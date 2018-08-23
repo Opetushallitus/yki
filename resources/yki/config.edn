@@ -1,0 +1,51 @@
+{:duct.core/project-ns  yki
+ :duct.core/environment :production
+
+ :duct.module/logging {}
+ :duct.module.web/api {}
+ :duct.module/sql {}
+
+ :duct.migrator/ragtime
+ {:migrations [#ig/ref :yki.migration/create-tables]}
+ 
+ [:duct.migrator.ragtime/sql :yki.migration/create-tables]
+ {:up [
+  "CREATE TABLE IF NOT EXISTS language (
+    code CHAR(2) PRIMARY KEY,
+    name TEXT NOT NULL
+  );"
+  "CREATE TABLE IF NOT EXISTS level (
+    id BIGSERIAL PRIMARY KEY
+  );"
+  "CREATE TABLE IF NOT EXISTS organizer (
+    oid TEXT PRIMARY KEY,
+    agreement_start_date DATE NOT NULL,
+    agreement_end_date DATE NOT NULL,
+    contact_name TEXT,
+    contact_email TEXT,
+    contact_phone_number TEXT
+  );"
+  "CREATE TABLE IF NOT EXISTS exam_language (
+    id BIGSERIAL PRIMARY KEY,
+    language_code CHAR(2) REFERENCES language (code) NOT NULL,
+    organizer_id TEXT not null references organizer(oid)
+  );"
+  "CREATE TABLE IF NOT EXISTS exam_level (
+    id BIGSERIAL PRIMARY KEY,
+    level_id BIGSERIAL REFERENCES level (id) NOT NULL,
+    organizer_id TEXT not null references organizer(oid)
+  );"
+  "INSERT INTO organizer VALUES ('ABCD', '01/01/2018', '01/01/2019', 'name', 'email', 'phone')"
+]
+  :down [
+  "drop table language;"
+  "drop table level;"
+  "drop table organizer;"
+  "drop table exam_language;"
+  "drop table exam_level;"]}
+ 
+ :duct.router/cascading
+ [#ig/ref :yki.handler/organizer]
+
+ :yki.handler/organizer
+ {:db #ig/ref :duct.database/sql}}
