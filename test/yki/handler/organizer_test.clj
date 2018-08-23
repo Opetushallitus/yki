@@ -33,8 +33,14 @@
                      :contact_name "fuu"
                      :contact_phone_number "123456"})
 
-  (defn- insert-organization-statement [oid]
-    (str "INSERT INTO organizer VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email', 'phone')"))
+  (defn- insert-organization [tx oid]
+    (jdbc/execute! tx (str "INSERT INTO organizer VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email', 'phone')")))
+
+  (defn- insert-levels [tx oid]
+    (jdbc/execute! tx "insert into level(level) values (1)")
+    (jdbc/execute! tx "insert into level(level) values (2)")
+    (jdbc/execute! tx (str "insert into exam_level (level_id, organizer_id) values (1," oid ")"))
+    (jdbc/execute! tx (str "insert into exam_level (level_id, organizer_id) values (2," oid ")")))
 
   (deftest add-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
@@ -49,19 +55,21 @@
 
   (deftest get-organizations-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
-      (jdbc/execute! tx (insert-organization-statement "'1.2.3.4'"))
-      (jdbc/execute! tx (insert-organization-statement "'1.2.3.5'"))
+      (insert-organization tx "'1.2.3.4'")
+      (insert-organization tx "'1.2.3.5'")
+      (insert-levels tx "'1.2.3.4'")
       (let [request (-> (mock/request :get "/organizer"))
             response (send-request tx request)
             response-body (parse-string (slurp (:body response) :encoding "UTF-8"))]
-        (testing "get organizations endpoint should return 2 organizations"
+        (testing "get organizations endpoint should return 2 organizations with exam levels"
           (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8")))
           (is (= (:status response) 200))
+          (is (= (get (first (get response-body "organizations")) "levels") [1 2]))
           (is (= (count (get response-body "organizations")))))))
 
   (deftest delete-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
-      (jdbc/execute! tx (insert-organization-statement "'1.2.3.4'"))
+      (insert-organization tx "'1.2.3.4'")
       (let [request (-> (mock/request :delete "/organizer/1.2.3.4"))
             response (send-request tx request)]
         (testing "delete organization endpoint should remove organization"
