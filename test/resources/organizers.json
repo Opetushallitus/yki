@@ -1,0 +1,27 @@
+{
+    "organizations":[
+       {
+          "oid":"1.2.3.4",
+          "agreement_start_date":"2017-12-31T22:00:00Z",
+          "agreement_end_date":"2018-12-31T22:00:00Z",
+          "contact_name":"name",
+          "contact_email":"email",
+          "contact_phone_number":"phone",
+          "languages":[],
+          "levels":[
+             1,
+             2
+          ]
+       },
+       {
+          "oid":"1.2.3.5",
+          "agreement_start_date":"2017-12-31T22:00:00Z",
+          "agreement_end_date":"2018-12-31T22:00:00Z",
+          "contact_name":"name",
+          "contact_email":"email",
+          "contact_phone_number":"phone",
+          "languages":[],
+          "levels":[]
+       }
+    ]
+ }

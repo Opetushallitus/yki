@@ -10,14 +10,6 @@
             [yki.embedded-db :as embedded-db]
             [yki.handler.organizer]))
 
-  ; (defn- with-handler [f]
-  ;   (jdbc/with-db-transaction [tx embedded-db/db-spec]
-  ;     (println "with-handler")
-  ;     (jdbc/db-set-rollback-only! tx)
-  ;       (let [db (duct.database.sql/->Boundary tx)
-  ;             handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db}))]
-  ;             (f))))
-
   (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
   
   (defn- send-request [tx request]
@@ -32,6 +24,9 @@
                      :contact_email "fuu@bar.com"
                      :contact_name "fuu"
                      :contact_phone_number "123456"})
+
+  (def organizations-json
+    (parse-string (slurp "test/resources/organizers.json")))
 
   (defn- insert-organization [tx oid]
     (jdbc/execute! tx (str "INSERT INTO organizer VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email', 'phone')")))
@@ -64,8 +59,7 @@
         (testing "get organizations endpoint should return 2 organizations with exam levels"
           (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8")))
           (is (= (:status response) 200))
-          (is (= (get (first (get response-body "organizations")) "levels") [1 2]))
-          (is (= (count (get response-body "organizations")))))))
+          (is (= response-body organizations-json)))))
 
   (deftest delete-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]

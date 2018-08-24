@@ -9,7 +9,7 @@
   (extend-protocol jdbc/IResultSetReadColumn
     org.postgresql.jdbc.PgArray
     (result-set-read-column [pgobj metadata i]
-      (vec (.getArray pgobj))))
+      (remove nil? (vec (.getArray pgobj)))))
 
   (defn- convert-dates [{:keys [oid agreement_start_date agreement_end_date contact_name contact_email contact_phone_number]}]
     {:oid oid
