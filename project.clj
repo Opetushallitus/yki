@@ -9,11 +9,11 @@
                  [duct/module.logging "0.3.1"]
                  [duct/module.web "0.6.4"]
                  [duct/module.sql "0.4.2"]
-                 [org.postgresql/postgresql "42.1.4"]
-                 [webjure/jeesql "0.4.7"]
-                 [org.xerial/sqlite-jdbc "3.21.0.1"]]
+                 [org.postgresql/postgresql "42.2.4"]
+                 [webjure/jeesql "0.4.7"]]
   :plugins [[duct/lein-duct "0.10.6"]]
   :main ^:skip-aot yki.main
+  :jvm-opts ["-Duser.timezone=UTC"]
   :resource-paths ["resources" "target/resources"]
   :prep-tasks     ["javac" "compile" ["run" ":duct/compiler"]]
   :profiles
@@ -22,7 +22,6 @@
           :repl-options {:init-ns user}}
    :uberjar {:aot :all}
    :profiles/dev {}
-  ;  :test {:dependencies [[com.opentable.components/otj-pg-embedded "0.12.0"]]} 
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
                   :dependencies   [[integrant/repl "0.2.0"]
