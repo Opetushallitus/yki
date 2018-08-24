@@ -9,6 +9,7 @@
                  [duct/module.logging "0.3.1"]
                  [duct/module.web "0.6.4"]
                  [duct/module.sql "0.4.2"]
+                 [com.mjachimowicz/duct-migrations-auto-cfg "0.1.0"]
                  [org.postgresql/postgresql "42.2.4"]
                  [webjure/jeesql "0.4.7"]]
   :plugins [[duct/lein-duct "0.10.6"]]

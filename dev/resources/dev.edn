@@ -1,5 +1,6 @@
 {:duct.core/environment :development
  :duct.core/include ["yki/config"]
-;:db {:uri "jdbc:postgresql://localhost/oti"}
+ :duct.core/project-ns yki
+ :duct-migrations-auto-cfg/module {}
  :duct.module/sql
  {:database-url "jdbc:postgresql://localhost/yki?user=admin&password=admin"}}
