@@ -1,5 +1,5 @@
 -- name: select-organizers
-SELECT 
+SELECT
   o.oid,
   o.agreement_start_date,
   o.agreement_end_date,
@@ -14,7 +14,7 @@ LEFT JOIN exam_level ele ON o.oid = ele.organizer_id
 GROUP BY o.oid, ela.organizer_id, ele.organizer_id;
 
 -- name: select-organizer
-SELECT 
+SELECT
   o.oid,
   o.agreement_start_date,
   o.agreement_end_date,
@@ -41,11 +41,32 @@ INSERT INTO organizer (
   :contact_phone_number
 );
 
+-- name: update-organizer!
+UPDATE organizer
+SET
+  agreement_start_date = :agreement_start_date,
+  agreement_end_date = :agreement_end_date,
+  contact_name = :contact_name,
+  contact_email = :contact_email,
+  contact_phone_number = :contact_phone_number
+WHERE oid = :oid;
+
 -- name: delete-organizer!
 DELETE FROM organizer WHERE oid = :oid;
 
+-- name: delete-organizer-languages!
+DELETE FROM exam_language WHERE organizer_id = :oid;
+
+-- name: insert-organizer-language!
+INSERT INTO exam_language (
+  language_code,
+  organizer_id
+) VALUES (
+  :language_code,
+  :oid
+);
+
 -- name: select-organizer-languages
-SELECT 
-  el.language_code
+SELECT el.language_code
 FROM exam_language el
 WHERE el.organizer_id = oid;

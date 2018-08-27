@@ -11,7 +11,7 @@
             [yki.handler.organizer]))
 
   (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
-  
+
   (defn- send-request [tx request]
     (jdbc/db-set-rollback-only! tx)
     (let [db (duct.database.sql/->Boundary tx)
@@ -37,7 +37,7 @@
     (jdbc/execute! tx (str "insert into exam_level (level_id, organizer_id) values (1," oid ")"))
     (jdbc/execute! tx (str "insert into exam_level (level_id, organizer_id) values (2," oid ")")))
 
-  (deftest add-organization-test
+  (deftest organizer-validation-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
       (let [json-body (generate-string (assoc-in organization [:agreement_start_date] "NOT_A_VALID_DATE"))
             request (-> (mock/request :post "/yki/api/organizer" json-body)
@@ -48,7 +48,19 @@
             (jdbc/query tx "SELECT COUNT(1) FROM organizer")))
           (is (= (:status response) 400))))))
 
-  (deftest organization-validation-test
+  (deftest update-organization-test
+    (jdbc/with-db-transaction [tx embedded-db/db-spec]
+      (insert-organization tx "'1.2.3.5'")
+      (let [json-body (generate-string organization)
+            request (-> (mock/request :put "/yki/api/organizer/1.2.3.5" json-body)
+                        (mock/content-type "application/json; charset=UTF-8"))
+            response (send-request tx request)]
+        (testing "put organization endpoint should update organization based on oid in url params"
+          (is (= '({:contact_name "fuu"})
+            (jdbc/query tx "SELECT contact_name FROM organizer where oid = '1.2.3.5'")))
+          (is (= (:status response) 200))))))
+
+  (deftest add-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
       (let [json-body (generate-string organization)
             request (-> (mock/request :post "/yki/api/organizer" json-body)
