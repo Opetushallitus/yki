@@ -23,7 +23,8 @@
                      :agreement_end_date "2029-01-01T00:00:00Z"
                      :contact_email "fuu@bar.com"
                      :contact_name "fuu"
-                     :contact_phone_number "123456"})
+                     :contact_phone_number "123456"
+                     :languages ["fi", "en"]})
 
   (def organizations-json
     (parse-string (slurp "test/resources/organizers.json")))
@@ -32,8 +33,6 @@
     (jdbc/execute! tx (str "INSERT INTO organizer VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email', 'phone')")))
 
   (defn- insert-levels [tx oid]
-    (jdbc/execute! tx "insert into level(level) values (1)")
-    (jdbc/execute! tx "insert into level(level) values (2)")
     (jdbc/execute! tx (str "insert into exam_level (level_id, organizer_id) values (1," oid ")"))
     (jdbc/execute! tx (str "insert into exam_level (level_id, organizer_id) values (2," oid ")")))
 
@@ -56,8 +55,8 @@
                         (mock/content-type "application/json; charset=UTF-8"))
             response (send-request tx request)]
         (testing "put organization endpoint should update organization based on oid in url params"
-          (is (= '({:contact_name "fuu"})
-            (jdbc/query tx "SELECT contact_name FROM organizer where oid = '1.2.3.5'")))
+          (is (= '({:count 2})
+            (jdbc/query tx "SELECT COUNT(1) FROM exam_language where organizer_id = '1.2.3.5'")))
           (is (= (:status response) 200))))))
 
   (deftest add-organization-test

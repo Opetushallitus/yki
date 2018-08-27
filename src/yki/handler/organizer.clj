@@ -20,20 +20,22 @@
    :type :date-time
    :reason "FAIL"
    :json-schema/default "2018-01-01T00:00:00Z"}))
-
 (s/def ::oid                  (s/and string? #(<= (count %) 256)))
 (s/def ::agreement_start_date ::date)
 (s/def ::agreement_end_date   ::date)
 (s/def ::contact_name         (s/and string? #(<= (count %) 256)))
+(s/def ::language_code        (s/and string? #(<= (count %) 2)))
 (s/def ::contact_email        (s/and string? #(<= (count %) 256)))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
+(s/def ::languages (s/coll-of ::language_code :kind vector?))
 
 (s/def ::organizer-spec (s/keys :req-un [::oid
-                                    ::agreement_start_date
-                                    ::agreement_end_date
-                                    ::contact_name
-                                    ::contact_email
-                                    ::contact_phone_number]))
+                                         ::agreement_start_date
+                                         ::agreement_end_date
+                                         ::contact_name
+                                         ::contact_email
+                                         ::contact_phone_number]
+                                :opt-un [::languages]))
 
 (defmethod ig/init-key :yki.handler/organizer [_ {:keys [db]}]
   (api

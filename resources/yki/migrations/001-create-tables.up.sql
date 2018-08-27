@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS language (
-  code CHAR(2) PRIMARY KEY,
-  name TEXT NOT NULL
+  code CHAR(2) PRIMARY KEY
 );
 --;;
 CREATE TABLE IF NOT EXISTS level (

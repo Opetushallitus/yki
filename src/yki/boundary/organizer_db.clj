@@ -31,13 +31,20 @@
     duct.database.sql.Boundary
     (create-organizer!
       [{:keys [spec]} organizer]
-      (-> (q/insert-organizer! spec (convert-dates organizer))))
+      (jdbc/with-db-transaction [tx spec]
+        (-> (q/insert-organizer! tx (convert-dates organizer)))))
     (delete-organizer!
       [{:keys [spec]} oid]
-      (-> (q/delete-organizer! spec {:oid oid})))
+      (jdbc/with-db-transaction [tx spec]
+        (-> (q/delete-organizer-languages! tx {:oid oid}))
+        (-> (q/delete-organizer! tx {:oid oid}))))
     (update-organizer!
       [{:keys [spec]} oid organizer]
       "update organizer using oid from arguments"
-      (-> (q/update-organizer! spec (assoc-in (convert-dates organizer) [:oid] oid))))
+      (jdbc/with-db-transaction [tx spec]
+        (-> (q/delete-organizer-languages! tx {:oid oid}))
+        (doseq [lang (:languages organizer)]
+          (-> (q/insert-organizer-language! tx {:language_code lang :oid oid})))
+        (-> (q/update-organizer! tx (assoc-in (convert-dates organizer) [:oid] oid)))))
     (get-organizers [{:keys [spec]}]
       (-> (q/select-organizers spec))))
