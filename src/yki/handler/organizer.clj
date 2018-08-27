@@ -39,11 +39,11 @@
     (context "/yki/api/organizer" []
       :coercion :spec
       (POST "/" []
-        {:body-params [payload :- ::organizer-spec]}
-        (if (organizer_db/create-organizer! db payload)
+        {:body [organizer ::organizer-spec]}
+        (if (organizer_db/create-organizer! db organizer)
               (response {:success true})))
       (GET "/" []
-        (response {:organizations (organizer_db/get-organizers db)}))
+        (response {:organizers (organizer_db/get-organizers db)}))
       (context "/:oid" [oid]
         (DELETE "/" []
           (if (organizer_db/delete-organizer! db oid)

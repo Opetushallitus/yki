@@ -18,14 +18,12 @@
           handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db}))]
           (handler request)))
 
-  (def organization {:payload 
-                      {:oid "1.2.3.4"
-                      :agreement_start_date "2018-01-01T00:00:00Z"
-                      :agreement_end_date "2029-01-01T00:00:00Z"
-                      :contact_email "fuu@bar.com"
-                      :contact_name "fuu"
-                      :contact_phone_number "123456"}
-                     })
+  (def organization {:oid "1.2.3.4"
+                     :agreement_start_date "2018-01-01T00:00:00Z"
+                     :agreement_end_date "2029-01-01T00:00:00Z"
+                     :contact_email "fuu@bar.com"
+                     :contact_name "fuu"
+                     :contact_phone_number "123456"})
 
   (def organizations-json
     (parse-string (slurp "test/resources/organizers.json")))
@@ -41,7 +39,7 @@
 
   (deftest add-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
-      (let [json-body (generate-string (assoc-in organization [:payload :agreement_start_date] "NOT_A_VALID_DATE"))
+      (let [json-body (generate-string (assoc-in organization [:agreement_start_date] "NOT_A_VALID_DATE"))
             request (-> (mock/request :post "/yki/api/organizer" json-body)
                         (mock/content-type "application/json; charset=UTF-8"))
             response (send-request tx request)]
