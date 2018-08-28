@@ -3,6 +3,7 @@
               [clj-time.coerce :as c]
               [clj-time.format :as f]
               [clj-time.jdbc]
+              [cheshire.core :as json]
               [clojure.java.jdbc :as jdbc]
               [duct.database.sql]))
 
@@ -11,7 +12,14 @@
   (extend-protocol jdbc/IResultSetReadColumn
     org.postgresql.jdbc.PgArray
     (result-set-read-column [pgobj metadata i]
-      (remove nil? (vec (.getArray pgobj)))))
+      (remove nil? (vec (.getArray pgobj))))
+    org.postgresql.util.PGobject
+    (result-set-read-column [pgobj metadata i]
+      (let [type (.getType pgobj)
+            value (.getValue pgobj)]
+        (if (= "json" type)
+          (json/parse-string value true)
+          value))))
 
   (defn- convert-dates [{:keys [oid agreement_start_date agreement_end_date contact_name contact_email contact_phone_number]}]
     {:oid oid

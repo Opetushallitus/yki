@@ -1,15 +1,26 @@
 -- name: select-organizers
-SELECT
-  o.oid,
-  o.agreement_start_date,
-  o.agreement_end_date,
-  o.contact_name,
-  o.contact_email,
-  o.contact_phone_number,
-  ARRAY_AGG(DISTINCT ela.language_code) as languages
-FROM organizer o
-LEFT JOIN exam_language ela ON o.oid = ela.organizer_id
-GROUP BY o.oid, ela.organizer_id;
+SELECT oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number,
+(
+  SELECT ARRAY_TO_JSON(ARRAY_AGG(ROW_TO_JSON(lang)))
+  FROM (
+    SELECT language_code, level_code
+    FROM exam_language
+    WHERE organizer_id = organizer.oid
+  ) lang
+) AS languages
+FROM organizer;
+
+-- SELECT
+--   o.oid,
+--   o.agreement_start_date,
+--   o.agreement_end_date,
+--   o.contact_name,
+--   o.contact_email,
+--   o.contact_phone_number,
+--   ARRAY_AGG(row_to_json((ela.language_code, ela.level_code))) as languages
+-- FROM organizer o
+-- LEFT JOIN exam_language ela ON o.oid = ela.organizer_id
+-- GROUP BY o.oid, ela.organizer_id;
 
 -- name: select-organizer
 SELECT
