@@ -6,12 +6,10 @@ SELECT
   o.contact_name,
   o.contact_email,
   o.contact_phone_number,
-  ARRAY_AGG(DISTINCT ela.language_code) as languages,
-  ARRAY_AGG(DISTINCT  ele.level_id) as levels
+  ARRAY_AGG(DISTINCT ela.language_code) as languages
 FROM organizer o
 LEFT JOIN exam_language ela ON o.oid = ela.organizer_id
-LEFT JOIN exam_level ele ON o.oid = ele.organizer_id
-GROUP BY o.oid, ela.organizer_id, ele.organizer_id;
+GROUP BY o.oid, ela.organizer_id;
 
 -- name: select-organizer
 SELECT
@@ -60,9 +58,11 @@ DELETE FROM exam_language WHERE organizer_id = :oid;
 -- name: insert-organizer-language!
 INSERT INTO exam_language (
   language_code,
+  level_code,
   organizer_id
 ) VALUES (
   :language_code,
+  :level_code,
   :oid
 );
 

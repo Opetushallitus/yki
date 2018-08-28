@@ -18,7 +18,6 @@
 (s/def ::date (st/spec
   {:spec (partial date?)
    :type :date-time
-   :reason "FAIL"
    :json-schema/default "2018-01-01T00:00:00Z"}))
 (s/def ::oid                  (s/and string? #(<= (count %) 256)))
 (s/def ::agreement_start_date ::date)

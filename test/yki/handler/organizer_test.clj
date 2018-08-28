@@ -32,9 +32,9 @@
   (defn- insert-organization [tx oid]
     (jdbc/execute! tx (str "INSERT INTO organizer VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email', 'phone')")))
 
-  (defn- insert-levels [tx oid]
-    (jdbc/execute! tx (str "insert into exam_level (level_id, organizer_id) values (1," oid ")"))
-    (jdbc/execute! tx (str "insert into exam_level (level_id, organizer_id) values (2," oid ")")))
+  (defn- insert-languages [tx oid]
+    (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', " oid ")"))
+    (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', " oid ")")))
 
   (deftest organizer-validation-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
@@ -57,6 +57,8 @@
         (testing "put organization endpoint should update organization based on oid in url params"
           (is (= '({:count 2})
             (jdbc/query tx "SELECT COUNT(1) FROM exam_language where organizer_id = '1.2.3.5'")))
+          (is (= '({:contact_name "fuu"})
+            (jdbc/query tx "SELECT contact_name FROM organizer where oid = '1.2.3.5'")))
           (is (= (:status response) 200))))))
 
   (deftest add-organization-test
@@ -74,7 +76,7 @@
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
       (insert-organization tx "'1.2.3.4'")
       (insert-organization tx "'1.2.3.5'")
-      (insert-levels tx "'1.2.3.4'")
+      (insert-languages tx "'1.2.3.4'")
       (let [request (-> (mock/request :get "/yki/api/organizer"))
             response (send-request tx request)
             response-body (parse-string (slurp (:body response) :encoding "UTF-8"))]
