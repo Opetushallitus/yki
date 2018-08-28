@@ -42,7 +42,7 @@
       (jdbc/with-db-transaction [tx spec]
         (-> (q/insert-organizer! tx (convert-dates organizer)))
         (doseq [lang (:languages organizer)]
-          (-> (q/insert-organizer-language! tx {:language_code lang :level_code "PERUS" :oid (:oid organizer)})))
+          (-> (q/insert-organizer-language! tx (merge lang {:oid (:oid organizer)}))))
           true))
     (delete-organizer!
       [{:keys [spec]} oid]
@@ -55,7 +55,7 @@
       (jdbc/with-db-transaction [tx spec]
         (-> (q/delete-organizer-languages! tx {:oid oid}))
         (doseq [lang (:languages organizer)]
-          (-> (q/insert-organizer-language! tx {:language_code lang :level_code "PERUS" :oid oid})))
+          (-> (q/insert-organizer-language! tx (merge lang {:oid oid}))))
         (-> (q/update-organizer! tx (assoc-in (convert-dates organizer) [:oid] oid)))))
     (get-organizers [{:keys [spec]}]
       (-> (q/select-organizers spec))))

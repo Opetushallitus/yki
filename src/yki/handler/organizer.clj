@@ -24,10 +24,12 @@
 (s/def ::agreement_end_date   ::date)
 (s/def ::contact_name         (s/and string? #(<= (count %) 256)))
 (s/def ::language_code        (s/and string? #(<= (count %) 2)))
+(s/def ::level_code           (s/and string? #(<= (count %) 16)))
 (s/def ::contact_email        (s/and string? #(<= (count %) 256)))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
-(s/def ::languages (s/coll-of ::language_code :kind vector?))
-
+(s/def ::language (s/keys :req-un [::language_code
+                                         ::level_code]))
+(s/def ::languages (s/coll-of ::language :kind vector?))
 (s/def ::organizer-spec (s/keys :req-un [::oid
                                          ::agreement_start_date
                                          ::agreement_end_date

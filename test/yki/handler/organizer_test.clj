@@ -24,7 +24,8 @@
                      :contact_email "fuu@bar.com"
                      :contact_name "fuu"
                      :contact_phone_number "123456"
-                     :languages ["fi", "en"]})
+                     :languages [{:language_code "fi" :level_code "PERUS"},
+                                 {:language_code "en" :level_code "PERUS"}]})
 
   (def organizations-json
     (parse-string (slurp "test/resources/organizers.json")))
