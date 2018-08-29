@@ -1,11 +1,9 @@
 CREATE TABLE IF NOT EXISTS language (
-  code CHAR(2) PRIMARY KEY,
-  name TEXT NOT NULL
+  code CHAR(2) PRIMARY KEY
 );
 --;;
-CREATE TABLE IF NOT EXISTS level (
-  id BIGSERIAL PRIMARY KEY,
-  level TEXT NOT NULL
+CREATE TABLE IF NOT EXISTS exam_level (
+  code TEXT PRIMARY KEY
 );
 --;;
 CREATE TABLE IF NOT EXISTS organizer (
@@ -20,11 +18,6 @@ CREATE TABLE IF NOT EXISTS organizer (
 CREATE TABLE IF NOT EXISTS exam_language (
   id BIGSERIAL PRIMARY KEY,
   language_code CHAR(2) REFERENCES language (code) NOT NULL,
-  organizer_id TEXT NOT NULL REFERENCES organizer(oid)
-);
---;;
-CREATE TABLE IF NOT EXISTS exam_level (
-  id BIGSERIAL PRIMARY KEY,
-  level_id BIGSERIAL REFERENCES level (id) NOT NULL,
+  level_code TEXT REFERENCES exam_level (code) NOT NULL,
   organizer_id TEXT NOT NULL REFERENCES organizer(oid)
 );

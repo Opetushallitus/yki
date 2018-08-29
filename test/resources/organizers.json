@@ -1,27 +1,31 @@
 {
-    "organizers":[
-       {
-          "oid":"1.2.3.4",
-          "agreement_start_date":"2018-01-01T00:00:00Z",
-          "agreement_end_date":"2019-01-01T00:00:00Z",
-          "contact_name":"name",
-          "contact_email":"email",
-          "contact_phone_number":"phone",
-          "languages":[],
-          "levels":[
-             1,
-             2
-          ]
-       },
-       {
-          "oid":"1.2.3.5",
-          "agreement_start_date":"2018-01-01T00:00:00Z",
-          "agreement_end_date":"2019-01-01T00:00:00Z",
-          "contact_name":"name",
-          "contact_email":"email",
-          "contact_phone_number":"phone",
-          "languages":[],
-          "levels":[]
-       }
+    "organizers": [
+        {
+            "oid": "1.2.3.4",
+            "agreement_start_date": "2018-01-01T00:00:00Z",
+            "agreement_end_date": "2019-01-01T00:00:00Z",
+            "contact_name": "name",
+            "contact_email": "email",
+            "contact_phone_number": "phone",
+            "languages": [
+                {
+                    "language_code": "fi",
+                    "level_code": "PERUS"
+                },
+                {
+                    "language_code": "sv",
+                    "level_code": "PERUS"
+                }
+            ]
+        },
+        {
+            "oid": "1.2.3.5",
+            "agreement_start_date": "2018-01-01T00:00:00Z",
+            "agreement_end_date": "2019-01-01T00:00:00Z",
+            "contact_name": "name",
+            "contact_email": "email",
+            "contact_phone_number": "phone",
+            "languages": null
+        }
     ]
- }
+}

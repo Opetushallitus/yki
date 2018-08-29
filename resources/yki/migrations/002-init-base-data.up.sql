@@ -1,0 +1,24 @@
+INSERT INTO language(code) VALUES ('fi');
+--;;
+INSERT INTO language(code) VALUES ('sv');
+--;;
+INSERT INTO language(code) VALUES ('en');
+--;;
+INSERT INTO language(code) VALUES ('es');
+--;;
+INSERT INTO language(code) VALUES ('it');
+--;;
+INSERT INTO language(code) VALUES ('fr');
+--;;
+INSERT INTO language(code) VALUES ('se');
+--;;
+INSERT INTO language(code) VALUES ('de');
+--;;
+INSERT INTO language(code) VALUES ('ru');
+--;;
+INSERT INTO exam_level(code) VALUES ('PERUS');
+--;;
+INSERT INTO exam_level(code) VALUES ('KESKI');
+--;;
+INSERT INTO exam_level(code) VALUES ('YLIN');
+
