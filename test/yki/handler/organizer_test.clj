@@ -31,11 +31,12 @@
     (parse-string (slurp "test/resources/organizers.json")))
 
   (defn- insert-organization [tx oid]
-    (jdbc/execute! tx (str "INSERT INTO organizer VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email', 'phone')")))
+    (jdbc/execute! tx (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number)
+      VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email', 'phone')")))
 
   (defn- insert-languages [tx oid]
-    (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', " oid ")"))
-    (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', " oid ")")))
+    (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
+    (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
   (deftest organizer-validation-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
@@ -57,7 +58,7 @@
             response (send-request tx request)]
         (testing "put organization endpoint should update organization based on oid in url params"
           (is (= '({:count 2})
-            (jdbc/query tx "SELECT COUNT(1) FROM exam_language where organizer_id = '1.2.3.5'")))
+            (jdbc/query tx "SELECT COUNT(1) FROM exam_language where organizer_id = (SELECT id FROM organizer WHERE oid = '1.2.3.5' AND deleted_at IS NULL)")))
           (is (= '({:contact_name "fuu"})
             (jdbc/query tx "SELECT contact_name FROM organizer where oid = '1.2.3.5'")))
           (is (= (:status response) 200))))))
@@ -94,4 +95,4 @@
         (testing "delete organization endpoint should remove organization"
           (is (= (:status response) 200))
           (is (= '({:count 0})
-            (jdbc/query tx "SELECT COUNT(1) FROM organizer")))))))
+            (jdbc/query tx "SELECT COUNT(1) FROM organizer where deleted_at IS NULL")))))))
