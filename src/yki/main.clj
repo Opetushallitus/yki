@@ -9,10 +9,12 @@
   (io/file "./oph-configuration/config.edn"))
 
 (defn- read-config []
-  (io/resource "yki/config.edn"))
+  (if (.exists (io/file "./oph-configuration/config.edn"))
+    (io/file "./oph-configuration/config.edn")
+    (io/resource "yki/config.edn")))
 
 (defn -main [& args]
   (let [keys (or (duct/parse-keys args) [:duct/daemon])]
-    (-> (duct/read-config (read-external-config))
+    (-> (duct/read-config (read-config))
         (duct/prep keys)
         (duct/exec keys))))

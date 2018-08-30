@@ -31,7 +31,6 @@
   (let [db  (ragtime.jdbc/sql-database db-spec)
         ms  (ragtime.jdbc/load-directory "resources/yki/migrations")
         idx (core/into-index ms)]
-    (println "execute migration")
     (core/migrate-all db idx ms))
   (f))
 
