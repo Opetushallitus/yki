@@ -8,4 +8,4 @@
                                  :username "{{host_postgresql_yki_user}}"
                                  :password "{{host_postgresql_yki_password}}"
                                  :connection-timeout {{host_postgresql_yki_max_wait}}
-                                 :maximum-pool-size "{{host_postgresql_yki_max_active}}"}}
+                                 :maximum-pool-size {{host_postgresql_yki_max_active}}}}
