@@ -8,8 +8,11 @@
  :duct.migrator/ragtime
  {:resource-path "oti/migrations"}
 
- :duct.router/cascading
- [#ig/ref :yki.handler/organizer]
+ :duct.router/cascading [#ig/ref :yki.handler/status
+                         #ig/ref :yki.handler/organizer]
+
+ :yki.handler/status
+ {:db #ig/ref :duct.database/sql}
 
  :yki.handler/organizer
  {:db #ig/ref :duct.database/sql}}

@@ -8,6 +8,7 @@
             [muuntaja.core :as m]
             [clojure.java.jdbc :as jdbc]
             [yki.embedded-db :as embedded-db]
+            [yki.handler.routing :as routing]
             [yki.handler.organizer]))
 
   (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
@@ -41,7 +42,7 @@
   (deftest organizer-validation-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
       (let [json-body (generate-string (assoc-in organization [:agreement_start_date] "NOT_A_VALID_DATE"))
-            request (-> (mock/request :post "/yki/api/organizer" json-body)
+            request (-> (mock/request :post routing/organizer-api-root json-body)
                         (mock/content-type "application/json; charset=UTF-8"))
             response (send-request tx request)]
         (testing "post organization endpoint should return 400 status code for validation errors"
@@ -53,7 +54,7 @@
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
       (insert-organization tx "'1.2.3.5'")
       (let [json-body (generate-string organization)
-            request (-> (mock/request :put "/yki/api/organizer/1.2.3.5" json-body)
+            request (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.5") json-body)
                         (mock/content-type "application/json; charset=UTF-8"))
             response (send-request tx request)]
         (testing "put organization endpoint should update organization based on oid in url params"
@@ -66,7 +67,7 @@
   (deftest add-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
       (let [json-body (generate-string organization)
-            request (-> (mock/request :post "/yki/api/organizer" json-body)
+            request (-> (mock/request :post routing/organizer-api-root json-body)
                         (mock/content-type "application/json; charset=UTF-8"))
             response (send-request tx request)]
         (testing "post organization endpoint should add organization"
@@ -79,7 +80,7 @@
       (insert-organization tx "'1.2.3.4'")
       (insert-organization tx "'1.2.3.5'")
       (insert-languages tx "'1.2.3.4'")
-      (let [request (-> (mock/request :get "/yki/api/organizer"))
+      (let [request (-> (mock/request :get routing/organizer-api-root))
             response (send-request tx request)
             response-body (parse-string (slurp (:body response) :encoding "UTF-8"))]
         (testing "get organizations endpoint should return 2 organizations with exam levels"
@@ -90,7 +91,7 @@
   (deftest delete-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
       (insert-organization tx "'1.2.3.4'")
-      (let [request (-> (mock/request :delete "/yki/api/organizer/1.2.3.4"))
+      (let [request (-> (mock/request :delete (str routing/organizer-api-root "/1.2.3.4")))
             response (send-request tx request)]
         (testing "delete organization endpoint should remove organization"
           (is (= (:status response) 200))
