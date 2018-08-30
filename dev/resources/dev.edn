@@ -1,4 +1,5 @@
-{:duct.core/include ["yki/config"]
+{:duct.core/environment :development
+ :duct.core/include ["yki/config"]
  :duct.core/project-ns yki
  :duct-migrations-auto-cfg/module {}
  :duct.database.sql/hikaricp {:adapter "postgresql"
