@@ -1,0 +1,27 @@
+sudo: required
+language: clojure
+jdk:
+  - oraclejdk8
+services:
+  - docker
+
+env:
+  global:
+    # AWS_ACCESS_KEY_ID
+    - secure: "NzaFI5sr9vE2JAxkOJP9RYjFBOGLZPpeJAJufQVoLKqRLg10YVOI75H8Qw+YpsQsNH1jetSI2pRJddIuG8I7/p+GW/fbhuvT9cA0BbEyzfubYFmS/NMRG0/IrsB7vjiG+n7VCL3v1eEIOL7FOJ2G73dhjoEtLukS8kou2m/HjytyEi+ulVFC69ECoyJfdfqX+gdZvqfqz7inSOPpvUzegBLdSRjyxXg05eQLeptX87ZZ5Uu6kwjHJP2PrJb/20zODIa2cp0RcXO31PVRGnKrRfAoJsOu0NK4a+PncfNXmW/bB0gACvqpkcPZHMtsKRGv8oOfwCtLJjGPt2Rx1T9TLf57aveteIlW9+6AV1iMOCWWlOEYXWVR/UziNax14IRps546w3Gkgb38U43TOVq8TutfrMy2A5O8DEKrIb4iAtJ0nflonlqXdFI+XgLhKkyERjnuSZuj8Gwz5RjCo0U0Vd85awaV5svrt7Q2PITMfiRzwTYSsgFUX2IzbzbJMrbVqmXVXJKgb4VlnGiVLQzUSslarj2p1+16nytFu/W+90eozXrsjkCNINm/gC4/vktfE/nS1jpcuPPJynhZ7b7f7nfgy61hlBm5uybnMn3E0PAUfSmsdpDP358w3+hAsuskLbs6RVf4anymua2ej5hrl5ONPfQWsqQRGb1+1cC+Mqk="
+    # AWS_SECRET_ACCESS_KEY
+    - secure: "ir9hY4r7DHwA0sqK/X5swq5D5iiBOPTw3NEEch4qKRG94Vo51CEfQC7z04BYsl5Kf0g5CX6sMFSC+HRhi3X+6HzEfaK83csx7pTXbJMKKPpbRpo2idTUTjllkR1+K+HyiBAhFriaaaV76HH8SZoZbc0ZaF6BRmH48l3VNUVSCvwzBztfTnWWE7MZfZYuIguQTwMKIXvWtqvpiEP0naiwr0dXyRkQZ6HLspKCrbb7Bc5cS3ZWxMjZff5deABF78nwqdyyVnCpo+zlWpNb7GXYRtzuu56rShBRCf/d9er79SHWVVIyeUmrVeRMrqXH9nh68NSALojFojBC7oQavdA2O2/sC98W8MLZEH/0vkSgXYcJHtqL4J4CmpoS3XwI+fM4S82CuzKQ2u9rsS6/IMfbRBia5BElvOuwuu6WMPS+VyS5xayS7QN9TyaZHRRKgmLdENy2oy326lyEjOEW+X6eeS1/yMDnvLMSRhvVnfl/bLACMpOobMU2ckGCkBgKBNRCMrK7yq5E8+q9AghS7tVBo4FWZvupQfEMda2xG5uqYoUtT2hZ3spsyuQgZ8NFegqqgh1mHUrdLlFJ5s/nIz7HVQkNCglxCp4POjGOGkyN1tGeA7HzdSUttQnDyv1Aq6Z2bNwEAZrsZk+55MROQHXYl8pFyn+G1kr2CzgUoo8W9ws="
+
+install:
+  - git clone https://github.com/Opetushallitus/ci-tools.git
+  - source ci-tools/common/setup-tools.sh
+
+script:
+  - lein uberjar
+
+  - mv target/yki-*-standalone.jar $DOCKER_BUILD_DIR/artifact/yki.jar
+  - cp -vr oph-configuration $DOCKER_BUILD_DIR/config/
+
+  - export BASE_IMAGE="base-legacy:0.1"
+  - ./ci-tools/common/pull-image.sh
+  - ./ci-tools/build/build-fatjar.sh yki
