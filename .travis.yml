@@ -10,7 +10,7 @@ env:
     # AWS_ACCESS_KEY_ID
     - secure: "TODO"
     # AWS_SECRET_ACCESS_KEY
-    - secure: ""TODO"
+    - secure: "TODO"
 
 install:
   - git clone https://github.com/Opetushallitus/ci-tools.git
