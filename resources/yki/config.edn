@@ -4,7 +4,7 @@
  :duct.module/logging {}
  :duct.module.web/api {}
  :duct.module/sql {}
-
+ :duct.server.http/jetty {:port 8080}
  :duct.migrator/ragtime
  {:resource-path "oti/migrations"}
 

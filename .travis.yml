@@ -1,28 +1,27 @@
 sudo: required
 language: clojure
 jdk:
-  - oraclejdk8
+- oraclejdk8
 services:
-  - docker
+- docker
+install:
+- git clone https://github.com/Opetushallitus/ci-tools.git
+- source ci-tools/common/setup-tools.sh
 
 env:
   global:
-    # AWS_ACCESS_KEY_ID
-    - secure: "TODO"
-    # AWS_SECRET_ACCESS_KEY
-    - secure: "TODO"
-
-install:
-  - git clone https://github.com/Opetushallitus/ci-tools.git
-  - source ci-tools/common/setup-tools.sh
+  # AWS_ACCESS_KEY_ID
+  - secure: f3oWNPH1LvhJ41Oi+ApJe+Wq3mVScswrphdRrVO1yldcjRIDHcxofJRo1/8NJalBYkR+CE9hk1DJ2mtPnLwbRQD7b9UkAA/9SihthMtyNimvF3eHP7GYiBHCjh6THCeq4Iu6JQs+ALjN4XLTq8RE8qs9tb4dyd2CvYpNJJ7qEICb4jtBuG/OZdEp5sgXykll+Vyt8iei6jQNtXCifcO/3sSVj0TXC6+Srbr7ZXBSGTuVbptf/GcWto31EqzlYjTOJTKD+cnBbA1BA/sf1csmwrneWR2W6ZskPHzbGIZnC6ObWAj9ismmOPMReAeJLwWRiTIfekN7SksStWpPAqfK8eq3KwijLpHh9yLcHLjFk+qxCeeh42IuvhuGwrFSD+81iYTf8PIOD1PaZ21nrZhE4Ox2K7u8OHi1WLttVI3EaGgq5Ln5AJDSwEI71UD5mfki+3kJYutaLgTBB4OznnGutxqnzvDaavIb9iVWce+czHmvR6wTf9oZpsjbLy0vhit83hjyCNIz0Umd817OIap9EWsclPgkRBN6ERo0fi12xJak4AfFODYJFYMx1z5jJ7TxTRDFQsX9t0Hi0k3lKdE3PgbPxdbBOo4+9fx+8GCOr+SaWAOVW2jLdY7Syb97CT+JRD+3VfHYE6f1gX6kDSZ7ikT3wjUjXDyjX0QskIeeYtE=
+  # AWS_SECRET_ACCESS_KEY
+  - secure: IyJCpXwbrJfaV5zLKEbWkQUlym/HmL8qitYVTMxHQ8Ua7SN/4ig1oD7UZ0hXUd6u/YZp0xkjXDIKt/iXiN5LNsmy1mnlb4v6NUeAlo6T5hGrcwDGRvTElyrAv1SDfyFZ5dnUekfEAXolPFJnBuhLamYRohWRrVEEwCu3m3SDbmibjm3ltDxdc6TPGsB+H+gpCxW5Z0qP/OTwixvFUZQcaJZJDMv0GBDRINgB9lxaofXBzrUD1zhXlDHgTyL9OzIhlaW/twxLmL1gIJ1RRIntg5pvkHzvnM58b0kB25Qzft9JS8tr5eB1kdTIet8gYbAbyZig3sXj0bdSzHp1M0eK0EnGupoR2UVDfGpuztqaTXWlx0q+ZoRJdYBfPMDa4xc2NcaOxNsx5Zw3Enq7/EEVPYFLHSoUKgZ8Qy4beVHAOzGccr+X/lORjunz+yHUaDEOLwQBY+tkvEQS5SJaqws7HesYSXe6k8SUVR9G/4KpIKGhCtzv6y7PIWsMIkyEjbMNTSOuSgWVRK8pMGtnsYrheDgKNQ2/wmI0z7fG3nLKyKnvVz/MdwWMzE3I1LF8pUJjt0VXFGNx11KZGQraCMLLrdHL1uD4k/1PyXChhCced6ws4VJYnpVf99FBp6NeZhAo/vT2nSNnOJTvFp54grewjOwzIjmm8k3hSx9O5u+2T6c=
 
 script:
   - lein test
-  # - lein uberjar
+  - lein uberjar
 
-  # - mv target/yki-*-standalone.jar $DOCKER_BUILD_DIR/artifact/yki.jar
-  # - cp -vr oph-configuration $DOCKER_BUILD_DIR/config/
+  - mv target/yki-*-standalone.jar $DOCKER_BUILD_DIR/artifact/yki.jar
+  - cp -vr oph-configuration $DOCKER_BUILD_DIR/config/
 
-  # - export BASE_IMAGE="base-legacy:0.1"
-  # - ./ci-tools/common/pull-image.sh
-  # - ./ci-tools/build/build-fatjar.sh yki
+  - export BASE_IMAGE="base-legacy:0.1"
+  - ./ci-tools/common/pull-image.sh
+  - ./ci-tools/build/build-fatjar.sh yki
