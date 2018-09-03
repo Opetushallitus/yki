@@ -15,6 +15,7 @@
                  [metosin/spec-tools "0.7.1"]
                  [org.postgresql/postgresql "42.2.4"]
                  [duct/database.sql.hikaricp "0.3.3"]
+                 [buddy/buddy-auth "2.1.0"]
                  [webjure/jeesql "0.4.7"]]
   :plugins [[duct/lein-duct "0.10.6"]]
   :main ^:skip-aot yki.main
