@@ -15,8 +15,10 @@
                  [metosin/spec-tools "0.7.1"]
                  [org.postgresql/postgresql "42.2.4"]
                  [duct/database.sql.hikaricp "0.3.3"]
+                 [org.clojure/tools.logging "0.4.1"]
                  [buddy/buddy-auth "2.1.0"]
-                 [webjure/jeesql "0.4.7"]]
+                 [webjure/jeesql "0.4.7"]
+                 [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
   :plugins [[duct/lein-duct "0.10.6"]]
   :main ^:skip-aot yki.main
   :jvm-opts ["-Duser.timezone=UTC"]

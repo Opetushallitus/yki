@@ -7,5 +7,8 @@
                               :server-name "localhost"
                               :port-number "5432"
                               :username "admin"
-                              :password "admin"}}
+                              :password "admin"}
+
+ :yki.util/url-helper {:virkailija-host "virkailija.untuvaopintopolku.fi"
+                       :yki-host    "http://localhost:8080"}}
 

@@ -8,13 +8,21 @@
  :duct.migrator/ragtime {:resource-path "oti/migrations"}
 
  :duct.router/cascading [#ig/ref :yki.handler/status
+                         #ig/ref :yki.handler/auth
                          #ig/ref :yki.handler/organizer]
 
- :yki.auth.basic-auth/auth {}
+ :yki.util/url-helper {:virkailija-host "virkailija.untuvaopintopolku.fi"
+                       :yki-host    "http://localhost:8080"}
+
+
+ :yki.middleware.auth/with-authentication
+ {:url-helper #ig/ref :yki.util/url-helper}
+
+ :yki.handler/auth {:db #ig/ref :duct.database/sql
+                    :auth #ig/ref :yki.middleware.auth-middleware/with-authentication}
 
  :yki.handler/status
- {:db #ig/ref :duct.database/sql
-  :auth #ig/ref :yki.auth.basic-auth/auth}
+{:db #ig/ref :duct.database/sql}
 
  :yki.handler/organizer
  {:db #ig/ref :duct.database/sql}}

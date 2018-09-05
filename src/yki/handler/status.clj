@@ -2,15 +2,13 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.status_db :as status-db]
             [yki.handler.routing :as routing]
-            [yki.middleware.auth :as auth]
             [ring.util.response :refer [response status]]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key :yki.handler/status [_ {:keys [db auth]}]
+(defmethod ig/init-key :yki.handler/status [_ {:keys [db]}]
   (api
    (context routing/status-api-root []
-     (GET "/" {:as request}
-       :middleware [auth auth/authenticated]
+     (GET "/" []
        (if (status-db/get-status db)
          (response {:success true})
          (status 500))))))
