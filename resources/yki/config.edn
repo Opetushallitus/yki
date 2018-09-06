@@ -13,11 +13,15 @@
 
  :yki.util/url-helper {}
 
+ :yki.boundary.cas-access/cas-access {}
+
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/auth {:db #ig/ref :duct.database/sql
-                    :auth #ig/ref :yki.middleware.auth/with-authentication}
+                    :auth #ig/ref :yki.middleware.auth/with-authentication
+                    :cas-access #ig/ref  :yki.boundary.cas-access/cas-access
+                    :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status
 {:db #ig/ref :duct.database/sql}

@@ -14,6 +14,7 @@
           (doto (OphProperties. (into-array String ["/yki/yki-oph.properties"]))
             (.addDefault "host-virkailija" virkailija-host)
             (.addDefault "host-yki" yki-host)))
+  (println "resetting2!")
   (defn resolve-url
     [key & params]
     (.url @url-properties (name key) (to-array (or params [])))))

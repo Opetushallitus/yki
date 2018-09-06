@@ -5,30 +5,52 @@
             [duct.database.sql]
             [muuntaja.middleware :as middleware]
             [clojure.java.jdbc :as jdbc]
+            [cheshire.core :refer :all]
+            [peridot.core :as peridot]
+            [duct.core :as duct]
+            ; [yki.util.url-helper :as url-helper]
+            [yki.boundary.cas-access :as cas]
             [yki.embedded-db :as embedded-db]
             [yki.handler.routing :as routing]
             [yki.handler.auth]))
 
-  (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
+(use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
 
-  (defn- send-request [tx request]
-    (let [db (duct.database.sql/->Boundary tx)
-          url-helper (ig/init-key :yki.util/url-helper {:virkailija-host "http://localhost:8080"})
-          auth (ig/init-key :yki.middleware.auth/with-authentication {:db db :url-helper url-helper})
-          handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth}))]
-          (handler request)))
+(defrecord MockCasClient [url-helper]
+  cas/CasAccess
+  (validate-ticket [this ticket]
+    "username"))
 
-  (deftest redirect-to-login-test
-    (jdbc/with-db-connection [tx embedded-db/db-spec]
-      (let [request (-> (mock/request :get routing/virkailija-auth-root))
-            response (send-request tx request)]
-        (testing "should redirect unauthenticated user to cas login"
-          (is (= (:status response) 302))))))
+(defn mock-cas [url-helper]
+  (->MockCasClient url-helper))
 
-  (deftest handle-success-callback
-    (jdbc/with-db-connection [tx embedded-db/db-spec]
-      (let [request (-> (mock/request :get routing/virkailija-auth-callback))
-            response (send-request tx request)]
-        (testing "should validate cas ticket and set it to session"
-          (is (= (:status response) 200))))))
+(defn url-helper2
+  [key & params]
+  "http://localhost:8080")
+
+(defn- create-handler [tx]
+  (let [url-helper (ig/init-key :yki.util/url-helper {:virkailija-host "http://localhost:8080"
+                                                     :yki-host "http://localhost:8080"})
+        db (duct.database.sql/->Boundary tx)
+        auth (ig/init-key :yki.middleware.auth/with-authentication {:db db :url-helper url-helper})
+        handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth :url-helper url-helper :cas-access mock-cas}))]
+    handler))
+
+; (defn- create-handler2 [tx]
+;   (let [system (ig/init {:yki.util/url-helper {:virkailija-host "http://localhost:8080" :yki-host "http://localhost:8080"}})
+;         handler (:yki.util/url-helper system)]
+;     handler))
+
+(deftest handle-authentication-success-callback
+  (jdbc/with-db-connection [tx embedded-db/db-spec]
+    (let [handler (create-handler tx)
+          session (peridot/session handler)
+          response (-> session
+                       (peridot/request routing/virkailija-auth-callback
+                                        :request-method :get
+                                        :params {:ticket "ST-15126-QDecNcbBTBfKo5dGRoNf-cas.a6730b06b7e6"})
+                       (peridot/follow-redirect))
+          response-body (parse-string (slurp (:body (:response response)) :encoding "UTF-8"))]
+      (testing "callback endpoint should set identity returned from cas client to session"
+        (is (= (get-in response-body ["session" "identity" "user"]) {"username" "username", "ticket" "ST-15126-QDecNcbBTBfKo5dGRoNf-cas.a6730b06b7e6"}))))))
 

@@ -1,6 +1,7 @@
 (ns yki.middleware.auth
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.middleware :refer [wrap-authentication]]
+            [ring.middleware.session :refer [wrap-session]]
             [buddy.auth.accessrules :refer [wrap-access-rules success error]]
             [buddy.auth.backends.session :refer [session-backend]]
             [integrant.core :as ig]
@@ -8,12 +9,12 @@
             [ring.util.response :refer [response status]]
             [ring.util.http-response :refer [unauthorized]]))
 
-(defn authenticated
-  [handler]
-  (fn [request]
-    (if (authenticated? request)
-      (handler request)
-      (unauthorized {:error "Not authorized"}))))
+; (defn authenticated
+;   [handler]
+;   (fn [request]
+;     (if (authenticated? request)
+;       (handler request)
+;       (unauthorized {:error "Not authorized"}))))
 
 (def backend (session-backend))
 
@@ -21,10 +22,9 @@
   true)
 
 (defn logged-in? [request]
-  ; let [username (cas/username-from-valid-service-ticket cas-config login-callback ticket)]
-  ; (let [ticket (-> request :session :identity :ticket)]
-  ;   (cas-store/logged-in? ticket)))
-  false)
+  (if-let [ticket (-> request :session :identity :user :ticket)]
+    true
+    false))
 
 (defn- authenticated-access [request]
   (if (logged-in? request)
@@ -72,5 +72,6 @@
   (defn with-authentication [handler]
     (-> handler
         (wrap-authentication backend)
-        (wrap-access-rules {:rules (rules (url-helper :cas.login))}))))
+        (wrap-access-rules {:rules (rules (url-helper :cas.login))})
+        (wrap-session))))
 
