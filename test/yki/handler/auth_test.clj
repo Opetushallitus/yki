@@ -3,6 +3,8 @@
             [integrant.core :as ig]
             [ring.mock.request :as mock]
             [duct.database.sql]
+            [yki.util.url-helper]
+            [yki.middleware.auth]
             [muuntaja.middleware :as middleware]
             [clojure.java.jdbc :as jdbc]
             [cheshire.core :refer :all]
