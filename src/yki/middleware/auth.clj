@@ -9,13 +9,6 @@
             [ring.util.response :refer [response status]]
             [ring.util.http-response :refer [unauthorized]]))
 
-; (defn authenticated
-;   [handler]
-;   (fn [request]
-;     (if (authenticated? request)
-;       (handler request)
-;       (unauthorized {:error "Not authorized"}))))
-
 (def backend (session-backend))
 
 (defn any-access [request]
@@ -33,26 +26,6 @@
 
 (defn access-error [req val]
   (unauthorized val))
-
-  ; (defn- redirect-to-cas-login [request _]
-  ;   {:status  302
-  ;    :headers {"Location" (url-helper :cas.login)
-  ;              "Content-Type" "text/plain"}
-  ;    :session {:original-url (request-url request)}
-  ;    :body    "Access to is not authorized, redirecting to login"})
-
-  ; (def ^:private rules [{:pattern #".*/auth/cas/callback"
-  ;                        :handler any-access}
-  ;                       {:pattern #".*/api/.*"
-  ;                        :handler authenticated-access
-  ;                        :on-error access-error}
-  ;                       {:pattern #".*/auth/cas"
-  ;                        :handler authenticated-access
-  ;                        :redirect (url-helper :cas.login)}
-  ;                     ;  :on-error redirect-to-cas-login}
-  ;                       {:pattern #".*"
-  ;                        :handler authenticated-access
-  ;                        :on-error redirect-to-cas-login}])
 
 (defn- rules [redirect-url] [{:pattern #".*/auth/cas/callback"
                               :handler any-access}

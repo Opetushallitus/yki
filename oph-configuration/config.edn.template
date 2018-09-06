@@ -10,5 +10,5 @@
                                  :connection-timeout {{host_postgresql_yki_max_wait}}
                                  :maximum-pool-size {{host_postgresql_yki_max_active}}}
 
-:yki.util/url-helper {:virkailija-host "virkailija.untuvaopintopolku.fi"
-                      :yki-host    "http://localhost:8080"}}
+:yki.util/url-helper {:virkailija-host "{{host_virkailija}}}"
+                      :yki-host    "{{host_ilb}}"}}
