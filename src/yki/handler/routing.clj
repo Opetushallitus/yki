@@ -10,6 +10,8 @@
 
 (def virkailija-auth-callback (str virkailija-auth-root "/callback"))
 
+(def virkailija-auth-logout (str virkailija-auth-root "/logout"))
+
 (def virkailija-api-root (str api-root "/virkailija"))
 
 (def organizer-api-root (str virkailija-api-root "/organizer"))

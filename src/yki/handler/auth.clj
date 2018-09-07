@@ -3,6 +3,7 @@
             [integrant.core :as ig]
             [yki.handler.routing :as routing]
             [yki.boundary.cas-access :as cas]
+            [yki.auth.cas-auth :as cas-auth]
             [clojure.tools.logging :refer [info error]]
             [ring.util.response :refer [response status redirect]]
             [clojure.string :as str])
@@ -19,8 +20,10 @@
          (do
             ; store ticket to db
            (info "user" username "logged in")
-           (-> (redirect "/yki/auth/cas/session")
-               (assoc :session {:identity {:user {:username username
-                                                  :ticket ticket}}})))))
-     (GET "/session" {session :session}
-       (response {:session session})))))
+           (-> (redirect "/yki/auth/cas/user")
+               (assoc :session {:identity  {:username username
+                                            :ticket ticket}})))))
+     (GET "/logout" {session :session}
+       (cas-auth/logout session url-helper))
+     (GET "/user" {session :session}
+       (response {:session (update-in session [:identity] dissoc :ticket)})))))

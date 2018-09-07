@@ -26,10 +26,6 @@
 (defn mock-cas [url-helper]
   (->MockCasClient url-helper))
 
-(defn url-helper2
-  [key & params]
-  "http://localhost:8080")
-
 (defn- create-handler [tx]
   (let [url-helper (ig/init-key :yki.util/url-helper {:virkailija-host "http://localhost:8080"
                                                      :yki-host "http://localhost:8080"})
@@ -38,11 +34,6 @@
         handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth :url-helper url-helper :cas-access mock-cas}))]
     handler))
 
-; (defn- create-handler2 [tx]
-;   (let [system (ig/init {:yki.util/url-helper {:virkailija-host "http://localhost:8080" :yki-host "http://localhost:8080"}})
-;         handler (:yki.util/url-helper system)]
-;     handler))
-
 (deftest handle-authentication-success-callback
   (jdbc/with-db-connection [tx embedded-db/db-spec]
     (let [handler (create-handler tx)
@@ -50,9 +41,22 @@
           response (-> session
                        (peridot/request routing/virkailija-auth-callback
                                         :request-method :get
-                                        :params {:ticket "ST-15126-QDecNcbBTBfKo5dGRoNf-cas.a6730b06b7e6"})
+                                        :params {:ticket "ST-15126"})
                        (peridot/follow-redirect))
           response-body (parse-string (slurp (:body (:response response)) :encoding "UTF-8"))]
       (testing "callback endpoint should set identity returned from cas client to session"
-        (is (= (get-in response-body ["session" "identity" "user"]) {"username" "username", "ticket" "ST-15126-QDecNcbBTBfKo5dGRoNf-cas.a6730b06b7e6"}))))))
+        (is (= (get-in response-body ["session" "identity"]) {"username" "username"}))))))
+
+(deftest handle-logout
+  (jdbc/with-db-connection [tx embedded-db/db-spec]
+    (let [handler (create-handler tx)
+          session (peridot/session handler)
+          response (-> session
+                        (peridot/request routing/virkailija-auth-callback
+                          :request-method :get
+                          :params {:ticket "ST-15126"})
+                        (peridot/request routing/virkailija-auth-logout
+                                        :request-method :get))]
+      (testing "logout endpoint redirects to cas logout"
+        (is (= (get-in response [:response :status]) 302))))))
 
