@@ -15,7 +15,12 @@
                  [metosin/spec-tools "0.7.1"]
                  [org.postgresql/postgresql "42.2.4"]
                  [duct/database.sql.hikaricp "0.3.3"]
-                 [webjure/jeesql "0.4.7"]]
+                 [org.clojure/tools.logging "0.4.1"]
+                 [buddy/buddy-auth "2.1.0"]
+                 [webjure/jeesql "0.4.7"]
+                ;  [oph/clj-cas "0.4.0-SNAPSHOT"]
+                 [oph/clj-util "0.1.0"]
+                 [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
   :plugins [[duct/lein-duct "0.10.6"]]
   :main ^:skip-aot yki.main
   :jvm-opts ["-Duser.timezone=UTC"]
@@ -33,5 +38,6 @@
                                    [eftest "0.4.1"]
                                    [cheshire "5.8.0"]
                                    [cider/cider-nrepl "0.15.1-SNAPSHOT"]
+                                   [peridot "0.5.1"]
                                    [com.opentable.components/otj-pg-embedded "0.12.0"]
                                    [kerodon "0.9.0"]]}})

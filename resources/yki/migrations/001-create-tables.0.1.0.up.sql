@@ -32,3 +32,4 @@ CREATE TABLE IF NOT EXISTS exam_language (
 CREATE UNIQUE INDEX organizer_oid
 ON organizer(oid)
 WHERE deleted_at IS NULL;
+

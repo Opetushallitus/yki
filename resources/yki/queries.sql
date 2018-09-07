@@ -74,3 +74,4 @@ INSERT INTO exam_language (
 SELECT el.language_code
 FROM exam_language el
 WHERE el.organizer_id = oid;
+

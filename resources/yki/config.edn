@@ -5,11 +5,24 @@
  :duct.module.web/api {}
  :duct.module/sql {}
  :duct.server.http/jetty {:port 8080}
- :duct.migrator/ragtime
- {:resource-path "oti/migrations"}
+ :duct.migrator/ragtime {:resource-path "oti/migrations"}
 
  :duct.router/cascading [#ig/ref :yki.handler/status
+                         #ig/ref :yki.handler/auth
                          #ig/ref :yki.handler/organizer]
+
+ :yki.util/url-helper {}
+
+ :yki.boundary.cas-access/cas-access {}
+
+ :yki.middleware.auth/with-authentication
+ {:url-helper #ig/ref :yki.util/url-helper
+  :session-config {}}
+
+ :yki.handler/auth {:db #ig/ref :duct.database/sql
+                    :auth #ig/ref :yki.middleware.auth/with-authentication
+                    :cas-access #ig/ref  :yki.boundary.cas-access/cas-access
+                    :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status
  {:db #ig/ref :duct.database/sql}

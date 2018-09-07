@@ -3,6 +3,7 @@
             [clojure.java.jdbc :as jdbc]
             [ragtime.jdbc]
             [ragtime.core :as core]
+            [integrant.core :as ig]
             [ragtime.jdbc.migrations :refer :all]
             [clojure.java.io :as io])
   (:import [com.opentable.db.postgres.embedded EmbeddedPostgres]))
