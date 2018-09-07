@@ -34,7 +34,7 @@
         handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth :url-helper url-helper :cas-access mock-cas}))]
     handler))
 
-(deftest handle-authentication-success-callback
+(deftest handle-authentication-success-callback-test
   (jdbc/with-db-connection [tx embedded-db/db-spec]
     (let [handler (create-handler tx)
           session (peridot/session handler)
@@ -47,7 +47,17 @@
       (testing "callback endpoint should set identity returned from cas client to session"
         (is (= (get-in response-body ["session" "identity"]) {"username" "username"}))))))
 
-(deftest handle-logout
+(deftest handle-authentication-callback-without-ticket-test
+  (jdbc/with-db-connection [tx embedded-db/db-spec]
+    (let [handler (create-handler tx)
+          session (peridot/session handler)
+          response (-> session
+                        (peridot/request routing/virkailija-auth-callback
+                                        :request-method :get))]
+      (testing "callback endpoint should return  identity returned from cas client to session"
+        (is (= (get-in response [:response :status]) 401))))))
+
+(deftest handle-logout-test
   (jdbc/with-db-connection [tx embedded-db/db-spec]
     (let [handler (create-handler tx)
           session (peridot/session handler)

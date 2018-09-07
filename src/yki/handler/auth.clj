@@ -14,15 +14,17 @@
    (context routing/virkailija-auth-root []
      :middleware [auth]
      (GET "/callback" [ticket :as request]
-       (let [client (cas-access url-helper)
-             username (.validate-ticket client ticket)
-             session (:session request)]
-         (do
+       (if ticket
+         (let [client (cas-access url-helper)
+               username (.validate-ticket client ticket)
+               session (:session request)]
+           (do
             ; store ticket to db
-           (info "user" username "logged in")
-           (-> (redirect "/yki/auth/cas/user")
-               (assoc :session {:identity  {:username username
-                                            :ticket ticket}})))))
+             (info "user" username "logged in")
+             (-> (redirect "/yki/auth/cas/user")
+                 (assoc :session {:identity  {:username username
+                                              :ticket ticket}}))))
+         {:status 401 :body "Unauthorized" :headers {"Content-Type" "text/plain; charset=utf-8"}}))
      (GET "/logout" {session :session}
        (cas-auth/logout session url-helper))
      (GET "/user" {session :session}
