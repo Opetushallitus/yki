@@ -2,6 +2,7 @@
   (:require [buddy.auth :refer [authenticated?]]
             [buddy.auth.middleware :refer [wrap-authentication]]
             [ring.middleware.session :refer [wrap-session]]
+            [ring.middleware.session.cookie :refer [cookie-store]]
             [buddy.auth.accessrules :refer [wrap-access-rules success error]]
             [buddy.auth.backends.session :refer [session-backend]]
             [integrant.core :as ig]
@@ -35,16 +36,16 @@
                              {:pattern #".*/auth/cas"
                               :handler authenticated-access
                               :redirect redirect-url}
-                              ;  :on-error redirect-to-cas-login}
                              {:pattern #".*"
                               :handler authenticated-access
                               :redirect redirect-url}])
 
-(defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper]}]
-
+(defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config]}]
   (defn with-authentication [handler]
     (-> handler
         (wrap-authentication backend)
         (wrap-access-rules {:rules (rules (url-helper :cas.login))})
-        (wrap-session))))
+        (wrap-session {:store (cookie-store {:key (:key session-config)})
+                       :cookie-name "yki"
+                       :cookie-attrs (:cookie-attrs session-config)}))))
 

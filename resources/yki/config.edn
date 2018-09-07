@@ -16,7 +16,8 @@
  :yki.boundary.cas-access/cas-access {}
 
  :yki.middleware.auth/with-authentication
- {:url-helper #ig/ref :yki.util/url-helper}
+ {:url-helper #ig/ref :yki.util/url-helper
+  :session-config {}}
 
  :yki.handler/auth {:db #ig/ref :duct.database/sql
                     :auth #ig/ref :yki.middleware.auth/with-authentication
@@ -24,7 +25,7 @@
                     :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status
-{:db #ig/ref :duct.database/sql}
+ {:db #ig/ref :duct.database/sql}
 
  :yki.handler/organizer
  {:db #ig/ref :duct.database/sql}}

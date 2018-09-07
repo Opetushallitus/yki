@@ -12,3 +12,11 @@
 
 :yki.util/url-helper {:virkailija-host "{{host_virkailija}}"
                       :yki-host    "{{host_ilb}}"}}
+
+:yki.middleware.auth/with-authentication
+  {:url-helper #ig/ref :yki.util/url-helper
+   :session-config {:key "{{yki_session_cookie_secret}}"
+                    :cookie-attrs {:max-age 28800
+                                    :http-only false
+                                    :secure true
+                                    :path "/yki"}}}}

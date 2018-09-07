@@ -32,9 +32,4 @@ CREATE TABLE IF NOT EXISTS exam_language (
 CREATE UNIQUE INDEX organizer_oid
 ON organizer(oid)
 WHERE deleted_at IS NULL;
---;;
-CREATE TABLE IF NOT EXISTS cas_ticket (
-  ticket TEXT PRIMARY KEY,
-  session_id TEXT NOT NULL,
-  created TIMESTAMP DEFAULT current_timestamp
-);
+

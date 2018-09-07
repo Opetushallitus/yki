@@ -19,7 +19,6 @@
                username (.validate-ticket client ticket)
                session (:session request)]
            (do
-            ; store ticket to db
              (info "user" username "logged in")
              (-> (redirect "/yki/auth/cas/user")
                  (assoc :session {:identity  {:username username

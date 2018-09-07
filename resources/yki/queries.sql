@@ -75,11 +75,3 @@ SELECT el.language_code
 FROM exam_language el
 WHERE el.organizer_id = oid;
 
--- name: insert-ticket!
-INSERT INTO cas_ticket (ticket, session_id) VALUES (:ticket, ;session_id);
-
--- name: select-ticket
-SELECT ticket FROM cas_ticket WHERE ticket = :ticket;
-
--- name: delete-ticket?
-DELETE FROM cas_ticket WHERE ticket = :ticket;
