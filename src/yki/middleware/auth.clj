@@ -16,7 +16,7 @@
   true)
 
 (defn logged-in? [request]
-  (if-let [ticket (-> request :session :identity :ticket)]
+  (if (-> request :session :identity :ticket)
     true
     false))
 

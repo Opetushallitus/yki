@@ -2,7 +2,8 @@
   :description "YKI backend"
   :repositories [["oph-releases" "https://artifactory.opintopolku.fi/artifactory/oph-sade-release-local"]
                  ["oph-snapshots" "https://artifactory.opintopolku.fi/artifactory/oph-sade-snapshot-local"]
-                 ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]]
+                 ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
+                 ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [duct/core "0.6.2"]
@@ -18,8 +19,11 @@
                  [org.clojure/tools.logging "0.4.1"]
                  [buddy/buddy-auth "2.1.0"]
                  [webjure/jeesql "0.4.7"]
-                ;  [oph/clj-cas "0.4.0-SNAPSHOT"]
-                 [oph/clj-util "0.1.0"]
+                 [http-kit "2.3.0"]
+                 ;; these two are necessery for Scala Cas Client
+                 [org.http4s/blaze-http_2.11 "0.10.1" :upgrade false]
+                 [org.http4s/http4s-json4s-native_2.11 "0.10.1" :upgrade false]
+                 [oph/clj-util "0.1.0" :exclusions [org.http4s/blaze-http_2.11]]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
   :plugins [[duct/lein-duct "0.10.6"]]
   :main ^:skip-aot yki.main

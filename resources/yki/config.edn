@@ -13,15 +13,18 @@
 
  :yki.util/url-helper {}
 
- :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper}
+ :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
+                               :cas-creds {}}
+ :yki.boundary.permissions/permissions-client {:url-helper #ig/ref :yki.util/url-helper
+                                           :cas-client #ig/ref  :yki.boundary.cas/cas-client}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
   :session-config {}}
 
- :yki.handler/auth {:db #ig/ref :duct.database/sql
-                    :auth #ig/ref :yki.middleware.auth/with-authentication
+ :yki.handler/auth {:auth #ig/ref :yki.middleware.auth/with-authentication
                     :cas-client #ig/ref  :yki.boundary.cas/cas-client
+                    :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
                     :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status
