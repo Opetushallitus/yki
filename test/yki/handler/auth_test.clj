@@ -5,9 +5,9 @@
             [duct.database.sql]
             [yki.util.url-helper]
             [yki.middleware.auth]
+            [jsonista.core :as j]
             [muuntaja.middleware :as middleware]
             [clojure.java.jdbc :as jdbc]
-            [cheshire.core :refer :all]
             [peridot.core :as peridot]
             [duct.core :as duct]
             [yki.boundary.cas :as cas]
@@ -53,7 +53,7 @@
                                       :request-method :get
                                       :params {:ticket "ST-15126"})
                      (peridot/follow-redirect))
-        response-body (parse-string (slurp (:body (:response response)) :encoding "UTF-8"))]
+        response-body (j/read-value (slurp (:body (:response response)) :encoding "UTF-8"))]
     (testing "callback endpoint should set identity returned from cas client to session"
       (is (= (get-in response-body ["session" "identity"]) {"username" "username"})))))
 
