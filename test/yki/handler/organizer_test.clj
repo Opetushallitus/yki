@@ -16,7 +16,7 @@
   (defn- send-request [tx request]
     (jdbc/db-set-rollback-only! tx)
     (let [db (duct.database.sql/->Boundary tx)
-          handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db}))]
+          handler (ig/init-key :yki.handler/organizer {:db db})]
           (handler request)))
 
   (def organization {:oid "1.2.3.4"
