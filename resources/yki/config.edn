@@ -5,8 +5,8 @@
  :duct.module.web/api {}
  :duct.module/sql {}
  :duct.server.http/jetty {:port 8080}
- :duct.migrator/ragtime {:resource-path "oti/migrations"}
-
+ :duct.migrator/ragtime {:resource-path "yki/migrations"}
+ :duct-migrations-auto-cfg/module {}
  :duct.router/cascading [#ig/ref :yki.handler/status
                          #ig/ref :yki.handler/auth
                          #ig/ref :yki.handler/organizer]
