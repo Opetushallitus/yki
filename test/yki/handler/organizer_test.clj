@@ -3,7 +3,7 @@
             [integrant.core :as ig]
             [ring.mock.request :as mock]
             [duct.database.sql]
-            [cheshire.core :refer :all]
+            [jsonista.core :as j]
             [muuntaja.middleware :as middleware]
             [muuntaja.core :as m]
             [clojure.java.jdbc :as jdbc]
@@ -29,7 +29,7 @@
                                  {:language_code "en" :level_code "PERUS"}]})
 
   (def organizations-json
-    (parse-string (slurp "test/resources/organizers.json")))
+    (j/read-value (slurp "test/resources/organizers.json")))
 
   (defn- insert-organization [tx oid]
     (jdbc/execute! tx (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number)
@@ -41,7 +41,7 @@
 
   (deftest organizer-validation-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
-      (let [json-body (generate-string (assoc-in organization [:agreement_start_date] "NOT_A_VALID_DATE"))
+      (let [json-body (j/write-value-as-string (assoc-in organization [:agreement_start_date] "NOT_A_VALID_DATE"))
             request (-> (mock/request :post routing/organizer-api-root json-body)
                         (mock/content-type "application/json; charset=UTF-8"))
             response (send-request tx request)]
@@ -53,7 +53,7 @@
   (deftest update-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
       (insert-organization tx "'1.2.3.5'")
-      (let [json-body (generate-string organization)
+      (let [json-body (j/write-value-as-string organization)
             request (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.5") json-body)
                         (mock/content-type "application/json; charset=UTF-8"))
             response (send-request tx request)]
@@ -66,7 +66,7 @@
 
   (deftest add-organization-test
     (jdbc/with-db-transaction [tx embedded-db/db-spec]
-      (let [json-body (generate-string organization)
+      (let [json-body (j/write-value-as-string organization)
             request (-> (mock/request :post routing/organizer-api-root json-body)
                         (mock/content-type "application/json; charset=UTF-8"))
             response (send-request tx request)]
@@ -82,7 +82,7 @@
       (insert-languages tx "'1.2.3.4'")
       (let [request (-> (mock/request :get routing/organizer-api-root))
             response (send-request tx request)
-            response-body (parse-string (slurp (:body response) :encoding "UTF-8"))]
+            response-body (j/read-value (slurp (:body response) :encoding "UTF-8"))]
         (testing "get organizations endpoint should return 2 organizations with exam levels"
           (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8")))
           (is (= (:status response) 200))
