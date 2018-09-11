@@ -12,6 +12,7 @@
                  [duct/module.sql "0.4.2"]
                  [metosin/compojure-api "2.0.0-alpha25"]
                  [metosin/jsonista "0.2.1"]
+                 [metosin/muuntaja "0.6.0"]
                  [com.mjachimowicz/duct-migrations-auto-cfg "0.1.0"]
                  [metosin/spec-tools "0.7.1"]
                  [org.postgresql/postgresql "42.2.4"]
