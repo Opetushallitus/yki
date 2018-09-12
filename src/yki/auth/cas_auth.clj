@@ -12,7 +12,7 @@
   (try
     (if ticket
       (let [username (cas/validate-ticket (cas-client "/") ticket)
-            user (permissions/virkailija-by-username permissions-client username)
+            permissions (permissions/virkailija-by-username permissions-client username)
             session (:session request)]
         (do
           (info "user" username "logged in")

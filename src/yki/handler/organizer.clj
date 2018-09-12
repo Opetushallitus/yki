@@ -39,9 +39,10 @@
                                          ::contact_phone_number]
                                 :opt-un [::languages]))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db]}]
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db auth]}]
   (api
    (context routing/organizer-api-root []
+     :middleware [auth]
      :coercion :spec
      (POST "/" []
        {:body [organizer ::organizer-spec]}

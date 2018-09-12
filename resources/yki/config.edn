@@ -16,7 +16,7 @@
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {}}
  :yki.boundary.permissions/permissions-client {:url-helper #ig/ref :yki.util/url-helper
-                                           :cas-client #ig/ref  :yki.boundary.cas/cas-client}
+                                               :cas-client #ig/ref  :yki.boundary.cas/cas-client}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
@@ -27,8 +27,7 @@
                     :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
                     :url-helper #ig/ref :yki.util/url-helper}
 
- :yki.handler/status
- {:db #ig/ref :duct.database/sql}
+ :yki.handler/status {:db #ig/ref :duct.database/sql}
 
- :yki.handler/organizer
- {:db #ig/ref :duct.database/sql}}
+ :yki.handler/organizer {:db #ig/ref :duct.database/sql
+                         :auth #ig/ref :yki.middleware.auth/with-authentication}}
