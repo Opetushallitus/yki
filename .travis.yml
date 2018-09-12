@@ -29,3 +29,5 @@ script:
 deploy:
   provider: script
   script: ./ci-tools/build/upload-image.sh yki
+  on:
+    all_branches: true
