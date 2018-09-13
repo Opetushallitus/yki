@@ -1,6 +1,6 @@
 (ns yki.middleware.auth
   (:require [buddy.auth :refer [authenticated?]]
-            [buddy.auth.middleware :refer [wrap-authentication]]
+            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.session.cookie :refer [cookie-store]]
             [buddy.auth.accessrules :refer [wrap-access-rules success error]]
@@ -15,13 +15,8 @@
 (defn any-access [request]
   true)
 
-(defn logged-in? [request]
-  (if-let [ticket (-> request :session :identity :ticket)]
-    true
-    false))
-
 (defn- authenticated-access [request]
-  (if (logged-in? request)
+  (if (-> request :session :identity :ticket)
     true
     (error "Authentication required")))
 
@@ -43,8 +38,9 @@
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config]}]
   (defn with-authentication [handler]
     (-> handler
-        (wrap-authentication backend)
         (wrap-access-rules {:rules (rules (url-helper :cas.login))})
+        (wrap-authentication backend)
+        (wrap-authorization backend)
         (wrap-session {:store (cookie-store {:key (:key session-config)})
                        :cookie-name "yki"
                        :cookie-attrs (:cookie-attrs session-config)}))))

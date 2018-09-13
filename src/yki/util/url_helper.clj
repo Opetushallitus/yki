@@ -2,7 +2,7 @@
   (:require [integrant.core :as ig])
   (:import [fi.vm.sade.properties OphProperties]))
 
-(def ^fi.vm.sade.properties.OphProperties url-properties (atom nil))
+(defonce ^fi.vm.sade.properties.OphProperties url-properties (atom nil))
 
 (defmethod ig/init-key :yki.util/url-helper [_ {:keys [virkailija-host yki-host] :or
                                                 {virkailija-host "" yki-host ""}}]

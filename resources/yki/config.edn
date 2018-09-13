@@ -5,27 +5,29 @@
  :duct.module.web/api {}
  :duct.module/sql {}
  :duct.server.http/jetty {:port 8080}
- :duct.migrator/ragtime {:resource-path "oti/migrations"}
-
+ :duct.migrator/ragtime {:resource-path "yki/migrations"}
+ :duct-migrations-auto-cfg/module {}
  :duct.router/cascading [#ig/ref :yki.handler/status
                          #ig/ref :yki.handler/auth
                          #ig/ref :yki.handler/organizer]
 
  :yki.util/url-helper {}
 
- :yki.boundary.cas-access/cas-access {}
+ :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
+                               :cas-creds {}}
+ :yki.boundary.permissions/permissions-client {:url-helper #ig/ref :yki.util/url-helper
+                                               :cas-client #ig/ref  :yki.boundary.cas/cas-client}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
   :session-config {}}
 
- :yki.handler/auth {:db #ig/ref :duct.database/sql
-                    :auth #ig/ref :yki.middleware.auth/with-authentication
-                    :cas-access #ig/ref  :yki.boundary.cas-access/cas-access
+ :yki.handler/auth {:auth #ig/ref :yki.middleware.auth/with-authentication
+                    :cas-client #ig/ref  :yki.boundary.cas/cas-client
+                    :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
                     :url-helper #ig/ref :yki.util/url-helper}
 
- :yki.handler/status
- {:db #ig/ref :duct.database/sql}
+ :yki.handler/status {:db #ig/ref :duct.database/sql}
 
- :yki.handler/organizer
- {:db #ig/ref :duct.database/sql}}
+ :yki.handler/organizer {:db #ig/ref :duct.database/sql
+                         :auth #ig/ref :yki.middleware.auth/with-authentication}}

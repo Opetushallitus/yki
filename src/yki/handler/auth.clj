@@ -2,28 +2,19 @@
   (:require [compojure.api.sweet :refer :all]
             [integrant.core :as ig]
             [yki.handler.routing :as routing]
-            [yki.boundary.cas-access :as cas]
+            [yki.boundary.cas :as cas]
             [yki.auth.cas-auth :as cas-auth]
+            [yki.boundary.permissions :as permissions]
             [clojure.tools.logging :refer [info error]]
             [ring.util.response :refer [response status redirect]]
-            [clojure.string :as str])
-  (:import [java.net URLEncoder]))
+            [clojure.string :as str]))
 
-(defmethod ig/init-key :yki.handler/auth [_ {:keys [db auth url-helper cas-access]}]
+(defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client permissions-client]}]
   (api
    (context routing/virkailija-auth-root []
      :middleware [auth]
      (GET "/callback" [ticket :as request]
-       (if ticket
-         (let [client (cas-access url-helper)
-               username (.validate-ticket client ticket)
-               session (:session request)]
-           (do
-             (info "user" username "logged in")
-             (-> (redirect "/yki/auth/cas/user")
-                 (assoc :session {:identity  {:username username
-                                              :ticket ticket}}))))
-         {:status 401 :body "Unauthorized" :headers {"Content-Type" "text/plain; charset=utf-8"}}))
+       (cas-auth/login ticket request cas-client permissions-client))
      (GET "/logout" {session :session}
        (cas-auth/logout session url-helper))
      (GET "/user" {session :session}

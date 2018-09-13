@@ -1,6 +1,5 @@
 {:duct.core/include ["yki/config"]
  :duct.core/project-ns yki
- :duct-migrations-auto-cfg/module {}
  :duct.database.sql/hikaricp {:adapter "postgresql"
                                  :database-name "yki"
                                  :server-name "{{host_postgresql_yki}}"
@@ -10,11 +9,14 @@
                                  :connection-timeout {{host_postgresql_yki_max_wait}}
                                  :maximum-pool-size {{host_postgresql_yki_max_active}}}
 
-:yki.util/url-helper {:virkailija-host "{{host_virkailija}}"
+ :yki.util/url-helper {:virkailija-host "{{host_virkailija}}"
                       :yki-host    "{{host_ilb}}"}}
 
-:yki.middleware.auth/with-authentication
-  {:url-helper #ig/ref :yki.util/url-helper
+ :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
+                               :cas-creds {:username "{{yki_cas_username}}"
+                                           :password "{{yki_cas_password}}"}}
+ :yki.middleware.auth/with-authentication
+   {:url-helper #ig/ref :yki.util/url-helper
    :session-config {:key "{{yki_session_cookie_secret}}"
                     :cookie-attrs {:max-age 28800
                                     :http-only false
