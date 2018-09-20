@@ -12,7 +12,7 @@
   (virkailija-by-username [_ username]
     (let [url (url-helper :kayttooikeus-service.kayttooikeus.kayttaja
                           {"username" username})
-               {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
+          {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
         (if-let [virkailija (first (json/parse-string body true))]
           virkailija

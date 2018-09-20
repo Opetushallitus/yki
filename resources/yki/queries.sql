@@ -1,5 +1,5 @@
 -- name: select-organizers
-SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number,
+SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.contact_shared_email,
 (
   SELECT ARRAY_TO_JSON(ARRAY_AGG(ROW_TO_JSON(lang)))
   FROM (
@@ -18,7 +18,8 @@ SELECT
   o.agreement_end_date,
   o.contact_name,
   o.contact_email,
-  o.contact_phone_number
+  o.contact_phone_number,
+  o.contact_shared_email
 FROM organizer o
 WHERE o.oid = :oid AND o.deleted_at IS NULL;
 
@@ -29,14 +30,16 @@ INSERT INTO organizer (
   agreement_end_date,
   contact_name,
   contact_email,
-  contact_phone_number
+  contact_phone_number,
+  contact_shared_email
 ) VALUES (
   :oid,
   :agreement_start_date,
   :agreement_end_date,
   :contact_name,
   :contact_email,
-  :contact_phone_number
+  :contact_phone_number,
+  :contact_shared_email
 );
 
 -- name: update-organizer!
@@ -47,6 +50,7 @@ SET
   contact_name = :contact_name,
   contact_email = :contact_email,
   contact_phone_number = :contact_phone_number,
+  contact_shared_email = :contact_shared_email,
   modified = current_timestamp
 WHERE oid = :oid;
 
