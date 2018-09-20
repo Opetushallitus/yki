@@ -32,8 +32,8 @@
   (j/read-value (slurp "test/resources/organizers.json")))
 
 (defn- insert-organization [tx oid]
-  (jdbc/execute! tx (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number)
-      VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email', 'phone')")))
+  (jdbc/execute! tx (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, contact_shared_email)
+      VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi')")))
 
 (defn- insert-languages [tx oid]
   (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))

@@ -5,8 +5,9 @@
             "agreement_start_date": "2018-01-01T00:00:00.000Z",
             "agreement_end_date": "2019-01-01T00:00:00.000Z",
             "contact_name": "name",
-            "contact_email": "email",
+            "contact_email": "email@oph.fi",
             "contact_phone_number": "phone",
+            "contact_shared_email": "shared@oph.fi",
             "languages": [
                 {
                     "language_code": "fi",
@@ -23,8 +24,9 @@
             "agreement_start_date": "2018-01-01T00:00:00.000Z",
             "agreement_end_date": "2019-01-01T00:00:00.000Z",
             "contact_name": "name",
-            "contact_email": "email",
+            "contact_email": "email@oph.fi",
             "contact_phone_number": "phone",
+            "contact_shared_email": "shared@oph.fi",
             "languages": null
         }
     ]

@@ -21,11 +21,13 @@
         (json/parse-string value true)
         value))))
 
-(defn- convert-dates [{:keys [oid agreement_start_date agreement_end_date contact_name contact_email contact_phone_number]}]
+(defn- convert-dates [{:keys [oid agreement_start_date agreement_end_date contact_name
+                              contact_email contact_phone_number contact_shared_email]}]
   {:oid oid
    :contact_name contact_name
    :contact_email contact_email
    :contact_phone_number contact_phone_number
+   :contact_shared_email contact_shared_email
    :agreement_start_date (f/parse agreement_start_date)
    :agreement_end_date (f/parse agreement_end_date)})
 

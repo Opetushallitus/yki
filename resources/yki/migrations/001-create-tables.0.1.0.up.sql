@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS organizer (
   contact_name TEXT,
   contact_email TEXT,
   contact_phone_number TEXT,
+  contact_shared_email TEXT,
   deleted_at TIMESTAMP DEFAULT NULL,
   created TIMESTAMP DEFAULT current_timestamp,
   modified TIMESTAMP DEFAULT current_timestamp
