@@ -21,8 +21,8 @@
 
 (defn with-postgres [f]
   (let [db (-> (EmbeddedPostgres/builder)
-                      (.setPort port)
-                      (.start))]
+               (.setPort port)
+               (.start))]
     (try
       (f)
       (finally
