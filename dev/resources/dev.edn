@@ -9,6 +9,7 @@
                               :password "admin"}
 
  :yki.util/url-helper {:virkailija-host "virkailija.untuvaopintopolku.fi"
+                       :liiteri-host     "virkailija.untuvaopintopolku.fi"
                        :yki-host    "http://localhost:8080"}
 
  :yki.middleware.auth/with-authentication
@@ -17,5 +18,17 @@
                    :cookie-attrs {:max-age 28800
                                   :http-only true
                                   :secure false
-                                  :path "/yki"}}}}
+                                  :path "/yki"}}}
+
+ :yki.middleware.no-auth/with-authentication
+ {:session-config {:key "ad7tbRZIG839gDo2"
+                   :cookie-attrs {:max-age 28800
+                                  :http-only true
+                                  :secure false
+                                  :path "/yki"}}}
+
+ :yki.handler/organizer {:db #ig/ref :duct.database/sql
+                         :url-helper #ig/ref :yki.util/url-helper
+                         :file-store #ig/ref :yki.boundary.files/liiteri-file-store
+                         :auth #ig/ref :yki.middleware.no-auth/with-authentication}}
 

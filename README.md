@@ -65,6 +65,11 @@ But you can also run tests through Leiningen.
 lein test
 ```
 
+### Formatting
+```shell
+lein cljfmt check
+lein cljfmt fix
+```
 ## Legal
 
 Copyright (c) 2018 The Finnish National Board of Education - Opetushallitus

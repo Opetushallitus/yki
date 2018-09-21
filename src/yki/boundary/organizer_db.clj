@@ -35,7 +35,8 @@
   (create-organizer! [db organizer])
   (delete-organizer! [db oid])
   (update-organizer! [db oid organizer])
-  (get-organizers [db]))
+  (get-organizers [db])
+  (create-attachment-metadata! [db oid external-id]))
 
 (extend-protocol Organizers
   duct.database.sql.Boundary
@@ -46,6 +47,10 @@
       (doseq [lang (:languages organizer)]
         (-> (q/insert-organizer-language! tx (merge lang {:oid (:oid organizer)}))))
       true))
+  (create-attachment-metadata!
+    [{:keys [spec]} oid external-id]
+    (jdbc/with-db-transaction [tx spec]
+      (-> (q/insert-attachment-metadata! tx {:oid oid :external_id external-id}))))
   (delete-organizer!
     [{:keys [spec]} oid]
     (jdbc/with-db-transaction [tx spec]

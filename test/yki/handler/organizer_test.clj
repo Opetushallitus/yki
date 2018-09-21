@@ -4,6 +4,8 @@
             [ring.mock.request :as mock]
             [duct.database.sql]
             [jsonista.core :as j]
+            [clojure.java.io :as io]
+            [yki.boundary.files :as files]
             [muuntaja.middleware :as middleware]
             [muuntaja.core :as m]
             [clojure.java.jdbc :as jdbc]
@@ -13,10 +15,15 @@
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
 
+(defrecord MockStore []
+  files/FileStore
+  (upload-file [_ _ _]
+    {"key" "d45c5262"}))
+
 (defn- send-request [tx request]
   (jdbc/db-set-rollback-only! tx)
   (let [db (duct.database.sql/->Boundary tx)
-        handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db}))]
+        handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db :url-helper {} :file-store (->MockStore)}))]
     (handler request)))
 
 (def organization {:oid "1.2.3.4"
@@ -38,6 +45,15 @@
 (defn- insert-languages [tx oid]
   (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
   (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
+
+(defn- create-temp-file [file-path]
+  (let [filename-start (inc (.lastIndexOf file-path "/"))
+        file-extension-start (.lastIndexOf file-path ".")
+        file-name (.substring file-path filename-start file-extension-start)
+        file-extension (.substring file-path file-extension-start)
+        temp-file (java.io.File/createTempFile file-name file-extension)]
+    (io/copy (io/file file-path) temp-file)
+    temp-file))
 
 (deftest organizer-validation-test
   (jdbc/with-db-transaction [tx embedded-db/db-spec]
@@ -97,3 +113,18 @@
         (is (= (:status response) 200))
         (is (= '({:count 0})
                (jdbc/query tx "SELECT COUNT(1) FROM organizer where deleted_at IS NULL")))))))
+
+(deftest upload-file-test
+  (jdbc/with-db-transaction [tx embedded-db/db-spec]
+    (insert-organization tx "'1.2.3.5'")
+    (let [filecontent {:tempfile (create-temp-file "test/resources/test.pdf")
+                       :content-type "application/pdf",
+                       :filename "test.pdf"}
+          request (assoc (mock/request :post (str routing/organizer-api-root "/1.2.3.5/files"))
+                         :params {:filecontent filecontent}
+                         :multipart-params {"file" filecontent})
+          response (send-request tx request)]
+      (testing "post files endpoint should send file to file store and save returned id to database"
+        (is (= '({:count 1})
+               (jdbc/query tx "SELECT COUNT(1) FROM attachment_metadata WHERE external_id = 'd45c5262'")))
+        (is (= (:status response) 200))))))
