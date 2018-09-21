@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS exam_language (
 CREATE TABLE IF NOT EXISTS attachment_metadata (
   external_id TEXT PRIMARY KEY,
   organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
+  type TEXT,
   deleted_at TIMESTAMP DEFAULT NULL,
   created TIMESTAMP DEFAULT current_timestamp
 );

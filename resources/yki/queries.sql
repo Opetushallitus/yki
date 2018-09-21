@@ -82,9 +82,11 @@ WHERE el.organizer_id = oid;
 -- name: insert-attachment-metadata!
 INSERT INTO attachment_metadata (
   external_id,
-  organizer_id
+  organizer_id,
+  type
 ) VALUES (
   :external_id,
-  (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+  (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL),
+  :type
 );
 

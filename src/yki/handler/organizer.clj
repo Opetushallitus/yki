@@ -90,7 +90,7 @@
                  filename (:filename file)]
              (try
                (if-let [resp (files/upload-file file-store tempfile filename)]
-                 (if (organizer-db/create-attachment-metadata! db oid (resp "key"))
+                 (if (organizer-db/create-attachment-metadata! db oid "agreement" (resp "key"))
                    (response {:success true}))
                  (bad-request {:error "Failed to upload file"}))
                (catch Exception e
