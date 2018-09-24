@@ -44,5 +44,5 @@
                                    [cheshire "5.8.0"]
                                    [cider/cider-nrepl "0.15.1-SNAPSHOT"]
                                    [peridot "0.5.1"]
-                                   [com.opentable.components/otj-pg-embedded "0.12.0"]
+                                   [com.opentable.components/otj-pg-embedded "0.12.1"]
                                    [kerodon "0.9.0"]]}})
