@@ -20,9 +20,6 @@
                                   :secure false
                                   :path "/yki"}}}
 
- :yki.handler/files {:db #ig/ref :duct.database/sql
-                     :file-store #ig/ref :yki.boundary.files/liiteri-file-store}
-
  :yki.middleware.no-auth/with-authentication
  {:session-config {:key "ad7tbRZIG839gDo2"
                    :cookie-attrs {:max-age 28800
@@ -32,6 +29,6 @@
 
  :yki.handler/organizer {:db #ig/ref :duct.database/sql
                          :url-helper #ig/ref :yki.util/url-helper
-                         :files-handler #ig/ref  :yki.handler/files
+                         :file-handler #ig/ref  :yki.handler/file
                          :auth #ig/ref :yki.middleware.no-auth/with-authentication}}
 

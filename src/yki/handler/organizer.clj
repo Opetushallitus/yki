@@ -56,8 +56,8 @@
 (defn- exists? [s]
   (not (nil? s)))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth files-handler]}]
-  {:pre [(exists? db) (exists? url-helper) (exists? files-handler)]}
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler]}]
+  {:pre [(exists? db) (exists? url-helper) (exists? file-handler)]}
   (api
    (context routing/organizer-api-root []
      :middleware [auth]
@@ -82,5 +82,5 @@
          (if (organizer-db/delete-organizer! db oid)
            (response {:success true})
            (not-found {:error "Organizer not found"})))
-       (context "/files" []
-         (files-handler oid))))))
+       (context "/file" []
+         (file-handler oid))))))

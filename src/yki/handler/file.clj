@@ -1,4 +1,4 @@
-(ns yki.handler.files
+(ns yki.handler.file
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.organizer_db :as organizer-db]
             [yki.boundary.files :as files]
@@ -10,7 +10,7 @@
             [ring.middleware.multipart-params :as mp]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key :yki.handler/files [_ {:keys [db file-store]}]
+(defmethod ig/init-key :yki.handler/file [_ {:keys [db file-store]}]
   (fn [oid]
     (context "/" []
       :middleware [mp/wrap-multipart-params]

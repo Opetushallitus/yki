@@ -11,7 +11,7 @@
             [clojure.java.jdbc :as jdbc]
             [yki.embedded-db :as embedded-db]
             [yki.handler.routing :as routing]
-            [yki.handler.files]
+            [yki.handler.file]
             [yki.handler.organizer]))
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
@@ -24,10 +24,10 @@
 (defn- send-request [tx request]
   (jdbc/db-set-rollback-only! tx)
   (let [db (duct.database.sql/->Boundary tx)
-        files-handler (ig/init-key :yki.handler/files {:db db :file-store (->MockStore)})
+        file-handler (ig/init-key :yki.handler/file {:db db :file-store (->MockStore)})
         handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
                                                                             :url-helper {}
-                                                                            :files-handler files-handler}))]
+                                                                            :file-handler file-handler}))]
     (handler request)))
 
 (def organization {:oid "1.2.3.4"
@@ -124,7 +124,7 @@
     (let [filecontent {:tempfile (create-temp-file "test/resources/test.pdf")
                        :content-type "application/pdf",
                        :filename "test.pdf"}
-          request (assoc (mock/request :post (str routing/organizer-api-root "/1.2.3.5/files"))
+          request (assoc (mock/request :post (str routing/organizer-api-root "/1.2.3.5/file"))
                          :params {:filecontent filecontent}
                          :multipart-params {"file" filecontent})
           response (send-request tx request)
