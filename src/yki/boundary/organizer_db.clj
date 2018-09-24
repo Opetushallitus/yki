@@ -1,6 +1,7 @@
 (ns yki.boundary.organizer_db
   (:require [jeesql.core :refer [require-sql]]
             [clj-time.coerce :as c]
+            [clj-time.local :as l]
             [clj-time.format :as f]
             [clj-time.jdbc]
             [cheshire.core :as json]
@@ -10,11 +11,13 @@
 (require-sql ["yki/queries.sql" :as q])
 
 (extend-protocol jdbc/IResultSetReadColumn
+  java.sql.Date
+  (result-set-read-column [d _ _] (-> d l/to-local-date-time))
   org.postgresql.jdbc.PgArray
-  (result-set-read-column [pgobj metadata i]
+  (result-set-read-column [pgobj _ _]
     (remove nil? (vec (.getArray pgobj))))
   org.postgresql.util.PGobject
-  (result-set-read-column [pgobj metadata i]
+  (result-set-read-column [pgobj _ _]
     (let [type (.getType pgobj)
           value (.getValue pgobj)]
       (if (= "json" type)
@@ -35,7 +38,8 @@
   (create-organizer! [db organizer])
   (delete-organizer! [db oid])
   (update-organizer! [db oid organizer])
-  (get-organizers [db]))
+  (get-organizers [db])
+  (create-attachment-metadata! [db oid type external-id]))
 
 (extend-protocol Organizers
   duct.database.sql.Boundary
@@ -46,6 +50,10 @@
       (doseq [lang (:languages organizer)]
         (-> (q/insert-organizer-language! tx (merge lang {:oid (:oid organizer)}))))
       true))
+  (create-attachment-metadata!
+    [{:keys [spec]} oid type external-id]
+    (jdbc/with-db-transaction [tx spec]
+      (-> (q/insert-attachment-metadata! tx {:oid oid :external_id external-id :type type}))))
   (delete-organizer!
     [{:keys [spec]} oid]
     (jdbc/with-db-transaction [tx spec]

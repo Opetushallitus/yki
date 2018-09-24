@@ -17,6 +17,7 @@
                                :cas-creds {}}
  :yki.boundary.permissions/permissions-client {:url-helper #ig/ref :yki.util/url-helper
                                                :cas-client #ig/ref  :yki.boundary.cas/cas-client}
+ :yki.boundary.files/liiteri-file-store {:url-helper #ig/ref :yki.util/url-helper}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
@@ -30,4 +31,6 @@
  :yki.handler/status {:db #ig/ref :duct.database/sql}
 
  :yki.handler/organizer {:db #ig/ref :duct.database/sql
+                         :url-helper #ig/ref :yki.util/url-helper
+                         :file-store #ig/ref :yki.boundary.files/liiteri-file-store
                          :auth #ig/ref :yki.middleware.auth/with-authentication}}

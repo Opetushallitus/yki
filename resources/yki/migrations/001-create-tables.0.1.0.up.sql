@@ -22,6 +22,10 @@ CREATE TABLE IF NOT EXISTS organizer (
   modified TIMESTAMP DEFAULT current_timestamp
 );
 --;;
+CREATE UNIQUE INDEX organizer_oid
+ON organizer(oid)
+WHERE deleted_at IS NULL;
+--;;
 CREATE TABLE IF NOT EXISTS exam_language (
   id BIGSERIAL PRIMARY KEY,
   language_code CHAR(2) REFERENCES language (code) NOT NULL,
@@ -30,7 +34,12 @@ CREATE TABLE IF NOT EXISTS exam_language (
   created TIMESTAMP DEFAULT current_timestamp
 );
 --;;
-CREATE UNIQUE INDEX organizer_oid
-ON organizer(oid)
-WHERE deleted_at IS NULL;
+CREATE TABLE IF NOT EXISTS attachment_metadata (
+  external_id TEXT PRIMARY KEY,
+  organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
+  type TEXT,
+  deleted_at TIMESTAMP DEFAULT NULL,
+  created TIMESTAMP DEFAULT current_timestamp
+);
+
 

@@ -10,7 +10,8 @@
                                  :maximum-pool-size {{host_postgresql_yki_max_active}}}
 
  :yki.util/url-helper {:virkailija-host "{{host_virkailija}}"
-                      :yki-host    "{{host_ilb}}"}}
+                       :liiteri-host "{{host_virkailija}}"
+                       :yki-host    "{{host_ilb}}"}}
 
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {:username "{{yki_cas_username}}"

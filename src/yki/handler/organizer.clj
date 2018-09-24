@@ -1,17 +1,21 @@
 (ns yki.handler.organizer
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.organizer_db :as organizer-db]
+            [yki.boundary.files :as files]
             [yki.handler.routing :as routing]
             [clj-time.format :as f]
+            [clojure.java.io :as io]
+            [clojure.tools.logging :refer [info error]]
             [ring.util.response :refer [response not-found header]]
-            [ring.util.http-response :refer [ok]]
+            [ring.util.http-response :refer [ok bad-request]]
             [ring.util.request]
+            [ring.middleware.multipart-params :as mp]
             [clojure.spec.alpha :as s]
             [spec-tools.spec :as spec]
             [spec-tools.core :as st]
             [integrant.core :as ig])
 
-  (:import (org.joda.time DateTime)))
+  (:import [org.joda.time DateTime]))
 
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
 
@@ -49,7 +53,11 @@
 (s/def ::organizers-map (s/keys :req-un [::organizers]))
 (s/def ::success-map (s/keys :req-un [::success]))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db auth]}]
+(defn- exists? [s]
+  (not (nil? s)))
+
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper file-store auth]}]
+  {:pre [(exists? db) (exists? url-helper) (exists? file-store)]}
   (api
    (context routing/organizer-api-root []
      :middleware [auth]
@@ -64,7 +72,7 @@
        (response {:organizers (organizer-db/get-organizers db)}))
      (context "/:oid" [oid]
        (PUT "/" []
-         {:body [organizer ::organizer-type]}
+         :body [organizer ::organizer-type]
          :return ::success-map
          (if (organizer-db/update-organizer! db oid organizer)
            (response {:success true})
@@ -73,4 +81,20 @@
          :return ::success-map
          (if (organizer-db/delete-organizer! db oid)
            (response {:success true})
-           (not-found {:error "Organizer not found"})))))))
+           (not-found {:error "Organizer not found"})))
+       (context "/files" []
+         :middleware [mp/wrap-multipart-params]
+         (POST "/" {multipart-params :multipart-params}
+           (let [file (multipart-params "file")
+                 tempfile (:tempfile file)
+                 filename (:filename file)]
+             (try
+               (if-let [resp (files/upload-file file-store tempfile filename)]
+                 (if (organizer-db/create-attachment-metadata! db oid "agreement" (resp "key"))
+                   (response {:success true}))
+                 (bad-request {:error "Failed to upload file"}))
+               (catch Exception e
+                 (error e "Failed to upload file")
+                 (throw e))
+               (finally
+                 (io/delete-file tempfile true))))))))))
