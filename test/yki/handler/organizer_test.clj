@@ -127,8 +127,9 @@
           request (assoc (mock/request :post (str routing/organizer-api-root "/1.2.3.5/files"))
                          :params {:filecontent filecontent}
                          :multipart-params {"file" filecontent})
-          response (send-request tx request)]
+          response (send-request tx request)
+          response-body (j/read-value (slurp (:body response) :encoding "UTF-8"))]
       (testing "post files endpoint should send file to file store and save returned id to database"
         (is (= '({:count 1})
                (jdbc/query tx "SELECT COUNT(1) FROM attachment_metadata WHERE external_id = 'd45c5262'")))
-        (is (= (:status response) 200))))))
+        (is (= {"external_id" "d45c5262"} response-body) )))))
