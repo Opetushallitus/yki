@@ -15,7 +15,7 @@
             [spec-tools.core :as st]
             [integrant.core :as ig])
 
-  (:import  [org.joda.time DateTime]))
+  (:import [org.joda.time DateTime]))
 
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
 
