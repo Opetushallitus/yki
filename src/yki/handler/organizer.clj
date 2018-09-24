@@ -56,8 +56,8 @@
 (defn- exists? [s]
   (not (nil? s)))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper file-store auth]}]
-  {:pre [(exists? db) (exists? url-helper) (exists? file-store)]}
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth files-handler]}]
+  {:pre [(exists? db) (exists? url-helper) (exists? files-handler)]}
   (api
    (context routing/organizer-api-root []
      :middleware [auth]
@@ -83,18 +83,4 @@
            (response {:success true})
            (not-found {:error "Organizer not found"})))
        (context "/files" []
-         :middleware [mp/wrap-multipart-params]
-         (POST "/" {multipart-params :multipart-params}
-           (let [file (multipart-params "file")
-                 tempfile (:tempfile file)
-                 filename (:filename file)]
-             (try
-               (if-let [resp (files/upload-file file-store tempfile filename)]
-                 (if (organizer-db/create-attachment-metadata! db oid "agreement" (resp "key"))
-                   (response {:success true}))
-                 (bad-request {:error "Failed to upload file"}))
-               (catch Exception e
-                 (error e "Failed to upload file")
-                 (throw e))
-               (finally
-                 (io/delete-file tempfile true))))))))))
+         (files-handler oid))))))
