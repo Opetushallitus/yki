@@ -1,16 +1,16 @@
 (ns yki.handler.organizer
   (:require [compojure.api.sweet :refer :all]
-            [yki.boundary.organizer_db :as organizer-db]
+            [yki.boundary.organizer-db :as organizer-db]
             [yki.handler.routing :as routing]
             [yki.spec :as ys]
-            [clojure.tools.logging :refer [info error]]
+            [taoensso.timbre :as timbre :refer [info error]]
             [ring.util.response :refer [response not-found header]]
             [ring.util.http-response :refer [ok bad-request]]
             [ring.util.request]
             [ring.middleware.multipart-params :as mp]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler]}]
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler]}]
   (api
    (context routing/organizer-api-root []
      :middleware [auth]
@@ -36,5 +36,7 @@
          (if (organizer-db/delete-organizer! db oid)
            (response {:success true})
            (not-found {:error "Organizer not found"})))
-       (context "/file" []
-         (file-handler oid))))))
+       (context routing/file-uri []
+         (file-handler oid))
+       (context routing/exam-session-uri []
+         (exam-session-handler oid))))))

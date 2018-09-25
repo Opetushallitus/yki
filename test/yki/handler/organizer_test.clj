@@ -59,7 +59,7 @@
     (base/insert-languages tx "'1.2.3.4'")
     (let [request (mock/request :get routing/organizer-api-root)
           response (base/send-request tx request)
-          response-body (j/read-value (slurp (:body response) :encoding "UTF-8"))]
+          response-body (base/body-as-json response)]
       (testing "get organizations endpoint should return 2 organizations with exam levels"
         (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8")))
       (is (= (:status response) 200))

@@ -1,11 +1,11 @@
 (ns yki.handler.file
   (:require [compojure.api.sweet :refer :all]
-            [yki.boundary.organizer_db :as organizer-db]
+            [yki.boundary.organizer-db :as organizer-db]
             [yki.boundary.files :as files]
             [yki.spec :as ys]
             [clojure.java.io :as io]
             [ring.util.response :refer [response]]
-            [clojure.tools.logging :refer [info error]]
+            [taoensso.timbre :as timbre :refer [info error]]
             [ring.util.http-response :refer [bad-request]]
             [ring.util.request]
             [clojure.spec.alpha :as s]

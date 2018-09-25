@@ -17,11 +17,11 @@
                  [metosin/spec-tools "0.7.1"]
                  [org.postgresql/postgresql "42.2.4"]
                  [duct/database.sql.hikaricp "0.3.3"]
-                 [org.clojure/tools.logging "0.4.1"]
                  [buddy/buddy-auth "2.1.0"]
-                 [ring/ring-jetty-adapter "1.7.0"]
+                 [webjure/jeesql "0.4.7"]
                  [http-kit "2.3.0"]
-                 ;; these two are necessery for Scala Cas Client
+                 [ch.qos.logback/logback-classic "1.2.3"]
+                 ;; these two are necessary for Scala Cas Client
                  [org.http4s/blaze-http_2.11 "0.10.1" :upgrade false]
                  [org.http4s/http4s-json4s-native_2.11 "0.10.1" :upgrade false]
                  [oph/clj-util "0.1.0" :exclusions [org.http4s/blaze-http_2.11]]

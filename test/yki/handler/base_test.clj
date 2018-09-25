@@ -32,6 +32,15 @@
 (def organizations-json
   (j/read-value (slurp "test/resources/organizers.json")))
 
+(def exam-session
+  (slurp "test/resources/exam_session.json"))
+
+(defn change-entry [json-string key value]
+  (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
+
+(defn body-as-json [response]
+  (j/read-value (slurp (:body response) :encoding "UTF-8")))
+
 (defn insert-organization [tx oid]
   (jdbc/execute! tx (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, contact_shared_email)
         VALUES (" oid ", '2018-01-01', '2019-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi')")))

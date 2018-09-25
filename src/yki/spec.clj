@@ -1,29 +1,26 @@
 
 (ns yki.spec
-  (:require [compojure.api.sweet :refer :all]
-            [yki.boundary.organizer_db :as organizer-db]
-            [yki.boundary.files :as files]
-            [yki.handler.routing :as routing]
-            [clj-time.format :as f]
-            [clojure.java.io :as io]
-            [clojure.tools.logging :refer [info error]]
-            [ring.util.response :refer [response not-found header]]
-            [ring.util.http-response :refer [ok bad-request]]
-            [ring.util.request]
-            [ring.middleware.multipart-params :as mp]
-            [clojure.spec.alpha :as s]
-            [spec-tools.spec :as spec]
-            [spec-tools.core :as st]
-            [integrant.core :as ig])
+  (:require
+   [clj-time.format :as f]
+   [clojure.spec.alpha :as s]
+   [spec-tools.spec :as spec]
+   [spec-tools.core :as st])
 
   (:import [org.joda.time DateTime]))
 
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 
-(defn- date? [maybe-date]
+(defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
       (f/parse maybe-date)))
+
+(defn str->date-time [value]
+  (try
+    (println "converting")
+    (DateTime. value)
+    (catch Exception _
+      ::s/invalid)))
 
 (s/def ::date (st/spec
                {:spec (partial date?)
@@ -31,7 +28,7 @@
                 :json-schema/default "2018-01-01T00:00:00Z"}))
 (s/def ::time (s/and string? #(re-matches time-regex %)))
 (s/def ::email-type (s/and string? #(re-matches email-regex %)))
-(s/def ::oid                  (s/and string? #(<= (count %) 256)))
+(s/def ::oid (s/and string? #(<= (count %) 256)))
 
 ;; organization
 (s/def ::agreement_start_date ::date)
@@ -61,7 +58,7 @@
                           :opt-un [::error]))
 
 ;; exam-session
-(s/def ::organizer_id               ::oid)
+(s/def ::organizer_oid               ::oid)
 (s/def ::session_date               ::date)
 (s/def ::session_start_time         ::time)
 (s/def ::session_end_time           ::time)
@@ -70,19 +67,18 @@
 (s/def ::registration_end_date      ::date)
 (s/def ::registration_end_time      ::time)
 (s/def ::max_participants           pos-int?)
-(s/def ::published_at               ::date)
+(s/def ::published_at              (s/nilable ::date))
 
-(s/def ::exam-session (s/and
-                       (s/keys :req [::organizer_id
-                                     ::session_date
-                                     ::session_start_time
-                                     ::session_end_time
-                                     ::registration_start_date
-                                     ::registration_start_time
-                                     ::registration_end_date
-                                     ::registration_end_time
-                                     ::max_participants
-                                     ::published_at])))
+(s/def ::exam-session (s/keys :req-un [::organizer_oid
+                                       ::session_date
+                                       ::session_start_time
+                                       ::session_end_time
+                                       ::registration_start_date
+                                       ::registration_start_time
+                                       ::registration_end_date
+                                       ::registration_end_time
+                                       ::max_participants
+                                       ::published_at]))
 
 ;; exam-session-location
 (s/def ::street_address       (s/and string? #(<= (count %) 256)))

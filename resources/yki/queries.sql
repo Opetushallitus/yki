@@ -103,7 +103,7 @@ INSERT INTO exam_session (
   max_participants,
   published_at
 ) VALUES (
-  :organizer_id,
+  (SELECT id FROM organizer WHERE oid = :organizer_oid AND deleted_at IS NULL),
   :session_date,
   :session_start_time,
   :session_end_time,

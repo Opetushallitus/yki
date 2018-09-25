@@ -71,7 +71,7 @@ lein cljfmt check
 lein cljfmt fix
 ```
 
-### Static code analysis
+### Code analysis
 ```shell
 lein kibit
 lein nvd check

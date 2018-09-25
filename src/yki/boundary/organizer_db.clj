@@ -1,28 +1,15 @@
-(ns yki.boundary.organizer_db
+(ns yki.boundary.organizer-db
   (:require [jeesql.core :refer [require-sql]]
             [clj-time.coerce :as c]
             [clj-time.local :as l]
             [clj-time.format :as f]
             [clj-time.jdbc]
+            [yki.util.db-util]
             [cheshire.core :as json]
             [clojure.java.jdbc :as jdbc]
             [duct.database.sql]))
 
 (require-sql ["yki/queries.sql" :as q])
-
-(extend-protocol jdbc/IResultSetReadColumn
-  java.sql.Date
-  (result-set-read-column [d _ _] (l/to-local-date-time d))
-  org.postgresql.jdbc.PgArray
-  (result-set-read-column [pgobj _ _]
-    (remove nil? (vec (.getArray pgobj))))
-  org.postgresql.util.PGobject
-  (result-set-read-column [pgobj _ _]
-    (let [type (.getType pgobj)
-          value (.getValue pgobj)]
-      (if (= "json" type)
-        (json/parse-string value true)
-        value))))
 
 (defn- convert-dates [{:keys [oid agreement_start_date agreement_end_date contact_name
                               contact_email contact_phone_number contact_shared_email]}]
@@ -70,12 +57,3 @@
   (get-organizers [{:keys [spec]}]
     (-> (q/select-organizers spec))))
 
-(defprotocol ExamSessions
-  (create-exam-session! [db exam-session]))
-
-(extend-protocol ExamSessions
-  duct.database.sql.Boundary
-  (create-exam-session!!
-    [{:keys [spec]} exam-session]
-    (jdbc/with-db-transaction [tx spec]
-      (-> (q/insert-exam-session! tx exam-session)))))

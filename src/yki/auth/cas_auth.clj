@@ -3,7 +3,7 @@
             [integrant.core :as ig]
             [yki.handler.routing :as routing]
             [yki.boundary.cas :as cas]
-            [clojure.tools.logging :refer [info error]]
+            [taoensso.timbre :as timbre :refer [info error]]
             [yki.boundary.permissions :as permissions]
             [ring.util.response :refer [response status redirect]]
             [clojure.string :as str]))
@@ -14,10 +14,10 @@
       (let [username (cas/validate-ticket (cas-client "/") ticket)
             permissions (permissions/virkailija-by-username permissions-client username)
             session (:session request)]
-          (info "user" username "logged in")
-          (-> (redirect "/yki/auth/cas/user")
-              (assoc :session {:identity  {:username username
-                                           :ticket ticket}})))
+        (info "user" username "logged in")
+        (-> (redirect "/yki/auth/cas/user")
+            (assoc :session {:identity  {:username username
+                                         :ticket ticket}})))
       {:status 401 :body "Unauthorized" :headers {"Content-Type" "text/plain; charset=utf-8"}})
     (catch Exception e
       (error e "Cas ticket handling failed")
