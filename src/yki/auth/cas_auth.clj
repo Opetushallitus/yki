@@ -14,11 +14,10 @@
       (let [username (cas/validate-ticket (cas-client "/") ticket)
             permissions (permissions/virkailija-by-username permissions-client username)
             session (:session request)]
-        (do
           (info "user" username "logged in")
           (-> (redirect "/yki/auth/cas/user")
               (assoc :session {:identity  {:username username
-                                           :ticket ticket}}))))
+                                           :ticket ticket}})))
       {:status 401 :body "Unauthorized" :headers {"Content-Type" "text/plain; charset=utf-8"}})
     (catch Exception e
       (error e "Cas ticket handling failed")

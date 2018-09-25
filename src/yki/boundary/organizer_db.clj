@@ -12,7 +12,7 @@
 
 (extend-protocol jdbc/IResultSetReadColumn
   java.sql.Date
-  (result-set-read-column [d _ _] (-> d l/to-local-date-time))
+  (result-set-read-column [d _ _] (l/to-local-date-time d))
   org.postgresql.jdbc.PgArray
   (result-set-read-column [pgobj _ _]
     (remove nil? (vec (.getArray pgobj))))

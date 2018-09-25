@@ -1,4 +1,4 @@
-(ns yki.handler.organizer-test
+(ns yki.handler.exam-session-test
   (:require [clojure.test :refer :all]
             [integrant.core :as ig]
             [ring.mock.request :as mock]
@@ -16,7 +16,7 @@
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
 
-(deftest organizer-validation-test
+(deftest exam-session-validation-test
   (jdbc/with-db-transaction [tx embedded-db/db-spec]
     (let [json-body (j/write-value-as-string (assoc-in base/organization [:agreement_start_date] "NOT_A_VALID_DATE"))
           request (-> (mock/request :post routing/organizer-api-root json-body)

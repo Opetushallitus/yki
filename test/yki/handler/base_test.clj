@@ -40,11 +40,6 @@
   (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
   (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
-(defrecord MockStore []
-  files/FileStore
-  (upload-file [_ _ _]
-    {"key" "d45c5262"}))
-
 (defn send-request [tx request]
   (jdbc/db-set-rollback-only! tx)
   (let [db (duct.database.sql/->Boundary tx)

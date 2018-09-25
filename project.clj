@@ -19,7 +19,7 @@
                  [duct/database.sql.hikaricp "0.3.3"]
                  [org.clojure/tools.logging "0.4.1"]
                  [buddy/buddy-auth "2.1.0"]
-                 [webjure/jeesql "0.4.7"]
+                 [ring/ring-jetty-adapter "1.7.0"]
                  [http-kit "2.3.0"]
                  ;; these two are necessery for Scala Cas Client
                  [org.http4s/blaze-http_2.11 "0.10.1" :upgrade false]
@@ -28,7 +28,10 @@
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
   :plugins [[duct/lein-duct "0.10.6"]
             [lein-cljfmt "0.6.1"]
-            [jonase/eastwood "0.2.9"]]
+            [jonase/eastwood "0.2.9"]
+            [lein-nvd "0.5.4"]
+            [lein-cloverage "1.0.13"]
+            [lein-kibit "0.1.6"]]
   :main ^:skip-aot yki.main
   :jvm-opts ["-Duser.timezone=UTC"]
   :resource-paths ["resources" "target/resources"]

@@ -57,7 +57,7 @@
     (base/insert-organization tx "'1.2.3.4'")
     (base/insert-organization tx "'1.2.3.5'")
     (base/insert-languages tx "'1.2.3.4'")
-    (let [request (-> (mock/request :get routing/organizer-api-root))
+    (let [request (mock/request :get routing/organizer-api-root)
           response (base/send-request tx request)
           response-body (j/read-value (slurp (:body response) :encoding "UTF-8"))]
       (testing "get organizations endpoint should return 2 organizations with exam levels"
@@ -68,7 +68,7 @@
 (deftest delete-organization-test
   (jdbc/with-db-transaction [tx embedded-db/db-spec]
     (base/insert-organization tx "'1.2.3.4'")
-    (let [request (-> (mock/request :delete (str routing/organizer-api-root "/1.2.3.4")))
+    (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4"))
           response (base/send-request tx request)]
       (testing "delete organization endpoint should remove organization"
         (is (= (:status response) 200))

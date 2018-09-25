@@ -17,7 +17,7 @@
      :coercion :spec
      (POST "/" []
        :body [organizer ::ys/organizer-type]
-       :return ::ys/success-map
+       :return ::ys/response
        (if (organizer-db/create-organizer! db organizer)
          (response {:success true})))
      (GET "/" []
@@ -26,13 +26,13 @@
      (context "/:oid" [oid]
        (PUT "/" []
          :body [organizer ::ys/organizer-type]
-         :return ::ys/success-map
+         :return ::ys/response
          (if (organizer-db/update-organizer! db oid organizer)
            (response {:success true})
            (not-found {:success false
                        :error "Organizer not found"})))
        (DELETE "/" []
-         :return ::ys/success-map
+         :return ::ys/response
          (if (organizer-db/delete-organizer! db oid)
            (response {:success true})
            (not-found {:error "Organizer not found"})))

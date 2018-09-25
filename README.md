@@ -70,6 +70,15 @@ lein test
 lein cljfmt check
 lein cljfmt fix
 ```
+
+### Static code analysis
+```shell
+lein kibit
+lein nvd check
+lein cloverage
+```
+
+
 ## Legal
 
 Copyright (c) 2018 The Finnish National Board of Education - Opetushallitus
