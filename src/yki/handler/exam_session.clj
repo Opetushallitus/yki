@@ -14,10 +14,10 @@
     (context "/" []
       (POST "/" []
         :body [exam-session ::ys/exam-session]
-        :return ::ys/response
+        :return ::ys/id-response
         (try
-          (if (exam-session-db/create-exam-session! db exam-session)
-            (response {:success true}))
+          (if-let [exam-session-id (exam-session-db/create-exam-session! db exam-session)]
+            (response {:id exam-session-id}))
           (catch Exception e
             (error e "Creating exam session failed")
             (throw e)))))))

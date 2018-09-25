@@ -8,6 +8,7 @@
 
   (:import [org.joda.time DateTime]))
 
+;; common
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 
@@ -15,20 +16,14 @@
   (or (instance? DateTime maybe-date)
       (f/parse maybe-date)))
 
-(defn str->date-time [value]
-  (try
-    (println "converting")
-    (DateTime. value)
-    (catch Exception _
-      ::s/invalid)))
-
-(s/def ::date (st/spec
-               {:spec (partial date?)
-                :type :date-time
-                :json-schema/default "2018-01-01T00:00:00Z"}))
-(s/def ::time (s/and string? #(re-matches time-regex %)))
-(s/def ::email-type (s/and string? #(re-matches email-regex %)))
-(s/def ::oid (s/and string? #(<= (count %) 256)))
+(s/def ::date         (st/spec
+                       {:spec (partial date?)
+                        :type :date-time
+                        :json-schema/default "2018-01-01T00:00:00Z"}))
+(s/def ::time         (s/and string? #(re-matches time-regex %)))
+(s/def ::email-type   (s/and string? #(re-matches email-regex %)))
+(s/def ::oid          (s/and string? #(<= (count %) 256)))
+(s/def ::id           pos-int?)
 
 ;; organization
 (s/def ::agreement_start_date ::date)
@@ -57,8 +52,22 @@
 (s/def ::response (s/keys :req-un [::success]
                           :opt-un [::error]))
 
+;; exam-session-location
+(s/def ::street_address       (s/and string? #(<= (count %) 256)))
+(s/def ::city                 (s/and string? #(<= (count %) 256)))
+(s/def ::other_location_info  (s/and string? #(<= (count %) 1024)))
+(s/def ::extra_information    (s/and (s/nilable string?) #(<= (count %) 1024)))
+(s/def ::exam_session_id      pos-int?)
+
+(s/def ::exam-session-location (s/keys :req-un [::street_address
+                                                ::city
+                                                ::other_location_info
+                                                ::extra_information
+                                                ::language_code]))
+(s/def ::location (s/coll-of ::exam-session-location))
+
 ;; exam-session
-(s/def ::organizer_oid               ::oid)
+(s/def ::organizer_oid              ::oid)
 (s/def ::session_date               ::date)
 (s/def ::session_start_time         ::time)
 (s/def ::session_end_time           ::time)
@@ -67,7 +76,7 @@
 (s/def ::registration_end_date      ::date)
 (s/def ::registration_end_time      ::time)
 (s/def ::max_participants           pos-int?)
-(s/def ::published_at              (s/nilable ::date))
+(s/def ::published_at               (s/nilable ::date))
 
 (s/def ::exam-session (s/keys :req-un [::organizer_oid
                                        ::session_date
@@ -78,14 +87,11 @@
                                        ::registration_end_date
                                        ::registration_end_time
                                        ::max_participants
-                                       ::published_at]))
-
-;; exam-session-location
-(s/def ::street_address       (s/and string? #(<= (count %) 256)))
-(s/def ::city                 (s/and string? #(<= (count %) 256)))
-(s/def ::other_location_info  (s/and string? #(<= (count %) 1024)))
-(s/def ::extra_information    (s/and string? #(<= (count %) 1024)))
-(s/def ::exam_session_id      pos-int?)
+                                       ::published_at
+                                       ::location]
+                              :opt-un [::id]))
 
 (s/def ::external_id (s/and string? #(<= (count %) 64)))
 (s/def ::external-id-type (s/keys :req-un [::external_id]))
+
+(s/def ::id-response (s/keys :req-un [::id]))

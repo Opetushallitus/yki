@@ -90,7 +90,7 @@ INSERT INTO attachment_metadata (
   :type
 );
 
--- name: insert-exam-session!
+-- name: insert-exam-session<!
 INSERT INTO exam_session (
   organizer_id,
   session_date,
@@ -132,7 +132,7 @@ INSERT INTO exam_session_location(
   :exam_session_id
 );
 
--- name: insert-exam-session-location!
+-- name: insert-exam-session-date!
 INSERT INTO exam_session_date(
   exam_date
 ) VALUES (

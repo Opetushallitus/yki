@@ -33,4 +33,7 @@
   (create-exam-session!
     [{:keys [spec]} exam-session]
     (jdbc/with-db-transaction [tx spec]
-      (-> (q/insert-exam-session! tx (convert-dates exam-session))))))
+      (let [result (q/insert-exam-session<! tx (convert-dates exam-session))
+            exam-session-id (result :id)]
+        (doseq [loc (:location exam-session)]
+          (-> (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))) exam-session-id))))
