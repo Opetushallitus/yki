@@ -90,3 +90,51 @@ INSERT INTO attachment_metadata (
   :type
 );
 
+-- name: insert-exam-session!
+INSERT INTO exam_session (
+  organizer_id,
+  session_date,
+  session_start_time,
+  session_end_time,
+  registration_start_date,
+  registration_start_time,
+  registration_end_date,
+  registration_end_time,
+  max_participants,
+  published_at
+) VALUES (
+  :organizer_id,
+  :session_date,
+  :session_start_time,
+  :session_end_time,
+  :registration_start_date,
+  :registration_start_time,
+  :registration_end_date,
+  :registration_end_time,
+  :max_participants,
+  :published_at
+);
+
+-- name: insert-exam-session-location!
+INSERT INTO exam_session_location(
+  street_address,
+  city,
+  other_location_info,
+  extra_information,
+  language_code,
+  exam_session_id
+) VALUES (
+  :street_address,
+  :city,
+  :other_location_info,
+  :extra_information,
+  :language_code,
+  :exam_session_id
+);
+
+-- name: insert-exam-session-location!
+INSERT INTO exam_session_date(
+  exam_date
+) VALUES (
+  :exam_date
+);

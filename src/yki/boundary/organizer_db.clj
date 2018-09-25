@@ -69,3 +69,13 @@
       (-> (q/update-organizer! tx (assoc-in (convert-dates organizer) [:oid] oid)))))
   (get-organizers [{:keys [spec]}]
     (-> (q/select-organizers spec))))
+
+(defprotocol ExamSessions
+  (create-exam-session! [db exam-session]))
+
+(extend-protocol ExamSessions
+  duct.database.sql.Boundary
+  (create-exam-session!!
+    [{:keys [spec]} exam-session]
+    (jdbc/with-db-transaction [tx spec]
+      (-> (q/insert-exam-session! tx exam-session)))))

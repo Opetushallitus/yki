@@ -2,11 +2,13 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.organizer_db :as organizer-db]
             [yki.boundary.files :as files]
+            [yki.spec :as ys]
             [clojure.java.io :as io]
             [ring.util.response :refer [response]]
             [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [bad-request]]
             [ring.util.request]
+            [clojure.spec.alpha :as s]
             [ring.middleware.multipart-params :as mp]
             [integrant.core :as ig]))
 
@@ -15,6 +17,7 @@
     (context "/" []
       :middleware [mp/wrap-multipart-params]
       (POST "/" {multipart-params :multipart-params}
+        :return ::ys/external-id-type
         (let [file (multipart-params "file")
               tempfile (:tempfile file)
               filename (:filename file)]
