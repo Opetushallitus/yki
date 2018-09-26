@@ -33,27 +33,27 @@
   (create-organizer!
     [{:keys [spec]} organizer]
     (jdbc/with-db-transaction [tx spec]
-      (-> (q/insert-organizer! tx (convert-dates organizer)))
+      (q/insert-organizer! tx (convert-dates organizer))
       (doseq [lang (:languages organizer)]
-        (-> (q/insert-organizer-language! tx (merge lang {:oid (:oid organizer)}))))
+        (q/insert-organizer-language! tx (merge lang {:oid (:oid organizer)})))
       true))
   (create-attachment-metadata!
     [{:keys [spec]} oid type external-id]
     (jdbc/with-db-transaction [tx spec]
-      (-> (q/insert-attachment-metadata! tx {:oid oid :external_id external-id :type type}))))
+      (q/insert-attachment-metadata! tx {:oid oid :external_id external-id :type type})))
   (delete-organizer!
     [{:keys [spec]} oid]
     (jdbc/with-db-transaction [tx spec]
-      (-> (q/delete-organizer-languages! tx {:oid oid}))
-      (-> (q/delete-organizer! tx {:oid oid}))))
+      (q/delete-organizer-languages! tx {:oid oid})
+      (q/delete-organizer! tx {:oid oid})))
   (update-organizer!
     [{:keys [spec]} oid organizer]
     "update organizer using oid from arguments"
     (jdbc/with-db-transaction [tx spec]
-      (-> (q/delete-organizer-languages! tx {:oid oid}))
+      (q/delete-organizer-languages! tx {:oid oid})
       (doseq [lang (:languages organizer)]
-        (-> (q/insert-organizer-language! tx (merge lang {:oid oid}))))
-      (-> (q/update-organizer! tx (assoc-in (convert-dates organizer) [:oid] oid)))))
+        (q/insert-organizer-language! tx (merge lang {:oid oid})))
+      (q/update-organizer! tx (assoc (convert-dates organizer) :oid oid))))
   (get-organizers [{:keys [spec]}]
     (q/select-organizers spec)))
 

@@ -171,13 +171,24 @@ WHERE e.session_date >= COALESCE(:from, e.session_date)
   AND o.oid = COALESCE(:oid, o.oid);
 
 -- name: update-exam-session!
-UPDATE organizer
+UPDATE exam_session
 SET
-  agreement_start_date = :agreement_start_date,
-  agreement_end_date = :agreement_end_date,
-  contact_name = :contact_name,
-  contact_email = :contact_email,
-  contact_phone_number = :contact_phone_number,
-  contact_shared_email = :contact_shared_email,
+  session_date = :session_date,
+  session_start_time = :session_start_time,
+  session_end_time = :session_end_time,
+  registration_start_date = :registration_start_date,
+  registration_start_time = :registration_start_time,
+  registration_end_date = :registration_end_date,
+  registration_end_time = :registration_end_time,
+  max_participants = :max_participants,
+  published_at = :published_at,
   modified = current_timestamp
-WHERE oid = :oid;
+WHERE id = :id;
+
+-- name: delete-exam-session-location!
+DELETE FROM exam_session_location
+WHERE exam_session_id = :id;
+
+-- name: delete-exam-session!
+DELETE FROM exam_session
+WHERE id = :id;

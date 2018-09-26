@@ -31,6 +31,8 @@
 
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session])
+  (update-exam-session! [db id exam-session])
+  (delete-exam-session! [db id])
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and optional from arguments"))
 
@@ -42,7 +44,18 @@
       (let [result (q/insert-exam-session<! tx (assoc (convert-dates exam-session) :oid oid))
             exam-session-id (result :id)]
         (doseq [loc (:location exam-session)]
-          (-> (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))) exam-session-id)))
+          (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))
+        exam-session-id)))
+  (update-exam-session!
+    [{:keys [spec]} id exam-session]
+    (jdbc/with-db-transaction [tx spec]
+      (q/delete-exam-session-location! tx {:id id})
+      (doseq [location (:location exam-session)]
+        (q/insert-exam-session-location! tx (assoc location :exam_session_id id)))
+      (q/update-exam-session! tx (assoc (convert-dates exam-session) :id id))))
+  (delete-exam-session! [{:keys [spec]} id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/delete-exam-session! tx {:id id})))
   (get-exam-sessions [{:keys [spec]} oid from]
     (q/select-exam-sessions spec {:oid oid
                                   :from (string->date from)})))

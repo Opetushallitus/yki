@@ -1,7 +1,7 @@
 (ns yki.handler.exam_session
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.exam-session-db :as exam-session-db]
-            [ring.util.response :refer [response]]
+            [ring.util.response :refer [response not-found header]]
             [taoensso.timbre :as timbre :refer [info error]]
             [ring.util.http-response :refer [bad-request]]
             [ring.util.request]
@@ -24,5 +24,21 @@
             (response {:id exam-session-id}))
           (catch Exception e
             (error e "Creating exam session failed")
-            (throw e)))))))
+            (throw e))))
+      (context "/:id" []
+        (PUT "/" []
+          :body [exam-session ::ys/exam-session]
+          :path-params [id :- ::ys/id]
+          :return ::ys/response
+          (if (exam-session-db/update-exam-session! db id exam-session)
+            (response {:success true})
+            (not-found {:success false
+                        :error "Exam session not found"})))
+        (DELETE "/" []
+          :path-params [id :- ::ys/id]
+          :return ::ys/response
+          (if (exam-session-db/delete-exam-session! db id)
+            (response {:success true})
+            (not-found {:success false
+                        :error "Exam session not found"})))))))
 
