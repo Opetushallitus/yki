@@ -65,17 +65,21 @@ But you can also run tests through Leiningen.
 lein test
 ```
 
+Test coverage reporting.
+```sh
+lein cloverage
+```
+
 ### Formatting
-```shell
+```sh
 lein cljfmt check
 lein cljfmt fix
 ```
 
-### Code analysis
-```shell
+### Static code analysis
+```sh
 lein kibit
 lein nvd check
-lein cloverage
 ```
 
 

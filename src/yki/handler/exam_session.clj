@@ -31,13 +31,11 @@
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (if (exam-session-db/update-exam-session! db id exam-session)
-            (response {:success true})
-            (not-found {:success false
-                        :error "Exam session not found"})))
+            (response {:success true})))
         (DELETE "/" []
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if (exam-session-db/delete-exam-session! db id)
+          (if (= (exam-session-db/delete-exam-session! db id) 1)
             (response {:success true})
             (not-found {:success false
                         :error "Exam session not found"})))))))
