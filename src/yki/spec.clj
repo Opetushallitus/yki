@@ -48,7 +48,7 @@
                                 :opt-un [::languages
                                          ::contact_shared_email]))
 (s/def ::organizers (s/coll-of ::organizer-type))
-(s/def ::organizers-map (s/keys :req-un [::organizers]))
+(s/def ::organizers-response (s/keys :req-un [::organizers]))
 (s/def ::response (s/keys :req-un [::success]
                           :opt-un [::error]))
 
@@ -78,8 +78,9 @@
 (s/def ::max_participants           pos-int?)
 (s/def ::published_at               (s/nilable ::date))
 
-(s/def ::exam-session (s/keys :req-un [::organizer_oid
-                                       ::session_date
+(s/def ::from                       ::date)
+
+(s/def ::exam-session (s/keys :req-un [::session_date
                                        ::session_start_time
                                        ::session_end_time
                                        ::registration_start_date
@@ -89,7 +90,11 @@
                                        ::max_participants
                                        ::published_at
                                        ::location]
-                              :opt-un [::id]))
+                              :opt-un [::id
+                                       ::organizer_oid]))
+(s/def ::exam_sessions (s/coll-of ::exam-session))
+(s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
+(s/def ::from-param (s/keys :opt-un [::from]))
 
 (s/def ::external_id (s/and string? #(<= (count %) 64)))
 (s/def ::external-id-type (s/keys :req-un [::external_id]))

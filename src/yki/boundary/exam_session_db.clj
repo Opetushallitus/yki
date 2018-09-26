@@ -4,7 +4,7 @@
             [clj-time.local :as l]
             [clj-time.format :as f]
             [clj-time.jdbc]
-            [yki.util.db-util]
+            [yki.boundary.db-extensions]
             [cheshire.core :as json]
             [clojure.java.jdbc :as jdbc]
             [duct.database.sql]))
@@ -25,15 +25,24 @@
    :max_participants max_participants
    :published_at (f/parse published_at)})
 
+(defn- string->date [date]
+  (if (some? date)
+    (f/parse date)))
+
 (defprotocol ExamSessions
-  (create-exam-session! [db exam-session]))
+  (create-exam-session! [db oid exam-session])
+  (get-exam-sessions [db oid from]
+    "Get exam sessions by optional oid and optional from arguments"))
 
 (extend-protocol ExamSessions
   duct.database.sql.Boundary
   (create-exam-session!
-    [{:keys [spec]} exam-session]
+    [{:keys [spec]} oid exam-session]
     (jdbc/with-db-transaction [tx spec]
-      (let [result (q/insert-exam-session<! tx (convert-dates exam-session))
+      (let [result (q/insert-exam-session<! tx (assoc (convert-dates exam-session) :oid oid))
             exam-session-id (result :id)]
         (doseq [loc (:location exam-session)]
-          (-> (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))) exam-session-id))))
+          (-> (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))) exam-session-id)))
+  (get-exam-sessions [{:keys [spec]} oid from]
+    (q/select-exam-sessions spec {:oid oid
+                                  :from (string->date from)})))

@@ -9,14 +9,18 @@
             [ring.middleware.multipart-params :as mp]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db file-store]}]
+(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db]}]
   (fn [oid]
     (context "/" []
+      (GET "/" []
+        :query-params [{from :- ::ys/date nil}]
+        :return ::ys/exam-sessions-response
+        (response {:exam_sessions (exam-session-db/get-exam-sessions db oid from)}))
       (POST "/" []
         :body [exam-session ::ys/exam-session]
         :return ::ys/id-response
         (try
-          (if-let [exam-session-id (exam-session-db/create-exam-session! db exam-session)]
+          (if-let [exam-session-id (exam-session-db/create-exam-session! db oid exam-session)]
             (response {:id exam-session-id}))
           (catch Exception e
             (error e "Creating exam session failed")

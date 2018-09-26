@@ -58,6 +58,9 @@ CREATE TABLE IF NOT EXISTS exam_session (
   modified TIMESTAMP DEFAULT current_timestamp
 );
 --;;
+CREATE INDEX exam_session_session_date
+ON exam_session(session_date);
+--;;
 CREATE TABLE IF NOT EXISTS exam_session_location (
   id BIGSERIAL PRIMARY KEY,
   street_address TEXT NOT NULL,

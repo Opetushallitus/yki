@@ -1,4 +1,4 @@
-(ns yki.util.db-util
+(ns yki.boundary.db-extensions
   (:require
    [clj-time.local :as l]
    [clj-time.format :as f]
@@ -9,6 +9,8 @@
 (extend-protocol jdbc/IResultSetReadColumn
   java.sql.Date
   (result-set-read-column [d _ _] (l/to-local-date-time d))
+  java.sql.Time
+  (result-set-read-column [d _ _] (.toString (l/to-local-date-time d) "HH:mm"))
   org.postgresql.jdbc.PgArray
   (result-set-read-column [pgobj _ _]
     (remove nil? (vec (.getArray pgobj))))

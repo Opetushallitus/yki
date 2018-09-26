@@ -28,15 +28,24 @@
                (jdbc/query tx "SELECT COUNT(1) FROM exam_session")))
         (is (= (:status response) 400))))))
 
-(deftest add-exam-session-test
+(deftest exam-session-crud-test
   (jdbc/with-db-transaction [tx embedded-db/db-spec]
     (base/insert-organization tx "'1.2.3.4'")
-    (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
+    (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session?from=2000-01-01") base/exam-session)
                       (mock/content-type "application/json; charset=UTF-8"))
           response (base/send-request tx request)
           response-body (base/body-as-json response)]
       (testing "post exam session endpoint should return add valid exam session to database"
         (is (= '({:count 1})
                (jdbc/query tx "SELECT COUNT(1) FROM exam_session")))
-        (is (= (:status response) 200))))))
+        (is (= '({:count 3})
+               (jdbc/query tx "SELECT COUNT(1) FROM exam_session_location")))
+        (is (= (:status response) 200))))
+    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session"))
+          response (base/send-request tx request)
+          response-body (base/body-as-json response)]
+      (testing "get exam session endpoint should return exam session with location"
+        (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8")))
+      (is (= (:status response) 200))
+      (is (= response-body base/exam-sessions-json)))))
 

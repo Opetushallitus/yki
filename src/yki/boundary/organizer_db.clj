@@ -4,7 +4,7 @@
             [clj-time.local :as l]
             [clj-time.format :as f]
             [clj-time.jdbc]
-            [yki.util.db-util]
+            [yki.boundary.db-extensions]
             [cheshire.core :as json]
             [clojure.java.jdbc :as jdbc]
             [duct.database.sql]))
@@ -55,5 +55,5 @@
         (-> (q/insert-organizer-language! tx (merge lang {:oid oid}))))
       (-> (q/update-organizer! tx (assoc-in (convert-dates organizer) [:oid] oid)))))
   (get-organizers [{:keys [spec]}]
-    (-> (q/select-organizers spec))))
+    (q/select-organizers spec)))
 

@@ -32,6 +32,9 @@
 (def organizations-json
   (j/read-value (slurp "test/resources/organizers.json")))
 
+(def exam-sessions-json
+    (j/read-value (slurp "test/resources/exam_sessions.json")))
+
 (def exam-session
   (slurp "test/resources/exam_session.json"))
 

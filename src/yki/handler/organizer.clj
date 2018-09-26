@@ -21,8 +21,10 @@
        (if (organizer-db/create-organizer! db organizer)
          (response {:success true})))
      (GET "/" []
-       :return ::ys/organizers-map
+       :return ::ys/organizers-response
        (response {:organizers (organizer-db/get-organizers db)}))
+     (context routing/exam-session-uri []
+       (exam-session-handler nil))
      (context "/:oid" [oid]
        (PUT "/" []
          :body [organizer ::ys/organizer-type]
