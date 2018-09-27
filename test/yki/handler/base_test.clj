@@ -15,11 +15,6 @@
             [yki.handler.file]
             [yki.handler.organizer]))
 
-(defrecord MockStore []
-  files/FileStore
-  (upload-file [_ _ _]
-    {"key" "d45c5262"}))
-
 (def organization {:oid "1.2.3.4"
                    :agreement_start_date "2018-01-01T00:00:00Z"
                    :agreement_end_date "2029-01-01T00:00:00Z"
@@ -52,13 +47,19 @@
   (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
   (jdbc/execute! tx (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
-(defn send-request [tx request]
+(defn send-request
+  ([tx request]
+  (send-request tx request ""))
+  ([tx request port]
   (jdbc/db-set-rollback-only! tx)
-  (let [db (duct.database.sql/->Boundary tx)
+  (let [uri (str "localhost:" port)
+        db (duct.database.sql/->Boundary tx)
+        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :protocol-base "http"})
         exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
-        file-handler (ig/init-key :yki.handler/file {:db db :file-store (->MockStore)})
+        file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
+        file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
         handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
-                                                                             :url-helper {}
+                                                                             :url-helper url-helper
                                                                              :exam-session-handler exam-session-handler
                                                                              :file-handler file-handler}))]
-    (handler request)))
+    (handler request))))
