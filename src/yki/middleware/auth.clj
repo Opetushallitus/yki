@@ -20,8 +20,8 @@
     true
     (error "Authentication required")))
 
-(defn access-error [req val]
-  (unauthorized val))
+(defn access-error [req value]
+  (unauthorized value))
 
 (defn- rules [redirect-url] [{:pattern #".*/auth/cas/callback"
                               :handler any-access}

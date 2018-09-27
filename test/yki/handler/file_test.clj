@@ -32,7 +32,7 @@
     (base/insert-organization tx "'1.2.3.5'")
     (with-routes!
       {"/liiteri/api/files" {:status 200 :content-type "application/json"
-                     :body   (j/write-value-as-string {:key "d45c5262"})}}
+                             :body   (j/write-value-as-string {:key "d45c5262"})}}
       (let [filecontent {:tempfile (create-temp-file "test/resources/test.pdf")
                          :content-type "application/pdf",
                          :filename "test.pdf"}

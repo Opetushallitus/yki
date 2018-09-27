@@ -29,7 +29,8 @@
   :plugins [[duct/lein-duct "0.10.6"]
             [lein-cljfmt "0.6.1"]
             [jonase/eastwood "0.2.9"]
-            [lein-nvd "0.5.4"]
+            [lein-bikeshed "0.5.1"]
+            [com.jakemccrary/lein-test-refresh "0.23.0"]
             [lein-cloverage "1.0.13"]
             [lein-kibit "0.1.6"]]
   :main ^:skip-aot yki.main

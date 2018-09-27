@@ -23,8 +23,6 @@
      (GET "/" []
        :return ::ys/organizers-response
        (response {:organizers (organizer-db/get-organizers db)}))
-     (context routing/exam-session-uri []
-       (exam-session-handler nil))
      (context "/:oid" [oid]
        (PUT "/" []
          :body [organizer ::ys/organizer-type]

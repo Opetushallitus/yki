@@ -17,6 +17,18 @@ for the project.
 
 ### Environment
 
+Before launching local development environment start PostgreSQL in docker container.
+
+```sh
+docker run --name postgres-yki -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -p 5432:5432 -d postgres:10.4
+```
+
+And create yki database.
+
+```sh
+psql -h localhost -U admin -d yki -c 'create database yki'
+```
+
 To begin developing, start with a REPL.
 
 ```sh
@@ -34,11 +46,11 @@ Run `go` to prep and initiate the system.
 
 ```clojure
 dev=> (go)
-:duct.server.http.jetty/starting-server {:port 3000}
+:duct.server.http.jetty/starting-server {:port 8080}
 :initiated
 ```
 
-By default this creates a web server at <http://localhost:3000>.
+By default this creates a web server at <http://localhost:8080>.
 
 When you make changes to your source files, use `reset` to reload any
 modified files and reset the server.
@@ -48,6 +60,7 @@ dev=> (reset)
 :reloading (...)
 :resumed
 ```
+
 
 ### Testing
 
@@ -65,6 +78,11 @@ But you can also run tests through Leiningen.
 lein test
 ```
 
+Rerun tests on file change.
+```sh
+lein test-refresh
+```
+
 Test coverage reporting.
 ```sh
 lein cloverage
@@ -77,10 +95,22 @@ lein cljfmt fix
 ```
 
 ### Static code analysis
+
+[eastwood](https://github.com/jonase/eastwood)
+```sh
+lein eastwood
+```
+
+[kibit](https://github.com/jonase/kibit)
 ```sh
 lein kibit
-lein nvd check
 ```
+
+[bikeshed](https://github.com/dakrone/lein-bikeshed)
+```sh
+lein bikeshed
+```
+
 
 
 ## Legal

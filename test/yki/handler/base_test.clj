@@ -49,17 +49,17 @@
 
 (defn send-request
   ([tx request]
-  (send-request tx request ""))
+   (send-request tx request ""))
   ([tx request port]
-  (jdbc/db-set-rollback-only! tx)
-  (let [uri (str "localhost:" port)
-        db (duct.database.sql/->Boundary tx)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :protocol-base "http"})
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
-        file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
-        file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
-        handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
-                                                                             :url-helper url-helper
-                                                                             :exam-session-handler exam-session-handler
-                                                                             :file-handler file-handler}))]
-    (handler request))))
+   (jdbc/db-set-rollback-only! tx)
+   (let [uri (str "localhost:" port)
+         db (duct.database.sql/->Boundary tx)
+         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :protocol-base "http"})
+         exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
+         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
+         file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
+         handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
+                                                                              :url-helper url-helper
+                                                                              :exam-session-handler exam-session-handler
+                                                                              :file-handler file-handler}))]
+     (handler request))))
