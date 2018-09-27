@@ -1,7 +1,7 @@
 -- name: select-organizers
 SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.contact_shared_email,
 (
-  SELECT ARRAY_TO_JSON(ARRAY_AGG(ROW_TO_JSON(lang)))
+  SELECT array_to_json(array_agg(lang))
   FROM (
     SELECT language_code, level_code
     FROM exam_language
@@ -90,3 +90,105 @@ INSERT INTO attachment_metadata (
   :type
 );
 
+-- name: insert-exam-session<!
+INSERT INTO exam_session (
+  organizer_id,
+  session_date,
+  session_start_time,
+  session_end_time,
+  registration_start_date,
+  registration_start_time,
+  registration_end_date,
+  registration_end_time,
+  max_participants,
+  published_at
+) VALUES (
+  (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL),
+  :session_date,
+  :session_start_time,
+  :session_end_time,
+  :registration_start_date,
+  :registration_start_time,
+  :registration_end_date,
+  :registration_end_time,
+  :max_participants,
+  :published_at
+);
+
+-- name: insert-exam-session-location!
+INSERT INTO exam_session_location(
+  street_address,
+  city,
+  other_location_info,
+  extra_information,
+  language_code,
+  exam_session_id
+) VALUES (
+  :street_address,
+  :city,
+  :other_location_info,
+  :extra_information,
+  :language_code,
+  :exam_session_id
+);
+
+-- name: insert-exam-session-date!
+INSERT INTO exam_session_date(
+  exam_date
+) VALUES (
+  :exam_date
+);
+
+-- name: select-exam-sessions
+SELECT
+  e.id,
+  e.session_date,
+  e.session_start_time,
+  e.session_end_time,
+  e.registration_start_date,
+  e.registration_start_time,
+  e.registration_end_date,
+  e.registration_end_time,
+  e.max_participants,
+  e.published_at,
+  o.oid as organizer_oid,
+(
+  SELECT array_to_json(array_agg(loc))
+  FROM (
+    SELECT
+      street_address,
+      city,
+      other_location_info,
+      extra_information,
+      language_code
+    FROM exam_session_location
+    WHERE exam_session_id = e.id
+  ) loc
+) AS location
+FROM exam_session e INNER JOIN organizer o
+  ON e.organizer_id = o.id
+WHERE e.session_date >= COALESCE(:from, e.session_date)
+  AND o.oid = COALESCE(:oid, o.oid);
+
+-- name: update-exam-session!
+UPDATE exam_session
+SET
+  session_date = :session_date,
+  session_start_time = :session_start_time,
+  session_end_time = :session_end_time,
+  registration_start_date = :registration_start_date,
+  registration_start_time = :registration_start_time,
+  registration_end_date = :registration_end_date,
+  registration_end_time = :registration_end_time,
+  max_participants = :max_participants,
+  published_at = :published_at,
+  modified = current_timestamp
+WHERE id = :id;
+
+-- name: delete-exam-session-location!
+DELETE FROM exam_session_location
+WHERE exam_session_id = :id;
+
+-- name: delete-exam-session!
+DELETE FROM exam_session
+WHERE id = :id;

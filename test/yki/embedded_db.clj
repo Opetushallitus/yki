@@ -3,13 +3,18 @@
             [clojure.java.jdbc :as jdbc]
             [ragtime.jdbc]
             [ragtime.core :as core]
-            [integrant.core :as ig]
             [ragtime.jdbc.migrations :refer :all]
             [clojure.java.io :as io])
-  (:import [com.opentable.db.postgres.embedded EmbeddedPostgres]))
+  (:import [java.net ServerSocket]
+           [com.opentable.db.postgres.embedded EmbeddedPostgres]))
 
-  ; TODO find free port
-(def port 59432)
+(defn- get-free-port! []
+  (let [socket (ServerSocket. 0)
+        port (.getLocalPort socket)]
+    (.close socket)
+    port))
+
+(defonce port (get-free-port!))
 
 (def db-spec {:classname "org.postgresql.Driver"
               :subprotocol "postgresql"

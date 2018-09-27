@@ -17,16 +17,22 @@
                  [metosin/spec-tools "0.7.1"]
                  [org.postgresql/postgresql "42.2.4"]
                  [duct/database.sql.hikaricp "0.3.3"]
-                 [org.clojure/tools.logging "0.4.1"]
                  [buddy/buddy-auth "2.1.0"]
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.3.0"]
-                 ;; these two are necessery for Scala Cas Client
+                 [ch.qos.logback/logback-classic "1.2.3"]
+                 ;; these two are necessary for Scala Cas Client
                  [org.http4s/blaze-http_2.11 "0.10.1" :upgrade false]
                  [org.http4s/http4s-json4s-native_2.11 "0.10.1" :upgrade false]
                  [oph/clj-util "0.1.0" :exclusions [org.http4s/blaze-http_2.11]]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
-  :plugins [[duct/lein-duct "0.10.6"][lein-cljfmt "0.6.1"]]
+  :plugins [[duct/lein-duct "0.10.6"]
+            [lein-cljfmt "0.6.1"]
+            [jonase/eastwood "0.2.9"]
+            [lein-bikeshed "0.5.1"]
+            [com.jakemccrary/lein-test-refresh "0.23.0"]
+            [lein-cloverage "1.0.13"]
+            [lein-kibit "0.1.6"]]
   :main ^:skip-aot yki.main
   :jvm-opts ["-Duser.timezone=UTC"]
   :resource-paths ["resources" "target/resources"]
@@ -44,5 +50,6 @@
                                    [cheshire "5.8.0"]
                                    [cider/cider-nrepl "0.15.1-SNAPSHOT"]
                                    [peridot "0.5.1"]
-                                   [com.opentable.components/otj-pg-embedded "0.12.0"]
+                                   [se.haleby/stub-http "0.2.5"]
+                                   [com.opentable.components/otj-pg-embedded "0.12.1"]
                                    [kerodon "0.9.0"]]}})

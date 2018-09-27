@@ -17,3 +17,7 @@
 (def organizer-api-root (str virkailija-api-root "/organizer"))
 
 (def status-api-root (str api-root "/status"))
+
+(def file-uri "/file")
+
+(def exam-session-uri "/exam-session")

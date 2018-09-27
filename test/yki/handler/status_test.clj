@@ -18,7 +18,7 @@
 
 (deftest status-ok-test
   (jdbc/with-db-connection [tx embedded-db/db-spec]
-    (let [request (-> (mock/request :get routing/status-api-root))
+    (let [request (mock/request :get routing/status-api-root)
           response (send-request tx request)]
       (testing "get status endpoint should return 200 when db connection is ok"
         (is (= (:status response) 200))))))

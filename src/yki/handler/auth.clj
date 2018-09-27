@@ -5,7 +5,7 @@
             [yki.boundary.cas :as cas]
             [yki.auth.cas-auth :as cas-auth]
             [yki.boundary.permissions :as permissions]
-            [clojure.tools.logging :refer [info error]]
+            [taoensso.timbre :as timbre :refer [info error]]
             [ring.util.response :refer [response status redirect]]
             [clojure.string :as str]))
 

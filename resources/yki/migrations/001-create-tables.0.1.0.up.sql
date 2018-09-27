@@ -41,5 +41,38 @@ CREATE TABLE IF NOT EXISTS attachment_metadata (
   deleted_at TIMESTAMP DEFAULT NULL,
   created TIMESTAMP DEFAULT current_timestamp
 );
-
-
+--;;
+CREATE TABLE IF NOT EXISTS exam_session (
+  id BIGSERIAL PRIMARY KEY,
+  organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
+  session_date DATE NOT NULL,
+  session_start_time TIME NOT NULL,
+  session_end_time TIME NOT NULL,
+  registration_start_date DATE NOT NULL,
+  registration_start_time TIME NOT NULL,
+  registration_end_date DATE NOT NULL,
+  registration_end_time TIME NOT NULL,
+  max_participants INTEGER NOT NULL,
+  published_at TIMESTAMP DEFAULT NULL,
+  created TIMESTAMP DEFAULT current_timestamp,
+  modified TIMESTAMP DEFAULT current_timestamp
+);
+--;;
+CREATE INDEX exam_session_session_date
+ON exam_session(session_date);
+--;;
+CREATE TABLE IF NOT EXISTS exam_session_location (
+  id BIGSERIAL PRIMARY KEY,
+  street_address TEXT NOT NULL,
+  city TEXT NOT NULL,
+  other_location_info TEXT NOT NULL,
+  extra_information TEXT,
+  language_code CHAR(2) REFERENCES language (code) NOT NULL,
+  exam_session_id BIGINT NOT NULL REFERENCES exam_session (id) ON DELETE CASCADE
+);
+--;;
+CREATE TABLE IF NOT EXISTS exam_date (
+  id BIGSERIAL PRIMARY KEY,
+  exam_date DATE NOT NULL,
+  created TIMESTAMP DEFAULT current_timestamp
+);

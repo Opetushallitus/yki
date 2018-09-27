@@ -30,7 +30,14 @@
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
 
+ :yki.handler/exam-session {:db #ig/ref :duct.database/sql}
+
+ :yki.handler/file {:db #ig/ref :duct.database/sql
+                    :file-store #ig/ref :yki.boundary.files/liiteri-file-store}
+
  :yki.handler/organizer {:db #ig/ref :duct.database/sql
                          :url-helper #ig/ref :yki.util/url-helper
-                         :file-store #ig/ref :yki.boundary.files/liiteri-file-store
+                         :file-handler #ig/ref  :yki.handler/file
+                         :exam-session-handler #ig/ref :yki.handler/exam-session
                          :auth #ig/ref :yki.middleware.auth/with-authentication}}
+
