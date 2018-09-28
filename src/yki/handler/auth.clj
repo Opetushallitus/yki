@@ -14,7 +14,7 @@
    (context routing/virkailija-auth-root []
      :middleware [auth]
      (GET "/callback" [ticket :as request]
-       (cas-auth/login ticket request cas-client permissions-client))
+       (cas-auth/login ticket request cas-client permissions-client url-helper))
      (GET "/logout" {session :session}
        (cas-auth/logout session url-helper))
      (GET "/user" {session :session}

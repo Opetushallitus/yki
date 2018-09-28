@@ -2,7 +2,7 @@
   (:require
    [integrant.core :as ig]
    [yki.boundary.cas :as cas]
-   [cheshire.core :as json]))
+   [jsonista.core :as json]))
 
 (defprotocol Permissions
   (virkailija-by-username [this username]))
@@ -14,7 +14,7 @@
                           {"username" username})
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
-        (if-let [virkailija (first (json/parse-string body true))]
+        (if-let [virkailija (first (json/read-value body))]
           virkailija
           (throw (new RuntimeException
                       (str "No virkailija found by username " username))))

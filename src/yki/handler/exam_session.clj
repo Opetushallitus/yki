@@ -6,7 +6,6 @@
             [ring.util.http-response :refer [bad-request]]
             [ring.util.request]
             [yki.spec :as ys]
-            [ring.middleware.multipart-params :as mp]
             [integrant.core :as ig]))
 
 (defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db]}]

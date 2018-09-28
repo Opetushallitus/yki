@@ -26,6 +26,7 @@
                  [org.http4s/http4s-json4s-native_2.11 "0.10.1" :upgrade false]
                  [oph/clj-util "0.1.0" :exclusions [org.http4s/blaze-http_2.11]]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
+  :cloverage {:ns-exclude-regex [#"dev" #"user" #"yki.main" #"yki.middleware.no-auth"]}
   :plugins [[duct/lein-duct "0.10.6"]
             [lein-cljfmt "0.6.1"]
             [jonase/eastwood "0.2.9"]

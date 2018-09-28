@@ -7,7 +7,6 @@
             [ring.util.response :refer [response not-found header]]
             [ring.util.http-response :refer [ok bad-request]]
             [ring.util.request]
-            [ring.middleware.multipart-params :as mp]
             [integrant.core :as ig]))
 
 (defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler]}]
