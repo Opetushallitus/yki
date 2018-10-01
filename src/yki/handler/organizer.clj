@@ -32,7 +32,7 @@
                        :error "Organizer not found"})))
        (DELETE "/" []
          :return ::ys/response
-         (if (organizer-db/delete-organizer! db oid)
+         (if (= (organizer-db/delete-organizer! db oid) 1)
            (response {:success true})
            (not-found {:error "Organizer not found"})))
        (context routing/file-uri []

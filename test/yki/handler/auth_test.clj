@@ -5,7 +5,9 @@
             [duct.database.sql]
             [yki.util.url-helper]
             [yki.middleware.auth]
+            [yki.handler.base-test :as base]
             [jsonista.core :as j]
+            [compojure.core :refer :all]
             [muuntaja.middleware :as middleware]
             [clojure.java.jdbc :as jdbc]
             [peridot.core :as peridot]
@@ -16,9 +18,9 @@
             [yki.handler.routing :as routing]
             [yki.handler.auth]))
 
-(defn get-routes [port]
-  {"/kayttooikeus-service/kayttooikeus/kayttaja?username=test" {:status 200 :content-type "application/json"
-                                                                :body (slurp "test/resources/user.json")}
+(defn get-routes [port user]
+  {"/kayttooikeus-service/kayttooikeus/kayttaja" {:status 200 :content-type "application/json"
+                                                  :body (slurp (str "test/resources/" user ".json"))}
    "/kayttooikeus-service/j_spring_cas_security_check" {:status 200
                                                         :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}
    "/cas/serviceValidate" {:status 200 :content-type "application/xml;charset=UTF-8"
@@ -41,16 +43,16 @@
         permissions-client (ig/init-key  :yki.boundary.permissions/permissions-client
                                          {:url-helper url-helper
                                           :cas-client cas-client})
-        handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
-                                                                        :url-helper url-helper
-                                                                        :permissions-client permissions-client
-                                                                        :cas-client cas-client}))]
-    handler))
+        auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
+                                                                             :url-helper url-helper
+                                                                             :permissions-client permissions-client
+                                                                             :cas-client cas-client}))]
+    (routes auth-handler)))
 
 (deftest handle-authentication-success-callback-test
   (with-routes!
     (fn [server]
-      (get-routes (:port server)))
+      (get-routes (:port server) "yki_user"))
     (let [handler (create-handler port)
           session (peridot/session handler)
           response (-> session
@@ -69,7 +71,7 @@
 
 (deftest handle-authentication-callback-without-ticket-test
   (let [handler (create-handler "")
-        session (peridot/session handler)
+        session (peridot/session (routes handler))
         response (-> session
                      (peridot/request routing/virkailija-auth-callback
                                       :request-method :get))]
@@ -79,7 +81,7 @@
 (deftest handle-logout-test
   (with-routes!
     (fn [server]
-      (get-routes (:port server)))
+      (get-routes (:port server) "yki_user"))
     (let [handler (create-handler port)
           session (peridot/session handler)
           response (-> session
@@ -90,4 +92,3 @@
                                         :request-method :get))]
       (testing "logout endpoint redirects to cas logout"
         (is (= (get-in response [:response :status]) 302))))))
-

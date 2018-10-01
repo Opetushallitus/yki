@@ -13,6 +13,12 @@
 
 (def backend (session-backend))
 
+(def oph-oid "1.2.246.562.10.00000000001")
+
+(def organizer-routes
+  ["*/organizer/:oid"
+   "*/organizer/:oid/*"])
+
 (defn- any-access [request]
   true)
 
@@ -32,20 +38,28 @@
   [request routes]
   (:oid (into {} (map #(clout/route-matches % {:path-info (:uri request)}) routes))))
 
-(def organizer-routes
-  ["*/organizer/:oid"
-   "*/organizer/:oid/*"])
-
-(defn permission-to-organization
+(defn- permission-to-organization
   [request]
   (if-let [oid (match-oid request organizer-routes)]
     (allowed-organization? request oid)
     true))
 
+(defn- oph-user
+  [request]
+  (if (allowed-organization? request oph-oid)
+    true
+    (error "Not authorized")))
+
 (defn- rules [redirect-url] [{:pattern #".*/auth/cas/callback"
                               :handler any-access}
-                             {:pattern #".*/api/.*"
-                              :handler {:and [authenticated permission-to-organization]}}
+                             {:pattern #".*/api/virkailija/organizer/.*/exam-session"
+                              :handler {:and [authenticated {:or [oph-user permission-to-organization]}]}}
+                             {:pattern #".*/api/virkailija/organizer.*"
+                              :handler {:and [authenticated oph-user]}
+                              :request-method {:or [:post :put :delete]}}
+                             {:pattern #".*/api/virkailija.*"
+                              :handler {:and [authenticated {:or [oph-user permission-to-organization]}]}
+                              :request-method :get}
                              {:pattern #".*/auth/cas"
                               :handler authenticated
                               :redirect redirect-url}
