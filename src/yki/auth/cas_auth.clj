@@ -8,27 +8,36 @@
             [ring.util.response :refer [response status redirect]]
             [clojure.string :as str]))
 
+(def unauthorized {:status 401
+                   :body "Unauthorized"
+                   :headers {"Content-Type" "text/plain; charset=utf-8"}})
+
 (defn- yki-permission? [permission]
   (= (permission "palvelu") "YKI"))
 
-(defn- get-yki-permissions [organizations]
-  (filter (fn [org]
-            (some yki-permission? (org "kayttooikeudet")))
-          organizations))
+(defn- yki-permissions [org]
+  {:oid (org "organisaatioOid")
+   :permissions (filter yki-permission? (org "kayttooikeudet"))})
+
+(defn- get-organizations-with-yki-permissions [organizations]
+  (->> (map yki-permissions organizations)
+       (filter #(not-empty (:permissions %)))))
 
 (defn login [ticket request cas-client permissions-client url-helper]
   (try
     (if ticket
       (let [username (cas/validate-ticket (cas-client "/") ticket)
             permissions (permissions/virkailija-by-username permissions-client username)
-            yki-permissions (get-yki-permissions (permissions "organisaatiot"))
+            organizations (get-organizations-with-yki-permissions (permissions "organisaatiot"))
             session (:session request)]
         (info "user" username "logged in")
-        (-> (redirect (url-helper :yki.cas.login-success.redirect))
-            (assoc :session {:identity  {:username username
-                                         :permissions yki-permissions
-                                         :ticket ticket}})))
-      {:status 401 :body "Unauthorized" :headers {"Content-Type" "text/plain; charset=utf-8"}})
+        (if (empty? organizations)
+          unauthorized
+          (-> (redirect (url-helper :yki.cas.login-success.redirect))
+              (assoc :session {:identity  {:username username
+                                           :organizations organizations
+                                           :ticket ticket}}))))
+      unauthorized)
     (catch Exception e
       (error e "Cas ticket handling failed")
       (throw e))))

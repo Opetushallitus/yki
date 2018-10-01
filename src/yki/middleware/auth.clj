@@ -6,33 +6,51 @@
             [buddy.auth.accessrules :refer [wrap-access-rules success error]]
             [buddy.auth.backends.session :refer [session-backend]]
             [integrant.core :as ig]
+            [clout.core :as clout]
             [ring.util.request :refer [request-url]]
             [ring.util.response :refer [response status]]
             [ring.util.http-response :refer [unauthorized]]))
 
 (def backend (session-backend))
 
-(defn any-access [request]
+(defn- any-access [request]
   true)
 
-(defn- authenticated-access [request]
+(defn- authenticated [request]
   (if (-> request :session :identity :ticket)
     true
     (error "Authentication required")))
 
-(defn access-error [req value]
-  (unauthorized value))
+(defn- has-oid? [permission oid]
+  (= (permission "oid") oid))
+
+(defn- allowed-organization? [request oid]
+  (let [organizations (get-in request [:session :identity :organizations])]
+    (some #(= (:oid %) oid) organizations)))
+
+(defn- match-oid
+  [request routes]
+  (:oid (into {} (map #(clout/route-matches % {:path-info (:uri request)}) routes))))
+
+(def organizer-routes
+  ["*/organizer/:oid"
+   "*/organizer/:oid/*"])
+
+(defn permission-to-organization
+  [request]
+  (if-let [oid (match-oid request organizer-routes)]
+    (allowed-organization? request oid)
+    true))
 
 (defn- rules [redirect-url] [{:pattern #".*/auth/cas/callback"
                               :handler any-access}
                              {:pattern #".*/api/.*"
-                              :handler authenticated-access
-                              :on-error access-error}
+                              :handler {:and [authenticated permission-to-organization]}}
                              {:pattern #".*/auth/cas"
-                              :handler authenticated-access
+                              :handler authenticated
                               :redirect redirect-url}
                              {:pattern #".*"
-                              :handler authenticated-access
+                              :handler authenticated
                               :redirect redirect-url}])
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config]}]

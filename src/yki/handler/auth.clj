@@ -2,12 +2,8 @@
   (:require [compojure.api.sweet :refer :all]
             [integrant.core :as ig]
             [yki.handler.routing :as routing]
-            [yki.boundary.cas :as cas]
-            [yki.auth.cas-auth :as cas-auth]
-            [yki.boundary.permissions :as permissions]
-            [taoensso.timbre :as timbre :refer [info error]]
-            [ring.util.response :refer [response status redirect]]
-            [clojure.string :as str]))
+            [ring.util.response :refer [response]]
+            [yki.auth.cas-auth :as cas-auth]))
 
 (defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client permissions-client]}]
   (api

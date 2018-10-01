@@ -60,12 +60,12 @@
                        (peridot/follow-redirect))
           response-body (j/read-value (slurp (:body (:response response)) :encoding "UTF-8"))
           identity (get-in response-body ["session" "identity"])
-          permissions (get-in response-body ["session" "identity" "permissions"])]
+          organizations (identity "organizations")]
       (testing "callback endpoint should set identity returned from cas client to session"
         (is (= (identity "username") "test")))
-      (testing "callback endpoint should set YKI roles returned from permissions client to session"
-        (is (= permissions
-               [{"organisaatioOid" "1.2.3.4" "kayttooikeudet" [{"oikeus" "ADMIN" "palvelu" "YKI"}, {"oikeus" "ADMIN" "palvelu" "OTHER"}]}]))))))
+      (testing "callback endpoint should set only YKI permissions returned from permissions client to session"
+        (is (= organizations
+               [{"oid" "1.2.3.4" "permissions" [{"oikeus" "ADMIN" "palvelu" "YKI"}]}]))))))
 
 (deftest handle-authentication-callback-without-ticket-test
   (let [handler (create-handler "")
