@@ -14,6 +14,8 @@
     (.close socket)
     port))
 
+(defonce conn (atom nil))
+
 (defonce port (get-free-port!))
 
 (def db-spec {:classname "org.postgresql.Driver"
@@ -40,3 +42,8 @@
     (core/migrate-all db idx ms))
   (f))
 
+(defn with-transaction [f]
+  (jdbc/with-db-transaction [tx db-spec]
+    (jdbc/db-set-rollback-only! tx)
+    (reset! conn tx)
+    (f)))

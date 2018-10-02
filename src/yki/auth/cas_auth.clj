@@ -43,6 +43,6 @@
       (throw e))))
 
 (defn logout [session url-helper]
-  (info "username" (-> session :identity :username) "logged out")
+  (info "user" (-> session :identity :username) "logged out")
   (-> (redirect (url-helper :cas.logout))
       (assoc :session {:identity nil})))

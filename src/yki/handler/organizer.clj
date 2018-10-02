@@ -2,12 +2,16 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.organizer-db :as organizer-db]
             [yki.handler.routing :as routing]
+            [yki.middleware.auth :as auth]
             [yki.spec :as ys]
             [taoensso.timbre :as timbre :refer [info error]]
             [ring.util.response :refer [response not-found header]]
             [ring.util.http-response :refer [ok bad-request]]
             [ring.util.request]
             [integrant.core :as ig]))
+
+(defn- get-oids [session]
+  (map #(:oid %) (auth/get-organizations-from-session session)))
 
 (defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler]}]
   (api
@@ -19,9 +23,11 @@
        :return ::ys/response
        (if (organizer-db/create-organizer! db organizer)
          (response {:success true})))
-     (GET "/" []
+     (GET "/" {session :session}
        :return ::ys/organizers-response
-       (response {:organizers (organizer-db/get-organizers db)}))
+       (if (auth/oph-user? session)
+         (response {:organizers (organizer-db/get-organizers db)})
+         (response {:organizers (organizer-db/get-organizers-by-oids db (get-oids session))})))
      (context "/:oid" [oid]
        (PUT "/" []
          :body [organizer ::ys/organizer-type]

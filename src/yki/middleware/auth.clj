@@ -9,7 +9,7 @@
             [clout.core :as clout]
             [ring.util.request :refer [request-url]]
             [ring.util.response :refer [response status]]
-            [ring.util.http-response :refer [unauthorized]]))
+            [ring.util.http-response :refer [unauthorized forbidden]]))
 
 (def backend (session-backend))
 
@@ -25,40 +25,56 @@
 (defn- authenticated [request]
   (if (-> request :session :identity :ticket)
     true
-    (error "Authentication required")))
+    (error unauthorized)))
 
 (defn- has-oid? [permission oid]
   (= (permission "oid") oid))
-
-(defn- allowed-organization? [request oid]
-  (let [organizations (get-in request [:session :identity :organizations])]
-    (some #(= (:oid %) oid) organizations)))
 
 (defn- match-oid
   [request routes]
   (:oid (into {} (map #(clout/route-matches % {:path-info (:uri request)}) routes))))
 
+(defn get-organizations-from-session [session]
+  (get-in session [:identity :organizations]))
+
+(defn- allowed-organization? [session oid]
+  (some #(= (:oid %) oid) (get-organizations-from-session session)))
+
+(defn oph-user?
+  [session]
+  (if (allowed-organization? session oph-oid)
+    true))
+
+(defn oph-user-access
+  [request]
+  (if (oph-user? (:session request))
+    true
+    (error forbidden)))
+
 (defn- permission-to-organization
   [request]
   (if-let [oid (match-oid request organizer-routes)]
-    (allowed-organization? request oid)
+    (allowed-organization? (:session request) oid)
     true))
-
-(defn- oph-user
-  [request]
-  (if (allowed-organization? request oph-oid)
-    true
-    (error "Not authorized")))
 
 (defn- rules [redirect-url] [{:pattern #".*/auth/cas/callback"
                               :handler any-access}
                              {:pattern #".*/api/virkailija/organizer/.*/exam-session"
-                              :handler {:and [authenticated {:or [oph-user permission-to-organization]}]}}
+                              :handler {:and [authenticated {:or [oph-user-access permission-to-organization]}]}}
+                             {:pattern #".*/api/virkailija/organizer"
+                              :handler {:and [authenticated oph-user-access]}
+                              :request-method :post}
                              {:pattern #".*/api/virkailija/organizer.*"
-                              :handler {:and [authenticated oph-user]}
-                              :request-method {:or [:post :put :delete]}}
-                             {:pattern #".*/api/virkailija.*"
-                              :handler {:and [authenticated {:or [oph-user permission-to-organization]}]}
+                              :handler {:and [authenticated oph-user-access]}
+                              :request-method :put}
+                             {:pattern #".*/api/virkailija/organizer.*"
+                              :handler {:and [authenticated oph-user-access]}
+                              :request-method :delete}
+                             {:pattern #".*/api/virkailija/organizer"
+                              :handler authenticated
+                              :request-method :get}
+                             {:pattern #".*/api/virkailija/organizer/.*"
+                              :handler {:and [authenticated {:or [oph-user-access permission-to-organization]}]}
                               :request-method :get}
                              {:pattern #".*/auth/cas"
                               :handler authenticated
