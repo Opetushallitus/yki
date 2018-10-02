@@ -18,8 +18,7 @@
             [yki.handler.routing :as routing]
             [yki.handler.auth]))
 
-(use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
-(use-fixtures :each embedded-db/with-transaction)
+(use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
 (defn- get-mock-routes [port user]
   {"/kayttooikeus-service/kayttooikeus/kayttaja" {:status 200 :content-type "application/json"
@@ -53,9 +52,10 @@
         permissions-client (ig/init-key  :yki.boundary.permissions/permissions-client
                                          {:url-helper url-helper
                                           :cas-client cas-client})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
         org-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
                                                                                  :url-helper url-helper
-                                                                                 :exam-session-handler {}
+                                                                                 :exam-session-handler exam-session-handler
                                                                                  :auth auth
                                                                                  :file-handler {}}))
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
@@ -85,16 +85,41 @@
                                            :body (j/write-value-as-string base/organizer)
                                            :content-type "application/json"
                                            :request-method :put))
+        organizer-get (-> session
+                          (peridot/request routing/organizer-api-root
+                                           :request-method :get))
+
         organizer-delete (-> session
                              (peridot/request (str routing/organizer-api-root "/1.2.3.6")
                                               :request-method :delete))
-        organizer-get (-> session
-                          (peridot/request routing/organizer-api-root
-                                           :request-method :get))]
-    {:post organizer-post
-     :put organizer-put
-     :delete organizer-delete
-     :get organizer-get}))
+        exam-session-post (-> session
+                              (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri)
+                                               :body base/exam-session
+                                               :content-type "application/json"
+                                               :request-method :post))
+        exam-session-put (-> session
+                             (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/1")
+                                              :body base/exam-session
+                                              :content-type "application/json"
+                                              :request-method :put))
+        exam-session-get (-> session
+                             (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri)
+                                              :request-method :get))
+        exam-session-delete (-> session
+                                (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/9999")
+                                                 :request-method :delete))]
+    {:org {:post organizer-post
+           :put organizer-put
+           :delete organizer-delete
+           :get organizer-get}
+     :exam {:post exam-session-post
+            :put exam-session-put
+            :delete exam-session-delete
+            :get exam-session-get}}))
+
+(defn- assert-status-code
+  [response code]
+  (is (= (-> response :response :status) code)))
 
 (deftest handle-authentication-success-callback-test
   (with-routes!
@@ -148,16 +173,26 @@
     (fn [server]
       (get-mock-routes (:port server) "yki_user"))
     (let [responses (fire-requests port)
-          organizers ((base/body-as-json (-> responses :get :response)) "organizers")]
-      (testing "post should not be allowed"
-        (is (= (-> responses :post :response :status) 401)))
-      (testing "put should not be allowed"
-        (is (= (-> responses :put :response :status) 401)))
-      (testing "delete should not be allowed"
-        (is (= (-> responses :delete :response :status) 401)))
-      (testing "get should return only organizers that user has permissions to see"
+          org-responses (:org responses)
+          exam-responses (:exam responses)
+          organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
+      (testing "post organizer should not be allowed"
+        (is (= (-> org-responses :post :response :status) 401)))
+      (testing "put organizer should not be allowed"
+        (is (= (-> org-responses :put :response :status) 401)))
+      (testing "delete organizer should not be allowed"
+        (is (= (-> org-responses :delete :response :status) 401)))
+      (testing "get organizer should return only organizers that user has permissions to see"
         (is (= (count organizers) 1))
-        (is (= (get (first organizers) "oid") "1.2.3.4"))))))
+        (is (= (get (first organizers) "oid") "1.2.3.4")))
+      (testing "post exam-session should be allowed"
+        (is (= (-> exam-responses :post :response :status) 200)))
+      (testing "put exam-session should be allowed"
+        (is (= (-> exam-responses :put :response :status) 200)))
+      (testing "get exam-session should be allowed"
+        (is (= (-> exam-responses :get :response :status) 200)))
+      (testing "delete exam-session should be allowed"
+        (is (= (-> exam-responses :get :response :status) 200))))))
 
 (deftest user-with-oph-permissions-authorization-test
   (base/insert-organizer "'1.2.3.5'")
@@ -166,28 +201,35 @@
     (fn [server]
       (get-mock-routes (:port server) "oph_user"))
     (let [responses (fire-requests port)
-          organizers ((base/body-as-json (-> responses :get :response)) "organizers")]
-      (testing "post should be allowed"
-        (is (= (-> responses :post :response :status) 200)))
-      (testing "put should be allowed"
-        (is (= (-> responses :put :response :status) 200)))
-      (testing "delete should be allowed"
-        (is (= (-> responses :delete :response :status) 404)))
-      (testing "get should return all organizers"
-        (is (= (count organizers) 2))))))
+          org-responses (:org responses)
+          exam-responses (:exam responses)
+          organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
+      (testing "should allow all endpoints"
+        (assert-status-code (:get org-responses) 200)
+        (is (= (count organizers) 2))
+        (assert-status-code (:put org-responses) 200)
+        (assert-status-code (:delete org-responses) 404)
+        (assert-status-code (:post org-responses) 200)
+        (assert-status-code (:get exam-responses) 200)
+        (assert-status-code (:put exam-responses) 200)
+        (assert-status-code (:delete exam-responses) 404)
+        (assert-status-code (:post exam-responses) 200)))))
 
-(deftest user-without-yki-permissions-authorization-test
+(deftest user-without-permissions-authorization-test
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server) "no_permissions_user"))
-    (let [responses (fire-requests port)]
-      (testing "post should not be allowed"
-        (is (= (-> responses :post :response :status) 401)))
-      (testing "put should not be allowed"
-        (is (= (-> responses :put :response :status) 401)))
-      (testing "delete should not be allowed"
-        (is (= (-> responses :delete :response :status) 401)))
-      (testing "get should not be allowed"
-        (is (= (-> responses :get :response :status)
-               401))))))
-
+    (let [responses     (fire-requests port)
+          exam-responses (:exam responses)
+          org-responses (:org responses)
+          organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
+      (testing "should not allow any endpoints"
+        (assert-status-code (:get org-responses) 200)
+        (is (= (count organizers) 0))
+        (assert-status-code (:put org-responses) 401)
+        (assert-status-code (:delete org-responses) 401)
+        (assert-status-code (:post org-responses) 401)
+        (assert-status-code (:get exam-responses) 401)
+        (assert-status-code (:put exam-responses) 401)
+        (assert-status-code (:delete exam-responses) 401)
+        (assert-status-code (:post exam-responses) 401)))))

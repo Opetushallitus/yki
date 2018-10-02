@@ -7,6 +7,10 @@
       {
         "organisaatioOid": "1.2.3.5",
         "kayttooikeudet": [{ "palvelu": "OTHER", "oikeus": "ADMIN" }]
+      },
+      {
+        "organisaatioOid": "1.2.3.9999",
+        "kayttooikeudet": [{ "palvelu": "YKI", "oikeus": "ADMIN" }]
       }
     ]
   }

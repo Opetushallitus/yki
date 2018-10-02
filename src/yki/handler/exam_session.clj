@@ -1,4 +1,4 @@
-(ns yki.handler.exam_session
+(ns yki.handler.exam-session
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.exam-session-db :as exam-session-db]
             [ring.util.response :refer [response not-found header]]

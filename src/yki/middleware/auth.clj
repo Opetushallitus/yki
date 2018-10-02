@@ -59,15 +59,15 @@
 
 (defn- rules [redirect-url] [{:pattern #".*/auth/cas/callback"
                               :handler any-access}
-                             {:pattern #".*/api/virkailija/organizer/.*/exam-session"
+                             {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
                               :handler {:and [authenticated {:or [oph-user-access permission-to-organization]}]}}
                              {:pattern #".*/api/virkailija/organizer"
                               :handler {:and [authenticated oph-user-access]}
                               :request-method :post}
-                             {:pattern #".*/api/virkailija/organizer.*"
+                             {:pattern #".*/api/virkailija/organizer/.*"
                               :handler {:and [authenticated oph-user-access]}
                               :request-method :put}
-                             {:pattern #".*/api/virkailija/organizer.*"
+                             {:pattern #".*/api/virkailija/organizer/.*"
                               :handler {:and [authenticated oph-user-access]}
                               :request-method :delete}
                              {:pattern #".*/api/virkailija/organizer"
