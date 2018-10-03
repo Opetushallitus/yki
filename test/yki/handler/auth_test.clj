@@ -219,10 +219,10 @@
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server) "no_permissions_user"))
-    (let [responses     (fire-requests port)
-          exam-responses (:exam responses)
-          org-responses (:org responses)
-          organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
+    (let [responses       (fire-requests port)
+          exam-responses  (:exam responses)
+          org-responses   (:org responses)
+          organizers      ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "should not allow any endpoints"
         (assert-status-code (:get org-responses) 200)
         (is (= (count organizers) 0))
