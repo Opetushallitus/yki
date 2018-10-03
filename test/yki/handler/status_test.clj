@@ -9,17 +9,16 @@
             [yki.handler.routing :as routing]
             [yki.handler.status]))
 
-(use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
+(use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction]))
 
-(defn- send-request [tx request]
-  (let [db (duct.database.sql/->Boundary tx)
+(defn- send-request [request]
+  (let [db (duct.database.sql/->Boundary @embedded-db/conn)
         handler (middleware/wrap-format (ig/init-key :yki.handler/status {:db db}))]
     (handler request)))
 
 (deftest status-ok-test
-  (jdbc/with-db-connection [tx embedded-db/db-spec]
-    (let [request (mock/request :get routing/status-api-root)
-          response (send-request tx request)]
-      (testing "get status endpoint should return 200 when db connection is ok"
-        (is (= (:status response) 200))))))
+  (let [request (mock/request :get routing/status-api-root)
+        response (send-request request)]
+    (testing "get status endpoint should return 200 when db connection is ok"
+      (is (= (:status response) 200)))))
 

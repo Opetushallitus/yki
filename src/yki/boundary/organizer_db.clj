@@ -26,6 +26,7 @@
   (delete-organizer! [db oid])
   (update-organizer! [db oid organizer])
   (get-organizers [db])
+  (get-organizers-by-oids [db oids])
   (create-attachment-metadata! [db oid attachment-type external-id]))
 
 (extend-protocol Organizers
@@ -55,5 +56,7 @@
         (q/insert-organizer-language! tx (merge lang {:oid oid})))
       (q/update-organizer! tx (assoc (convert-dates organizer) :oid oid))))
   (get-organizers [{:keys [spec]}]
-    (q/select-organizers spec)))
+    (q/select-organizers spec))
+  (get-organizers-by-oids [{:keys [spec]} oids]
+    (q/select-organizers-by-oids spec {:oids oids})))
 

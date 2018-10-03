@@ -11,6 +11,20 @@ SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.co
 FROM organizer o
 WHERE deleted_at IS NULL;
 
+-- name: select-organizers-by-oids
+SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.contact_shared_email,
+(
+  SELECT array_to_json(array_agg(lang))
+  FROM (
+    SELECT language_code, level_code
+    FROM exam_language
+    WHERE organizer_id = o.id
+  ) lang
+) AS languages
+FROM organizer o
+WHERE deleted_at IS NULL
+  AND o.oid IN (:oids);
+
 -- name: select-organizer
 SELECT
   o.oid,
