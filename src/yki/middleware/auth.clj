@@ -79,7 +79,7 @@
    {:pattern #".*/api/virkailija/organizer"
     :handler authenticated ; authorized on database level
     :request-method :get}
-    {:pattern #".*/api/virkailija/organizer.*"
+   {:pattern #".*/api/virkailija/organizer.*"
     :handler {:and [authenticated oph-user-access]}
     :request-method #{:post :put :delete}}
    {:pattern #".*/auth/cas"
