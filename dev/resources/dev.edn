@@ -30,5 +30,5 @@
  :yki.handler/organizer {:db #ig/ref :duct.database/sql
                          :url-helper #ig/ref :yki.util/url-helper
                          :file-handler #ig/ref  :yki.handler/file
-                         :auth #ig/ref :yki.middleware.no-auth/with-authentication}}
+                         :auth #ig/ref :yki.middleware.auth/with-authentication}}
 

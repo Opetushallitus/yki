@@ -20,6 +20,8 @@
                  [buddy/buddy-auth "2.1.0"]
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.3.0"]
+                 [org.clojure/tools.logging "0.4.1"]
+                 [ring-logger "1.0.1"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  ;; these two are necessary for Scala Cas Client
                  [org.http4s/blaze-http_2.11 "0.10.1" :upgrade false]

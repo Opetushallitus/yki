@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.exam-session-db :as exam-session-db]
             [ring.util.response :refer [response not-found header]]
-            [taoensso.timbre :as timbre :refer [info error]]
+            [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [bad-request]]
             [ring.util.request]
             [yki.spec :as ys]

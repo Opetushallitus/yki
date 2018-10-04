@@ -5,7 +5,7 @@
             [yki.spec :as ys]
             [clojure.java.io :as io]
             [ring.util.response :refer [response]]
-            [taoensso.timbre :as timbre :refer [info error]]
+            [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [bad-request]]
             [ring.util.request]
             [clojure.spec.alpha :as s]

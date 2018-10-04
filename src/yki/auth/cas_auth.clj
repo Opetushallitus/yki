@@ -3,17 +3,18 @@
             [integrant.core :as ig]
             [yki.handler.routing :as routing]
             [yki.boundary.cas :as cas]
-            [taoensso.timbre :as timbre :refer [info error]]
+            [clojure.tools.logging :refer [info error]]
             [yki.boundary.permissions :as permissions]
             [ring.util.response :refer [response status redirect]]
-            [clojure.string :as str]))
+            [clojure.string :as str])
+  (:import [java.util UUID]))
 
 (def unauthorized {:status 401
                    :body "Unauthorized"
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn- yki-permission? [permission]
-  (= (permission "palvelu") "YKI"))
+  (= (permission "palvelu") "YKI")) ;EPERUSTEET_YLOPS
 
 (defn- yki-permissions [org]
   {:oid (org "organisaatioOid")
@@ -36,7 +37,8 @@
           (-> (redirect (url-helper :yki.cas.login-success.redirect))
               (assoc :session {:identity  {:username username
                                            :organizations organizations
-                                           :ticket ticket}}))))
+                                           :ticket ticket}
+                               :yki-session-id (str (UUID/randomUUID))}))))
       unauthorized)
     (catch Exception e
       (error e "Cas ticket handling failed")

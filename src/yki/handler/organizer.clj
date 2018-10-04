@@ -4,7 +4,8 @@
             [yki.handler.routing :as routing]
             [yki.middleware.auth :as auth]
             [yki.spec :as ys]
-            [taoensso.timbre :as timbre :refer [info error]]
+            [yki.middleware.access-log :as access-log]
+            [clojure.tools.logging :refer [info error]]
             [ring.util.response :refer [response not-found header]]
             [ring.util.http-response :refer [ok bad-request]]
             [ring.util.request]
@@ -16,7 +17,7 @@
 (defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler]}]
   (api
    (context routing/organizer-api-root []
-     :middleware [auth]
+     :middleware [auth access-log/with-logging]
      :coercion :spec
      (POST "/" []
        :body [organizer ::ys/organizer-type]
