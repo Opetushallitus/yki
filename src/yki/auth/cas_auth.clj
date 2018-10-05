@@ -14,7 +14,7 @@
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn- yki-permission? [permission]
-  (= (permission "palvelu") "YKI")) ;EPERUSTEET_YLOPS
+  (= (permission "palvelu") "YKI")) ;use EPERUSTEET_YLOPS for testing
 
 (defn- yki-permissions [org]
   {:oid (org "organisaatioOid")
@@ -29,6 +29,7 @@
     (if ticket
       (let [username (cas/validate-ticket (cas-client "/") ticket)
             permissions (permissions/virkailija-by-username permissions-client username)
+            person-oid (permissions "oidHenkilo")
             organizations (get-organizations-with-yki-permissions (permissions "organisaatiot"))
             session (:session request)]
         (info "user" username "logged in")
@@ -36,6 +37,7 @@
           unauthorized
           (-> (redirect (url-helper :yki.cas.login-success.redirect))
               (assoc :session {:identity  {:username username
+                                           :oid person-oid
                                            :organizations organizations
                                            :ticket ticket}
                                :yki-session-id (str (UUID/randomUUID))}))))

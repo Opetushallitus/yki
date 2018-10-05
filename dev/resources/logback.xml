@@ -39,16 +39,23 @@
             <maxIndex>10</maxIndex>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>10MB</maxFileSize>
+            <maxFileSize>5MB</maxFileSize>
         </triggeringPolicy>
         <encoder>
             <pattern>%msg%n</pattern>
         </encoder>
     </appender>
 
+      <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-4relative [%thread] %-5level %logger{35} - %msg %n</pattern>
+        </encoder>
+    </appender>
+
     <!-- Application log -->
     <root level="INFO">
         <appender-ref ref="APP" />
+        <appender-ref ref="STDOUT" />
     </root>
 
     <!-- Access Log -->
@@ -57,7 +64,7 @@
     </logger>
 
     <!-- Auditlog -->
-    <logger name="fi.vm.sade.auditlog.Audit" level="INFO" additivity="false">
+    <logger name="yki.util.audit-log" level="INFO" additivity="false">
         <appender-ref ref="AUDIT" />
     </logger>
 

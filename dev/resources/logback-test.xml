@@ -7,6 +7,9 @@
     </layout>
   </appender>
 
+    <logger name="ring.logger" level="OFF" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
 
   <root level="ERROR">
     <appender-ref ref="STDOUT" />
