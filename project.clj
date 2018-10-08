@@ -20,11 +20,14 @@
                  [buddy/buddy-auth "2.1.0"]
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.3.0"]
+                 [org.clojure/tools.logging "0.4.1"]
+                 [ring-logger "1.0.1"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  ;; these two are necessary for Scala Cas Client
                  [org.http4s/blaze-http_2.11 "0.10.1" :upgrade false]
                  [org.http4s/http4s-json4s-native_2.11 "0.10.1" :upgrade false]
                  [oph/clj-util "0.1.0" :exclusions [org.http4s/blaze-http_2.11]]
+                 [fi.vm.sade/auditlogger "8.2.0-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
   :cloverage {:ns-exclude-regex [#"dev" #"user" #"yki.main" #"yki.middleware.no-auth"]}
   :plugins [[duct/lein-duct "0.10.6"]
@@ -40,6 +43,7 @@
   :prep-tasks     ["javac" "compile" ["run" ":duct/compiler"]]
   :profiles
   {:dev  [:project/dev :profiles/dev]
+   :test {:jvm-opts ["-Dlogback.configurationFile=test/resources/logback-test.xml"]}
    :repl {:prep-tasks   ^:replace ["javac" "compile"]
           :repl-options {:init-ns user}}
    :uberjar {:aot :all}

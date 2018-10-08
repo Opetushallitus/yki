@@ -1,6 +1,6 @@
 (ns yki.middleware.no-auth
   (:require [ring.middleware.session :refer [wrap-session]]
-            [taoensso.timbre :as timbre :refer [warn]]
+            [clojure.tools.logging :refer [warn]]
             [ring.middleware.session.cookie :refer [cookie-store]]
             [integrant.core :as ig]))
 
