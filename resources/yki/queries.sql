@@ -184,6 +184,36 @@ FROM exam_session e INNER JOIN organizer o
 WHERE e.session_date >= COALESCE(:from, e.session_date)
   AND o.oid = COALESCE(:oid, o.oid);
 
+-- name: select-exam-session-by-id
+SELECT
+  e.id,
+  e.session_date,
+  e.session_start_time,
+  e.session_end_time,
+  e.registration_start_date,
+  e.registration_start_time,
+  e.registration_end_date,
+  e.registration_end_time,
+  e.max_participants,
+  e.published_at,
+  o.oid as organizer_oid,
+(
+  SELECT array_to_json(array_agg(loc))
+  FROM (
+    SELECT
+      street_address,
+      city,
+      other_location_info,
+      extra_information,
+      language_code
+    FROM exam_session_location
+    WHERE exam_session_id = e.id
+  ) loc
+) AS location
+FROM exam_session e INNER JOIN organizer o
+  ON e.organizer_id = o.id
+WHERE e.id = :id;
+
 -- name: update-exam-session!
 UPDATE exam_session
 SET

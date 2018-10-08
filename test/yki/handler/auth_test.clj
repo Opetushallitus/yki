@@ -138,7 +138,7 @@
       (testing "callback endpoint should set identity returned from cas client to session"
         (is (= (identity "username") "test")))
       (testing "callback endpoint should set person oid returned from permissions client to session"
-          (is (= (identity "oid") "1.2.3.4.5")))
+        (is (= (identity "oid") "1.2.3.4.5")))
       (testing "callback endpoint should set only YKI permissions returned from permissions client to session"
         (is (= organizations
                [{"oid" "1.2.3.4" "permissions" [{"oikeus" "ADMIN" "palvelu" "YKI"}]}]))))))

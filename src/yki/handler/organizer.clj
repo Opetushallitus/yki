@@ -4,7 +4,6 @@
             [yki.handler.routing :as routing]
             [yki.middleware.auth :as auth]
             [yki.util.audit-log :as audit-log]
-            [jsonista.core :as json]
             [yki.spec :as ys]
             [yki.middleware.access-log :as access-log]
             [clojure.tools.logging :refer [info error]]
@@ -13,10 +12,6 @@
             [ring.util.request]
             [integrant.core :as ig])
   (:import [com.fasterxml.jackson.datatype.joda JodaModule]))
-
-; (def mapper
-;   (json/object-mapper
-;    {:modules [(JodaModule.)]}))
 
 (defn- get-oids [session]
   (map #(:oid %) (auth/get-organizations-from-session session)))

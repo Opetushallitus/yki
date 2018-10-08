@@ -61,7 +61,7 @@
         user            (User. (oid-or-nil oid) inet-address (:yki-session-id session) user-agent)
         op              (op (:type change))
         target          (-> (Target$Builder.)
-                            (.setField (:k target-kv) (:v target-kv))
+                            (.setField (:k target-kv) (str (:v target-kv)))
                             (.build))
         changes         (-> (Changes$Builder.)
                             (add-changes change)

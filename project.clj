@@ -43,6 +43,7 @@
   :prep-tasks     ["javac" "compile" ["run" ":duct/compiler"]]
   :profiles
   {:dev  [:project/dev :profiles/dev]
+   :test {:jvm-opts ["-Dlogback.configurationFile=test/resources/logback-test.xml"]}
    :repl {:prep-tasks   ^:replace ["javac" "compile"]
           :repl-options {:init-ns user}}
    :uberjar {:aot :all}

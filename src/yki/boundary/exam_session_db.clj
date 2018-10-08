@@ -33,6 +33,7 @@
   (create-exam-session! [db oid exam-session])
   (update-exam-session! [db id exam-session])
   (delete-exam-session! [db id])
+  (get-exam-session-by-id [db id])
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and optional from arguments"))
 
@@ -56,6 +57,9 @@
   (delete-exam-session! [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (q/delete-exam-session! tx {:id id})))
+  (get-exam-session-by-id [{:keys [spec]} id]
+    (jdbc/with-db-transaction [tx spec]
+      (first (q/select-exam-session-by-id tx {:id id}))))
   (get-exam-sessions [{:keys [spec]} oid from]
     (q/select-exam-sessions spec {:oid oid
                                   :from (string->date from)})))
