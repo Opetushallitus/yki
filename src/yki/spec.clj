@@ -100,3 +100,7 @@
 (s/def ::external-id-type (s/keys :req-un [::external_id]))
 
 (s/def ::id-response (s/keys :req-un [::id]))
+
+;; localisation
+(s/def ::category (s/and string? #(<= (count %) 256)))
+(s/def ::key      (s/and string? #(<=  (count %) 256)))

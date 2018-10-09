@@ -1,19 +1,22 @@
 (ns yki.util.http-util
-  (:require [org.httpkit.client :as http]))
+  (:require [org.httpkit.client :as http]
+            [clojure.tools.logging :refer [info]]))
 
 (defn do-request
   [{:keys [url method] :as opts}]
+
   (let [opts        (update opts :headers merge {"clientSubSystemCode" "yki" "Caller-Id" "yki"})
         method-name (clojure.string/upper-case (name method))
         start       (System/currentTimeMillis)
         response    @(http/request opts)
         time        (- (System/currentTimeMillis) start)
-        status      (:status response 500)]
+        status      (:status response 500)
+        _           (info "Request" method-name url "returned" status "in" time "ms")]
     response))
 
 (defn do-get
-  [url]
-  (do-request {:url url :method :get}))
+  [url query-params]
+  (do-request {:url url :method :get :query-params query-params}))
 
 (defn do-post
   [url opts]

@@ -9,6 +9,7 @@
  :duct-migrations-auto-cfg/module {}
  :duct.router/cascading [#ig/ref :yki.handler/status
                          #ig/ref :yki.handler/auth
+                         #ig/ref :yki.handler/localisation
                          #ig/ref :yki.handler/organizer]
 
  :yki.util/url-helper {}
@@ -29,6 +30,8 @@
                     :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
+
+ :yki.handler/localisation {:url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/exam-session {:db #ig/ref :duct.database/sql}
 

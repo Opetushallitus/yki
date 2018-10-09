@@ -12,6 +12,8 @@
 
 (def virkailija-auth-logout (str virkailija-auth-root "/logout"))
 
+(def localisation-api-root (str api-root "/localisation"))
+
 (def virkailija-api-root (str api-root "/virkailija"))
 
 (def organizer-api-root (str virkailija-api-root "/organizer"))

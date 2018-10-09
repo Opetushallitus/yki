@@ -1,0 +1,44 @@
+[
+  {
+    "accesscount": 0,
+    "id": 3278,
+    "category": "osoitepalvelu",
+    "accessed": 1398332716933,
+    "created": 1398332716933,
+    "createdBy": "1.2.246.562.24.96497053108",
+    "modified": 1424426363648,
+    "modifiedBy": "1.2.246.562.24.25909319372",
+    "force": false,
+    "key": "address_field_email_osoite",
+    "locale": "en",
+    "value": "Email"
+  },
+  {
+    "accesscount": 0,
+    "id": 3271,
+    "category": "osoitepalvelu",
+    "accessed": 1398332716782,
+    "created": 1398332716782,
+    "createdBy": "1.2.246.562.24.96497053108",
+    "modified": 1397741751091,
+    "modifiedBy": "1.2.246.562.24.25909319372",
+    "force": false,
+    "key": "address_field_email_osoite",
+    "locale": "fi",
+    "value": "Email"
+  },
+  {
+    "accesscount": 0,
+    "id": 3273,
+    "category": "osoitepalvelu",
+    "accessed": 1398332716787,
+    "created": 1398332716787,
+    "createdBy": "1.2.246.562.24.96497053108",
+    "modified": 1424426363646,
+    "modifiedBy": "1.2.246.562.24.25909319372",
+    "force": false,
+    "key": "address_field_email_osoite",
+    "locale": "sv",
+    "value": "Epostadress"
+  }
+]
