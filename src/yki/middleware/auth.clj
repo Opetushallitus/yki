@@ -10,8 +10,7 @@
    [integrant.core :as ig]
    [clout.core :as clout]
    [ring.util.request :refer [request-url]]
-   [ring.util.response :refer [response status]]
-   [ring.util.http-response :refer [unauthorized forbidden]]))
+   [ring.util.http-response :refer [unauthorized forbidden found]]))
 
 (def backend (session-backend))
 
@@ -68,6 +67,11 @@
     (allowed-organization? (:session request) oid)
     true))
 
+(defn- callback-url-to-session-and-redirect
+  [request redirect-url]
+  (-> (found redirect-url)
+      (assoc :session {:success ((:query-params request) "callback")})))
+
 (defn- rules
   "OPH users are allowed to call all endpoints without restrictions to organizer.
   Other users have access only to organizer they have permissions for."
@@ -84,7 +88,7 @@
     :request-method #{:post :put :delete}}
    {:pattern #".*/auth/cas"
     :handler authenticated
-    :redirect redirect-url}
+    :on-error (fn [req _] (callback-url-to-session-and-redirect req redirect-url))}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"

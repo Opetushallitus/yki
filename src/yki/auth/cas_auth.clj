@@ -31,11 +31,12 @@
             permissions (permissions/virkailija-by-username permissions-client username)
             person-oid (permissions "oidHenkilo")
             organizations (get-organizations-with-yki-permissions (permissions "organisaatiot"))
-            session (:session request)]
+            session (:session request)
+            redirect-uri (or (:success session) (url-helper :yki.cas.login-success.redirect))]
         (info "user" username "logged in")
         (if (empty? organizations)
           unauthorized
-          (-> (redirect (url-helper :yki.cas.login-success.redirect))
+          (-> (redirect redirect-uri)
               (assoc :session {:identity  {:username username
                                            :oid person-oid
                                            :organizations organizations
