@@ -21,6 +21,7 @@
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.3.0"]
                  [org.clojure/tools.logging "0.4.1"]
+                 [org.clojure/core.memoize "0.7.1"]
                  [ring-logger "1.0.1"]
                  [ch.qos.logback/logback-classic "1.2.3"]
                  ;; these two are necessary for Scala Cas Client

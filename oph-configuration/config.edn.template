@@ -8,7 +8,7 @@
                                  :password "{{host_postgresql_yki_password}}"
                                  :connection-timeout {{host_postgresql_yki_max_wait}}
                                  :maximum-pool-size {{host_postgresql_yki_max_active}}}
-
+ :duct.migrator/ragtime {:resource-path "yki/migrations"}
  :yki.util/url-helper {:virkailija-host "{{host_virkailija}}"
                        :liiteri-host "{{host_virkailija}}"
                        :yki-host    "{{host_ilb}}"}}
@@ -23,3 +23,4 @@
                                     :http-only false
                                     :secure true
                                     :path "/yki"}}}}
+                                    
