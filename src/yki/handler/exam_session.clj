@@ -36,7 +36,7 @@
           :body [exam-session ::ys/exam-session]
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if (exam-session-db/update-exam-session! db id exam-session)
+          (if (exam-session-db/update-exam-session! db oid id exam-session)
             (let [current (exam-session-db/get-exam-session-by-id db id)]
               (audit-log/log {:request request
                               :target-kv {:k audit-log/exam-session

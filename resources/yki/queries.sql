@@ -107,6 +107,7 @@ INSERT INTO attachment_metadata (
 -- name: insert-exam-session<!
 INSERT INTO exam_session (
   organizer_id,
+  exam_language_id,
   session_date,
   session_start_time,
   session_end_time,
@@ -118,6 +119,10 @@ INSERT INTO exam_session (
   published_at
 ) VALUES (
   (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL),
+  (SELECT id FROM exam_language el
+    WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+      AND el.language_code = :language_code
+      AND el.level_code = :level_code),
   :session_date,
   :session_start_time,
   :session_end_time,
@@ -156,6 +161,8 @@ INSERT INTO exam_session_date(
 -- name: select-exam-sessions
 SELECT
   e.id,
+  el.language_code,
+  el.level_code,
   e.session_date,
   e.session_start_time,
   e.session_end_time,
@@ -179,8 +186,9 @@ SELECT
     WHERE exam_session_id = e.id
   ) loc
 ) AS location
-FROM exam_session e INNER JOIN organizer o
-  ON e.organizer_id = o.id
+FROM exam_session e
+INNER JOIN organizer o ON e.organizer_id = o.id
+INNER JOIN exam_language el ON e.exam_language_id = el.id
 WHERE e.session_date >= COALESCE(:from, e.session_date)
   AND o.oid = COALESCE(:oid, o.oid);
 
@@ -220,6 +228,11 @@ SET
   session_date = :session_date,
   session_start_time = :session_start_time,
   session_end_time = :session_end_time,
+  exam_language_id =
+  (SELECT id FROM exam_language el
+    WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+      AND el.language_code = :language_code
+      AND el.level_code = :level_code),
   registration_start_date = :registration_start_date,
   registration_start_time = :registration_start_time,
   registration_end_date = :registration_end_date,

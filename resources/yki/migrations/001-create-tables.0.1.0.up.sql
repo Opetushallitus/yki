@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS attachment_metadata (
 CREATE TABLE IF NOT EXISTS exam_session (
   id BIGSERIAL PRIMARY KEY,
   organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
+  exam_language_id BIGSERIAL NOT NULL REFERENCES exam_language(id),
   session_date DATE NOT NULL,
   session_start_time TIME NOT NULL,
   session_end_time TIME NOT NULL,
