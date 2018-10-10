@@ -6,7 +6,6 @@
             [jsonista.core :as j]
             [clojure.java.io :as io]
             [muuntaja.middleware :as middleware]
-            [muuntaja.core :as m]
             [clojure.java.jdbc :as jdbc]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
@@ -14,7 +13,8 @@
             [yki.handler.file]
             [yki.handler.organizer]))
 
-(use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]) :each embedded-db/with-transaction)
+(use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
+(use-fixtures :each embedded-db/with-transaction)
 
 (deftest exam-session-validation-test
   (let [invalid-exam-session (base/change-entry base/exam-session "registration_start_time" "2019-03-01")
@@ -29,8 +29,9 @@
 
 (deftest exam-session-crud-test
   (base/insert-organizer "'1.2.3.4'")
+  (base/insert-languages "'1.2.3.4'")
 
-  (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session?from=2000-01-01") base/exam-session)
+  (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (base/send-request-with-tx request)
         response-body (base/body-as-json response)]

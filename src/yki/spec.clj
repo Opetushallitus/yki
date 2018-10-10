@@ -83,6 +83,8 @@
 (s/def ::exam-session (s/keys :req-un [::session_date
                                        ::session_start_time
                                        ::session_end_time
+                                       ::language_code
+                                       ::level_code
                                        ::registration_start_date
                                        ::registration_start_time
                                        ::registration_end_date

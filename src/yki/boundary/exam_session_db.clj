@@ -13,11 +13,13 @@
 
 (defn- convert-dates [{:keys [organizer_oid session_date session_start_time session_end_time
                               registration_start_date registration_start_time registration_end_date
-                              registration_end_time max_participants published_at]}]
+                              registration_end_time max_participants published_at language_code level_code]}]
   {:organizer_oid organizer_oid
    :session_date (f/parse session_date)
    :session_start_time (f/parse session_start_time)
    :session_end_time (f/parse session_end_time)
+   :language_code language_code
+   :level_code level_code
    :registration_start_date (f/parse registration_start_date)
    :registration_start_time (f/parse registration_start_time)
    :registration_end_date (f/parse registration_end_date)
@@ -31,7 +33,7 @@
 
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session])
-  (update-exam-session! [db id exam-session])
+  (update-exam-session! [db oid id exam-session])
   (delete-exam-session! [db id])
   (get-exam-session-by-id [db id])
   (get-exam-sessions [db oid from]
@@ -48,12 +50,12 @@
           (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))
         exam-session-id)))
   (update-exam-session!
-    [{:keys [spec]} id exam-session]
+    [{:keys [spec]} oid id exam-session]
     (jdbc/with-db-transaction [tx spec]
       (q/delete-exam-session-location! tx {:id id})
       (doseq [location (:location exam-session)]
         (q/insert-exam-session-location! tx (assoc location :exam_session_id id)))
-      (q/update-exam-session! tx (assoc (convert-dates exam-session) :id id))))
+      (q/update-exam-session! tx (assoc (convert-dates exam-session) :oid oid :id id))))
   (delete-exam-session! [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (q/delete-exam-session! tx {:id id})))

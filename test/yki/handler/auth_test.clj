@@ -170,6 +170,8 @@
 (deftest user-with-yki-permissions-authorization-test
   (base/insert-organizer "'1.2.3.4'")
   (base/insert-organizer "'1.2.3.5'")
+  (base/insert-languages "'1.2.3.4'")
+  (base/insert-languages "'1.2.3.5'")
 
   (with-routes!
     (fn [server]
