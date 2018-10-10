@@ -10,6 +10,7 @@
 
  :yki.util/url-helper {:virkailija-host "virkailija.untuvaopintopolku.fi"
                        :liiteri-host     "virkailija.untuvaopintopolku.fi"
+                       :tunnistus-host "tunnistus.untuvaopintopolku.fi"
                        :yki-host    "http://localhost:8080"}
 
  :yki.middleware.auth/with-authentication

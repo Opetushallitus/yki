@@ -75,7 +75,7 @@
 (defn- rules
   "OPH users are allowed to call all endpoints without restrictions to organizer.
   Other users have access only to organizer they have permissions for."
-  [redirect-url]
+  [cas-redirect-url]
   [{:pattern #".*/auth/cas/callback"
     :handler any-access}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
@@ -88,12 +88,12 @@
     :request-method #{:post :put :delete}}
    {:pattern #".*/auth/cas"
     :handler authenticated
-    :on-error (fn [req _] (callback-url-to-session-and-redirect req redirect-url))}
+    :on-error (fn [req _] (callback-url-to-session-and-redirect req cas-redirect-url))}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"
     :handler authenticated
-    :redirect redirect-url}])
+    :redirect cas-redirect-url}])
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config]}]
   (defn with-authentication [handler]
