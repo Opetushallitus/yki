@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS exam_session (
   max_participants INTEGER NOT NULL,
   published_at TIMESTAMP DEFAULT NULL,
   created TIMESTAMP DEFAULT current_timestamp,
-  modified TIMESTAMP DEFAULT current_timestamp
+  modified TIMESTAMP DEFAULT current_timestamp,
+  UNIQUE (organizer_id, exam_language_id, session_date)
 );
 --;;
 CREATE INDEX exam_session_session_date
