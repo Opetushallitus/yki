@@ -2,14 +2,14 @@
   (:require [compojure.api.sweet :refer :all]
             [integrant.core :as ig]
             [yki.handler.routing :as routing]
-            [yki.middleware.access-log :as access-log]
+            [yki.middleware.access-log]
             [ring.util.response :refer [response]]
             [yki.auth.cas-auth :as cas-auth]))
 
-(defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client permissions-client]}]
+(defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client permissions-client access-log]}]
   (api
    (context routing/virkailija-auth-root []
-     :middleware [auth access-log/with-logging]
+     :middleware [auth access-log]
      (GET "/callback" [ticket :as request]
        (cas-auth/login ticket request cas-client permissions-client url-helper))
      (GET "/logout" {session :session}

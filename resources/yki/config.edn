@@ -24,9 +24,12 @@
  {:url-helper #ig/ref :yki.util/url-helper
   :session-config {}}
 
+ :yki.middleware.access-log/with-logging {}
+
  :yki.handler/auth {:auth #ig/ref :yki.middleware.auth/with-authentication
                     :cas-client #ig/ref  :yki.boundary.cas/cas-client
                     :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
+                    :access-log #ig/ref :yki.middleware.access-log/with-logging
                     :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
@@ -41,6 +44,7 @@
  :yki.handler/organizer {:db #ig/ref :duct.database/sql
                          :url-helper #ig/ref :yki.util/url-helper
                          :file-handler #ig/ref  :yki.handler/file
+                         :access-log #ig/ref :yki.middleware.access-log/with-logging
                          :exam-session-handler #ig/ref :yki.handler/exam-session
                          :auth #ig/ref :yki.middleware.auth/with-authentication}}
 

@@ -5,7 +5,7 @@
             [yki.middleware.auth :as auth]
             [yki.util.audit-log :as audit-log]
             [yki.spec :as ys]
-            [yki.middleware.access-log :as access-log]
+            [yki.middleware.access-log]
             [clojure.tools.logging :refer [info error]]
             [ring.util.response :refer [response not-found header]]
             [ring.util.http-response :refer [ok bad-request]]
@@ -16,10 +16,10 @@
 (defn- get-oids [session]
   (map #(:oid %) (auth/get-organizations-from-session session)))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler]}]
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler access-log]}]
   (api
    (context routing/organizer-api-root []
-     :middleware [auth access-log/with-logging]
+     :middleware [auth access-log]
      :coercion :spec
      (POST "/" request
        :body [organizer ::ys/organizer-type]
