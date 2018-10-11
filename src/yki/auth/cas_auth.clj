@@ -5,6 +5,7 @@
             [yki.boundary.cas :as cas]
             [clojure.tools.logging :refer [info error]]
             [yki.boundary.permissions :as permissions]
+            [ring.util.http-response :refer [found]]
             [ring.util.response :refer [response status redirect]]
             [clojure.string :as str])
   (:import [java.util UUID]))
@@ -36,7 +37,7 @@
         (info "user" username "logged in")
         (if (empty? organizations)
           unauthorized
-          (-> (redirect redirect-uri)
+          (-> (found redirect-uri)
               (assoc :session {:identity  {:username username
                                            :oid person-oid
                                            :organizations organizations
@@ -49,5 +50,5 @@
 
 (defn logout [session url-helper]
   (info "user" (-> session :identity :username) "logged out")
-  (-> (redirect (url-helper :cas.logout))
+  (-> (found (url-helper :cas.logout))
       (assoc :session {:identity nil})))

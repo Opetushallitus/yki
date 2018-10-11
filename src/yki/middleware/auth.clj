@@ -10,7 +10,7 @@
    [integrant.core :as ig]
    [clout.core :as clout]
    [ring.util.request :refer [request-url]]
-   [ring.util.http-response :refer [unauthorized forbidden found]]))
+   [ring.util.http-response :refer [unauthorized forbidden found see-other]]))
 
 (def backend (session-backend))
 
@@ -20,10 +20,10 @@
   ["*/organizer/:oid"
    "*/organizer/:oid/*"])
 
-(defn- any-access [request]
+(defn- any-access [_]
   true)
 
-(defn- no-access [request]
+(defn- no-access [_]
   false)
 
 (defn- authenticated [request]
@@ -67,15 +67,24 @@
     (allowed-organization? (:session request) oid)
     true))
 
-(defn- callback-url-to-session-and-redirect
-  [request redirect-url]
-  (-> (found redirect-url)
+(defn- redirect-to-cas
+  [request url-helper]
+  (-> (found (url-helper :cas.login))
       (assoc :session {:success ((:query-params request) "callback")})))
+
+(defn- redirect-to-shibboleth
+  [request url-helper]
+  (let [lang ((:query-params request) "lang")
+        url-key (if (and lang (= "sv" lang))
+                  "tunnistus.url.sv"
+                  "tunnistus.url.fi")]
+    (-> (see-other (url-helper url-key))
+        (assoc :session {:success ((:query-params request) "callback")}))))
 
 (defn- rules
   "OPH users are allowed to call all endpoints without restrictions to organizer.
   Other users have access only to organizer they have permissions for."
-  [cas-redirect-url]
+  [url-helper]
   [{:pattern #".*/auth/cas/callback"
     :handler any-access}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
@@ -86,19 +95,21 @@
    {:pattern #".*/api/virkailija/organizer.*"
     :handler {:and [authenticated oph-user-access]}
     :request-method #{:post :put :delete}}
-   {:pattern #".*/auth/cas"
+   {:pattern #".*/auth/cas.*"
     :handler authenticated
-    :on-error (fn [req _] (callback-url-to-session-and-redirect req cas-redirect-url))}
+    :on-error (fn [req _] (redirect-to-cas req url-helper))}
+   {:pattern #".*/auth"
+    :handler authenticated
+    :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"
-    :handler authenticated
-    :redirect cas-redirect-url}])
+    :handler no-access}])
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config]}]
   (defn with-authentication [handler]
     (-> handler
-        (wrap-access-rules {:rules (rules (url-helper :cas.login))})
+        (wrap-access-rules {:rules (rules url-helper)})
         (wrap-authentication backend)
         (wrap-authorization backend)
         (wrap-session {:store (cookie-store {:key (:key session-config)})

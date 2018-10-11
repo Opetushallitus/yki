@@ -1,6 +1,5 @@
 (ns yki.handler.base-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
+  (:require [integrant.core :as ig]
             [ring.mock.request :as mock]
             [duct.database.sql]
             [jsonista.core :as j]
