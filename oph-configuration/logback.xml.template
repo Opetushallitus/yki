@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="true">
-
+    {% raw %}
     <appender name="APP" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <Append>true</Append>
         <File>${user.home}/logs/oph-yki.log</File>
@@ -45,7 +45,7 @@
             <pattern>%msg%n</pattern>
         </encoder>
     </appender>
-
+    {% endraw %}
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%-4relative [%thread] %-5level %logger{35} - %msg %n</pattern>
