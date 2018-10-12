@@ -75,8 +75,8 @@
 (defn- redirect-to-shibboleth
   [request url-helper]
   (let [lang ((:query-params request) "lang")
-        url-key (if (and lang (= "sv" lang))
-                  "tunnistus.url.sv"
+        url-key (if lang
+                  (str "tunnistus.url." lang)
                   "tunnistus.url.fi")]
     (-> (see-other (url-helper url-key))
         (assoc :session {:success ((:query-params request) "callback")}))))
@@ -86,6 +86,8 @@
   Other users have access only to organizer they have permissions for."
   [url-helper]
   [{:pattern #".*/auth/cas/callback"
+    :handler any-access}
+   {:pattern #".*/auth/initsession"
     :handler any-access}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [authenticated {:or [oph-user-access permission-to-organization]}]}}
