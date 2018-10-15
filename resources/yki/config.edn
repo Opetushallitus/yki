@@ -16,19 +16,24 @@
 
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {}}
+
+ :yki.boundary.onr/onr-client {:url-helper #ig/ref :yki.util/url-helper
+                               :cas-client #ig/ref  :yki.boundary.cas/cas-client}
+
  :yki.boundary.permissions/permissions-client {:url-helper #ig/ref :yki.util/url-helper
                                                :cas-client #ig/ref  :yki.boundary.cas/cas-client}
+
  :yki.boundary.files/liiteri-file-store {:url-helper #ig/ref :yki.util/url-helper}
 
- :yki.middleware.auth/with-authentication
- {:url-helper #ig/ref :yki.util/url-helper
-  :session-config {}}
+ :yki.middleware.auth/with-authentication {:url-helper #ig/ref :yki.util/url-helper
+                                           :session-config {}}
 
  :yki.middleware.access-log/with-logging {}
 
  :yki.handler/auth {:auth #ig/ref :yki.middleware.auth/with-authentication
                     :cas-client #ig/ref  :yki.boundary.cas/cas-client
                     :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
+                    :onr-client #ig/ref :yki.boundary.onr/onr-client
                     :access-log #ig/ref :yki.middleware.access-log/with-logging
                     :url-helper #ig/ref :yki.util/url-helper}
 

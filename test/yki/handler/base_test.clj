@@ -37,6 +37,15 @@
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
 
+(defn cas-mock-routes [port]
+  {"/cas/v1/tickets" {:status 201
+                      :method :post
+                      :headers {"Location" (str "http://localhost:" port "/cas/v1/tickets/TGT-1-FFDFHDSJK")}
+                      :body "ST-1-FFDFHDSJK2"}
+   "/cas/v1/tickets/TGT-1-FFDFHDSJK" {:status 200
+                                      :method :post
+                                      :body "ST-1-FFDFHDSJK2"}})
+
 (defn body-as-json [response]
   (j/read-value (slurp (:body response) :encoding "UTF-8")))
 
@@ -54,7 +63,7 @@
   ([request port]
    (let [uri (str "localhost:" port)
          db (duct.database.sql/->Boundary @embedded-db/conn)
-         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :protocol-base "http"})
+         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :scheme "http"})
          exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
          file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
          file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})

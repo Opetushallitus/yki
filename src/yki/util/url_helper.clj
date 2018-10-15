@@ -4,12 +4,12 @@
 
 (defonce ^fi.vm.sade.properties.OphProperties url-properties (atom nil))
 
-(defmethod ig/init-key :yki.util/url-helper [_ {:keys [virkailija-host tunnistus-host yki-host liiteri-host protocol-base] :or
+(defmethod ig/init-key :yki.util/url-helper [_ {:keys [virkailija-host tunnistus-host yki-host liiteri-host scheme] :or
                                                 {virkailija-host "" tunnistus-host ""
-                                                 yki-host "" liiteri-host "" protocol-base "https"}}]
+                                                 yki-host "" liiteri-host "" scheme "https"}}]
   (reset! url-properties
           (doto (OphProperties. (into-array String ["/yki/yki-oph.properties"]))
-            (.addDefault "base-protocol" protocol-base)
+            (.addDefault "scheme" scheme)
             (.addDefault "host-virkailija" virkailija-host)
             (.addDefault "host-tunnistus" tunnistus-host)
             (.addDefault "host-liiteri" liiteri-host)

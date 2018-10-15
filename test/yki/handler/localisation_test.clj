@@ -17,7 +17,7 @@
 (defn- create-route
   [port]
   (let [uri (str "localhost:" port)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :protocol-base "http"})
+        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :scheme "http"})
         localisation-handler (ig/init-key :yki.handler/localisation {:url-helper url-helper})]
     localisation-handler))
 

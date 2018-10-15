@@ -7,6 +7,7 @@
    [ring.middleware.session.cookie :refer [cookie-store]]
    [buddy.auth.accessrules :refer [wrap-access-rules success error]]
    [buddy.auth.backends.session :refer [session-backend]]
+   [clojure.tools.logging :refer [warn]]
    [integrant.core :as ig]
    [clout.core :as clout]
    [ring.util.request :refer [request-url]]
@@ -23,11 +24,12 @@
 (defn- any-access [_]
   true)
 
-(defn- no-access [_]
+(defn- no-access [request]
+  (warn "No access to uri:" (:uri request))
   false)
 
 (defn- authenticated [request]
-  (if (-> request :session :identity :ticket)
+  (if (-> request :session :identity)
     true
     (error unauthorized)))
 
@@ -101,6 +103,9 @@
     :handler authenticated
     :on-error (fn [req _] (redirect-to-cas req url-helper))}
    {:pattern #".*/auth"
+    :handler authenticated
+    :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
+   {:pattern #".*/auth/user"
     :handler authenticated
     :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
    {:pattern #".*/api.*"

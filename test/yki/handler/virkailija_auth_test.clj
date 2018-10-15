@@ -18,28 +18,24 @@
             [yki.handler.routing :as routing]
             [yki.handler.auth]))
 
-(use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
+(use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
+(use-fixtures :each embedded-db/with-transaction)
 
 (defn- get-mock-routes [port user]
-  {"/kayttooikeus-service/kayttooikeus/kayttaja" {:status 200 :content-type "application/json"
-                                                  :body (slurp (str "test/resources/" user ".json"))}
-   "/kayttooikeus-service/j_spring_cas_security_check" {:status 200
-                                                        :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}
-   "/cas/serviceValidate" {:status 200 :content-type "application/xml;charset=UTF-8"
-                           :body (slurp "test/resources/serviceResponse.xml")}
-   "/cas/v1/tickets" {:status 201
-                      :method :post
-                      :headers {"Location" (str "http://localhost:" port "/cas/v1/tickets/TGT-1-FFDFHDSJK")}
-                      :body "ST-1-FFDFHDSJK2"}
-   "/cas/v1/tickets/TGT-1-FFDFHDSJK" {:status 200
-                                      :method :post
-                                      :body "ST-1-FFDFHDSJK2"}})
+  (merge
+   {"/kayttooikeus-service/kayttooikeus/kayttaja" {:status 200 :content-type "application/json"
+                                                   :body (slurp (str "test/resources/" user ".json"))}
+    "/kayttooikeus-service/j_spring_cas_security_check" {:status 200
+                                                         :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}
+    "/cas/serviceValidate" {:status 200 :content-type "application/xml;charset=UTF-8"
+                            :body (slurp "test/resources/serviceResponse.xml")}}
+   (base/cas-mock-routes port)))
 
 (defn- create-routes
   [port]
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :protocol-base "http"})
+        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :scheme "http"})
         auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper
                                                                     :session-config {:key "ad7tbRZIG839gDo2"
                                                                                      :cookie-attrs {:max-age 28800
@@ -97,8 +93,11 @@
                                                :body base/exam-session
                                                :content-type "application/json"
                                                :request-method :post))
+        exam-session-id (if (= (-> exam-session-post :response :status) 200)
+                          ((base/body-as-json (:response exam-session-post)) "id")
+                          9999)
         exam-session-put (-> session
-                             (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/1")
+                             (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/" exam-session-id)
                                               :body base/exam-session
                                               :content-type "application/json"
                                               :request-method :put))
@@ -106,7 +105,7 @@
                              (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri)
                                               :request-method :get))
         exam-session-delete (-> session
-                                (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/9999")
+                                (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/" exam-session-id)
                                                  :request-method :delete))]
     {:org {:post organizer-post
            :put organizer-put
@@ -216,7 +215,7 @@
         (assert-status-code (:post org-responses) 200)
         (assert-status-code (:get exam-responses) 200)
         (assert-status-code (:put exam-responses) 200)
-        (assert-status-code (:delete exam-responses) 404)
+        (assert-status-code (:delete exam-responses) 200)
         (assert-status-code (:post exam-responses) 200)))))
 
 (deftest user-without-permissions-authorization-test
