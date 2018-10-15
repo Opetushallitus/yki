@@ -23,7 +23,11 @@
 
 (defn- create-routes [port]
   (let [uri (str "localhost:" port)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :scheme "http"})
+        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri
+                                                      :yki-host uri
+                                                      :liiteri-host uri
+                                                      :host-tunnistus uri
+                                                      :scheme "http"})
         auth (ig/init-key :yki.middleware.auth/with-authentication
                           {:url-helper url-helper
                            :session-config {:key "ad7tbRZIG839gDo2"
@@ -51,7 +55,7 @@
                                       :request-method :get))]
     (testing "unauthenticated user should be redirected with http code 303"
       (is (= (get-in response [:response :status]) 303))
-      (is (= ((get-in response [:response :headers]) "Location") "https://shibboleth/ykiLoginFI")))))
+      (is (= ((get-in response [:response :headers]) "Location") "https:///shibboleth/ykiLoginFI")))))
 
 (def user {"lastname" "Aakula"
            "nickname" "Emma"
