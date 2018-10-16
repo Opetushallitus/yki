@@ -10,7 +10,7 @@
                 vakinainenkotimainenlahiosoitepostitoimipaikkas
                 vakinainenkotimainenlahiosoitepostinumero
                 sn firstname nationalidentificationnumber]} headers
-        person (onr/get-person-by-ssn onr-client nationalidentificationnumber)
+        {:strs [etunimet sukunimi kutsumanimi oidHenkilo]} (onr/get-person-by-ssn onr-client nationalidentificationnumber)
         address {:post-office    vakinainenkotimainenlahiosoitepostitoimipaikkas
                  :zip            vakinainenkotimainenlahiosoitepostinumero
                  :street-address vakinainenkotimainenlahiosoites}
@@ -19,13 +19,13 @@
       (-> (see-other redirect-url)
           (assoc :session {:identity (merge
                                       {:firstname       (first
-                                                         (if (person "etunimet")
-                                                           (str/split (person "etunimet") #" ")
+                                                         (if etunimet
+                                                           (str/split etunimet #" ")
                                                            (str/split firstname #" ")))
-                                       :lastname         (or (person "sukunimi") sn)
-                                       :nickname         (person "kutsumanimi")
+                                       :lastname         (or sukunimi sn)
+                                       :nickname         kutsumanimi
                                        :ssn              nationalidentificationnumber
-                                       :external-user-id (person "oidHenkilo")}
+                                       :external-user-id oidHenkilo}
                                       address)
                            :yki-session-id (str (UUID/randomUUID))}))
       {:status 403 :body {:error "Authentication failed"}})))

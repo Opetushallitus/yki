@@ -15,7 +15,7 @@
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
         (json/read-value body)
-        (error "ONR request error:" body)))))
+        (error "ONR request error:" (str status " : " body))))))
 
 (defmethod ig/init-key :yki.boundary.onr/onr-client [_ {:keys [url-helper cas-client]}]
   (->OnrClient url-helper (cas-client "/oppijanumerorekisteri-service")))

@@ -17,6 +17,7 @@
   (merge
    {"/oppijanumerorekisteri-service/henkilo/hetu=090940-9224" {:status 200 :content-type "application/json"
                                                                :body (slurp "test/resources/onr_henkilo_by_hetu.json")}
+    "/oppijanumerorekisteri-service/henkilo/hetu=260553-959D" {:status 404}
     "/oppijanumerorekisteri-service/j_spring_cas_security_check" {:status 200
                                                                   :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}}
    (base/cas-mock-routes port)))
@@ -57,16 +58,25 @@
       (is (= (get-in response [:response :status]) 303))
       (is (= ((get-in response [:response :headers]) "Location") "https:///shibboleth/ykiLoginFI")))))
 
-(def user {"lastname" "Aakula"
-           "nickname" "Emma"
-           "ssn" "090940-9224"
+(def user-1 {"lastname" "Aakula"
+            "nickname" "Emma"
+            "ssn" "090940-9224"
+            "post-office" ""
+            "external-user-id" "1.2.246.562.24.81121191558"
+            "street-address" ""
+            "firstname" "Emma"
+            "zip" ""})
+
+(def user-2 {"lastname" "Parkkonen-Testi"
+           "nickname" nil
+           "ssn" "260553-959D"
            "post-office" ""
-           "external-user-id" "1.2.246.562.24.81121191558"
-           "street-address" ""
-           "firstname" "Emma"
+           "external-user-id" nil
+           "street-address" "Ateläniitynpolku 29 G"
+           "firstname" "Carl-Erik"
            "zip" ""})
 
-(deftest init-session-with-data-from-headers-and-onr-test
+(deftest init-session-data-from-headers-and-onr-test
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server)))
@@ -81,4 +91,21 @@
           identity (get-in response-body ["session" "identity"])]
       (testing "after init session should contain user data"
         (is (= (get-in response [:response :status]) 200))
-        (is (= identity user))))))
+        (is (= identity user-1))))))
+
+(deftest init-session-data-person-not-found-from-onr-test
+  (with-routes!
+    (fn [server]
+      (get-mock-routes (:port server)))
+    (let [handler (create-routes port)
+          session (peridot/session handler)
+          response (-> session
+                       (peridot/request (str routing/auth-root routing/auth-init-session-uri)
+                                        :headers (json/read-value (slurp "test/resources/headers2.json"))
+                                        :request-method :get)
+                       (peridot/follow-redirect))
+          response-body (base/body-as-json (:response response))
+          identity (get-in response-body ["session" "identity"])]
+      (testing "after init session should contain user data"
+        (is (= (get-in response [:response :status]) 200))
+        (is (= identity user-2))))))
