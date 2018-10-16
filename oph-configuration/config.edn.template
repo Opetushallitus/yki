@@ -1,26 +1,28 @@
 {:duct.core/include ["yki/config"]
  :duct.core/project-ns yki
  :duct.database.sql/hikaricp {:adapter "postgresql"
-                                 :database-name "yki"
-                                 :server-name "{{host_postgresql_yki}}"
-                                 :port-number "{{host_postgresql_yki_port}}"
-                                 :username "{{host_postgresql_yki_user}}"
-                                 :password "{{host_postgresql_yki_password}}"
-                                 :connection-timeout {{host_postgresql_yki_max_wait}}
-                                 :maximum-pool-size {{host_postgresql_yki_max_active}}}
+                              :database-name "yki"
+                              :server-name "{{host_postgresql_yki}}"
+                              :port-number "{{host_postgresql_yki_port}}"
+                              :username "{{host_postgresql_yki_user}}"
+                              :password "{{host_postgresql_yki_password}}"
+                              :connection-timeout {{host_postgresql_yki_max_wait}}
+                              :maximum-pool-size {{host_postgresql_yki_max_active}}}
  :duct.migrator/ragtime {:resource-path "yki/migrations"}
  :yki.util/url-helper {:virkailija-host "{{host_virkailija}}"
-                       :liiteri-host "{{host_virkailija}}"
-                       :yki-host    "{{host_ilb}}"}}
+                       :alb-host "{{host_alb}}"
+                       :tunnistus-host "{{host_tunnistus}}"
+                       :yki-host    "{{host_ilb}}"}
+
+ :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
 
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {:username "{{yki_cas_username}}"
                                            :password "{{yki_cas_password}}"}}
  :yki.middleware.auth/with-authentication
    {:url-helper #ig/ref :yki.util/url-helper
-   :session-config {:key "{{yki_session_cookie_secret}}"
-                    :cookie-attrs {:max-age 28800
+    :session-config {:key "{{yki_session_cookie_secret}}"
+                     :cookie-attrs {:max-age 28800
                                     :http-only false
                                     :secure true
                                     :path "/yki"}}}}
-                                    

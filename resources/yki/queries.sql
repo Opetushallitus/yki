@@ -118,7 +118,8 @@ INSERT INTO exam_session (
   max_participants,
   published_at
 ) VALUES (
-  (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL),
+  (SELECT id FROM organizer
+    WHERE oid = :oid AND deleted_at IS NULL AND agreement_end_date >= :session_date AND agreement_start_date <= :session_date),
   (SELECT id FROM exam_language el
     WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
       AND el.language_code = :language_code
@@ -230,7 +231,8 @@ SET
   session_end_time = :session_end_time,
   exam_language_id =
   (SELECT id FROM exam_language el
-    WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+    WHERE el.organizer_id = (SELECT id FROM organizer
+                              WHERE oid = :oid AND deleted_at IS NULL AND agreement_end_date >= :session_date AND agreement_start_date <= :session_date)
       AND el.language_code = :language_code
       AND el.level_code = :level_code),
   registration_start_date = :registration_start_date,

@@ -8,8 +8,11 @@
                               :username "admin"
                               :password "admin"}
 
+ :yki.middleware.access-log/with-logging {:env "dev"}
+
  :yki.util/url-helper {:virkailija-host "virkailija.untuvaopintopolku.fi"
-                       :liiteri-host     "virkailija.untuvaopintopolku.fi"
+                       :alb-host     "https://virkailija.untuvaopintopolku.fi"
+                       :tunnistus-host "tunnistus.untuvaopintopolku.fi"
                        :yki-host    "http://localhost:8080"}
 
  :yki.middleware.auth/with-authentication
@@ -29,6 +32,7 @@
 
  :yki.handler/organizer {:db #ig/ref :duct.database/sql
                          :url-helper #ig/ref :yki.util/url-helper
-                         :file-handler #ig/ref  :yki.handler/file
-                         :auth #ig/ref :yki.middleware.auth/with-authentication}}
+                         :file-handler #ig/ref :yki.handler/file
+                         :access-log #ig/ref :yki.middleware.access-log/with-logging
+                         :auth #ig/ref :yki.middleware.no-auth/with-authentication}}
 

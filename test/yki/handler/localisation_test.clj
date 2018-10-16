@@ -3,11 +3,10 @@
             [integrant.core :as ig]
             [ring.mock.request :as mock]
             [jsonista.core :as j]
-            [muuntaja.middleware :as middleware]
-            [muuntaja.core :as m]
             [stub-http.core :refer :all]
             [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
+            [yki.util.url-helper]
             [yki.handler.localisation]))
 
 (def mock-route
@@ -17,7 +16,7 @@
 (defn- create-route
   [port]
   (let [uri (str "localhost:" port)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :protocol-base "http"})
+        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :alb-host (str "http://" uri) :scheme "http"})
         localisation-handler (ig/init-key :yki.handler/localisation {:url-helper url-helper})]
     localisation-handler))
 

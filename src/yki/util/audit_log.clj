@@ -66,5 +66,4 @@
         changes         (-> (Changes$Builder.)
                             (add-changes change)
                             (.build))]
-
     (.log virkailija-logger user op target changes)))

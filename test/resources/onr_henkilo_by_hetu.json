@@ -1,0 +1,39 @@
+{
+  "id": 68277127,
+  "etunimet": "Emma",
+  "syntymaaika": "1940-09-09",
+  "kuolinpaiva": null,
+  "hetu": "090940-9224",
+  "kutsumanimi": "Emma",
+  "oidHenkilo": "1.2.246.562.24.81121191558",
+  "oppijanumero": null,
+  "sukunimi": "Aakula",
+  "sukupuoli": "2",
+  "kotikunta": null,
+  "turvakielto": false,
+  "eiSuomalaistaHetua": false,
+  "passivoitu": false,
+  "yksiloity": false,
+  "yksiloityVTJ": false,
+  "yksilointiYritetty": true,
+  "duplicate": false,
+  "created": 1523425304247,
+  "modified": 1523425304247,
+  "vtjsynced": null,
+  "kasittelijaOid": "1.2.246.562.24.30121845486",
+  "asiointiKieli": null,
+  "aidinkieli": {
+    "id": 1,
+    "kieliKoodi": "fi",
+    "kieliTyyppi": "suomi"
+  },
+  "kielisyys": [],
+  "kansalaisuus": [
+    {
+      "id": 1,
+      "kansalaisuusKoodi": "246"
+    }
+  ],
+  "yhteystiedotRyhma": [],
+  "henkiloTyyppi": "OPPIJA"
+}

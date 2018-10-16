@@ -6,11 +6,15 @@
 
 (def auth-root (str app-root "/auth"))
 
-(def virkailija-auth-root (str auth-root "/cas"))
+(def auth-init-session-uri "/initsession")
 
-(def virkailija-auth-callback (str virkailija-auth-root "/callback"))
+(def auth-authenticate-uri "/authenticate")
 
-(def virkailija-auth-logout (str virkailija-auth-root "/logout"))
+(def virkailija-auth-uri "/cas")
+
+(def virkailija-auth-callback (str auth-root virkailija-auth-uri "/callback"))
+
+(def virkailija-auth-logout (str auth-root virkailija-auth-uri "/logout"))
 
 (def localisation-api-root (str api-root "/localisation"))
 

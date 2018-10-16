@@ -2,7 +2,6 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.status_db :as status-db]
             [yki.handler.routing :as routing]
-            [yki.middleware.access-log :as access]
             [ring.util.response :refer [response status]]
             [integrant.core :as ig]))
 

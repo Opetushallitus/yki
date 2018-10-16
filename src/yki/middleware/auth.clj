@@ -7,11 +7,11 @@
    [ring.middleware.session.cookie :refer [cookie-store]]
    [buddy.auth.accessrules :refer [wrap-access-rules success error]]
    [buddy.auth.backends.session :refer [session-backend]]
+   [clojure.tools.logging :refer [warn]]
    [integrant.core :as ig]
    [clout.core :as clout]
    [ring.util.request :refer [request-url]]
-   [ring.util.response :refer [response status]]
-   [ring.util.http-response :refer [unauthorized forbidden]]))
+   [ring.util.http-response :refer [unauthorized forbidden found see-other]]))
 
 (def backend (session-backend))
 
@@ -21,14 +21,15 @@
   ["*/organizer/:oid"
    "*/organizer/:oid/*"])
 
-(defn- any-access [request]
+(defn- any-access [_]
   true)
 
 (defn- no-access [request]
+  (warn "No access to uri:" (:uri request))
   false)
 
 (defn- authenticated [request]
-  (if (-> request :session :identity :ticket)
+  (if (-> request :session :identity)
     true
     (error unauthorized)))
 
@@ -68,11 +69,27 @@
     (allowed-organization? (:session request) oid)
     true))
 
+(defn- redirect-to-cas
+  [request url-helper]
+  (-> (found (url-helper :cas.login))
+      (assoc :session {:success ((:query-params request) "callback")})))
+
+(defn- redirect-to-shibboleth
+  [request url-helper]
+  (let [lang ((:query-params request) "lang")
+        url-key (if lang
+                  (str "tunnistus.url." lang)
+                  "tunnistus.url.fi")]
+    (-> (see-other (url-helper url-key))
+        (assoc :session {:success ((:query-params request) "callback")}))))
+
 (defn- rules
   "OPH users are allowed to call all endpoints without restrictions to organizer.
   Other users have access only to organizer they have permissions for."
-  [redirect-url]
+  [url-helper]
   [{:pattern #".*/auth/cas/callback"
+    :handler any-access}
+   {:pattern #".*/auth/initsession"
     :handler any-access}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [authenticated {:or [oph-user-access permission-to-organization]}]}}
@@ -82,19 +99,24 @@
    {:pattern #".*/api/virkailija/organizer.*"
     :handler {:and [authenticated oph-user-access]}
     :request-method #{:post :put :delete}}
-   {:pattern #".*/auth/cas"
+   {:pattern #".*/auth/cas.*"
     :handler authenticated
-    :redirect redirect-url}
+    :on-error (fn [req _] (redirect-to-cas req url-helper))}
+   {:pattern #".*/auth"
+    :handler authenticated
+    :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
+   {:pattern #".*/auth/user"
+    :handler authenticated
+    :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"
-    :handler authenticated
-    :redirect redirect-url}])
+    :handler no-access}])
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config]}]
   (defn with-authentication [handler]
     (-> handler
-        (wrap-access-rules {:rules (rules (url-helper :cas.login))})
+        (wrap-access-rules {:rules (rules url-helper)})
         (wrap-authentication backend)
         (wrap-authorization backend)
         (wrap-session {:store (cookie-store {:key (:key session-config)})
