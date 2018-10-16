@@ -12,7 +12,7 @@
  :yki.util/url-helper {:virkailija-host "{{host_virkailija}}"
                        :liiteri-host "{{host_virkailija}}"
                        :tunnistus-host "{{host_tunnistus}}"
-                       :yki-host    "{{host_ilb}}"}}
+                       :yki-host    "{{host_ilb}}"}
 
  :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
 
@@ -21,8 +21,8 @@
                                            :password "{{yki_cas_password}}"}}
  :yki.middleware.auth/with-authentication
    {:url-helper #ig/ref :yki.util/url-helper
-   :session-config {:key "{{yki_session_cookie_secret}}"
-                    :cookie-attrs {:max-age 28800
+    :session-config {:key "{{yki_session_cookie_secret}}"
+                     :cookie-attrs {:max-age 28800
                                     :http-only false
                                     :secure true
                                     :path "/yki"}}}}
