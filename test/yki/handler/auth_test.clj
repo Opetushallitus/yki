@@ -29,6 +29,7 @@
                                                       :alb-host (str "http://" uri)
                                                       :host-tunnistus uri
                                                       :scheme "http"})
+        access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth (ig/init-key :yki.middleware.auth/with-authentication
                           {:url-helper url-helper
                            :session-config {:key "ad7tbRZIG839gDo2"
@@ -43,6 +44,7 @@
                                                               :cas-client cas-client})
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
                                                                              :url-helper url-helper
+                                                                             :access-log access-log
                                                                              :permissions-client {}
                                                                              :onr-client onr-client
                                                                              :cas-client cas-client}))]
