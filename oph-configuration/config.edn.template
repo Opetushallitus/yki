@@ -10,7 +10,7 @@
                               :maximum-pool-size {{host_postgresql_yki_max_active}}}
  :duct.migrator/ragtime {:resource-path "yki/migrations"}
  :yki.util/url-helper {:virkailija-host "{{host_virkailija}}"
-                       :liiteri-host "{{host_virkailija}}"
+                       :alb-host "{{host_alb}}"
                        :tunnistus-host "{{host_tunnistus}}"
                        :yki-host    "{{host_ilb}}"}
 

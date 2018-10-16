@@ -26,7 +26,7 @@
   (let [uri (str "localhost:" port)
         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri
                                                       :yki-host uri
-                                                      :liiteri-host uri
+                                                      :alb-host (str "http://" uri)
                                                       :host-tunnistus uri
                                                       :scheme "http"})
         auth (ig/init-key :yki.middleware.auth/with-authentication
@@ -59,22 +59,22 @@
       (is (= ((get-in response [:response :headers]) "Location") "https:///shibboleth/ykiLoginFI")))))
 
 (def user-1 {"lastname" "Aakula"
-            "nickname" "Emma"
-            "ssn" "090940-9224"
-            "post-office" ""
-            "external-user-id" "1.2.246.562.24.81121191558"
-            "street-address" ""
-            "firstname" "Emma"
-            "zip" ""})
+             "nickname" "Emma"
+             "ssn" "090940-9224"
+             "post-office" ""
+             "external-user-id" "1.2.246.562.24.81121191558"
+             "street-address" ""
+             "firstname" "Emma"
+             "zip" ""})
 
 (def user-2 {"lastname" "Parkkonen-Testi"
-           "nickname" nil
-           "ssn" "260553-959D"
-           "post-office" ""
-           "external-user-id" nil
-           "street-address" "Ateläniitynpolku 29 G"
-           "firstname" "Carl-Erik"
-           "zip" ""})
+             "nickname" nil
+             "ssn" "260553-959D"
+             "post-office" ""
+             "external-user-id" nil
+             "street-address" "Ateläniitynpolku 29 G"
+             "firstname" "Carl-Erik"
+             "zip" ""})
 
 (deftest init-session-data-from-headers-and-onr-test
   (with-routes!

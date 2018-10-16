@@ -63,7 +63,7 @@
   ([request port]
    (let [uri (str "localhost:" port)
          db (duct.database.sql/->Boundary @embedded-db/conn)
-         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :liiteri-host uri :scheme "http"})
+         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :alb-host (str "http://" uri) :scheme "http"})
          exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
          file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
          file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})

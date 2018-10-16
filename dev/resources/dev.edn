@@ -11,7 +11,7 @@
  :yki.middleware.access-log/with-logging {:env "dev"}
 
  :yki.util/url-helper {:virkailija-host "virkailija.untuvaopintopolku.fi"
-                       :liiteri-host     "virkailija.untuvaopintopolku.fi"
+                       :alb-host     "https://virkailija.untuvaopintopolku.fi"
                        :tunnistus-host "tunnistus.untuvaopintopolku.fi"
                        :yki-host    "http://localhost:8080"}
 
