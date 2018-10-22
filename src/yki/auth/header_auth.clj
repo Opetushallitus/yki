@@ -6,8 +6,7 @@
 
 (defn- iso-8859->utf-8 [s]
   (if s
-    (String. (.getBytes s "ISO-8859-1") "UTF-8")
-    s))
+    (String. (.getBytes s "ISO-8859-1") "UTF-8")))
 
 (defn login [{:keys [query-params headers session]} onr-client url-helper]
   (let [lang (or (:lang query-params) "fi")
