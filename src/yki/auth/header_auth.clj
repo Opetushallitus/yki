@@ -4,7 +4,10 @@
             [clojure.string :as str])
   (:import [java.util UUID]))
 
-(defn- iso-8859->utf-8 [s]
+(defn- iso-8859-1->utf-8 [s]
+  "Shibboleth encodes headers in UTF-8. Servlet container handles them as ISO-8859-1,
+  so we need to convert values back to UTF-8.
+  See https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPAttributeAccess"
   (if s
     (String. (.getBytes s "ISO-8859-1") "UTF-8")))
 
@@ -13,7 +16,7 @@
         {:strs [vakinainenkotimainenlahiosoites
                 vakinainenkotimainenlahiosoitepostitoimipaikkas
                 vakinainenkotimainenlahiosoitepostinumero
-                sn firstname nationalidentificationnumber]} (reduce-kv #(assoc %1 %2 (iso-8859->utf-8 %3)) {} headers)
+                sn firstname nationalidentificationnumber]} (reduce-kv #(assoc %1 %2 (iso-8859-1->utf-8 %3)) {} headers)
         {:strs [etunimet sukunimi kutsumanimi oidHenkilo]}  (onr/get-person-by-ssn onr-client nationalidentificationnumber)
         address {:post-office    vakinainenkotimainenlahiosoitepostitoimipaikkas
                  :zip            vakinainenkotimainenlahiosoitepostinumero
