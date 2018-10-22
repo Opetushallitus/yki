@@ -4,13 +4,18 @@
             [clojure.string :as str])
   (:import [java.util UUID]))
 
+(defn- iso-8859->utf-8 [s]
+  (if s
+    (String. (.getBytes s "ISO-8859-1") "UTF-8")
+    s))
+
 (defn login [{:keys [query-params headers session]} onr-client url-helper]
   (let [lang (or (:lang query-params) "fi")
         {:strs [vakinainenkotimainenlahiosoites
                 vakinainenkotimainenlahiosoitepostitoimipaikkas
                 vakinainenkotimainenlahiosoitepostinumero
-                sn firstname nationalidentificationnumber]} headers
-        {:strs [etunimet sukunimi kutsumanimi oidHenkilo]} (onr/get-person-by-ssn onr-client nationalidentificationnumber)
+                sn firstname nationalidentificationnumber]} (reduce-kv #(assoc %1 %2 (iso-8859->utf-8 %3)) {} headers)
+        {:strs [etunimet sukunimi kutsumanimi oidHenkilo]}  (onr/get-person-by-ssn onr-client nationalidentificationnumber)
         address {:post-office    vakinainenkotimainenlahiosoitepostitoimipaikkas
                  :zip            vakinainenkotimainenlahiosoitepostinumero
                  :street-address vakinainenkotimainenlahiosoites}

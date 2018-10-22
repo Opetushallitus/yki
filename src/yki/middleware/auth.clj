@@ -102,10 +102,7 @@
    {:pattern #".*/auth/cas.*"
     :handler authenticated
     :on-error (fn [req _] (redirect-to-cas req url-helper))}
-   {:pattern #".*/auth"
-    :handler authenticated
-    :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
-   {:pattern #".*/auth/user"
+   {:pattern #".*/auth.*"
     :handler authenticated
     :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
    {:pattern #".*/api.*"

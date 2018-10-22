@@ -103,7 +103,7 @@
           session (peridot/session handler)
           response (-> session
                        (peridot/request (str routing/auth-root routing/auth-init-session-uri)
-                                        :headers (json/read-value (slurp "test/resources/headers2.json"))
+                                        :headers (json/read-value (slurp "test/resources/headers2.json" :encoding "ISO-8859-1"))
                                         :request-method :get)
                        (peridot/follow-redirect))
           response-body (base/body-as-json (:response response))
