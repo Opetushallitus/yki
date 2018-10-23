@@ -35,7 +35,7 @@
   [port]
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :yki-host uri :alb-host (str "http://" uri) :scheme "http"})
+        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-host-virkailija "" :alb-host (str "http://" uri) :scheme "http"})
         auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper
                                                                     :session-config {:key "ad7tbRZIG839gDo2"
                                                                                      :cookie-attrs {:max-age 28800

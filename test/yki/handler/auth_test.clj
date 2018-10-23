@@ -2,9 +2,13 @@
   (:require [clojure.test :refer :all]
             [integrant.core :as ig]
             [stub-http.core :refer :all]
+            [clj-time.local :as l]
+            [clj-time.format :as f]
             [yki.util.url-helper]
             [yki.handler.auth]
             [yki.boundary.onr]
+            [yki.embedded-db :as embedded-db]
+            [clojure.java.jdbc :as jdbc]
             [jsonista.core :as json]
             [yki.middleware.auth]
             [yki.boundary.cas :as cas]
@@ -12,6 +16,9 @@
             [muuntaja.middleware :as middleware]
             [peridot.core :as peridot]
             [yki.handler.routing :as routing]))
+
+(use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
+(use-fixtures :each embedded-db/with-transaction)
 
 (defn- get-mock-routes [port]
   (merge
@@ -25,11 +32,13 @@
 (defn- create-routes [port]
   (let [uri (str "localhost:" port)
         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri
-                                                      :yki-host uri
+                                                      :oppija-host ""
+                                                      :yki-host-virkailija uri
                                                       :alb-host (str "http://" uri)
                                                       :host-tunnistus uri
                                                       :scheme "http"})
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
+        db (duct.database.sql/->Boundary @embedded-db/conn)
         auth (ig/init-key :yki.middleware.auth/with-authentication
                           {:url-helper url-helper
                            :session-config {:key "ad7tbRZIG839gDo2"
@@ -43,6 +52,7 @@
         onr-client (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
                                                               :cas-client cas-client})
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
+                                                                             :db db
                                                                              :url-helper url-helper
                                                                              :access-log access-log
                                                                              :permissions-client {}
@@ -77,6 +87,32 @@
              "street-address" "Ateläniitynpolku 29 G"
              "firstname" "Carl-Erik"
              "zip" ""})
+(def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
+(def code-expired "4ce84260-3d04-445e-b914-38e93c1ef668")
+(def code-not-found "4ce84260-3d04-445e-b914-38e93c1ef698")
+
+(defn insert-login-link-prereqs []
+  (base/insert-organizer "'1.2.3.4'")
+  (base/insert-languages "'1.2.3.4'")
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+      exam_language_id,
+      session_date,
+      session_start_time,
+      session_end_time,
+      registration_start_date,
+      registration_start_time,
+      registration_end_date,
+      registration_end_time,
+      max_participants,
+      published_at)
+        VALUES (1, 1, '2018-01-01', null, null, null, null, null, null, 50, null)"))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') "))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration (state, exam_session_id, participant_id) VALUES ('INCOMPLETE', 1, 1)")))
+
+(defn insert-login-link [code expires-at]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
+        (code, participant_id, registration_id, user_data, expires_at, expired_link_redirect, success_redirect)
+          VALUES ('" code "', 1, 1, null, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
 (deftest init-session-data-from-headers-and-onr-test
   (with-routes!
@@ -85,6 +121,7 @@
     (let [handler (create-routes port)
           session (peridot/session handler)
           response (-> session
+                       (peridot/request (str routing/auth-root "?success-redirect=/yki/auth/user"))
                        (peridot/request (str routing/auth-root routing/auth-init-session-uri)
                                         :headers (json/read-value (slurp "test/resources/headers.json"))
                                         :request-method :get)
@@ -102,12 +139,43 @@
     (let [handler (create-routes port)
           session (peridot/session handler)
           response (-> session
+                       (peridot/request (str routing/auth-root "?success-redirect=/yki/auth/user"))
                        (peridot/request (str routing/auth-root routing/auth-init-session-uri)
-                                        :headers (json/read-value (slurp "test/resources/headers2.json" :encoding "ISO-8859-1"))
-                                        :request-method :get)
+                                        :headers (json/read-value (slurp "test/resources/headers2.json" :encoding "ISO-8859-1")))
                        (peridot/follow-redirect))
           response-body (base/body-as-json (:response response))
           identity (get-in response-body ["session" "identity"])]
       (testing "after init session should contain user data"
         (is (= (get-in response [:response :status]) 200))
         (is (= identity user-2))))))
+
+(deftest login-with-login-link-test
+  (insert-login-link-prereqs)
+  (insert-login-link code-ok "2038-01-01")
+  (insert-login-link code-expired (l/format-local-time (l/local-now) :date))
+
+  (let [handler (create-routes "8080")
+        session (peridot/session handler)
+        response (-> session
+                     (peridot/request (str routing/auth-root "/callback?code=" code-ok))
+                     (peridot/request (str routing/auth-root "/user")))
+        response-body (base/body-as-json (:response response))
+        identity (get-in response-body ["session" "identity"])]
+    (testing "after login link authentication session should contain user data"
+      (is (= (get-in response [:response :status]) 200))
+      (is (= (identity "external-user-id") "test@user.com"))))
+
+  (let [handler (create-routes "8080")
+        session (peridot/session handler)
+        response (-> session
+                     (peridot/request (str routing/auth-root "/callback?code=" code-expired)))]
+    (testing "when trying to login with expired code should redirect to expired url"
+      (is (= (get-in response [:response :status]) 302))
+      (is (= (get-in response [:response :headers]) {"Location" "http://localhost/expired"}))))
+
+  (let [handler (create-routes "8080")
+        session (peridot/session handler)
+        response (-> session
+                     (peridot/request (str routing/auth-root "/callback?code=" "NOT_FOUND")))]
+    (testing "when trying to login with non existing code should return 401"
+      (is (= (get-in response [:response :status]) 401)))))

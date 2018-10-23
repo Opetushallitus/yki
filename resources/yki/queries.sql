@@ -251,3 +251,16 @@ WHERE exam_session_id = :id;
 -- name: delete-exam-session!
 DELETE FROM exam_session
 WHERE id = :id;
+
+-- name: select-login-link-by-code
+SELECT
+ l.code,
+ p.external_user_id,
+ l.registration_id,
+ l.user_data,
+ l.expires_at,
+ l.expired_link_redirect,
+ l.success_redirect
+FROM login_link l INNER JOIN participant p
+  ON l.participant_id = p.id
+WHERE l.code = :code;

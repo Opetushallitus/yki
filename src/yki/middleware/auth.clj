@@ -1,7 +1,6 @@
 (ns yki.middleware.auth
   (:require
    [yki.handler.routing :as routing]
-   [buddy.auth :refer [authenticated?]]
    [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
    [ring.middleware.session :refer [wrap-session]]
    [ring.middleware.session.cookie :refer [cookie-store]]
@@ -72,7 +71,7 @@
 (defn- redirect-to-cas
   [request url-helper]
   (-> (found (url-helper :cas.login))
-      (assoc :session {:success ((:query-params request) "callback")})))
+      (assoc :session {:success-redirect ((:query-params request) "success-redirect")})))
 
 (defn- redirect-to-shibboleth
   [request url-helper]
@@ -81,13 +80,15 @@
                   (str "tunnistus.url." lang)
                   "tunnistus.url.fi")]
     (-> (see-other (url-helper url-key))
-        (assoc :session {:success ((:query-params request) "callback")}))))
+        (assoc :session {:success-redirect ((:query-params request) "success-redirect")}))))
 
 (defn- rules
   "OPH users are allowed to call all endpoints without restrictions to organizer.
   Other users have access only to organizer they have permissions for."
   [url-helper]
   [{:pattern #".*/auth/cas/callback"
+    :handler any-access}
+   {:pattern #".*/auth/callback"
     :handler any-access}
    {:pattern #".*/auth/initsession"
     :handler any-access}

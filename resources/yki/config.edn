@@ -35,6 +35,7 @@
                     :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
                     :onr-client #ig/ref :yki.boundary.onr/onr-client
                     :access-log #ig/ref :yki.middleware.access-log/with-logging
+                    :db #ig/ref :duct.database/sql
                     :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
