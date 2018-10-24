@@ -91,28 +91,10 @@
 (def code-expired "4ce84260-3d04-445e-b914-38e93c1ef668")
 (def code-not-found "4ce84260-3d04-445e-b914-38e93c1ef698")
 
-(defn insert-login-link-prereqs []
-  (base/insert-organizer "'1.2.3.4'")
-  (base/insert-languages "'1.2.3.4'")
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
-      exam_language_id,
-      session_date,
-      session_start_time,
-      session_end_time,
-      registration_start_date,
-      registration_start_time,
-      registration_end_date,
-      registration_end_time,
-      max_participants,
-      published_at)
-        VALUES (1, 1, '2018-01-01', null, null, null, null, null, null, 50, null)"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') "))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration (state, exam_session_id, participant_id) VALUES ('INCOMPLETE', 1, 1)")))
-
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
-        (code, participant_id, registration_id, user_data, expires_at, expired_link_redirect, success_redirect)
-          VALUES ('" code "', 1, 1, null, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
+        (code, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
+          VALUES ('" code "', 1, 1, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
 (deftest init-session-data-from-headers-and-onr-test
   (with-routes!
@@ -128,7 +110,7 @@
                        (peridot/follow-redirect))
           response-body (base/body-as-json (:response response))
           identity (get-in response-body ["session" "identity"])]
-      (testing "after init session should contain user data"
+      (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
         (is (= identity user-1))))))
 
@@ -145,27 +127,27 @@
                        (peridot/follow-redirect))
           response-body (base/body-as-json (:response response))
           identity (get-in response-body ["session" "identity"])]
-      (testing "after init session should contain user data"
+      (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
         (is (= identity user-2))))))
 
 (deftest login-with-login-link-test
-  (insert-login-link-prereqs)
+  (base/insert-login-link-prereqs)
   (insert-login-link code-ok "2038-01-01")
   (insert-login-link code-expired (l/format-local-time (l/local-now) :date))
 
-  (let [handler (create-routes "8080")
+  (let [handler (create-routes "")
         session (peridot/session handler)
         response (-> session
                      (peridot/request (str routing/auth-root "/callback?code=" code-ok))
                      (peridot/request (str routing/auth-root "/user")))
         response-body (base/body-as-json (:response response))
         identity (get-in response-body ["session" "identity"])]
-    (testing "after login link authentication session should contain user data"
+    (testing "after successfull login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
       (is (= (identity "external-user-id") "test@user.com"))))
 
-  (let [handler (create-routes "8080")
+  (let [handler (create-routes "")
         session (peridot/session handler)
         response (-> session
                      (peridot/request (str routing/auth-root "/callback?code=" code-expired)))]
@@ -173,7 +155,7 @@
       (is (= (get-in response [:response :status]) 302))
       (is (= (get-in response [:response :headers]) {"Location" "http://localhost/expired"}))))
 
-  (let [handler (create-routes "8080")
+  (let [handler (create-routes "")
         session (peridot/session handler)
         response (-> session
                      (peridot/request (str routing/auth-root "/callback?code=" "NOT_FOUND")))]

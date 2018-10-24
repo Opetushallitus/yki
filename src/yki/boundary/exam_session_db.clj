@@ -11,21 +11,15 @@
 
 (require-sql ["yki/queries.sql" :as q])
 
-(defn- convert-dates [{:keys [organizer_oid session_date session_start_time session_end_time
-                              registration_start_date registration_start_time registration_end_date
-                              registration_end_time max_participants published_at language_code level_code]}]
-  {:organizer_oid organizer_oid
-   :session_date (f/parse session_date)
-   :session_start_time (f/parse session_start_time)
-   :session_end_time (f/parse session_end_time)
-   :language_code language_code
-   :level_code level_code
-   :registration_start_date (f/parse registration_start_date)
-   :registration_start_time (f/parse registration_start_time)
-   :registration_end_date (f/parse registration_end_date)
-   :registration_end_time (f/parse registration_end_time)
-   :max_participants max_participants
-   :published_at (f/parse published_at)})
+(defn- convert-dates [exam-session]
+  (reduce #(update-in %1 [%2] f/parse) exam-session [:session_date
+                                                     :session_start_time
+                                                     :session_end_time
+                                                     :registration_start_date
+                                                     :registration_start_time
+                                                     :registration_end_date
+                                                     :registration_end_time
+                                                     :published_at]))
 
 (defn- string->date [date]
   (if (some? date)

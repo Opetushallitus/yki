@@ -81,7 +81,8 @@ CREATE TABLE IF NOT EXISTS exam_date (
 --;;
 CREATE TABLE IF NOT EXISTS participant (
   id BIGSERIAL PRIMARY KEY,
-  external_user_id TEXT UNIQUE NOT NULL
+  external_user_id TEXT UNIQUE NOT NULL,
+  created TIMESTAMP DEFAULT current_timestamp
 );
 --;;
 CREATE TYPE registration_state AS ENUM ('OK', 'INCOMPLETE', 'ERROR');
@@ -99,10 +100,9 @@ CREATE TABLE IF NOT EXISTS login_link (
  id BIGSERIAL PRIMARY KEY,
  code TEXT UNIQUE NOT NULL,
  participant_id BIGSERIAL REFERENCES participant (id) NOT NULL,
- registration_id BIGSERIAL REFERENCES registration (id) NOT NULL,
+ exam_session_id BIGSERIAL REFERENCES exam_session (id) NOT NULL,
  expired_link_redirect TEXT NOT NULL,
  success_redirect TEXT NOT NULL,
- user_data TEXT,
  expires_at DATE NOT NULL,
  created TIMESTAMP DEFAULT current_timestamp,
  modified TIMESTAMP DEFAULT current_timestamp

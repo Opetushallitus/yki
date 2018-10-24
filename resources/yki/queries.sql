@@ -252,12 +252,35 @@ WHERE exam_session_id = :id;
 DELETE FROM exam_session
 WHERE id = :id;
 
+-- name: insert-participant!
+INSERT INTO participant(
+  external_user_id
+) VALUES (
+  :external_user_id
+) ON CONFLICT (external_user_id) DO NOTHING;
+
+-- name: insert-login-link<!
+INSERT INTO login_link(
+  code,
+  participant_id,
+  exam_session_id,
+  expired_link_redirect,
+  success_redirect,
+  expires_at
+) VALUES (
+  :code,
+  (SELECT id FROM participant WHERE external_user_id = :email),
+  :exam_session_id,
+  :expired_link_redirect,
+  :success_redirect,
+  :expires_at
+);
+
 -- name: select-login-link-by-code
 SELECT
  l.code,
  p.external_user_id,
- l.registration_id,
- l.user_data,
+ l.exam_session_id,
  l.expires_at,
  l.expired_link_redirect,
  l.success_redirect

@@ -18,6 +18,8 @@
 
 (def localisation-api-root (str api-root "/localisation"))
 
+(def login-link-api-root (str api-root "/login-link"))
+
 (def virkailija-api-root (str api-root "/virkailija"))
 
 (def organizer-api-root (str virkailija-api-root "/organizer"))

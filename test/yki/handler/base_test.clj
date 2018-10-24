@@ -57,6 +57,23 @@
   (jdbc/execute! @embedded-db/conn (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
   (jdbc/execute! @embedded-db/conn (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
+(defn insert-login-link-prereqs []
+  (insert-organizer "'1.2.3.4'")
+  (insert-languages "'1.2.3.4'")
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+        exam_language_id,
+        session_date,
+        session_start_time,
+        session_end_time,
+        registration_start_date,
+        registration_start_time,
+        registration_end_date,
+        registration_end_time,
+        max_participants,
+        published_at)
+          VALUES (1, 1, '2028-01-01', null, null, null, null, null, null, 50, null)"))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') ")))
+
 (defn send-request-with-tx
   ([request]
    (send-request-with-tx request ""))
