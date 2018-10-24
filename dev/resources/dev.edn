@@ -10,10 +10,11 @@
 
  :yki.middleware.access-log/with-logging {:env "dev"}
 
- :yki.util/url-helper {:virkailija-host "virkailija.untuvaopintopolku.fi"
-                       :alb-host     "https://virkailija.untuvaopintopolku.fi"
-                       :tunnistus-host "tunnistus.untuvaopintopolku.fi"
-                       :yki-host    "http://localhost:8080"}
+ :yki.util/url-helper {:virkailija-host        "virkailija.untuvaopintopolku.fi"
+                       :oppija-host            "untuvaopintopolku.fi"
+                       :alb-host               "https://virkailija.untuvaopintopolku.fi"
+                       :tunnistus-host         "tunnistus.untuvaopintopolku.fi"
+                       :yki-host-virkailija    "http://localhost:8080"}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
@@ -28,6 +29,7 @@
                    :cookie-attrs {:max-age 28800
                                   :http-only true
                                   :secure false
+                                  :domain "localhost"
                                   :path "/yki"}}}
 
  :yki.handler/organizer {:db #ig/ref :duct.database/sql

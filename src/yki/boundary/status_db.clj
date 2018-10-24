@@ -1,4 +1,4 @@
-(ns yki.boundary.status_db
+(ns yki.boundary.status-db
   (:require [clojure.java.jdbc :as jdbc]
             [duct.database.sql]))
 

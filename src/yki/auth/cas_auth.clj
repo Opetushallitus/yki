@@ -27,12 +27,12 @@
 (defn login [ticket request cas-client permissions-client url-helper]
   (try
     (if ticket
-      (let [username (cas/validate-ticket (cas-client "/") ticket)
-            permissions (permissions/virkailija-by-username permissions-client username)
-            person-oid (permissions "oidHenkilo")
+      (let [username      (cas/validate-ticket (cas-client "/") ticket)
+            permissions   (permissions/virkailija-by-username permissions-client username)
+            person-oid    (permissions "oidHenkilo")
             organizations (get-organizations-with-yki-permissions (permissions "organisaatiot"))
-            session (:session request)
-            redirect-uri (or (:success session) (url-helper :yki.default.cas.login-success.redirect))]
+            session       (:session request)
+            redirect-uri  (or (:success-redirect session) (url-helper :yki.default.cas.login-success.redirect))]
         (info "user" username "logged in")
         (if (empty? organizations)
           unauthorized

@@ -9,6 +9,7 @@
  :duct-migrations-auto-cfg/module {}
  :duct.router/cascading [#ig/ref :yki.handler/status
                          #ig/ref :yki.handler/auth
+                         #ig/ref :yki.handler/login-link
                          #ig/ref :yki.handler/localisation
                          #ig/ref :yki.handler/organizer]
 
@@ -35,6 +36,7 @@
                     :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
                     :onr-client #ig/ref :yki.boundary.onr/onr-client
                     :access-log #ig/ref :yki.middleware.access-log/with-logging
+                    :db #ig/ref :duct.database/sql
                     :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
@@ -42,6 +44,8 @@
  :yki.handler/localisation {:url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/exam-session {:db #ig/ref :duct.database/sql}
+
+ :yki.handler/login-link {:db #ig/ref :duct.database/sql}
 
  :yki.handler/file {:db #ig/ref :duct.database/sql
                     :file-store #ig/ref :yki.boundary.files/liiteri-file-store}

@@ -11,15 +11,9 @@
 
 (require-sql ["yki/queries.sql" :as q])
 
-(defn- convert-dates [{:keys [oid agreement_start_date agreement_end_date contact_name
-                              contact_email contact_phone_number contact_shared_email]}]
-  {:oid oid
-   :contact_name contact_name
-   :contact_email contact_email
-   :contact_phone_number contact_phone_number
-   :contact_shared_email contact_shared_email
-   :agreement_start_date (f/parse agreement_start_date)
-   :agreement_end_date (f/parse agreement_end_date)})
+(defn- convert-dates [organizer]
+  (reduce #(update-in %1 [%2] f/parse) organizer [:agreement_start_date
+                                                  :agreement_end_date]))
 
 (defprotocol Organizers
   (create-organizer! [db organizer])

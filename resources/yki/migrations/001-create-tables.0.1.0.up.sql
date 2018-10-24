@@ -47,12 +47,12 @@ CREATE TABLE IF NOT EXISTS exam_session (
   organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
   exam_language_id BIGSERIAL NOT NULL REFERENCES exam_language(id),
   session_date DATE NOT NULL,
-  session_start_time TIME NOT NULL,
-  session_end_time TIME NOT NULL,
-  registration_start_date DATE NOT NULL,
-  registration_start_time TIME NOT NULL,
-  registration_end_date DATE NOT NULL,
-  registration_end_time TIME NOT NULL,
+  session_start_time TIME,
+  session_end_time TIME,
+  registration_start_date DATE,
+  registration_start_time TIME,
+  registration_end_date DATE,
+  registration_end_time TIME,
   max_participants INTEGER NOT NULL,
   published_at TIMESTAMP DEFAULT NULL,
   created TIMESTAMP DEFAULT current_timestamp,
@@ -78,3 +78,34 @@ CREATE TABLE IF NOT EXISTS exam_date (
   exam_date DATE NOT NULL,
   created TIMESTAMP DEFAULT current_timestamp
 );
+--;;
+CREATE TABLE IF NOT EXISTS participant (
+  id BIGSERIAL PRIMARY KEY,
+  external_user_id TEXT UNIQUE NOT NULL,
+  created TIMESTAMP DEFAULT current_timestamp
+);
+--;;
+CREATE TYPE registration_state AS ENUM ('OK', 'INCOMPLETE', 'ERROR');
+--;;
+CREATE TABLE IF NOT EXISTS registration (
+  id BIGSERIAL PRIMARY KEY,
+  state registration_state NOT NULL,
+  exam_session_id BIGINT REFERENCES exam_session (id) NOT NULL,
+  participant_id BIGINT REFERENCES participant (id) NOT NULL,
+  created TIMESTAMP DEFAULT current_timestamp,
+  CONSTRAINT one_participation_per_session_constraint UNIQUE (exam_session_id, participant_id)
+);
+--;;
+CREATE TABLE IF NOT EXISTS login_link (
+ id BIGSERIAL PRIMARY KEY,
+ code TEXT UNIQUE NOT NULL,
+ participant_id BIGSERIAL REFERENCES participant (id) NOT NULL,
+ exam_session_id BIGSERIAL REFERENCES exam_session (id) NOT NULL,
+ expired_link_redirect TEXT NOT NULL,
+ success_redirect TEXT NOT NULL,
+ expires_at DATE NOT NULL,
+ created TIMESTAMP DEFAULT current_timestamp,
+ modified TIMESTAMP DEFAULT current_timestamp
+);
+--;;
+
