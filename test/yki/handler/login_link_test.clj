@@ -29,7 +29,7 @@
                     (mock/content-type "application/json; charset=UTF-8"))
         response (send-request request)
         response-body (base/body-as-json response)]
-    (testing "login link should be created and send via email"
+    (testing "login link should be created"
       (is (= '({:count 1})
              (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM login_link")))
       (is (= (:status response) 200)))))
