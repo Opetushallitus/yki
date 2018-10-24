@@ -26,4 +26,5 @@
                      :cookie-attrs {:max-age 28800
                                     :http-only false
                                     :secure true
+                                    :domain "{{host_oppija}}"
                                     :path "/yki"}}}}

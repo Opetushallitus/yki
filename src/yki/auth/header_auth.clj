@@ -1,5 +1,5 @@
 (ns yki.auth.header-auth
-  (:require [ring.util.http-response :refer [see-other]]
+  (:require [ring.util.http-response :refer [found]]
             [yki.boundary.onr :as onr]
             [clojure.string :as str])
   (:import [java.util UUID]))
@@ -27,7 +27,7 @@
                  :street-address vakinainenkotimainenlahiosoites}
         redirect-url (or (:success-redirect session) (url-helper :yki.default.login-success.redirect {"lang" lang}))]
     (if (and sn firstname nationalidentificationnumber)
-      (-> (see-other redirect-url)
+      (-> (found redirect-url)
           (assoc :session {:identity (merge
                                       {:firstname       (first
                                                          (if etunimet

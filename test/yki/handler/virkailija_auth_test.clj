@@ -40,6 +40,7 @@
                                                                     :session-config {:key "ad7tbRZIG839gDo2"
                                                                                      :cookie-attrs {:max-age 28800
                                                                                                     :http-only true
+                                                                                                    :domain "localhost"
                                                                                                     :secure false
                                                                                                     :path "/yki"}}})
         cas-client (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper

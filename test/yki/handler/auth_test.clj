@@ -45,6 +45,7 @@
                                             :cookie-attrs {:max-age 28800
                                                            :http-only true
                                                            :secure false
+                                                           :domain "localhost"
                                                            :path "/yki"}}})
         cas-client (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
                                                                :cas-creds {:username "username"

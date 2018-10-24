@@ -1,5 +1,5 @@
 (ns yki.auth.code-auth
-  (:require [ring.util.http-response :refer [see-other found]]
+  (:require [ring.util.http-response :refer [found]]
             [yki.boundary.login-link-db :as login-link-db]
             [clojure.tools.logging :refer [info error]]
             [clj-time.core :as t]
@@ -18,7 +18,7 @@
   (try
     (if-let [login-link (login-link-db/get-login-link-by-code db code)]
       (if (link-valid? (:expires_at login-link))
-        (-> (see-other (:success_redirect login-link))
+        (-> (found (:success_redirect login-link))
             (assoc :session {:identity {:external-user-id (:external_user_id login-link)}
                              :yki-session-id (str (UUID/randomUUID))}))
         (found (:expired_link_redirect login-link)))
