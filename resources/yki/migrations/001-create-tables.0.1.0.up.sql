@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS organizer (
   contact_email TEXT,
   contact_phone_number TEXT,
   contact_shared_email TEXT,
+  extra_information TEXT,
   deleted_at TIMESTAMP DEFAULT NULL,
   created TIMESTAMP DEFAULT current_timestamp,
   modified TIMESTAMP DEFAULT current_timestamp
@@ -42,26 +43,34 @@ CREATE TABLE IF NOT EXISTS attachment_metadata (
   created TIMESTAMP DEFAULT current_timestamp
 );
 --;;
+CREATE TABLE IF NOT EXISTS exam_date (
+  id BIGSERIAL PRIMARY KEY,
+  exam_date DATE NOT NULL,
+  registration_start_date DATE NOT NULL,
+  registration_end_date DATE NOT NULL,
+  created TIMESTAMP DEFAULT current_timestamp,
+  modified TIMESTAMP DEFAULT current_timestamp,
+  UNIQUE (exam_date, registration_start_date, registration_end_date)
+);
+--;;
+CREATE TABLE IF NOT EXISTS exam_date_language (
+  id BIGSERIAL PRIMARY KEY,
+  exam_date_id BIGSERIAL REFERENCES exam_date(id) NOT NULL,
+  language_code CHAR(2) REFERENCES language(code) NOT NULL,
+  created TIMESTAMP DEFAULT current_timestamp
+);
+--;;
 CREATE TABLE IF NOT EXISTS exam_session (
   id BIGSERIAL PRIMARY KEY,
   organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
   exam_language_id BIGSERIAL NOT NULL REFERENCES exam_language(id),
-  session_date DATE NOT NULL,
-  session_start_time TIME,
-  session_end_time TIME,
-  registration_start_date DATE,
-  registration_start_time TIME,
-  registration_end_date DATE,
-  registration_end_time TIME,
+  exam_date_id BIGSERIAL NOT NULL REFERENCES exam_date(id),
   max_participants INTEGER NOT NULL,
   published_at TIMESTAMP DEFAULT NULL,
   created TIMESTAMP DEFAULT current_timestamp,
   modified TIMESTAMP DEFAULT current_timestamp,
-  UNIQUE (organizer_id, exam_language_id, session_date)
+  UNIQUE (organizer_id, exam_language_id, exam_date_id)
 );
---;;
-CREATE INDEX exam_session_session_date
-ON exam_session(session_date);
 --;;
 CREATE TABLE IF NOT EXISTS exam_session_location (
   id BIGSERIAL PRIMARY KEY,
@@ -69,13 +78,8 @@ CREATE TABLE IF NOT EXISTS exam_session_location (
   city TEXT NOT NULL,
   other_location_info TEXT NOT NULL,
   extra_information TEXT,
-  language_code CHAR(2) REFERENCES language (code) NOT NULL,
-  exam_session_id BIGINT NOT NULL REFERENCES exam_session (id) ON DELETE CASCADE
-);
---;;
-CREATE TABLE IF NOT EXISTS exam_date (
-  id BIGSERIAL PRIMARY KEY,
-  exam_date DATE NOT NULL,
+  language_code CHAR(2) REFERENCES language(code) NOT NULL,
+  exam_session_id BIGINT NOT NULL REFERENCES exam_session(id) ON DELETE CASCADE,
   created TIMESTAMP DEFAULT current_timestamp
 );
 --;;

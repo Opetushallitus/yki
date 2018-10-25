@@ -17,7 +17,7 @@
 (use-fixtures :each embedded-db/with-transaction)
 
 (deftest exam-session-validation-test
-  (let [invalid-exam-session (base/change-entry base/exam-session "registration_start_time" "2019-03-01")
+  (let [invalid-exam-session (base/change-entry base/exam-session "session_date" "NOT_A_DATE")
         request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") invalid-exam-session)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (base/send-request-with-tx request)
@@ -30,6 +30,7 @@
 (deftest exam-session-crud-test
   (base/insert-organizer "'1.2.3.4'")
   (base/insert-languages "'1.2.3.4'")
+  (base/insert-exam-dates)
 
   (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
                     (mock/content-type "application/json; charset=UTF-8"))
@@ -50,13 +51,13 @@
     (is (= (:status response) 200))
     (is (= response-body base/exam-sessions-json)))
 
-  (let [updated-exam-session (base/change-entry base/exam-session "registration_start_time" "10:00")
+  (let [updated-exam-session (base/change-entry base/exam-session "max_participants" 51)
         request (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.4/exam-session/1") updated-exam-session)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (base/send-request-with-tx request)]
     (testing "put exam session endpoint should update exam session based on id query parameter"
-      (is (= '({:registration_start_time "10:00"})
-             (jdbc/query @embedded-db/conn "SELECT registration_start_time FROM exam_session where id = 1")))))
+      (is (= '({:max_participants 51})
+             (jdbc/query @embedded-db/conn "SELECT max_participants FROM exam_session where id = 1")))))
 
   (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/1"))
         response (base/send-request-with-tx request)]

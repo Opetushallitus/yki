@@ -2,15 +2,9 @@
   "exam_sessions": [
     {
       "id": 1,
-      "session_date": "2019-05-01T00:00:00.000Z",
-      "session_start_time": "09:00",
-      "session_end_time": "14:00",
+      "session_date": "2039-05-02T00:00:00.000Z",
       "language_code": "fi",
       "level_code": "PERUS",
-      "registration_start_date": "2019-03-01T00:00:00.000Z",
-      "registration_start_time": "09:30",
-      "registration_end_date": "2018-04-15T00:00:00.000Z",
-      "registration_end_time": "16:00",
       "max_participants": 50,
       "published_at": "2018-01-01T00:00:00.000Z",
       "organizer_oid": "1.2.3.4",

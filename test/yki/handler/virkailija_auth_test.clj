@@ -172,6 +172,7 @@
   (base/insert-organizer "'1.2.3.5'")
   (base/insert-languages "'1.2.3.4'")
   (base/insert-languages "'1.2.3.5'")
+  (base/insert-exam-dates)
 
   (with-routes!
     (fn [server]
@@ -200,6 +201,7 @@
 
 (deftest user-with-oph-permissions-authorization-test
   (base/insert-organizer "'1.2.3.5'")
+  (base/insert-exam-dates)
 
   (with-routes!
     (fn [server]

@@ -69,26 +69,14 @@
 ;; exam-session
 (s/def ::organizer_oid              ::oid)
 (s/def ::session_date               ::date)
-(s/def ::session_start_time         ::time)
-(s/def ::session_end_time           ::time)
-(s/def ::registration_start_date    ::date)
-(s/def ::registration_start_time    ::time)
-(s/def ::registration_end_date      ::date)
-(s/def ::registration_end_time      ::time)
 (s/def ::max_participants           pos-int?)
 (s/def ::published_at               (s/nilable ::date))
 
 (s/def ::from                       ::date)
 
 (s/def ::exam-session (s/keys :req-un [::session_date
-                                       ::session_start_time
-                                       ::session_end_time
                                        ::language_code
                                        ::level_code
-                                       ::registration_start_date
-                                       ::registration_start_time
-                                       ::registration_end_date
-                                       ::registration_end_time
                                        ::max_participants
                                        ::published_at
                                        ::location]

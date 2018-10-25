@@ -16,7 +16,7 @@
 
 (def organizer {:oid "1.2.3.4"
                 :agreement_start_date "2018-01-01T00:00:00Z"
-                :agreement_end_date "2029-01-01T00:00:00Z"
+                :agreement_end_date "2049-01-01T00:00:00Z"
                 :contact_email "fuu@bar.com"
                 :contact_name "fuu"
                 :contact_phone_number "123456"
@@ -73,6 +73,9 @@
         published_at)
           VALUES (1, 1, '2028-01-01', null, null, null, null, null, null, 50, null)"))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') ")))
+
+(defn insert-exam-dates []
+  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-05-01', '2039-12-01')"))
 
 (defn send-request-with-tx
   ([request]
