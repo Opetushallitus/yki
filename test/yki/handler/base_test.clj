@@ -16,7 +16,7 @@
 
 (def organizer {:oid "1.2.3.4"
                 :agreement_start_date "2018-01-01T00:00:00Z"
-                :agreement_end_date "2029-01-01T00:00:00Z"
+                :agreement_end_date "2049-01-01T00:00:00Z"
                 :contact_email "fuu@bar.com"
                 :contact_name "fuu"
                 :contact_phone_number "123456"
@@ -57,21 +57,19 @@
   (jdbc/execute! @embedded-db/conn (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
   (jdbc/execute! @embedded-db/conn (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
+(defn insert-exam-dates []
+  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-05-01', '2039-12-01')"))
+
 (defn insert-login-link-prereqs []
   (insert-organizer "'1.2.3.4'")
   (insert-languages "'1.2.3.4'")
+  (insert-exam-dates)
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
         exam_language_id,
-        session_date,
-        session_start_time,
-        session_end_time,
-        registration_start_date,
-        registration_start_time,
-        registration_end_date,
-        registration_end_time,
+        exam_date_id,
         max_participants,
         published_at)
-          VALUES (1, 1, '2028-01-01', null, null, null, null, null, null, 50, null)"))
+          VALUES (1, 1, 1, 50, null)"))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') ")))
 
 (defn send-request-with-tx

@@ -13,12 +13,6 @@
 
 (defn- convert-dates [exam-session]
   (reduce #(update-in %1 [%2] f/parse) exam-session [:session_date
-                                                     :session_start_time
-                                                     :session_end_time
-                                                     :registration_start_date
-                                                     :registration_start_time
-                                                     :registration_end_date
-                                                     :registration_end_time
                                                      :published_at]))
 
 (defn- string->date [date]
@@ -39,7 +33,7 @@
     [{:keys [spec]} oid exam-session]
     (jdbc/with-db-transaction [tx spec]
       (let [result (q/insert-exam-session<! tx (assoc (convert-dates exam-session) :oid oid))
-            exam-session-id (result :id)]
+            exam-session-id (:id result)]
         (doseq [loc (:location exam-session)]
           (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))
         exam-session-id)))
