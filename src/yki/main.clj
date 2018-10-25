@@ -10,7 +10,7 @@
     (io/file "./oph-configuration/config.edn")))
 
 (defn -main [& args]
-  (let [keys (or (duct/parse-keys args) [:duct/daemon])]
+  (let [keys (or (duct/parse-keys args) [:duct/daemon :duct.migrator/ragtime])]
     (-> (duct/read-config (read-external-config))
         (duct/prep keys)
         (duct/exec keys))))
