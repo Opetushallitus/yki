@@ -28,9 +28,9 @@
         request (-> (mock/request :post routing/login-link-api-root json-body)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (send-request request)
+        code (:code (first (jdbc/query @embedded-db/conn "SELECT code FROM login_link")))
         response-body (base/body-as-json response)]
-    (testing "login link should be created"
-      (is (= '({:count 1})
-             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM login_link")))
+    (testing "login link should be created with hashed code"
+      (is (= (count code) 64))
       (is (= (:status response) 200)))))
 

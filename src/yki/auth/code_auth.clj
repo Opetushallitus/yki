@@ -2,6 +2,7 @@
   (:require [ring.util.http-response :refer [found]]
             [yki.boundary.login-link-db :as login-link-db]
             [clojure.tools.logging :refer [info error]]
+            [yki.handler.login-link :as login-link]
             [clj-time.core :as t]
             [clj-time.local :as l]
             [clojure.string :as str])
@@ -16,7 +17,7 @@
 
 (defn login [db code lang url-helper]
   (try
-    (if-let [login-link (login-link-db/get-login-link-by-code db code)]
+    (if-let [login-link (login-link-db/get-login-link-by-code db (login-link/hash code))]
       (if (link-valid? (:expires_at login-link))
         (-> (found (:success_redirect login-link))
             (assoc :session {:identity {:external-user-id (:external_user_id login-link)}
