@@ -10,6 +10,7 @@
             [yki.embedded-db :as embedded-db]
             [clojure.java.jdbc :as jdbc]
             [jsonista.core :as json]
+            [yki.handler.login-link :as login-link]
             [yki.middleware.auth]
             [yki.boundary.cas :as cas]
             [yki.handler.base-test :as base]
@@ -95,7 +96,7 @@
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
         (code, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
-          VALUES ('" code "', 1, 1, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
+          VALUES ('" (login-link/hash code) "', 1, 1, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
 (deftest init-session-data-from-headers-and-onr-test
   (with-routes!
