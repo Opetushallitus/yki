@@ -1,0 +1,442 @@
+{
+    "username": "1.2.246.562.24.86420489115",
+    "authorities": [
+      {
+        "authority": "ROLE_APP_VALINTOJENTOTEUTTAMINEN_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_CREATE_TEMPLATE"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_READ_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_HAKEMUS_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_KAYTTOOIKEUS_VIRKAILIJANLUONTI_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_YHTEYSTIETOTYYPPIENHALLINTA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEET_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_CREATE_LETTER"
+      },
+      {
+        "authority": "ROLE_APP_VIRKAILIJANTYOPOYTA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_SUORITUSREKISTERI_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_SISALLONHALLINTA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_SIJOITTELU"
+      },
+      {
+        "authority": "ROLE_APP_KOODISTO"
+      },
+      {
+        "authority": "ROLE_APP_ORGANISAATIOHALLINTA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_VIRKAILIJANTYOPOYTA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_HAKUPERUSTEETADMIN"
+      },
+      {
+        "authority": "ROLE_APP_RYHMASAHKOPOSTI_SEND"
+      },
+      {
+        "authority": "ROLE_APP_TIEDONSIIRTO"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEET_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_ATARU_EDITORI_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_TIEDONSIIRTO_VALINTA_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_SYSTEM_ATTACHMENT_DOWNLOAD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_IPOSTI_READ"
+      },
+      {
+        "authority": "ROLE_APP_ORGANISAATIOHALLINTA_RYHMA_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_OSOITE_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_CREATE_LETTER_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_OTI"
+      },
+      {
+        "authority": "ROLE_APP_KAYTTOOIKEUS_VASTUUKAYTTAJAT"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEET"
+      },
+      {
+        "authority": "ROLE_APP_KOODISTO_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_RAPORTOINTI"
+      },
+      {
+        "authority": "ROLE_APP_KAYTTOOIKEUS_REKISTERINPITAJA"
+      },
+      {
+        "authority": "ROLE_APP_IPOSTI_READ_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_IPOSTI_SEND"
+      },
+      {
+        "authority": "ROLE_APP_OID_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_IPOSTI"
+      },
+      {
+        "authority": "ROLE_APP_RAPORTOINTI_VALINTAKAYTTAJA_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_ATARU_EDITORI_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET"
+      },
+      {
+        "authority": "ROLE_APP_RYHMASAHKOPOSTI_VIEW"
+      },
+      {
+        "authority": "ROLE_APP_YHTEYSTIETOTYYPPIENHALLINTA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_HAKUJENHALLINTA"
+      },
+      {
+        "authority": "ROLE_APP_SIJOITTELU_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_ASIOINTITILICRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_AMOSAA_ADMIN_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_VALINTOJENTOTEUTTAMINEN_TULOSTENTUONTI_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_RYHMASAHKOPOSTI_VIEW_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_YLOPS_ADMIN_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_HAKULOMAKKEENHALLINTA"
+      },
+      {
+        "authority": "ROLE_APP_TARJONTA"
+      },
+      {
+        "authority": "ROLE_APP_VALINTATULOSSERVICE_KELA_READ_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_ASIOINTITILICRUD"
+      },
+      {
+        "authority": "ROLE_APP_ATARU_EDITORI"
+      },
+      {
+        "authority": "ROLE_APP_HAKUPERUSTEETADMIN_REKISTERINPITAJA_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_READ"
+      },
+      {
+        "authority": "ROLE_APP_TIEDONSIIRTO_VALINTA"
+      },
+      {
+        "authority": "ROLE_APP_VALINTATULOSSERVICE"
+      },
+      {
+        "authority": "ROLE_APP_VALINTOJENTOTEUTTAMINEN_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_VALINTOJENTOTEUTTAMINENKK"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_SEND_LETTER_EMAIL_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_OTI_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_HAKEMUS"
+      },
+      {
+        "authority": "ROLE_APP_SISALLONHALLINTA"
+      },
+      {
+        "authority": "ROLE_APP_KAYTTOOIKEUS_REKISTERINPITAJA_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_YHTEYSTIETOTYYPPIENHALLINTA"
+      },
+      {
+        "authority": "ROLE_APP_RYHMASAHKOPOSTI_SEND_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_KAYTTOOIKEUS_VIRKAILIJANLUONTI"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEKUVAUSTENHALLINTA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_RAPORTOINTI_VALINTAKAYTTAJA"
+      },
+      {
+        "authority": "ROLE_APP_HAKULOMAKKEENHALLINTA_LOMAKEPOHJANVAIHTO"
+      },
+      {
+        "authority": "ROLE_APP_VALINTOJENTOTEUTTAMINENKK_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_HAKEMUS_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_HAKUJENHALLINTA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_CREATE_TEMPLATE_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_TIEDONSIIRTO_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_YLOPS_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_SUORITUSREKISTERI"
+      },
+      {
+        "authority": "ROLE_APP_ATARU_HAKEMUS"
+      },
+      {
+        "authority": "ROLE_APP_SIJOITTELU_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_OID"
+      },
+      {
+        "authority": "ROLE_APP_HAKUPERUSTEETADMIN_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_OPPIJANUMEROREKISTERI_REKISTERINPITAJA_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_SUORITUSREKISTERI_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_VALINTOJENTOTEUTTAMINEN_TULOSTENTUONTI"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_AMOSAA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_OPPIJANUMEROREKISTERI"
+      },
+      {
+        "authority": "ROLE_APP_HAKULOMAKKEENHALLINTA_LOMAKEPOHJANVAIHTO_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_KOODISTO_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_OID_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_VALINTOJENTOTEUTTAMINEN"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_SYSTEM_ATTACHMENT_DOWNLOAD"
+      },
+      {
+        "authority": "ROLE_APP_LOKALISOINTI"
+      },
+      {
+        "authority": "ROLE_APP_LOKALISOINTI_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU"
+      },
+      {
+        "authority": "ROLE_APP_OSOITE_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_OTI_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_HAKUPERUSTEETADMIN_REKISTERINPITAJA"
+      },
+      {
+        "authority": "ROLE_APP_OPPIJANUMEROREKISTERI_REKISTERINPITAJA"
+      },
+      {
+        "authority": "ROLE_APP_OMATTIEDOT_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEKUVAUSTENHALLINTA_KK"
+      },
+      {
+        "authority": "ROLE_APP_TARJONTA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_TARJONTA_KK_READ"
+      },
+      {
+        "authority": "ROLE_APP_OMATTIEDOT"
+      },
+      {
+        "authority": "ROLE_APP_OSOITE"
+      },
+      {
+        "authority": "ROLE_APP_VALINTATULOSSERVICE_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_KAYTTOOIKEUS_VASTUUKAYTTAJAT_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_SISALLONHALLINTA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_TARJONTA_KK_READ_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEKUVAUSTENHALLINTA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_ATARU_HAKEMUS_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_RAPORTOINTI_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_ASIAKIRJAPALVELU_SEND_LETTER_EMAIL"
+      },
+      {
+        "authority": "ROLE_APP_HAKUPERUSTEETADMIN_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_AMOSAA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_HAKULOMAKKEENHALLINTA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_YLOPS_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEKUVAUSTENHALLINTA_KK_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEKUVAUSTENHALLINTA_KK_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_VIRKAILIJANTYOPOYTA"
+      },
+      {
+        "authority": "ROLE_APP_KAYTTOOIKEUS"
+      },
+      {
+        "authority": "ROLE_APP_LOKALISOINTI_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_AMOSAA_ADMIN"
+      },
+      {
+        "authority": "ROLE_APP_RYHMASAHKOPOSTI"
+      },
+      {
+        "authority": "ROLE_APP_VALINTOJENTOTEUTTAMINENKK_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_HAKUJENHALLINTA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_ORGANISAATIOHALLINTA_RYHMA"
+      },
+      {
+        "authority": "ROLE_APP_ATARU_HAKEMUS_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_TARJONTA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_AMOSAA"
+      },
+      {
+        "authority": "ROLE_APP_ORGANISAATIOHALLINTA_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_YLOPS_ADMIN"
+      },
+      {
+        "authority": "ROLE_APP_OMATTIEDOT_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_VALINTATULOSSERVICE_KELA_READ"
+      },
+      {
+        "authority": "ROLE_APP_HAKULOMAKKEENHALLINTA_CRUD"
+      },
+      {
+        "authority": "ROLE_APP_TIEDONSIIRTO_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_IPOSTI_SEND_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_RAPORTOINTI_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_ORGANISAATIOHALLINTA"
+      },
+      {
+        "authority": "ROLE_APP_VALINTAPERUSTEKUVAUSTENHALLINTA"
+      },
+      {
+        "authority": "ROLE_APP_TARJONTA_KK"
+      },
+      {
+        "authority": "ROLE_APP_VALINTATULOSSERVICE_CRUD_1.2.246.562.10.00000000001"
+      },
+      {
+        "authority": "ROLE_APP_EPERUSTEET_YLOPS"
+      }
+    ],
+    "accountNonExpired": true,
+    "accountNonLocked": true,
+    "credentialsNonExpired": true,
+    "enabled": true,
+    "password": null
+  }

@@ -11,7 +11,7 @@
             [integrant.core :as ig])
   (:import [java.util UUID]))
 
-(defn hash [code]
+(defn sha256-hash [code]
   (-> (hash/sha256 code)
       (bytes->hex)))
 
@@ -24,6 +24,6 @@
        :return ::ys/response
        (registration-db/create-participant-if-not-exists! db (:email login-link))
        (let [code (str (UUID/randomUUID))
-             hashed (hash code)]
+             hashed (sha256-hash code)]
          (if (login-link-db/create-login-link! db (assoc login-link :code hashed))
            (ok {:success true})))))))

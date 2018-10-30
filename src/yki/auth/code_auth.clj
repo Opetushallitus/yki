@@ -17,7 +17,7 @@
 
 (defn login [db code lang url-helper]
   (try
-    (if-let [login-link (login-link-db/get-login-link-by-code db (login-link/hash code))]
+    (if-let [login-link (login-link-db/get-login-link-by-code db (login-link/sha256-hash code))]
       (if (link-valid? (:expires_at login-link))
         (-> (found (:success_redirect login-link))
             (assoc :session {:identity {:external-user-id (:external_user_id login-link)}

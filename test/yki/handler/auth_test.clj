@@ -96,7 +96,7 @@
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
         (code, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
-          VALUES ('" (login-link/hash code) "', 1, 1, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
+          VALUES ('" (login-link/sha256-hash code) "', 1, 1, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
 (deftest init-session-data-from-headers-and-onr-test
   (with-routes!

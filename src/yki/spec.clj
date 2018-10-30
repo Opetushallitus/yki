@@ -3,6 +3,7 @@
   (:require
    [clj-time.format :as f]
    [clojure.spec.alpha :as s]
+   [clojure.string :as str]
    [spec-tools.spec :as spec]
    [spec-tools.core :as st])
 
@@ -12,10 +13,13 @@
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 
+(s/def ::language-code  #{"fi" "sv" "en"})
+
 (defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
       (f/parse maybe-date)))
 
+(s/def ::non-blank-string (s/and string? #(not (str/blank? %))))
 (s/def ::date         (st/spec
                        {:spec (partial date?)
                         :type :date-time
@@ -29,12 +33,12 @@
 (s/def ::agreement_start_date ::date)
 (s/def ::agreement_end_date   ::date)
 (s/def ::contact_name         (s/and string? #(<= (count %) 256)))
-(s/def ::language_code        (s/and string? #(=  (count %) 2)))
+(s/def ::language_code        ::language-code)
 (s/def ::level_code           (s/and string? #(<= (count %) 16)))
 (s/def ::success              boolean?)
 (s/def ::error                string?)
 (s/def ::contact_email        ::email-type)
-(s/def ::contact_shared_email ::email-type)
+(s/def ::contact_shared_email (s/nilable ::email-type))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
 (s/def ::language (s/keys :req-un [::language_code
                                    ::level_code]))
@@ -109,3 +113,74 @@
                                      ::success_redirect
                                      ::expires_at]
                             :opt-un [::user_data]))
+
+(defn- parse-int [int-str]
+  (try (Integer/parseInt int-str)
+       (catch Throwable _)))
+
+(defn- valid-reference-number? [x]
+  (let [factors [7 3 1]
+        ref-str (str x)
+        check-num (-> (last ref-str) str parse-int)
+        ref (drop-last ref-str)]
+    (-> (->> (reverse ref)
+             (partition 3 3 [])
+             (map (fn [three]
+                    (->> (map #(parse-int (str %)) three)
+                         (map * factors))))
+             (flatten)
+             (reduce +)
+             str
+             last
+             str
+             parse-int
+             (- 10))
+        (mod 10)
+        (= check-num))))
+
+;; payment
+(s/def ::timestamp date?)
+(s/def ::amount (s/and number? pos?))
+(s/def ::reference-number (s/and number? #(valid-reference-number? %)))
+(s/def ::order-number (s/and ::non-blank-string #(< (count %) 33)))
+(s/def ::msg ::non-blank-string)
+(s/def ::payment-id (s/and ::non-blank-string #(< (count %) 26)))
+
+(s/def ::uri ::non-blank-string)
+(def pt-amount-regexp #"\d{0,3}.\d{2}")
+(def pt-locale-regexp #"^[a-z]{1,2}[_][A-Z]{1,2}$")
+
+(s/def ::pt-payment-params (s/keys :req [::language-code
+                                         ::amount
+                                         ::order-number
+                                         ::reference-number
+                                         ::msg]))
+
+(s/def ::MERCHANT_ID number?)
+(s/def ::LOCALE (s/and string? #(re-matches pt-locale-regexp %)))
+(s/def ::URL_SUCCESS ::non-blank-string)
+(s/def ::URL_CANCEL ::non-blank-string)
+(s/def ::AMOUNT (s/and string? #(re-matches pt-amount-regexp %)))
+(s/def ::ORDER_NUMBER ::order-number)
+(s/def ::REFERENCE_NUMBER ::reference-number)
+(s/def ::MSG_SETTLEMENT_PAYER ::non-blank-string)
+(s/def ::MSG_UI_MERCHANT_PANEL ::non-blank-string)
+(s/def ::PARAMS_IN ::non-blank-string)
+(s/def ::PARAMS_OUT ::non-blank-string)
+(s/def ::AUTHCODE ::non-blank-string)
+
+(s/def ::pt-payment-form-params (s/keys :req [::MERCHANT_ID
+                                              ::LOCALE
+                                              ::URL_SUCCESS
+                                              ::URL_CANCEL
+                                              ::AMOUNT
+                                              ::ORDER_NUMBER
+                                              ::REFERENCE_NUMBER
+                                              ::MSG_SETTLEMENT_PAYER
+                                              ::MSG_UI_MERCHANT_PANEL
+                                              ::PARAMS_IN
+                                              ::PARAMS_OUT
+                                              ::AUTHCODE]))
+
+(s/def ::pt-payment-form-data (s/keys :req [::uri
+                                            ::pt-payment-form-params]))
