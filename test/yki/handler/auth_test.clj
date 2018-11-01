@@ -93,11 +93,6 @@
 (def code-expired "4ce84260-3d04-445e-b914-38e93c1ef668")
 (def code-not-found "4ce84260-3d04-445e-b914-38e93c1ef698")
 
-(defn insert-login-link [code expires-at]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
-        (code, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
-          VALUES ('" (login-link/sha256-hash code) "', 1, 1, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
-
 (deftest init-session-data-from-headers-and-onr-test
   (with-routes!
     (fn [server]
@@ -135,13 +130,13 @@
 
 (deftest login-with-login-link-test
   (base/insert-login-link-prereqs)
-  (insert-login-link code-ok "2038-01-01")
-  (insert-login-link code-expired (l/format-local-time (l/local-now) :date))
+  (base/insert-login-link code-ok "2038-01-01")
+  (base/insert-login-link code-expired (l/format-local-time (l/local-now) :date))
 
   (let [handler (create-routes "")
         session (peridot/session handler)
         response (-> session
-                     (peridot/request (str routing/auth-root "/callback?code=" code-ok))
+                     (peridot/request (str routing/auth-root "/login?code=" code-ok))
                      (peridot/request (str routing/auth-root "/user")))
         response-body (base/body-as-json (:response response))
         identity (get-in response-body ["session" "identity"])]
@@ -152,7 +147,7 @@
   (let [handler (create-routes "")
         session (peridot/session handler)
         response (-> session
-                     (peridot/request (str routing/auth-root "/callback?code=" code-expired)))]
+                     (peridot/request (str routing/auth-root "/login?code=" code-expired)))]
     (testing "when trying to login with expired code should redirect to expired url"
       (is (= (get-in response [:response :status]) 302))
       (is (= (get-in response [:response :headers]) {"Location" "http://localhost/expired"}))))
@@ -160,6 +155,6 @@
   (let [handler (create-routes "")
         session (peridot/session handler)
         response (-> session
-                     (peridot/request (str routing/auth-root "/callback?code=" "NOT_FOUND")))]
+                     (peridot/request (str routing/auth-root "/login?code=" "NOT_FOUND")))]
     (testing "when trying to login with non existing code should return 401"
       (is (= (get-in response [:response :status]) 401)))))

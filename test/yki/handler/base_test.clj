@@ -6,9 +6,11 @@
             [clojure.java.io :as io]
             [yki.boundary.files :as files]
             [muuntaja.middleware :as middleware]
+            [peridot.core :as peridot]
             [muuntaja.core :as m]
             [clojure.java.jdbc :as jdbc]
             [yki.embedded-db :as embedded-db]
+            [yki.handler.login-link :as login-link]
             [yki.handler.routing :as routing]
             [yki.handler.exam-session]
             [yki.handler.file]
@@ -33,6 +35,9 @@
 (def exam-session
   (slurp "test/resources/exam_session.json"))
 
+(def payment-formdata-json
+  (j/read-value (slurp "test/resources/payment_formdata.json")))
+
 (defn change-entry
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
@@ -54,8 +59,8 @@
         VALUES (" oid ", '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi')")))
 
 (defn insert-languages [oid]
-  (jdbc/execute! @embedded-db/conn (str "insert into exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
-  (jdbc/execute! @embedded-db/conn (str "insert into exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
 (defn insert-exam-dates []
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-05-01', '2039-12-01')"))
@@ -70,7 +75,14 @@
         max_participants,
         published_at)
           VALUES (1, 1, 1, 50, null)"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') ")))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') "))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(state, exam_session_id, participant_id) values ('INCOMPLETE', 1, 1)"))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO payment(state, registration_id, amount, reference_number, order_number) values ('UNPAID', 1, 30.10, 312321325, 'order1234')")))
+
+(defn insert-login-link [code expires-at]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
+          (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
+            VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', 1, 1, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
 (defn send-request-with-tx
   ([request]

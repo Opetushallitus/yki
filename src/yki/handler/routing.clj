@@ -20,6 +20,8 @@
 
 (def login-link-api-root (str api-root "/login-link"))
 
+(def payment-root (str app-root "/payment"))
+
 (def virkailija-api-root (str api-root "/virkailija"))
 
 (def organizer-api-root (str virkailija-api-root "/organizer"))

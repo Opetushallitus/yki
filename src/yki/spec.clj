@@ -13,7 +13,8 @@
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 
-(s/def ::language-code  #{"fi" "sv" "en"})
+(s/def ::language-code (s/and string? #(= (count %) 2)))
+(s/def ::yki-language-code  #{"fi" "sv" "en"})
 
 (defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
@@ -139,22 +140,21 @@
         (= check-num))))
 
 ;; payment
+(def pt-order-number-regex #"/^[0-9a-zA-Z()\[\]{}*+\-_,. ]{1,64}$/")
+(def pt-amount-regexp #"\d{0,3}.\d{2}")
+(def pt-locale-regexp #"^[a-z]{1,2}[_][A-Z]{1,2}$")
+
 (s/def ::timestamp date?)
-(s/def ::amount (s/and number? pos?))
+(s/def ::amount (s/and string? #(re-matches pt-amount-regexp %)))
 (s/def ::reference-number (s/and number? #(valid-reference-number? %)))
 (s/def ::order-number (s/and ::non-blank-string #(< (count %) 33)))
 (s/def ::msg ::non-blank-string)
 (s/def ::payment-id (s/and ::non-blank-string #(< (count %) 26)))
-
 (s/def ::uri ::non-blank-string)
-(def pt-amount-regexp #"\d{0,3}.\d{2}")
-(def pt-locale-regexp #"^[a-z]{1,2}[_][A-Z]{1,2}$")
 
 (s/def ::pt-payment-params (s/keys :req [::language-code
-                                         ::amount
                                          ::order-number
-                                         ::reference-number
-                                         ::msg]))
+                                         ::reference-number]))
 
 (s/def ::MERCHANT_ID number?)
 (s/def ::LOCALE (s/and string? #(re-matches pt-locale-regexp %)))
@@ -169,18 +169,18 @@
 (s/def ::PARAMS_OUT ::non-blank-string)
 (s/def ::AUTHCODE ::non-blank-string)
 
-(s/def ::pt-payment-form-params (s/keys :req [::MERCHANT_ID
-                                              ::LOCALE
-                                              ::URL_SUCCESS
-                                              ::URL_CANCEL
-                                              ::AMOUNT
-                                              ::ORDER_NUMBER
-                                              ::REFERENCE_NUMBER
-                                              ::MSG_SETTLEMENT_PAYER
-                                              ::MSG_UI_MERCHANT_PANEL
-                                              ::PARAMS_IN
-                                              ::PARAMS_OUT
-                                              ::AUTHCODE]))
-
-(s/def ::pt-payment-form-data (s/keys :req [::uri
-                                            ::pt-payment-form-params]))
+(s/def ::pt-payment-form-params (s/keys :req-un [::MERCHANT_ID
+                                                 ::LOCALE
+                                                 ::URL_SUCCESS
+                                                 ::URL_CANCEL
+                                                 ::AMOUNT
+                                                 ::ORDER_NUMBER
+                                                 ::REFERENCE_NUMBER
+                                                 ::MSG_SETTLEMENT_PAYER
+                                                 ::MSG_UI_MERCHANT_PANEL
+                                                 ::PARAMS_IN
+                                                 ::PARAMS_OUT
+                                                 ::AUTHCODE]))
+          ; (s/def ::organizers-response (s/keys :req-un [::organizers]))
+(s/def ::pt-payment-form-data (s/keys :req-un [::uri
+                                               ::pt-payment-form-params]))

@@ -25,6 +25,15 @@
                        :tunnistus-host         "tunnistus.untuvaopintopolku.fi"
                        :yki-host-virkailija    "http://localhost:8080"}
 
+ :yki.handler/payment {:db #ig/ref :duct.database/sql
+                       :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                                        :yki-payment-uri "http://localhost:8080/yki/payment"
+                                        :merchant-id 12345
+                                        :amount "100.00"
+                                        :merchant-secret "SECRET_KEY"
+                                        :msg {:fi "msg_fi"
+                                              :sv "msg_sv"}}}
+
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
   :session-config {:key "ad7tbRZIG839gDo2"

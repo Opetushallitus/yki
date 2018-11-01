@@ -88,7 +88,7 @@
   [url-helper]
   [{:pattern #".*/auth/cas/callback"
     :handler any-access}
-   {:pattern #".*/auth/callback"
+   {:pattern #".*/auth/login"
     :handler any-access}
    {:pattern #".*/auth/initsession"
     :handler any-access}
