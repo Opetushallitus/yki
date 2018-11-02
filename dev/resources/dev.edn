@@ -27,12 +27,12 @@
 
  :yki.handler/payment {:db #ig/ref :duct.database/sql
                        :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                        :yki-payment-uri "http://localhost:8080/yki/payment"
-                                        :merchant-id 12345
+                                        :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                        :merchant-id 13466
                                         :amount "100.00"
-                                        :merchant-secret "SECRET_KEY"
-                                        :msg {:fi "msg_fi"
-                                              :sv "msg_sv"}}}
+                                        :merchant-secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
+                                        :msg {:fi "order fi 1234"
+                                              :sv "order sv 1234"}}}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
