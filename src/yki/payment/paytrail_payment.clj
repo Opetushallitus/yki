@@ -31,6 +31,9 @@
       (error "Payment not found for registration-id" registration-id))
     (error "Registration not found" registration-id)))
 
+(defn valid-return-params? [payment-config params]
+  (payment-util/valid-return-params? payment-config params))
+
 (defn create-payment
   [db payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]

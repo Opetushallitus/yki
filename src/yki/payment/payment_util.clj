@@ -38,7 +38,7 @@
 
 (def response-keys [:ORDER_NUMBER :PAYMENT_ID :AMOUNT :TIMESTAMP :STATUS])
 
-(defn return-authcode-valid? [{:keys [merchant-secret]} form-data]
+(defn valid-return-params? [{:keys [merchant-secret]} form-data]
   (if-let [return-authcode (:RETURN_AUTHCODE form-data)]
     (let [plaintext (-> (->> response-keys
                              (map #(% form-data))

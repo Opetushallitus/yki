@@ -89,7 +89,7 @@
              "street-address" "Ateläniitynpolku 29 G"
              "firstname" "Carl-Erik"
              "zip" ""})
-(def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
+
 (def code-expired "4ce84260-3d04-445e-b914-38e93c1ef668")
 (def code-not-found "4ce84260-3d04-445e-b914-38e93c1ef698")
 
@@ -130,13 +130,13 @@
 
 (deftest login-with-login-link-test
   (base/insert-login-link-prereqs)
-  (base/insert-login-link code-ok "2038-01-01")
+  (base/insert-login-link base/code-ok "2038-01-01")
   (base/insert-login-link code-expired (l/format-local-time (l/local-now) :date))
 
   (let [handler (create-routes "")
         session (peridot/session handler)
         response (-> session
-                     (peridot/request (str routing/auth-root "/login?code=" code-ok))
+                     (peridot/request (str routing/auth-root "/login?code=" base/code-ok))
                      (peridot/request (str routing/auth-root "/user")))
         response-body (base/body-as-json (:response response))
         identity (get-in response-body ["session" "identity"])]

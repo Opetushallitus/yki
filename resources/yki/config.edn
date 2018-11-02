@@ -53,7 +53,8 @@
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
 
- :yki.handler/payment {:db #ig/ref :duct.database/sql}
+ :yki.handler/payment {:db #ig/ref :duct.database/sql
+                       :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/localisation {:url-helper #ig/ref :yki.util/url-helper}
 

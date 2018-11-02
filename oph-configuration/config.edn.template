@@ -17,6 +17,15 @@
 
  :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
 
+ :yki.handler/payment {:db #ig/ref :duct.database/sql
+                       :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                                       :yki-payment-uri "http://localhost:8080/yki/payment"
+                                       :merchant-id 12345
+                                       :amount "100.00"
+                                       :merchant-secret "SECRET_KEY"
+                                       :msg {:fi "msg_fi"
+                                             :sv "msg_sv"}}}
+
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {:username "{{yki_cas_username}}"
                                            :password "{{yki_cas_password}}"}}
