@@ -1,8 +1,10 @@
 (ns yki.auth.header-auth
   (:require [ring.util.http-response :refer [found]]
             [yki.boundary.onr :as onr]
+            [clojure.tools.logging :refer [info]]
             [clojure.string :as str])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           [org.slf4j MDC]))
 
 (defn- iso-8859-1->utf-8 [s]
   "Shibboleth encodes headers in UTF-8. Servlet container handles them as ISO-8859-1,
@@ -26,6 +28,8 @@
                  :zip            vakinainenkotimainenlahiosoitepostinumero
                  :street-address vakinainenkotimainenlahiosoites}
         redirect-url (or (:success-redirect session) (url-helper :yki.default.login-success.redirect {"lang" lang}))]
+    (MDC/put "user" oidHenkilo)
+    (info "User" oidHenkilo "logged in")
     (if (and sn firstname nationalidentificationnumber)
       (-> (found redirect-url)
           (assoc :session {:identity (merge

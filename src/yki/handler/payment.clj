@@ -3,7 +3,7 @@
             [clojure.tools.logging :refer [info error]]
             [yki.handler.routing :as routing]
             [yki.boundary.registration-db :as registration-db]
-            [yki.util.audit-log :as audit-log]
+            [yki.util.audit-log :as audit]
             [yki.spec :as ys]
             [yki.payment.paytrail-payment :as paytrail-payment]
             [yki.middleware.access-log]
@@ -32,19 +32,33 @@
          (if formdata
            (ok formdata)
            (internal-server-error {:error "Payment form data creation failed"}))))
-     (GET "/success" {session :session params :params}
-       (info "Received payment success params" params)
-       (if (paytrail-payment/valid-return-params? payment-config params)
-         (if (= (paytrail-payment/handle-payment-return db params) 1)
-           (success-redirect url-helper)
-           (error-redirect url-helper))
-         (error-redirect url-helper)))
-     (GET "/cancel" {session :session params :params}
-       (info "Received payment cancel params" params)
-       (if (paytrail-payment/valid-return-params? payment-config params)
-         (cancel-redirect url-helper)
-         (error-redirect url-helper)))
-     (GET "/notify" {session :session params :params}
+     (GET "/success" request
+       (let [params (:params request)]
+         (info "Received payment success params" params)
+         (if (paytrail-payment/valid-return-params? payment-config params)
+           (if (= (paytrail-payment/handle-payment-return db params) 1)
+             (do
+               (audit/log-participant {:request request
+                                 :target-kv {:k audit/payment
+                                             :v (:ORDER_NUMBER params)}
+                                 :change {:type audit/create-op
+                                          :new params}})
+               (success-redirect url-helper))
+             (error-redirect url-helper))
+           (error-redirect url-helper))))
+     (GET "/cancel" request
+       (let [params (:params request)]
+         (info "Received payment cancel params" params)
+         (if (paytrail-payment/valid-return-params? payment-config params)
+           (do
+             (audit/log-participant {:request request
+                               :target-kv {:k audit/payment
+                                           :v (:ORDER_NUMBER params)}
+                               :change {:type audit/cancel-op
+                                        :new params}})
+             (cancel-redirect url-helper))
+           (error-redirect url-helper))))
+     (GET "/notify" {params :params}
        (info "Received payment notify params" params)
        (if (paytrail-payment/valid-return-params? payment-config params)
          (do

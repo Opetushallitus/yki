@@ -6,7 +6,8 @@
             [clj-time.core :as t]
             [clj-time.local :as l]
             [clojure.string :as str])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           [org.slf4j MDC]))
 
 (def unauthorized {:status 401
                    :body "Unauthorized"
@@ -18,11 +19,14 @@
 (defn login [db code lang url-helper]
   (try
     (if-let [login-link (login-link-db/get-login-link-by-code db (login-link/sha256-hash code))]
-      (if (link-valid? (:expires_at login-link))
-        (-> (found (:success_redirect login-link))
-            (assoc :session {:identity {:external-user-id (:external_user_id login-link)}
-                             :yki-session-id (str (UUID/randomUUID))}))
-        (found (:expired_link_redirect login-link)))
+      (do
+        (MDC/put "user" (:external_user_id login-link))
+        (info "User" (:external_user_id login-link) "logged in")
+        (if (link-valid? (:expires_at login-link))
+          (-> (found (:success_redirect login-link))
+              (assoc :session {:identity {:external-user-id (:external_user_id login-link)}
+                               :yki-session-id (str (UUID/randomUUID))}))
+          (found (:expired_link_redirect login-link))))
       unauthorized)
     (catch Exception e
       (error e "Login link handling failed")

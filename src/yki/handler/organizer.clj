@@ -26,7 +26,7 @@
        :return ::ys/response
        (if (organizer-db/create-organizer! db organizer)
          (do
-           (audit-log/log {:request request
+           (audit-log/log-participant {:request request
                            :target-kv {:k audit-log/organizer
                                        :v (:oid organizer)}
                            :change {:type audit-log/create-op
@@ -45,7 +45,7 @@
          :return ::ys/response
          (if (= (organizer-db/update-organizer! db oid organizer) 1)
            (let [current (first (organizer-db/get-organizers-by-oids db [oid]))]
-             (audit-log/log {:request request
+             (audit-log/log-participant{:request request
                              :target-kv {:k audit-log/organizer
                                          :v oid}
                              :change {:type audit-log/update-op
@@ -59,7 +59,7 @@
          :return ::ys/response
          (if (= (organizer-db/delete-organizer! db oid) 1)
            (do
-             (audit-log/log {:request request
+             (audit-log/log-participant {:request request
                              :target-kv {:k audit-log/organizer
                                          :v oid}
                              :change {:type audit-log/delete-op}})

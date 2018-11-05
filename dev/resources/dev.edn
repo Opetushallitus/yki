@@ -26,6 +26,7 @@
                        :yki-host-virkailija    "http://localhost:8080"}
 
  :yki.handler/payment {:db #ig/ref :duct.database/sql
+                       :auth #ig/ref :yki.middleware.auth/with-authentication
                        :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                         :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
                                         :merchant-id 13466
@@ -54,5 +55,5 @@
                          :url-helper #ig/ref :yki.util/url-helper
                          :file-handler #ig/ref :yki.handler/file
                          :access-log #ig/ref :yki.middleware.access-log/with-logging
-                         :auth #ig/ref :yki.middleware.no-auth/with-authentication}}
+                         :auth #ig/ref :yki.middleware.auth/with-authentication}}
 

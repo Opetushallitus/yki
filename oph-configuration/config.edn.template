@@ -18,6 +18,7 @@
  :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
 
  :yki.handler/payment {:db #ig/ref :duct.database/sql
+                       :auth #ig/ref :yki.middleware.auth/with-authentication
                        :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                        :yki-payment-uri "http://localhost:8080/yki/payment"
                                        :merchant-id 12345
