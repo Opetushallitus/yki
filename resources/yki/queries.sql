@@ -283,6 +283,14 @@ FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 WHERE re.id = :id AND p.external_user_id = :external_user_id;
 
+-- name: update-registration!
+UPDATE registration
+SET
+  state = :state::registration_state,
+  modified = current_timestamp
+WHERE
+ id = (SELECT registration_id FROM payment WHERE order_number = :order_number);
+
 -- name: insert-payment<!
 INSERT INTO payment(
   state,
@@ -309,7 +317,18 @@ SELECT
   payment_method,
   payed_at
  FROM payment
- WHERE registration_id = :registration_id
+ WHERE registration_id = :registration_id;
 
 -- name: select-next-order-number-suffix!
 SELECT nextval('payment_order_number_seq');
+
+-- name: update-payment!
+ UPDATE payment
+ SET
+    state = :state::payment_state,
+    external_payment_id = :external_payment_id,
+    payment_method = :payment_method,
+    payed_at = :payed_at,
+    modified = current_timestamp
+WHERE
+  order_number = :order_number;

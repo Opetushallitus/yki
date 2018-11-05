@@ -67,6 +67,10 @@
 (defn insert-exam-dates []
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-05-01', '2039-12-01')"))
 
+(def select-participant "(SELECT id from participant WHERE external_user_id = 'test@user.com')")
+
+(def select-exam-session "(SELECT id from exam_session WHERE max_participants = 50)")
+
 (defn insert-login-link-prereqs []
   (insert-organizer "'1.2.3.4'")
   (insert-languages "'1.2.3.4'")
@@ -76,19 +80,28 @@
         exam_date_id,
         max_participants,
         published_at)
-          VALUES (1, 1, 1, 50, null)"))
+          VALUES (
+            (SELECT id FROM organizer where oid = '1.2.3.4'),
+            (SELECT id from exam_language WHERE language_code = 'fi'), 1, 50, null)"))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') "))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(state, exam_session_id, participant_id) values ('INCOMPLETE', 1, 1)"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO payment(state, registration_id, amount, reference_number, order_number) values ('UNPAID', 1, 100.00, 312321325, 'order1234')")))
+  (jdbc/execute! @embedded-db/conn (str
+                                    "INSERT INTO registration(state, exam_session_id, participant_id) values
+      ('INCOMPLETE',
+        " select-exam-session ", " select-participant ")"))
+  (jdbc/execute! @embedded-db/conn (str
+                                    "INSERT INTO payment(state, registration_id, amount, reference_number, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'INCOMPLETE'), 100.00, 312321325, 'order1234')")))
 
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
-            VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', 1, 1, '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
+            VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " select-participant ", " select-exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
 (defn login-with-login-link [session]
   (-> session
       (peridot/request (str routing/auth-root "/login?code=" code-ok))))
+
+(defn create-url-helper [uri]
+  (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"}))
 
 (defn send-request-with-tx
   ([request]
@@ -96,7 +109,7 @@
   ([request port]
    (let [uri (str "localhost:" port)
          db (duct.database.sql/->Boundary @embedded-db/conn)
-         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"})
+         url-helper (create-url-helper uri)
          exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
          file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
          file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})

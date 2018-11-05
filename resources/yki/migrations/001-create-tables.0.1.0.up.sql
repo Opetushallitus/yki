@@ -89,13 +89,14 @@ CREATE TABLE IF NOT EXISTS participant (
   created TIMESTAMP DEFAULT current_timestamp
 );
 --;;
-CREATE TYPE registration_state AS ENUM ('OK', 'INCOMPLETE', 'ERROR');
+CREATE TYPE registration_state AS ENUM ('COMPLETED', 'INCOMPLETE', 'ERROR');
 --;;
 CREATE TABLE IF NOT EXISTS registration (
   id BIGSERIAL PRIMARY KEY,
   state registration_state NOT NULL,
   exam_session_id BIGINT REFERENCES exam_session (id) NOT NULL,
   participant_id BIGINT REFERENCES participant (id) NOT NULL,
+  notified_at TIMESTAMP,
   created TIMESTAMP DEFAULT current_timestamp,
   modified TIMESTAMP DEFAULT current_timestamp,
   CONSTRAINT one_participation_per_session UNIQUE (exam_session_id, participant_id)
@@ -117,14 +118,14 @@ CREATE TABLE IF NOT EXISTS login_link (
  modified TIMESTAMP DEFAULT current_timestamp
 );
 --;;
-CREATE TYPE payment_state AS ENUM ('OK', 'UNPAID', 'ERROR');
+CREATE TYPE payment_state AS ENUM ('PAID', 'UNPAID', 'ERROR');
 --;;
 CREATE SEQUENCE IF NOT EXISTS payment_order_number_seq;
 --;;
 CREATE TABLE IF NOT EXISTS payment (
   id BIGSERIAL PRIMARY KEY,
   state payment_state NOT NULL,
-  registration_id BIGSERIAL REFERENCES registration (id) NOT NULL,
+  registration_id BIGSERIAL REFERENCES registration (id) NOT NULL UNIQUE,
   amount NUMERIC NOT NULL,
   reference_number NUMERIC NOT NULL,
   order_number TEXT NOT NULL UNIQUE,

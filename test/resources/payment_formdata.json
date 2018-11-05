@@ -5,7 +5,7 @@
         "MERCHANT_ID": 12345,
         "URL_SUCCESS": "http://localhost:8080/yki/payment/success",
         "AMOUNT": "100.00",
-        "PARAMS_OUT": "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS",
+        "PARAMS_OUT": "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS,PAYMENT_METHOD",
         "URL_CANCEL": "http://localhost:8080/yki/payment/cancel",
         "URL_NOTIFY": "http://localhost:8080/yki/payment/notify",
         "LOCALE": "fi_FI",

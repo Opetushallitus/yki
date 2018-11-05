@@ -32,18 +32,22 @@
          (if formdata
            (ok formdata)
            (internal-server-error {:error "Payment form data creation failed"}))))
-     (GET "/success" {session :session query-params :query-params}
-       (info "Received success params" query-params)
-       (if (paytrail-payment/valid-return-params? payment-config query-params)
-         (success-redirect url-helper)
+     (GET "/success" {session :session params :params}
+       (info "Received payment success params" params)
+       (if (paytrail-payment/valid-return-params? payment-config params)
+         (if (= (paytrail-payment/handle-payment-return db params) 1)
+           (success-redirect url-helper)
+           (error-redirect url-helper))
          (error-redirect url-helper)))
-     (GET "/cancel" {session :session query-params :query-params}
-       (info "Received cancel params" query-params)
-       (if (paytrail-payment/valid-return-params? payment-config query-params)
+     (GET "/cancel" {session :session params :params}
+       (info "Received payment cancel params" params)
+       (if (paytrail-payment/valid-return-params? payment-config params)
          (cancel-redirect url-helper)
          (error-redirect url-helper)))
-     (GET "/notify" {session :session query-params :query-params}
-       (info "Received notify params" query-params)
-       (if (paytrail-payment/valid-return-params? payment-config query-params)
-         (found (""))
-         (found ("")))))))
+     (GET "/notify" {session :session params :params}
+       (info "Received payment notify params" params)
+       (if (paytrail-payment/valid-return-params? payment-config params)
+         (do
+           (paytrail-payment/handle-payment-return db params)
+           (ok "OK"))
+         (internal-server-error "Error in payment notify handling"))))))

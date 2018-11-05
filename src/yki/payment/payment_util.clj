@@ -19,10 +19,10 @@
 (defn generate-form-data [{:keys [paytrail-host yki-payment-uri merchant-id merchant-secret amount msg]}
                           {:keys [language-code order-number reference-number] :as params}]
   (let [params-in     "MERCHANT_ID,LOCALE,URL_SUCCESS,URL_CANCEL,URL_NOTIFY,AMOUNT,ORDER_NUMBER,REFERENCE_NUMBER,MSG_SETTLEMENT_PAYER,MSG_UI_MERCHANT_PANEL,PARAMS_IN,PARAMS_OUT"
-        params-out    "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS"
+        params-out    "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS,PAYMENT_METHOD"
         localized-msg ((keyword language-code) msg)
         form-params {:MERCHANT_ID  merchant-id
-                     :LOCALE       (case language-code "fi" "fi_FI" "sv" "sv_SE")
+                     :LOCALE       (case language-code "fi" "fi_FI" "sv" "sv_SE" "en" "en_US")
                      :URL_SUCCESS  (str yki-payment-uri "/success")
                      :URL_CANCEL   (str yki-payment-uri "/cancel")
                      :URL_NOTIFY   (str yki-payment-uri "/notify")
@@ -37,15 +37,15 @@
     {:uri  paytrail-host
      :pt-payment-form-params (assoc form-params :AUTHCODE authcode)}))
 
-(def response-keys [:ORDER_NUMBER :PAYMENT_ID :AMOUNT :TIMESTAMP :STATUS])
+(def response-keys [:ORDER_NUMBER :PAYMENT_ID :AMOUNT :TIMESTAMP :STATUS :PAYMENT_METHOD])
 
-(defn valid-return-params? [{:keys [merchant-secret]} form-data]
-  (if-let [return-authcode (:RETURN_AUTHCODE form-data)]
+(defn valid-return-params? [{:keys [merchant-secret]} query-params]
+  (if-let [return-authcode (:RETURN_AUTHCODE query-params)]
     (let [plaintext (-> (->> response-keys
-                             (map #(% form-data))
+                             (map #(% query-params))
                              (remove nil?)
                              (str/join "|"))
                         (str "|" merchant-secret))
           calculated-authcode (-> plaintext DigestUtils/sha256Hex str/upper-case)]
       (= return-authcode calculated-authcode))
-    (log/error "Tried to authenticate message, but the map contained no :RETURN_AUTHCODE key. Data:" form-data)))
+    (log/error "Tried to authenticate message, but the map contained no :RETURN_AUTHCODE key. Data:" query-params)))
