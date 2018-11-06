@@ -15,6 +15,11 @@
 
  :yki.util/url-helper {}
 
+ :duct.scheduler/simple
+    {:jobs [{:interval 59 :delay 60 :run #ig/ref :yki.job/payment-state-checker}]}
+
+ :yki.job/payment-state-checker {:db #ig/ref :duct.database/sql}
+
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {}}
 

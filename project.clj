@@ -10,6 +10,7 @@
                  [duct/module.logging "0.3.1"]
                  [duct/module.web "0.6.4"]
                  [duct/module.sql "0.4.2"]
+                 [duct/scheduler.simple "0.1.0"]
                  [metosin/compojure-api "2.0.0-alpha25"]
                  [metosin/jsonista "0.2.1"]
                  [metosin/muuntaja "0.6.0"]

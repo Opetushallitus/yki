@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS organizer (
   modified TIMESTAMP DEFAULT current_timestamp
 );
 --;;
-CREATE UNIQUE INDEX organizer_oid
+CREATE UNIQUE INDEX IF NOT EXISTS organizer_oid
 ON organizer(oid)
 WHERE deleted_at IS NULL;
 --;;
