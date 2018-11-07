@@ -11,6 +11,7 @@
                  [duct/module.web "0.6.4"]
                  [duct/module.sql "0.4.2"]
                  [duct/scheduler.simple "0.1.0"]
+                 [com.layerware/pgqueue "0.5.1"]
                  [metosin/compojure-api "2.0.0-alpha25"]
                  [metosin/jsonista "0.2.1"]
                  [metosin/muuntaja "0.6.0"]

@@ -13,7 +13,7 @@
 
 (defn hash [code]
   (-> (hash/sha256 code)
-    (bytes->hex)))
+      (bytes->hex)))
 
 (defmethod ig/init-key :yki.handler/login-link [_ {:keys [db]}]
   (api

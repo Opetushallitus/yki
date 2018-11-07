@@ -1,12 +1,21 @@
 {:duct.core/environment :development
  :duct.core/include ["yki/config"]
  :duct.core/project-ns yki
+
  :duct.database.sql/hikaricp {:adapter "postgresql"
                               :database-name "yki"
                               :server-name "localhost"
                               :port-number "5432"
                               :username "admin"
                               :password "admin"}
+
+
+:yki.job.job-queue/email-q {
+     :db-config {
+        :db {:subprotocol "postgresql"
+            :subname "//127.0.0.1:5432/yki"
+            :user "admin"
+            :password "admin"}}}
 
  :yki.middleware.access-log/with-logging {:env "dev"}
 
