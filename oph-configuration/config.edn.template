@@ -20,12 +20,13 @@
  :yki.handler/payment {:db #ig/ref :duct.database/sql
                        :auth #ig/ref :yki.middleware.auth/with-authentication
                        :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                       :yki-payment-uri "http://localhost:8080/yki/payment"
-                                       :merchant-id 12345
-                                       :amount "100.00"
-                                       :merchant-secret "SECRET_KEY"
-                                       :msg {:fi "msg_fi"
-                                             :sv "msg_sv"}}}
+                                        :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"
+                                        :merchant-id 13466
+                                        :amount "100.00"
+                                        :merchant-secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
+                                        :msg {:fi "Tutkintomaksu"
+                                              :sv "Tutkintomaksu_sv"
+                                              :en "Tutkintomaksu_en"}}}
 
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {:username "{{yki_cas_username}}"

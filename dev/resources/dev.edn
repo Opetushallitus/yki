@@ -31,7 +31,7 @@
                                         :merchant-secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
                                         :msg {:fi "Tutkintomaksu"
                                               :sv "Tutkintomaksu_sv"
-                                              :sv "Tutkintomaksu_en"}}}
+                                              :en "Tutkintomaksu_en"}}}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
