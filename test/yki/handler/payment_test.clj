@@ -55,10 +55,10 @@
       (is (= base/payment-formdata-json response-body)))))
 
 (def success-params
-  "?PAYMENT_METHOD=1&AMOUNT=100.00&ORDER_NUMBER=order1234&PAYMENT_ID=101047298871&TIMESTAMP=1541146922&STATUS=PAID&RETURN_AUTHCODE=521A90258D9738692115A4B4F5F41256DFAAAF4249C6F81D0D9D4A9292835F08")
+  "?ORDER_NUMBER=order1234&PAYMENT_ID=101687270712&AMOUNT=100.00&TIMESTAMP=1541585404&STATUS=PAID&PAYMENT_METHOD=1&SETTLEMENT_REFERENCE_NUMBER=1232&RETURN_AUTHCODE=312BF5EA52575FCEAECEE3A18153CB9C759E6CBFE2622670EC9902964C2C4EC5")
 
 (def cancel-params
-  "?PAYMENT_METHOD=1&AMOUNT=100.00&ORDER_NUMBER=order1234&PAYMENT_ID=101047298871&TIMESTAMP=1541146922&STATUS=PAID&RETURN_AUTHCODE=521A90258D9738692115A4B4F5F41256DFAAAF4249C6F81D0D9D4A9292835F08")
+  "?ORDER_NUMBER=order1234&PAYMENT_ID=101687270712&AMOUNT=100.00&TIMESTAMP=1541585404&STATUS=CANCELLED&PAYMENT_METHOD=1&SETTLEMENT_REFERENCE_NUMBER=1232&RETURN_AUTHCODE=7874413040C8F6BF5D005B6BD3F22C14AB1C99B841C3FE7733E9D12D5D7F4175")
 
 (deftest handle-payment-success-test
   (let [handler (create-handlers)
@@ -86,7 +86,7 @@
   (let [handler (create-handlers)
         session (base/login-with-login-link (peridot/session handler))
         response (-> session
-                     (peridot/request (str routing/payment-root "/cancel" success-params)))
+                     (peridot/request (str routing/payment-root "/cancel" cancel-params)))
         location (get-in response [:response :headers "Location"])]
     (testing "when payment is cancelled should redirect to cancelled url"
       (is (s/includes? location "state=cancel")))))

@@ -296,13 +296,11 @@ INSERT INTO payment(
   state,
   registration_id,
   amount,
-  reference_number,
   order_number
 ) VALUES (
   'UNPAID',
   :registration_id,
   :amount,
-  :reference_number,
   :order_number
 );
 
@@ -328,6 +326,7 @@ SELECT nextval('payment_order_number_seq');
     state = :state::payment_state,
     external_payment_id = :external_payment_id,
     payment_method = :payment_method,
+    reference_number = :reference_number,
     payed_at = :payed_at,
     modified = current_timestamp
 WHERE

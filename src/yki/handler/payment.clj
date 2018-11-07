@@ -39,10 +39,10 @@
            (if (= (paytrail-payment/handle-payment-return db params) 1)
              (do
                (audit/log-participant {:request request
-                                 :target-kv {:k audit/payment
-                                             :v (:ORDER_NUMBER params)}
-                                 :change {:type audit/create-op
-                                          :new params}})
+                                       :target-kv {:k audit/payment
+                                                   :v (:ORDER_NUMBER params)}
+                                       :change {:type audit/create-op
+                                                :new params}})
                (success-redirect url-helper))
              (error-redirect url-helper))
            (error-redirect url-helper))))
@@ -52,10 +52,10 @@
          (if (paytrail-payment/valid-return-params? payment-config params)
            (do
              (audit/log-participant {:request request
-                               :target-kv {:k audit/payment
-                                           :v (:ORDER_NUMBER params)}
-                               :change {:type audit/cancel-op
-                                        :new params}})
+                                     :target-kv {:k audit/payment
+                                                 :v (:ORDER_NUMBER params)}
+                                     :change {:type audit/cancel-op
+                                              :new params}})
              (cancel-redirect url-helper))
            (error-redirect url-helper))))
      (GET "/notify" {params :params}

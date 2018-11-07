@@ -175,12 +175,11 @@
                                                  ::URL_CANCEL
                                                  ::AMOUNT
                                                  ::ORDER_NUMBER
-                                                 ::REFERENCE_NUMBER
                                                  ::MSG_SETTLEMENT_PAYER
                                                  ::MSG_UI_MERCHANT_PANEL
                                                  ::PARAMS_IN
                                                  ::PARAMS_OUT
                                                  ::AUTHCODE]))
-          ; (s/def ::organizers-response (s/keys :req-un [::organizers]))
+
 (s/def ::pt-payment-form-data (s/keys :req-un [::uri
                                                ::pt-payment-form-params]))

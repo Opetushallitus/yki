@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [yki.spec :as ys]
             [clojure.string :as str]
-            [clj-time.format :as f]
+            [clj-time.coerce :as c]
             [yki.boundary.registration-db :as registration-db]
             [yki.payment.payment-util :as payment-util]
             [ring.util.http-response :refer [not-found]]
@@ -56,11 +56,12 @@
   (info "Payment cancelled" payment-params))
 
 (defn handle-payment-return
-  [db {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD]}]
+  [db {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD SETTLEMENT_REFERENCE_NUMBER]}]
   (let [payment-params {:order-number ORDER_NUMBER
                         :payment-id PAYMENT_ID
+                        :reference-number (Integer/valueOf SETTLEMENT_REFERENCE_NUMBER)
                         :payment-method PAYMENT_METHOD
-                        :timestamp (f/parse TIMESTAMP)}]
+                        :timestamp (c/from-long (* 1000 (Long/valueOf TIMESTAMP)))}]
     (case STATUS
       "PAID" (handle-payment-success db payment-params)
       "CANCELLED" (handle-payment-cancelled db payment-params)

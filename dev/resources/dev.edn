@@ -9,13 +9,10 @@
                               :username "admin"
                               :password "admin"}
 
-
-:yki.job.job-queue/email-q {
-     :db-config {
-        :db {:subprotocol "postgresql"
-            :subname "//127.0.0.1:5432/yki"
-            :user "admin"
-            :password "admin"}}}
+ :yki.job.job-queue/email-q {:db-config {:db {:subprotocol "postgresql"
+                                              :subname "//127.0.0.1:5432/yki"
+                                              :user "admin"
+                                              :password "admin"}}}
 
  :yki.middleware.access-log/with-logging {:env "dev"}
 
@@ -32,8 +29,9 @@
                                         :merchant-id 13466
                                         :amount "100.00"
                                         :merchant-secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
-                                        :msg {:fi "order fi 1234"
-                                              :sv "order sv 1234"}}}
+                                        :msg {:fi "Tutkintomaksu"
+                                              :sv "Tutkintomaksu_sv"
+                                              :sv "Tutkintomaksu_en"}}}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper

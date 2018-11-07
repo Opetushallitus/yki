@@ -19,12 +19,13 @@
   (get-payment-by-registration-id [{:keys [spec]} registration-id]
     (first (q/select-payment-by-registration-id spec {:registration_id registration-id})))
   (complete-registration-and-payment!
-    [{:keys [spec]} {:keys [order-number payment-id payment-method timestamp]}]
+    [{:keys [spec]} {:keys [order-number payment-id payment-method timestamp reference-number]}]
     (jdbc/with-db-transaction [tx spec]
       (q/update-payment! tx {:order_number order-number
                              :external_payment_id payment-id
                              :payment_method payment-method
                              :payed_at timestamp
+                             :reference_number reference-number
                              :state "PAID"})
       (q/update-registration! tx {:order_number order-number
                                   :state "COMPLETED"})))
