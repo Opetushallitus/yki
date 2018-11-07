@@ -265,3 +265,10 @@ SELECT
 FROM login_link l INNER JOIN participant p
   ON l.participant_id = p.id
 WHERE l.code = :code;
+
+-- name: try-to-acquire-lock!
+UPDATE task_lock SET
+  last_executed = current_timestamp,
+  worker_id = :worker_id
+WHERE task = :task
+  AND last_executed < (current_timestamp - :interval::interval);
