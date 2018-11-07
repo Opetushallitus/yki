@@ -17,7 +17,7 @@
     (-> plaintext (.getBytes "ISO-8859-1") DigestUtils/sha256Hex str/upper-case)))
 
 (defn generate-form-data [{:keys [paytrail-host yki-payment-uri merchant-id merchant-secret amount msg]}
-                          {:keys [language-code order-number reference-number] :as params}]
+                          {:keys [language-code order-number] :as params}]
   (let [params-in     "MERCHANT_ID,LOCALE,URL_SUCCESS,URL_CANCEL,URL_NOTIFY,AMOUNT,ORDER_NUMBER,MSG_SETTLEMENT_PAYER,MSG_UI_MERCHANT_PANEL,PARAMS_IN,PARAMS_OUT"
         params-out    "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS,PAYMENT_METHOD,SETTLEMENT_REFERENCE_NUMBER"
         localized-msg ((keyword language-code) msg)

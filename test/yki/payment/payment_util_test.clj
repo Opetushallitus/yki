@@ -27,8 +27,7 @@
 
 (deftest generate-payment-form-data
   (let [payment {:language-code "fi"
-                 :order-number "1234"
-                 :reference-number 12344}
+                 :order-number "1234"}
         form-data (payment/generate-form-data payment-config payment)]
     (testing "should create payment form data"
       (is (= payment-form-data form-data)))))

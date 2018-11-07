@@ -317,7 +317,7 @@ SELECT
  FROM payment
  WHERE registration_id = :registration_id;
 
--- name: select-next-order-number-suffix!
+-- name: select-next-order-number-suffix
 SELECT nextval('payment_order_number_seq');
 
 -- name: update-payment!

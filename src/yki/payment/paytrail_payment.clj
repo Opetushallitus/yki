@@ -9,23 +9,17 @@
             [clojure.tools.logging :refer [info error]]
             [integrant.core :as ig]))
 
-(defn- create-order-number [db reference-number]
-  (let [order-number-suffix (registration-db/get-next-order-number-suffix! db)]
-    (str "YKI" reference-number order-number-suffix)))
-
-(defn- create-reference-number [external-id]
-  (let [with-prefix (str "900" external-id)
-        reference-number-with-checknum (s/conform ::ys/reference-number-conformer with-prefix)]
-    (when-not (s/invalid? reference-number-with-checknum)
-      reference-number-with-checknum)))
+(defn- create-order-number [db external-user-id]
+  (let [order-number-prefix (-> (str/split external-user-id #"\.") last)
+        order-number-suffix (registration-db/get-next-order-number-suffix! db)]
+    (str "YKI" order-number-prefix order-number-suffix)))
 
 (defn create-payment-form-data
   [db payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
     (if-let [payment (registration-db/get-payment-by-registration-id db registration-id)]
       (let [payment-data {:language-code lang
-                          :order-number (:order_number payment)
-                          :reference-number (:reference_number payment)}
+                          :order-number (:order_number payment)}
             form-data (payment-util/generate-form-data payment-config payment-data)]
         form-data)
       (error "Payment not found for registration-id" registration-id))
@@ -37,11 +31,9 @@
 (defn create-payment
   [db payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
-    (let [reference-number (-> (str/split external-user-id #"\.") last create-reference-number)
-          order-number (create-order-number db reference-number)
+    (let [order-number (create-order-number db external-user-id)
           payment-id (registration-db/create-payment! db {:registration_id registration-id
-                                                          :amount (payment-config :amount)
-                                                          :reference_number reference-number
+                                                          :amount (bigdec (payment-config :amount))
                                                           :order_number order-number})]
       payment-id)
     (error "Registration not found" registration-id)))

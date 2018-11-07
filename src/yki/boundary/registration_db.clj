@@ -32,7 +32,7 @@
   (get-next-order-number-suffix!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
-      (q/select-next-order-number-suffix! tx)))
+      (:nextval (first (q/select-next-order-number-suffix tx)))))
   (create-payment!
     [{:keys [spec]} payment]
     (jdbc/with-db-transaction [tx spec]

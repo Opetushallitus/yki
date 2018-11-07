@@ -24,13 +24,6 @@
 
 (defn- create-handlers []
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
-        payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                        :yki-payment-uri "http://localhost:8080/yki/payment"
-                        :merchant-id 12345
-                        :amount "100.00"
-                        :merchant-secret "SECRET_KEY"
-                        :msg {:fi "msg_fi"
-                              :sv "msg_sv"}}
         auth (ig/init-key :yki.middleware.auth/with-authentication
                           {:session-config {:key "ad7tbRZIG839gDo2"
                                             :cookie-attrs {:max-age 28800
@@ -40,7 +33,7 @@
                                                            :path "/yki"}}})
         url-helper (base/create-url-helper "localhost:8080")
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth}))
-        payment-handler (middleware/wrap-format (ig/init-key :yki.handler/payment {:db db :payment-config payment-config :url-helper url-helper}))]
+        payment-handler (middleware/wrap-format (ig/init-key :yki.handler/payment {:db db :payment-config base/payment-config :url-helper url-helper}))]
     (core/routes auth-handler payment-handler)))
 
 (deftest get-payment-formdata-test

@@ -44,6 +44,14 @@
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
 
+(def payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                     :yki-payment-uri "http://localhost:8080/yki/payment"
+                     :merchant-id 12345
+                     :amount "100.00"
+                     :merchant-secret "SECRET_KEY"
+                     :msg {:fi "msg_fi"
+                           :sv "msg_sv"}})
+
 (defn cas-mock-routes [port]
   {"/cas/v1/tickets" {:status 201
                       :method :post
