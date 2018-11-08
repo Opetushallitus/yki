@@ -170,16 +170,16 @@
 (s/def ::AUTHCODE ::non-blank-string)
 
 (s/def ::params (s/keys :req-un [::MERCHANT_ID
-                                                 ::LOCALE
-                                                 ::URL_SUCCESS
-                                                 ::URL_CANCEL
-                                                 ::AMOUNT
-                                                 ::ORDER_NUMBER
-                                                 ::MSG_SETTLEMENT_PAYER
-                                                 ::MSG_UI_MERCHANT_PANEL
-                                                 ::PARAMS_IN
-                                                 ::PARAMS_OUT
-                                                 ::AUTHCODE]))
+                                 ::LOCALE
+                                 ::URL_SUCCESS
+                                 ::URL_CANCEL
+                                 ::AMOUNT
+                                 ::ORDER_NUMBER
+                                 ::MSG_SETTLEMENT_PAYER
+                                 ::MSG_UI_MERCHANT_PANEL
+                                 ::PARAMS_IN
+                                 ::PARAMS_OUT
+                                 ::AUTHCODE]))
 
 (s/def ::pt-payment-form-data (s/keys :req-un [::uri
                                                ::params]))
