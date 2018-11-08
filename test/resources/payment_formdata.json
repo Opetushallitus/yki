@@ -1,6 +1,6 @@
 {
     "uri": "https://payment.paytrail.com/e2",
-    "pt-payment-form-params": {
+    "params": {
         "MERCHANT_ID": 12345,
         "URL_SUCCESS": "http://localhost:8080/yki/payment/success",
         "AMOUNT": "100.00",

@@ -34,7 +34,7 @@
                      :PARAMS_OUT params-out}
         authcode (calculate-authcode form-params merchant-secret)]
     {:uri  paytrail-host
-     :pt-payment-form-params (assoc form-params :AUTHCODE authcode)}))
+     :params (assoc form-params :AUTHCODE authcode)}))
 
 (def response-keys [:ORDER_NUMBER :PAYMENT_ID :AMOUNT :TIMESTAMP :STATUS :PAYMENT_METHOD :SETTLEMENT_REFERENCE_NUMBER])
 

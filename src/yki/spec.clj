@@ -169,7 +169,7 @@
 (s/def ::PARAMS_OUT ::non-blank-string)
 (s/def ::AUTHCODE ::non-blank-string)
 
-(s/def ::pt-payment-form-params (s/keys :req-un [::MERCHANT_ID
+(s/def ::params (s/keys :req-un [::MERCHANT_ID
                                                  ::LOCALE
                                                  ::URL_SUCCESS
                                                  ::URL_CANCEL
@@ -182,4 +182,4 @@
                                                  ::AUTHCODE]))
 
 (s/def ::pt-payment-form-data (s/keys :req-un [::uri
-                                               ::pt-payment-form-params]))
+                                               ::params]))

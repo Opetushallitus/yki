@@ -5,7 +5,7 @@
             [yki.payment.payment-util :as payment]))
 
 (def payment-form-data {:uri "https://paytrail.com",
-                        :pt-payment-form-params {:MERCHANT_ID 12345
+                        :params {:MERCHANT_ID 12345
                                                  :URL_SUCCESS "http://localhost:8080/payment/success"
                                                  :AMOUNT "100.00"
                                                  :PARAMS_OUT "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS,PAYMENT_METHOD,SETTLEMENT_REFERENCE_NUMBER"
