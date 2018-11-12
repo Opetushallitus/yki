@@ -10,7 +10,7 @@
             [integrant.core :as ig]))
 
 (defn- create-order-number [db external-user-id]
-  (let [order-number-prefix (-> (str/split external-user-id #"\.") last)
+  (let [order-number-prefix (last (str/split external-user-id #"\."))
         order-number-suffix (registration-db/get-next-order-number-suffix! db)]
     (str "YKI" order-number-prefix order-number-suffix)))
 

@@ -14,8 +14,7 @@
   (:import [java.util UUID]))
 
 (defn sha256-hash [code]
-  (-> (hash/sha256 code)
-      (bytes->hex)))
+  (bytes->hex (hash/sha256 code)))
 
 (defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper]}]
   (api

@@ -10,10 +10,7 @@
 (defn- calculate-authcode [{:keys [MERCHANT_ID LOCALE URL_SUCCESS URL_CANCEL URL_NOTIFY
                                    AMOUNT ORDER_NUMBER MSG_SETTLEMENT_PAYER
                                    MSG_UI_MERCHANT_PANEL PARAMS_IN PARAMS_OUT]} secret]
-  (let [plaintext (str/join "|" (->> [secret MERCHANT_ID LOCALE URL_SUCCESS URL_CANCEL URL_NOTIFY
-                                      AMOUNT ORDER_NUMBER MSG_SETTLEMENT_PAYER
-                                      MSG_UI_MERCHANT_PANEL PARAMS_IN PARAMS_OUT]
-                                     (remove nil?)))]
+  (let [plaintext (str/join "|" (remove nil? [secret MERCHANT_ID LOCALE URL_SUCCESS URL_CANCEL URL_NOTIFY AMOUNT ORDER_NUMBER MSG_SETTLEMENT_PAYER MSG_UI_MERCHANT_PANEL PARAMS_IN PARAMS_OUT]))]
     (-> plaintext (.getBytes "ISO-8859-1") DigestUtils/sha256Hex str/upper-case)))
 
 (defn generate-form-data [{:keys [paytrail-host yki-payment-uri merchant-id merchant-secret amount msg]}
@@ -40,11 +37,7 @@
 
 (defn valid-return-params? [{:keys [merchant-secret]} query-params]
   (if-let [return-authcode (:RETURN_AUTHCODE query-params)]
-    (let [plaintext (-> (->> response-keys
-                             (map #(% query-params))
-                             (remove nil?)
-                             (str/join "|"))
-                        (str "|" merchant-secret))
+    (let [plaintext (str (->> response-keys (map (fn* [p1__1231860#] (p1__1231860# query-params))) (remove nil?) (str/join "|")) "|" merchant-secret)
           calculated-authcode (-> plaintext DigestUtils/sha256Hex str/upper-case)]
       (= return-authcode calculated-authcode))
     (log/error "Tried to authenticate message, but the map contained no :RETURN_AUTHCODE key. Data:" query-params)))

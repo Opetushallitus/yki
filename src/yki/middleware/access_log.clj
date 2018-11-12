@@ -18,7 +18,7 @@
     (assoc opt :message
            (let [method      (-> request-method name s/upper-case)
                  request     (str method " " uri (when query-string (str "?" (remove-ticket query-string))))
-                 log-map     {:timestamp           (.toString (t/to-time-zone (t/now) (t/time-zone-for-id "Europe/Helsinki")))
+                 log-map     {:timestamp           (str (t/to-time-zone (t/now) (t/time-zone-for-id "Europe/Helsinki")))
                               :responseCode        status
                               :request             request
                               :responseTime        ms
