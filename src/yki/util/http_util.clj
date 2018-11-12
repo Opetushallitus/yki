@@ -1,12 +1,13 @@
 (ns yki.util.http-util
   (:require [org.httpkit.client :as http]
+            [clojure.string :as string]
             [clojure.tools.logging :refer [info]]))
 
 (defn do-request
   [{:keys [url method] :as opts}]
 
   (let [opts        (update opts :headers merge {"clientSubSystemCode" "yki" "Caller-Id" "yki"})
-        method-name (clojure.string/upper-case (name method))
+        method-name (string/upper-case (name method))
         start       (System/currentTimeMillis)
         response    @(http/request opts)
         time        (- (System/currentTimeMillis) start)

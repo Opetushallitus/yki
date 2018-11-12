@@ -289,18 +289,21 @@ SET
   state = :state::registration_state,
   modified = current_timestamp
 WHERE
- id = (SELECT registration_id FROM payment WHERE order_number = :order_number);
+ id = (SELECT registration_id FROM payment WHERE order_number = :order_number) AND
+ state != 'COMPLETED';
 
 -- name: insert-payment<!
 INSERT INTO payment(
   state,
   registration_id,
   amount,
+  lang,
   order_number
 ) VALUES (
   'UNPAID',
   :registration_id,
   :amount,
+  :lang,
   :order_number
 );
 
@@ -316,6 +319,14 @@ SELECT
   payed_at
  FROM payment
  WHERE registration_id = :registration_id;
+
+-- name: select-participant-email-by-order-number
+SELECT par.email,
+       pay.lang
+FROM participant par
+INNER JOIN registration re ON re.participant_id = par.id
+INNER JOIN payment pay ON re.id = pay.registration_id
+WHERE pay.order_number = :order_number;
 
 -- name: select-next-order-number-suffix
 SELECT nextval('payment_order_number_seq');

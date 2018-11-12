@@ -3,13 +3,13 @@
             [yki.boundary.onr :as onr]
             [clojure.tools.logging :refer [info]]
             [clojure.string :as str])
-  (:import [java.util UUID]
-           [org.slf4j MDC]))
+  (:import [java.util UUID]))
 
-(defn- iso-8859-1->utf-8 [s]
+(defn- iso-8859-1->utf-8
   "Shibboleth encodes headers in UTF-8. Servlet container handles them as ISO-8859-1,
   so we need to convert values back to UTF-8.
   See https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPAttributeAccess"
+  [s]
   (if s
     (String. (.getBytes s "ISO-8859-1") "UTF-8")))
 
@@ -28,19 +28,22 @@
                  :zip            vakinainenkotimainenlahiosoitepostinumero
                  :street-address vakinainenkotimainenlahiosoites}
         redirect-url (or (:success-redirect session) (url-helper :yki.default.login-success.redirect {"lang" lang}))]
-    (MDC/put "user" oidHenkilo)
     (info "User" oidHenkilo "logged in")
     (if (and sn firstname nationalidentificationnumber)
-      (-> (found redirect-url)
-          (assoc :session {:identity (merge
-                                      {:firstname       (first
-                                                         (if etunimet
-                                                           (str/split etunimet #" ")
-                                                           (str/split firstname #" ")))
-                                       :lastname         (or sukunimi sn)
-                                       :nickname         kutsumanimi
-                                       :ssn              nationalidentificationnumber
-                                       :external-user-id oidHenkilo}
-                                      address)
-                           :yki-session-id (str (UUID/randomUUID))}))
+      (assoc
+       (found redirect-url)
+       :session
+       {:identity
+        (merge
+         {:firstname
+          (first
+           (if etunimet
+             (str/split etunimet #" ")
+             (str/split firstname #" "))),
+          :lastname (or sukunimi sn),
+          :nickname kutsumanimi,
+          :ssn nationalidentificationnumber,
+          :external-user-id oidHenkilo}
+         address),
+        :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))

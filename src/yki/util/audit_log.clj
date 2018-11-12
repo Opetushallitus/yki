@@ -40,15 +40,12 @@
 
 (defn- add-changes [builder change]
   (case (:type change)
-    "update" (let [old  (-> (.parse jsonParser (->json-string (:old change)))
-                            (.getAsJsonObject))
-                   new  (-> (.parse jsonParser (->json-string (:new change)))
-                            (.getAsJsonObject))]
+    "update" (let [old  (.getAsJsonObject (.parse jsonParser (->json-string (:old change))))
+                   new  (.getAsJsonObject (.parse jsonParser (->json-string (:new change))))]
                (.updated builder "object" old new))
     "delete" builder
     "cancel" builder
-    "create" (let [new  (-> (.parse jsonParser (->json-string (:new change)))
-                            (.getAsJsonObject))]
+    "create" (let [new  (.getAsJsonObject (.parse jsonParser (->json-string (:new change))))]
                (.added builder "object" new))))
 
 (defn- oid-or-nil [oid]

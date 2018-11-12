@@ -14,7 +14,7 @@
   (:import [com.fasterxml.jackson.datatype.joda JodaModule]))
 
 (defn- get-oids [session]
-  (map #(:oid %) (auth/get-organizations-from-session session)))
+  (map :oid (auth/get-organizations-from-session session)))
 
 (defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler access-log]}]
   (api
@@ -24,14 +24,12 @@
      (POST "/" request
        :body [organizer ::ys/organizer-type]
        :return ::ys/response
-       (if (organizer-db/create-organizer! db organizer)
-         (do
-           (audit-log/log-participant {:request request
-                                       :target-kv {:k audit-log/organizer
-                                                   :v (:oid organizer)}
-                                       :change {:type audit-log/create-op
-                                                :new organizer}})
-           (response {:success true}))))
+       (when (organizer-db/create-organizer! db organizer)
+         (audit-log/log
+          {:request request,
+           :target-kv {:k audit-log/organizer, :v (:oid organizer)},
+           :change {:type audit-log/create-op, :new organizer}})
+         (response {:success true})))
 
      (GET "/" {session :session}
        :return ::ys/organizers-response

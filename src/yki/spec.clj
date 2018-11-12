@@ -119,26 +119,6 @@
   (try (Integer/parseInt int-str)
        (catch Throwable _)))
 
-(defn- valid-reference-number? [x]
-  (let [factors [7 3 1]
-        ref-str (str x)
-        check-num (-> (last ref-str) str parse-int)
-        ref (drop-last ref-str)]
-    (-> (->> (reverse ref)
-             (partition 3 3 [])
-             (map (fn [three]
-                    (->> (map #(parse-int (str %)) three)
-                         (map * factors))))
-             (flatten)
-             (reduce +)
-             str
-             last
-             str
-             parse-int
-             (- 10))
-        (mod 10)
-        (= check-num))))
-
 ;; payment
 (def pt-order-number-regex #"/^[0-9a-zA-Z()\[\]{}*+\-_,. ]{1,64}$/")
 (def pt-amount-regexp #"\d{0,3}.\d{2}")
@@ -146,7 +126,6 @@
 
 (s/def ::timestamp date?)
 (s/def ::amount (s/and string? #(re-matches pt-amount-regexp %)))
-(s/def ::reference-number (s/and number? #(valid-reference-number? %)))
 (s/def ::order-number (s/and ::non-blank-string #(< (count %) 33)))
 (s/def ::msg ::non-blank-string)
 (s/def ::payment-id (s/and ::non-blank-string #(< (count %) 26)))
@@ -162,7 +141,6 @@
 (s/def ::URL_CANCEL ::non-blank-string)
 (s/def ::AMOUNT (s/and string? #(re-matches pt-amount-regexp %)))
 (s/def ::ORDER_NUMBER ::order-number)
-(s/def ::REFERENCE_NUMBER ::reference-number)
 (s/def ::MSG_SETTLEMENT_PAYER ::non-blank-string)
 (s/def ::MSG_UI_MERCHANT_PANEL ::non-blank-string)
 (s/def ::PARAMS_IN ::non-blank-string)

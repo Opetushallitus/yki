@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS exam_session_location (
 CREATE TABLE IF NOT EXISTS participant (
   id BIGSERIAL PRIMARY KEY,
   external_user_id TEXT UNIQUE NOT NULL,
+  email TEXT,
   created TIMESTAMP DEFAULT current_timestamp
 );
 --;;
@@ -96,7 +97,6 @@ CREATE TABLE IF NOT EXISTS registration (
   state registration_state NOT NULL,
   exam_session_id BIGINT REFERENCES exam_session (id) NOT NULL,
   participant_id BIGINT REFERENCES participant (id) NOT NULL,
-  notified_at TIMESTAMP,
   created TIMESTAMP DEFAULT current_timestamp,
   modified TIMESTAMP DEFAULT current_timestamp,
   CONSTRAINT one_participation_per_session UNIQUE (exam_session_id, participant_id)
@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS payment (
   state payment_state NOT NULL,
   registration_id BIGSERIAL REFERENCES registration (id) NOT NULL UNIQUE,
   amount NUMERIC NOT NULL,
+  lang TEXT NOT NULL,
   reference_number NUMERIC,
   order_number TEXT NOT NULL UNIQUE,
   external_payment_id TEXT UNIQUE,

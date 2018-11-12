@@ -19,7 +19,7 @@
 (defn- cancel-redirect [url-helper]
   (found (url-helper :payment.cancel-redirect)))
 
-(defmethod ig/init-key :yki.handler/payment [_ {:keys [db auth access-log payment-config url-helper]}]
+(defmethod ig/init-key :yki.handler/payment [_ {:keys [db auth access-log payment-config url-helper email-q]}]
   (api
    (context routing/payment-root []
      :coercion :spec
@@ -36,15 +36,14 @@
        (let [params (:params request)]
          (info "Received payment success params" params)
          (if (paytrail-payment/valid-return-params? payment-config params)
-           (if (= (paytrail-payment/handle-payment-return db params) 1)
-             (do
-               (audit/log-participant {:request request
-                                       :target-kv {:k audit/payment
-                                                   :v (:ORDER_NUMBER params)}
-                                       :change {:type audit/create-op
-                                                :new params}})
-               (success-redirect url-helper))
-             (error-redirect url-helper))
+           (do
+             (paytrail-payment/handle-payment-return db email-q params)
+             (audit/log-participant {:request request
+                                     :target-kv {:k audit/payment
+                                                 :v (:ORDER_NUMBER params)}
+                                     :change {:type audit/create-op
+                                              :new params}})
+             (success-redirect url-helper))
            (error-redirect url-helper))))
      (GET "/cancel" request
        (let [params (:params request)]
@@ -62,6 +61,6 @@
        (info "Received payment notify params" params)
        (if (paytrail-payment/valid-return-params? payment-config params)
          (do
-           (paytrail-payment/handle-payment-return db params)
+           (paytrail-payment/handle-payment-return db email-q params)
            (ok "OK"))
          (internal-server-error "Error in payment notify handling"))))))

@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.status-db :as status-db]
             [yki.handler.routing :as routing]
-            [ring.util.response :refer [response status]]
+            [ring.util.http-response :refer [ok internal-server-error]]
             [integrant.core :as ig]))
 
 (defmethod ig/init-key :yki.handler/status [_ {:keys [db]}]
@@ -10,5 +10,5 @@
    (context routing/status-api-root []
      (GET "/" []
        (if (status-db/get-status db)
-         (response {:success true})
-         (status 500))))))
+         (ok {:success true})
+         (internal-server-error))))))

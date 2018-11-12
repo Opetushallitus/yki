@@ -91,13 +91,13 @@
           VALUES (
             (SELECT id FROM organizer where oid = '1.2.3.4'),
             (SELECT id from exam_language WHERE language_code = 'fi'), 1, 50, null)"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') "))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@test.com') "))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO registration(state, exam_session_id, participant_id) values
       ('INCOMPLETE',
         " select-exam-session ", " select-participant ")"))
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO payment(state, registration_id, amount, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'INCOMPLETE'), 100.00, 'order1234')")))
+                                    "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'INCOMPLETE'), 100.00, 'fi', 'order1234')")))
 
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
