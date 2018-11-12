@@ -88,7 +88,7 @@
   [url-helper]
   [{:pattern #".*/auth/cas/callback"
     :handler any-access}
-   {:pattern #".*/auth/callback"
+   {:pattern #".*/auth/login"
     :handler any-access}
    {:pattern #".*/auth/initsession"
     :handler any-access}
@@ -106,6 +106,14 @@
    {:pattern #".*/auth.*"
     :handler authenticated
     :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
+   {:pattern #".*/payment/formdata"
+    :handler authenticated}
+   {:pattern #".*/payment/success" ;http://localhost:8080/yki/payment/success
+    :handler authenticated}
+   {:pattern #".*/payment/cancel"
+    :handler authenticated}
+   {:pattern #".*/payment/notify"
+    :handler any-access}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"

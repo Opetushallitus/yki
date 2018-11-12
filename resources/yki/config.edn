@@ -9,6 +9,7 @@
  :duct-migrations-auto-cfg/module {}
  :duct.router/cascading [#ig/ref :yki.handler/status
                          #ig/ref :yki.handler/auth
+                         #ig/ref :yki.handler/payment
                          #ig/ref :yki.handler/login-link
                          #ig/ref :yki.handler/localisation
                          #ig/ref :yki.handler/organizer]
@@ -51,6 +52,10 @@
                     :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
+
+ :yki.handler/payment {:db #ig/ref :duct.database/sql
+                       :auth #ig/ref :yki.middleware.auth/with-authentication
+                       :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/localisation {:url-helper #ig/ref :yki.util/url-helper}
 

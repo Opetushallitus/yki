@@ -16,7 +16,7 @@
        (header-auth/login request onr-client url-helper))
      (GET "/user" {session :session}
        (ok {:session session}))
-     (GET "/callback" [code lang]
+     (GET "/login" [code lang]
        (code-auth/login db code lang url-helper))
      (context routing/virkailija-auth-uri []
        (GET "/callback" [ticket :as request]

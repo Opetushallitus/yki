@@ -1,0 +1,17 @@
+{
+    "uri": "https://payment.paytrail.com/e2",
+    "params": {
+        "MERCHANT_ID": 12345,
+        "URL_SUCCESS": "http://localhost:8080/yki/payment/success",
+        "AMOUNT": "100.00",
+        "PARAMS_OUT": "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS,PAYMENT_METHOD,SETTLEMENT_REFERENCE_NUMBER",
+        "URL_CANCEL": "http://localhost:8080/yki/payment/cancel",
+        "URL_NOTIFY": "http://localhost:8080/yki/payment/notify",
+        "LOCALE": "fi_FI",
+        "PARAMS_IN": "MERCHANT_ID,LOCALE,URL_SUCCESS,URL_CANCEL,URL_NOTIFY,AMOUNT,ORDER_NUMBER,MSG_SETTLEMENT_PAYER,MSG_UI_MERCHANT_PANEL,PARAMS_IN,PARAMS_OUT",
+        "MSG_SETTLEMENT_PAYER": "msg_fi",
+        "MSG_UI_MERCHANT_PANEL": "msg_fi",
+        "ORDER_NUMBER": "order1234",
+        "AUTHCODE": "B2B44A2DA44C63B03554D250AF7D557F50E2F9BCA4DF37665FF6F590EA0019C3"
+    }
+}

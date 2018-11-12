@@ -7,14 +7,15 @@
             [yki.boundary.permissions :as permissions]
             [ring.util.http-response :refer [found]]
             [clojure.string :as str])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           [org.slf4j MDC]))
 
 (def unauthorized {:status 401
                    :body "Unauthorized"
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn- yki-permission? [permission]
-  (= (permission "palvelu") "EPERUSTEET_YLOPS")) ;use EPERUSTEET_YLOPS for testing
+  (= (permission "palvelu") "YKI")) ;use EPERUSTEET_YLOPS for testing
 
 (defn- yki-permissions [org]
   {:oid (org "organisaatioOid")
@@ -33,7 +34,8 @@
             organizations (get-organizations-with-yki-permissions (permissions "organisaatiot"))
             session       (:session request)
             redirect-uri  (or (:success-redirect session) (url-helper :yki.default.cas.login-success.redirect))]
-        (info "user" username "logged in")
+        (MDC/put "user" username)
+        (info "User" username "logged in")
         (if (empty? organizations)
           unauthorized
           (-> (found redirect-uri)

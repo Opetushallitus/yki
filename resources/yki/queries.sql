@@ -240,15 +240,19 @@ INSERT INTO participant(
 -- name: insert-login-link<!
 INSERT INTO login_link(
   code,
+  type,
   participant_id,
   exam_session_id,
+  registration_id,
   expired_link_redirect,
   success_redirect,
   expires_at
 ) VALUES (
   :code,
+  :type::login_link_type,
   (SELECT id FROM participant WHERE external_user_id = :email),
   :exam_session_id,
+  :registration_id,
   :expired_link_redirect,
   :success_redirect,
   :expires_at
@@ -272,3 +276,58 @@ UPDATE task_lock SET
   worker_id = :worker_id
 WHERE task = :task
   AND last_executed < (current_timestamp - :interval::interval);
+
+-- name: select-registration
+SELECT state, exam_session_id, participant_id
+FROM registration re
+INNER JOIN participant p ON p.id = re.participant_id
+WHERE re.id = :id AND p.external_user_id = :external_user_id;
+
+-- name: update-registration!
+UPDATE registration
+SET
+  state = :state::registration_state,
+  modified = current_timestamp
+WHERE
+ id = (SELECT registration_id FROM payment WHERE order_number = :order_number);
+
+-- name: insert-payment<!
+INSERT INTO payment(
+  state,
+  registration_id,
+  amount,
+  order_number
+) VALUES (
+  'UNPAID',
+  :registration_id,
+  :amount,
+  :order_number
+);
+
+-- name: select-payment-by-registration-id
+SELECT
+  state,
+  registration_id,
+  amount,
+  reference_number,
+  order_number,
+  external_payment_id,
+  payment_method,
+  payed_at
+ FROM payment
+ WHERE registration_id = :registration_id;
+
+-- name: select-next-order-number-suffix
+SELECT nextval('payment_order_number_seq');
+
+-- name: update-payment!
+ UPDATE payment
+ SET
+    state = :state::payment_state,
+    external_payment_id = :external_payment_id,
+    payment_method = :payment_method,
+    reference_number = :reference_number,
+    payed_at = :payed_at,
+    modified = current_timestamp
+WHERE
+  order_number = :order_number;

@@ -89,22 +89,28 @@ CREATE TABLE IF NOT EXISTS participant (
   created TIMESTAMP DEFAULT current_timestamp
 );
 --;;
-CREATE TYPE registration_state AS ENUM ('OK', 'INCOMPLETE', 'ERROR');
+CREATE TYPE registration_state AS ENUM ('COMPLETED', 'INCOMPLETE', 'ERROR');
 --;;
 CREATE TABLE IF NOT EXISTS registration (
   id BIGSERIAL PRIMARY KEY,
   state registration_state NOT NULL,
   exam_session_id BIGINT REFERENCES exam_session (id) NOT NULL,
   participant_id BIGINT REFERENCES participant (id) NOT NULL,
+  notified_at TIMESTAMP,
   created TIMESTAMP DEFAULT current_timestamp,
-  CONSTRAINT one_participation_per_session_constraint UNIQUE (exam_session_id, participant_id)
+  modified TIMESTAMP DEFAULT current_timestamp,
+  CONSTRAINT one_participation_per_session UNIQUE (exam_session_id, participant_id)
 );
+--;;
+CREATE TYPE login_link_type AS ENUM ('REGISTRATION', 'PAYMENT');
 --;;
 CREATE TABLE IF NOT EXISTS login_link (
  id BIGSERIAL PRIMARY KEY,
  code TEXT UNIQUE NOT NULL,
  participant_id BIGSERIAL REFERENCES participant (id) NOT NULL,
- exam_session_id BIGSERIAL REFERENCES exam_session (id) NOT NULL,
+ exam_session_id BIGSERIAL REFERENCES exam_session (id),
+ registration_id BIGINT REFERENCES registration (id),
+ type login_link_type NOT NULL,
  expired_link_redirect TEXT NOT NULL,
  success_redirect TEXT NOT NULL,
  expires_at DATE NOT NULL,
@@ -112,4 +118,21 @@ CREATE TABLE IF NOT EXISTS login_link (
  modified TIMESTAMP DEFAULT current_timestamp
 );
 --;;
-
+CREATE TYPE payment_state AS ENUM ('PAID', 'UNPAID', 'ERROR');
+--;;
+CREATE SEQUENCE IF NOT EXISTS payment_order_number_seq;
+--;;
+CREATE TABLE IF NOT EXISTS payment (
+  id BIGSERIAL PRIMARY KEY,
+  state payment_state NOT NULL,
+  registration_id BIGSERIAL REFERENCES registration (id) NOT NULL UNIQUE,
+  amount NUMERIC NOT NULL,
+  reference_number NUMERIC,
+  order_number TEXT NOT NULL UNIQUE,
+  external_payment_id TEXT UNIQUE,
+  payment_method TEXT,
+  payed_at TIMESTAMP,
+  created TIMESTAMP DEFAULT current_timestamp,
+  modified TIMESTAMP DEFAULT current_timestamp
+);
+--;;

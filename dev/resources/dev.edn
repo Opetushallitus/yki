@@ -9,13 +9,10 @@
                               :username "admin"
                               :password "admin"}
 
-
-:yki.job.job-queue/email-q {
-     :db-config {
-        :db {:subprotocol "postgresql"
-            :subname "//127.0.0.1:5432/yki"
-            :user "admin"
-            :password "admin"}}}
+ :yki.job.job-queue/email-q {:db-config {:db {:subprotocol "postgresql"
+                                              :subname "//127.0.0.1:5432/yki"
+                                              :user "admin"
+                                              :password "admin"}}}
 
  :yki.middleware.access-log/with-logging {:env "dev"}
 
@@ -24,6 +21,17 @@
                        :alb-host               "https://virkailija.untuvaopintopolku.fi"
                        :tunnistus-host         "tunnistus.untuvaopintopolku.fi"
                        :yki-host-virkailija    "http://localhost:8080"}
+
+ :yki.handler/payment {:db #ig/ref :duct.database/sql
+                       :auth #ig/ref :yki.middleware.auth/with-authentication
+                       :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                                        :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                        :merchant-id 13466
+                                        :amount "100.00"
+                                        :merchant-secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
+                                        :msg {:fi "Tutkintomaksu"
+                                              :sv "Tutkintomaksu_sv"
+                                              :en "Tutkintomaksu_en"}}}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
@@ -45,5 +53,5 @@
                          :url-helper #ig/ref :yki.util/url-helper
                          :file-handler #ig/ref :yki.handler/file
                          :access-log #ig/ref :yki.middleware.access-log/with-logging
-                         :auth #ig/ref :yki.middleware.no-auth/with-authentication}}
+                         :auth #ig/ref :yki.middleware.auth/with-authentication}}
 

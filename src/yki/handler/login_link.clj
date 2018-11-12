@@ -1,6 +1,5 @@
 (ns yki.handler.login-link
   (:require [compojure.api.sweet :refer :all]
-            [yki.boundary.login-link-db :as login-link-db]
             [yki.handler.routing :as routing]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.login-link-db :as login-link-db]
@@ -11,7 +10,7 @@
             [integrant.core :as ig])
   (:import [java.util UUID]))
 
-(defn hash [code]
+(defn sha256-hash [code]
   (-> (hash/sha256 code)
       (bytes->hex)))
 
@@ -24,6 +23,6 @@
        :return ::ys/response
        (registration-db/create-participant-if-not-exists! db (:email login-link))
        (let [code (str (UUID/randomUUID))
-             hashed (hash code)]
-         (if (login-link-db/create-login-link! db (assoc login-link :code hashed))
+             hashed (sha256-hash code)]
+         (if (login-link-db/create-login-link! db (assoc login-link :code hashed :type "REGISTRATION" :registration_id nil))
            (ok {:success true})))))))

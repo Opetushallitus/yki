@@ -14,7 +14,9 @@
 (def update-op "update")
 (def create-op "create")
 (def delete-op "delete")
+(def cancel-op "cancel")
 (def organizer "organizer")
+(def payment "payment")
 (def exam-session "exam-session")
 
 (defonce jsonParser (JsonParser.))
@@ -44,6 +46,7 @@
                             (.getAsJsonObject))]
                (.updated builder "object" old new))
     "delete" builder
+    "cancel" builder
     "create" (let [new  (-> (.parse jsonParser (->json-string (:new change)))
                             (.getAsJsonObject))]
                (.added builder "object" new))))
@@ -67,3 +70,19 @@
                             (add-changes change)
                             (.build))]
     (.log virkailija-logger user op target changes)))
+
+(defn log-participant
+  [{:keys [request target-kv change]}]
+  (let [inet-address    (InetAddress/getLocalHost)
+        session         (:session request)
+        oid             (get-in session [:identity :external-user-id])
+        user-agent      ((:headers request) "user-agent")
+        user            (User. (oid-or-nil oid) inet-address (:yki-session-id session) user-agent)
+        op              (op (:type change))
+        target          (-> (Target$Builder.)
+                            (.setField (:k target-kv) (str (:v target-kv)))
+                            (.build))
+        changes         (-> (Changes$Builder.)
+                            (add-changes change)
+                            (.build))]
+    (.log oppija-logger user op target changes)))
