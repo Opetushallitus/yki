@@ -28,10 +28,14 @@
        (registration-db/create-participant-if-not-exists! db (:email login-link))
        (let [code (str (UUID/randomUUID))
              login-url (str (url-helper :host-yki-oppija) "?code=" code)
-             hashed (sha256-hash code)]
-         (if (login-link-db/create-login-link! db (assoc login-link :code hashed :type "REGISTRATION" :registration_id nil))
-           (do
-             (pgq/put email-q {:recipients [(:email login-link)]
-                               :subject (template-util/subject "login_link" lang)
-                               :body (template-util/render "login_link" lang {:login-url login-url})})
-             (ok {:success true}))))))))
+             hashed (hash code)]
+         (when (login-link-db/create-login-link!
+                db
+                (assoc login-link :code hashed :type "REGISTRATION" :registration_id nil))
+           (pgq/put
+            email-q
+            {:recipients [(:email login-link)],
+             :subject (template-util/subject "login_link" lang),
+             :body
+             (template-util/render "login_link" lang {:login-url login-url})})
+           (ok {:success true})))))))

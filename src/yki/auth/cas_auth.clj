@@ -22,8 +22,9 @@
    :permissions (filter yki-permission? (org "kayttooikeudet"))})
 
 (defn- get-organizations-with-yki-permissions [organizations]
-  (->> (map yki-permissions organizations)
-       (filter #(not-empty (:permissions %)))))
+  (filter
+   #(not-empty (:permissions %))
+   (map yki-permissions organizations)))
 
 (defn login [ticket request cas-client permissions-client url-helper]
   (try
@@ -38,12 +39,15 @@
         (info "User" username "logged in")
         (if (empty? organizations)
           unauthorized
-          (-> (found redirect-uri)
-              (assoc :session {:identity  {:username username
-                                           :oid person-oid
-                                           :organizations organizations
-                                           :ticket ticket}
-                               :yki-session-id (str (UUID/randomUUID))}))))
+          (assoc
+           (found redirect-uri)
+           :session
+           {:identity
+            {:username username,
+             :oid person-oid,
+             :organizations organizations,
+             :ticket ticket},
+            :yki-session-id (str (UUID/randomUUID))})))
       unauthorized)
     (catch Exception e
       (error e "Cas ticket handling failed")
@@ -51,5 +55,4 @@
 
 (defn logout [session url-helper]
   (info "user" (-> session :identity :username) "logged out")
-  (-> (found (url-helper :cas.logout))
-      (assoc :session {:identity nil})))
+  (assoc (found (url-helper :cas.logout)) :session {:identity nil}))

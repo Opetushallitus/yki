@@ -43,7 +43,6 @@
       (q/delete-organizer! tx {:oid oid})))
   (update-organizer!
     [{:keys [spec]} oid organizer]
-    "update organizer using oid from arguments"
     (jdbc/with-db-transaction [tx spec]
       (q/delete-organizer-languages! tx {:oid oid})
       (doseq [lang (:languages organizer)]

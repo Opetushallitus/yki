@@ -37,7 +37,7 @@
              log-message)))
 
   (defn with-logging [handler]
-    (-> handler
-        (logger/wrap-log-response {:transform-fn log-transformer
-                                   :request-keys request-keys}))))
+    (logger/wrap-log-response
+     handler
+     {:transform-fn log-transformer, :request-keys request-keys})))
 

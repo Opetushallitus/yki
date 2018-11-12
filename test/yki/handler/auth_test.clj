@@ -4,6 +4,7 @@
             [stub-http.core :refer :all]
             [clj-time.local :as l]
             [clj-time.format :as f]
+            [duct.database.sql :as sql]
             [yki.util.url-helper]
             [yki.handler.auth]
             [yki.boundary.onr]
@@ -34,7 +35,7 @@
   (let [uri (str "localhost:" port)
         url-helper (base/url-helper uri)
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
-        db (duct.database.sql/->Boundary @embedded-db/conn)
+        db (sql/->Boundary @embedded-db/conn)
         auth (ig/init-key :yki.middleware.auth/with-authentication
                           {:url-helper url-helper
                            :session-config {:key "ad7tbRZIG839gDo2"
@@ -134,10 +135,10 @@
                      (peridot/request (str routing/auth-root "/login?code=" base/code-ok))
                      (peridot/request (str routing/auth-root "/user")))
         response-body (base/body-as-json (:response response))
-        identity (get-in response-body ["session" "identity"])]
+        id (get-in response-body ["session" "identity"])]
     (testing "after successfull login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
-      (is (= (identity "external-user-id") "test@user.com"))))
+      (is (= (id "external-user-id") "test@user.com"))))
 
   (let [handler (create-routes "")
         session (peridot/session handler)

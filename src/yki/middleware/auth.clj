@@ -70,8 +70,10 @@
 
 (defn- redirect-to-cas
   [request url-helper]
-  (-> (found (url-helper :cas.login))
-      (assoc :session {:success-redirect ((:query-params request) "success-redirect")})))
+  (assoc
+   (found (url-helper :cas.login))
+   :session
+   {:success-redirect ((:query-params request) "success-redirect")}))
 
 (defn- redirect-to-shibboleth
   [request url-helper]
@@ -79,8 +81,10 @@
         url-key (if lang
                   (str "tunnistus.url." lang)
                   "tunnistus.url.fi")]
-    (-> (see-other (url-helper url-key))
-        (assoc :session {:success-redirect ((:query-params request) "success-redirect")}))))
+    (assoc
+     (see-other (url-helper url-key))
+     :session
+     {:success-redirect ((:query-params request) "success-redirect")})))
 
 (defn- rules
   "OPH users are allowed to call all endpoints without restrictions to organizer.
