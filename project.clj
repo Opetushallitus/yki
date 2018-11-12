@@ -40,7 +40,10 @@
             [lein-bikeshed "0.5.1"]
             [com.jakemccrary/lein-test-refresh "0.23.0"]
             [lein-cloverage "1.0.13"]
+            [me.arrdem/lein-git-version "2.0.8"]
             [lein-kibit "0.1.6"]]
+  :git-version {:version-file      "target/classes/buildversion.edn"
+                :version-file-keys [:ref :version :branch :message]}
   :main ^:skip-aot yki.main
   :jvm-opts ["-Duser.timezone=UTC"]
   :resource-paths ["resources" "target/resources"]
