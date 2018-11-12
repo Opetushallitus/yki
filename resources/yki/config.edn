@@ -25,7 +25,7 @@
  :duct.scheduler/simple
     {:thread-pool-size 10
      :jobs [{:interval 600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/payment-state-handler}
-            {:interval 10 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}]}
+            {:interval 1 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}]}
 
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {}}
