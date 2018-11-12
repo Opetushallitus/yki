@@ -35,6 +35,7 @@
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
     (let [order-number (create-order-number db external-user-id)
           payment-id (registration-db/create-payment! db {:registration_id registration-id
+                                                          :lang (or lang "fi")
                                                           :amount (bigdec (payment-config :amount))
                                                           :order_number order-number})]
       payment-id)
@@ -42,7 +43,7 @@
 
 (defn- handle-payment-success [db email-q payment-params]
   (let [email (registration-db/get-participant-email-by-order-number db (:order-number payment-params))
-        lang (:lang payment-params)
+        lang (:lang email)
         updated (registration-db/complete-registration-and-payment! db payment-params)]
     (when (= updated 1)
       (pgq/put email-q
@@ -58,7 +59,6 @@
   [db email-q {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD SETTLEMENT_REFERENCE_NUMBER]}]
   (let [payment-params {:order-number ORDER_NUMBER
                         :payment-id PAYMENT_ID
-                        :lang "fi" ; TODO from params
                         :reference-number (Integer/valueOf SETTLEMENT_REFERENCE_NUMBER)
                         :payment-method PAYMENT_METHOD
                         :timestamp (c/from-long (* 1000 (Long/valueOf TIMESTAMP)))}]

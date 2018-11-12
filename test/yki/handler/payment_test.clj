@@ -68,34 +68,34 @@
       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM payment")) {:state "PAID"}))
       (is (s/includes? location "state=success")))))
 
-; (deftest handle-payment-success-invalid-authcode-test
-;   (let [handler (create-handlers)
-;         session (base/login-with-login-link (peridot/session handler))
-;         response (-> session
-;                      (peridot/request (str routing/payment-root "/success" success-params "INVALID")))
-;         location (get-in response [:response :headers "Location"])]
-;     (testing "when return authcode is invalid should redirect to error url"
-;       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM registration")) {:state "INCOMPLETE"}))
-;       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM payment")) {:state "UNPAID"}))
-;       (is (s/includes? location "state=error")))))
+(deftest handle-payment-success-invalid-authcode-test
+  (let [handler (create-handlers)
+        session (base/login-with-login-link (peridot/session handler))
+        response (-> session
+                     (peridot/request (str routing/payment-root "/success" success-params "INVALID")))
+        location (get-in response [:response :headers "Location"])]
+    (testing "when return authcode is invalid should redirect to error url"
+      (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM registration")) {:state "INCOMPLETE"}))
+      (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM payment")) {:state "UNPAID"}))
+      (is (s/includes? location "state=error")))))
 
-; (deftest handle-payment-cancel
-;   (let [handler (create-handlers)
-;         session (base/login-with-login-link (peridot/session handler))
-;         response (-> session
-;                      (peridot/request (str routing/payment-root "/cancel" cancel-params)))
-;         location (get-in response [:response :headers "Location"])]
-;     (testing "when payment is cancelled should redirect to cancelled url"
-;       (is (s/includes? location "state=cancel")))))
+(deftest handle-payment-cancel
+  (let [handler (create-handlers)
+        session (base/login-with-login-link (peridot/session handler))
+        response (-> session
+                     (peridot/request (str routing/payment-root "/cancel" cancel-params)))
+        location (get-in response [:response :headers "Location"])]
+    (testing "when payment is cancelled should redirect to cancelled url"
+      (is (s/includes? location "state=cancel")))))
 
-; (deftest handle-payment-notify-test
-;   (let [handler (create-handlers)
-;         session (base/login-with-login-link (peridot/session handler))
-;         response (-> session
-;                      (peridot/request (str routing/payment-root "/notify" success-params)))
-;         status (get-in response [:response :status])]
-;     (testing "when payment success is notified should complete registration"
-;       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM registration")) {:state "COMPLETED"}))
-;       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM payment")) {:state "PAID"}))
-;       (is (= status 200)))))
+(deftest handle-payment-notify-test
+  (let [handler (create-handlers)
+        session (base/login-with-login-link (peridot/session handler))
+        response (-> session
+                     (peridot/request (str routing/payment-root "/notify" success-params)))
+        status (get-in response [:response :status])]
+    (testing "when payment success is notified should complete registration"
+      (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM registration")) {:state "COMPLETED"}))
+      (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM payment")) {:state "PAID"}))
+      (is (= status 200)))))
 

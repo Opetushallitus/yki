@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS payment (
   state payment_state NOT NULL,
   registration_id BIGSERIAL REFERENCES registration (id) NOT NULL UNIQUE,
   amount NUMERIC NOT NULL,
+  lang TEXT NOT NULL,
   reference_number NUMERIC,
   order_number TEXT NOT NULL UNIQUE,
   external_payment_id TEXT UNIQUE,

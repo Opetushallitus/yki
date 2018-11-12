@@ -32,7 +32,7 @@
                                   :state "COMPLETED"})))
   (get-participant-email-by-order-number
     [{:keys [spec]} order-number]
-    (q/select-participant-email-by-order-number spec {:order_number order-number}))
+    (first (q/select-participant-email-by-order-number spec {:order_number order-number})))
   (get-next-order-number-suffix!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]

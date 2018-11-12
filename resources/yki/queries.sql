@@ -297,11 +297,13 @@ INSERT INTO payment(
   state,
   registration_id,
   amount,
+  lang,
   order_number
 ) VALUES (
   'UNPAID',
   :registration_id,
   :amount,
+  :lang,
   :order_number
 );
 
@@ -319,7 +321,8 @@ SELECT
  WHERE registration_id = :registration_id;
 
 -- name: select-participant-email-by-order-number
-SELECT email
+SELECT par.email,
+       pay.lang
 FROM participant par
 INNER JOIN registration re ON re.participant_id = par.id
 INNER JOIN payment pay ON re.id = pay.registration_id
