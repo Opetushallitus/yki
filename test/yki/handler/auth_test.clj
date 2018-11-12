@@ -32,12 +32,7 @@
 
 (defn- create-routes [port]
   (let [uri (str "localhost:" port)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri
-                                                      :oppija-host ""
-                                                      :yki-host-virkailija uri
-                                                      :alb-host (str "http://" uri)
-                                                      :host-tunnistus uri
-                                                      :scheme "http"})
+        url-helper (base/url-helper uri)
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         db (duct.database.sql/->Boundary @embedded-db/conn)
         auth (ig/init-key :yki.middleware.auth/with-authentication

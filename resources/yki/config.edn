@@ -61,7 +61,8 @@
 
  :yki.handler/exam-session {:db #ig/ref :duct.database/sql}
 
- :yki.handler/login-link {:db #ig/ref :duct.database/sql}
+ :yki.handler/login-link {:db #ig/ref :duct.database/sql
+                          :email-q #ig/ref :yki.job.job-queue/email-q}
 
  :yki.handler/file {:db #ig/ref :duct.database/sql
                     :file-store #ig/ref :yki.boundary.files/liiteri-file-store}
