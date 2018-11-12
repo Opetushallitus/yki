@@ -22,7 +22,7 @@
                                                 :body   (j/write-value-as-string {:id 1})}}
     (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
           _ (pgq/put email-q email-req)
-          reader (ig/init-key :yki.job.scheduled-tasks/email-queue-reader {:url-helper (base/url-helper (str "localhost:" port)) :email-q email-q})]
+          reader (ig/init-key :yki.job.scheduled-tasks/email-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port)) :email-q email-q})]
       (testing "should read email request from queue and send email"
         (is (= (pgq/count email-q) 1))
         (reader)

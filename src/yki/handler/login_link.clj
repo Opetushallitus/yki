@@ -28,7 +28,7 @@
        (registration-db/create-participant-if-not-exists! db (:email login-link))
        (let [code (str (UUID/randomUUID))
              login-url (str (url-helper :host-yki-oppija) "?code=" code)
-             hashed (hash code)]
+             hashed (sha256-hash code)]
          (when (login-link-db/create-login-link!
                 db
                 (assoc login-link :code hashed :type "REGISTRATION" :registration_id nil))
