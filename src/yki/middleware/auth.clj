@@ -10,7 +10,8 @@
    [integrant.core :as ig]
    [clout.core :as clout]
    [ring.util.request :refer [request-url]]
-   [ring.util.http-response :refer [unauthorized forbidden found see-other]]))
+   [ring.util.http-response :refer [unauthorized forbidden found see-other]])
+  (:import [org.slf4j MDC]))
 
 (def backend (session-backend))
 
@@ -28,8 +29,10 @@
   false)
 
 (defn- authenticated [request]
-  (if (-> request :session :identity)
-    true
+  (if-let [identity (-> request :session :identity)]
+    (do
+      (MDC/put "user" (or (:username identity) (:external-user-id identity)))
+      true)
     (error unauthorized)))
 
 (defn- has-oid?

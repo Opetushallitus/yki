@@ -91,7 +91,7 @@
           VALUES (
             (SELECT id FROM organizer where oid = '1.2.3.4'),
             (SELECT id from exam_language WHERE language_code = 'fi'), 1, 50, null)"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id) VALUES ('test@user.com') "))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@test.com') "))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO registration(state, exam_session_id, participant_id) values
       ('INCOMPLETE',

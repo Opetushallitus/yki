@@ -7,9 +7,12 @@
   (str base "_" lang ".html"))
 
 (def subject-by-lang
-  {"fi" {"login_link"  "Ilmoittautuminen"},
-   "sv" {"login_link"  "Ilmoittautuminen_sv"},
-   "en" {"login_link"  "Ilmoittautuminen_en"}})
+  {"fi" {"login_link"  "Ilmoittautuminen"
+         "payment_success" "Ilmoittautuminen maksettu"},
+   "sv" {"login_link"  "Ilmoittautuminen_sv"
+         "payment_success" "Ilmoittautuminen maksettu_sv"},
+   "en" {"login_link"  "Ilmoittautuminen_en"
+         "payment_success" "Ilmoittautuminen maksettu_en"}})
 
 (defn subject
   [template lang]

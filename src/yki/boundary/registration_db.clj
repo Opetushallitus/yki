@@ -11,6 +11,7 @@
   (get-payment-by-registration-id [db registration-id])
   (create-payment! [db payment])
   (complete-registration-and-payment! [db payment-params])
+  (get-participant-email-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
   (create-participant-if-not-exists! [db external-user-id]))
 
@@ -29,6 +30,9 @@
                              :state "PAID"})
       (q/update-registration! tx {:order_number order-number
                                   :state "COMPLETED"})))
+  (get-participant-email-by-order-number
+    [{:keys [spec]} order-number]
+    (q/select-participant-email-by-order-number spec {:order_number order-number}))
   (get-next-order-number-suffix!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]

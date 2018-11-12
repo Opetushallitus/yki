@@ -55,6 +55,7 @@
 
  :yki.handler/payment {:db #ig/ref :duct.database/sql
                        :auth #ig/ref :yki.middleware.auth/with-authentication
+                       :email-q #ig/ref :yki.job.job-queue/email-q
                        :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/localisation {:url-helper #ig/ref :yki.util/url-helper}

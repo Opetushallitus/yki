@@ -3,6 +3,8 @@
             [yki.spec :as ys]
             [clojure.string :as str]
             [clj-time.coerce :as c]
+            [pgqueue.core :as pgq]
+            [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
             [yki.payment.payment-util :as payment-util]
             [ring.util.http-response :refer [not-found]]
@@ -38,24 +40,30 @@
       payment-id)
     (error "Registration not found" registration-id)))
 
-(defn- handle-payment-success [db payment-params]
-  (let [updated (registration-db/complete-registration-and-payment! db payment-params)]
-    (if (= updated 1)
-  ; (send-confirmation-mail)
-      updated)))
+(defn- handle-payment-success [db email-q payment-params]
+  (let [email (registration-db/get-participant-email-by-order-number db (:order-number payment-params))
+        lang (:lang payment-params)
+        updated (registration-db/complete-registration-and-payment! db payment-params)]
+    (when (= updated 1)
+      (pgq/put email-q
+               {:recipients [(:email email)],
+                :subject (template-util/subject "payment_success" lang),
+                :body (template-util/render "payment_success" lang {})}))
+    updated))
 
 (defn- handle-payment-cancelled [db payment-params]
   (info "Payment cancelled" payment-params))
 
 (defn handle-payment-return
-  [db {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD SETTLEMENT_REFERENCE_NUMBER]}]
+  [db email-q {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD SETTLEMENT_REFERENCE_NUMBER]}]
   (let [payment-params {:order-number ORDER_NUMBER
                         :payment-id PAYMENT_ID
+                        :lang "fi" ; TODO from params
                         :reference-number (Integer/valueOf SETTLEMENT_REFERENCE_NUMBER)
                         :payment-method PAYMENT_METHOD
                         :timestamp (c/from-long (* 1000 (Long/valueOf TIMESTAMP)))}]
     (case STATUS
-      "PAID" (handle-payment-success db payment-params)
+      "PAID" (handle-payment-success db email-q payment-params)
       "CANCELLED" (handle-payment-cancelled db payment-params)
       (error "Unknown return status" STATUS))))
 

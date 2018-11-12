@@ -7,8 +7,7 @@
             [yki.boundary.permissions :as permissions]
             [ring.util.http-response :refer [found]]
             [clojure.string :as str])
-  (:import [java.util UUID]
-           [org.slf4j MDC]))
+  (:import [java.util UUID]))
 
 (def unauthorized {:status 401
                    :body "Unauthorized"
@@ -35,7 +34,6 @@
             organizations (get-organizations-with-yki-permissions (permissions "organisaatiot"))
             session       (:session request)
             redirect-uri  (or (:success-redirect session) (url-helper :yki.default.cas.login-success.redirect))]
-        (MDC/put "user" username)
         (info "User" username "logged in")
         (if (empty? organizations)
           unauthorized

@@ -6,8 +6,7 @@
             [clj-time.core :as t]
             [clj-time.local :as l]
             [clojure.string :as str])
-  (:import [java.util UUID]
-           [org.slf4j MDC]))
+  (:import [java.util UUID]))
 
 (def unauthorized {:status 401
                    :body "Unauthorized"
