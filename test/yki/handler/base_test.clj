@@ -34,6 +34,9 @@
 (def exam-sessions-json
   (j/read-value (slurp "test/resources/exam_sessions.json")))
 
+(def logout-request
+  (slurp "test/resources/logoutRequest.xml"))
+
 (def exam-session
   (slurp "test/resources/exam_session.json"))
 
@@ -103,6 +106,9 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
             VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " select-participant ", " select-exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
+
+(defn insert-cas-ticket []
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO cas_ticketstore (ticket) VALUES ('ST-15126') ON CONFLICT (ticket) DO NOTHING")))
 
 (defn login-with-login-link [session]
   (-> session

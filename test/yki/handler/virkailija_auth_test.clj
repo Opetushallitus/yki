@@ -18,6 +18,10 @@
             [yki.handler.routing :as routing]
             [yki.handler.auth]))
 
+(defn insert-prereq-data [f]
+  (base/insert-cas-ticket)
+  (f))
+
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
 
@@ -37,6 +41,7 @@
         db (duct.database.sql/->Boundary @embedded-db/conn)
         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-host-virkailija "" :alb-host (str "http://" uri) :scheme "http"})
         auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper
+                                                                    :db db
                                                                     :session-config {:key "ad7tbRZIG839gDo2"
                                                                                      :cookie-attrs {:max-age 28800
                                                                                                     :http-only true
@@ -56,6 +61,7 @@
                                                                                  :auth auth
                                                                                  :file-handler {}}))
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
+                                                                             :db db
                                                                              :url-helper url-helper
                                                                              :permissions-client permissions-client
                                                                              :cas-client cas-client}))]
@@ -240,3 +246,21 @@
         (assert-status-code (:put exam-responses) 401)
         (assert-status-code (:delete exam-responses) 401)
         (assert-status-code (:post exam-responses) 401)))))
+
+(deftest handle-cas-logout-test
+  (with-routes!
+    (fn [server]
+      (get-mock-routes (:port server) "yki_user"))
+    (let [handler (create-routes port)
+          session (peridot/session (routes handler))
+          response (-> session
+                       (peridot/request routing/virkailija-auth-callback
+                                        :request-method :get
+                                        :params {:ticket "ST-15126"})
+                       (peridot/request routing/virkailija-auth-cas-logout
+                                        :request-method :post
+                                        :content-type "application/xml"
+                                        :body base/logout-request))]
+      (testing "cas logout endpoint removes ticket from db"
+        (is (= (first (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM cas_ticketstore")) {:count 0}))
+        (is (= (get-in response [:response :status]) 200))))))
