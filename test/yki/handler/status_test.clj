@@ -23,13 +23,13 @@
     (testing "get status endpoint should return 200 when db connection is ok"
       (is (= (:status response) 200)))))
 
-; (deftest buildversion-test
-;   (let [request (mock/request :get (str routing/status-api-root "/buildversion.txt"))
-;         response (send-request request)
-;         response-body (base/body-as-json response)]
-;     (testing "get buildversion.txt endpoint should return 200 and build version"
-;       (is (= (:status response) 200))
-;       (is (some? (response-body "version")))
-;       (is (some? (response-body "branch")))
-;       (is (some? (response-body "ref"))))))
+(deftest buildversion-test
+  (let [request (mock/request :get (str routing/status-api-root "/buildversion.txt"))
+        response (send-request request)
+        response-body (base/body-as-json response)]
+    (testing "get buildversion.txt endpoint should return 200 and build version"
+      (is (= (:status response) 200))
+      (is (some? (response-body "version")))
+      (is (some? (response-body "branch")))
+      (is (some? (response-body "ref"))))))
 

@@ -17,6 +17,11 @@
 
  :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
 
+ :yki.job.job-queue/email-q {:db-config {:db {:subprotocol "postgresql"
+                                        :subname "//{{host_postgresql_yki}}:{{host_postgresql_yki_port}}/yki"
+                                        :user "{{host_postgresql_yki_user}}"
+                                        :password "{{host_postgresql_yki_password}}"}}}
+
  :yki.handler/payment {:db #ig/ref :duct.database/sql
                        :auth #ig/ref :yki.middleware.auth/with-authentication
                        :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
