@@ -1,6 +1,7 @@
 (ns yki.middleware.auth
   (:require
    [yki.handler.routing :as routing]
+   [yki.boundary.cas-ticket-db :as cas-ticket-db]
    [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
    [ring.middleware.session :refer [wrap-session]]
    [ring.middleware.session.cookie :refer [cookie-store]]
@@ -28,10 +29,18 @@
   (warn "No access to uri:" (:uri request))
   false)
 
-(defn- authenticated [request]
+(defn- participant-authenticated [request]
   (if-let [identity (-> request :session :identity)]
     (do
-      (MDC/put "user" (or (:username identity) (:external-user-id identity)))
+      (MDC/put "user" (:external-id identity))
+      true)
+    (error unauthorized)))
+
+(defn- virkailija-authenticated
+  [db request]
+  (if-let [ticket (cas-ticket-db/get-ticket db (-> request :session :identity :ticket))]
+    (do
+      (MDC/put "user" (:username identity))
       true)
     (error unauthorized)))
 
@@ -92,7 +101,7 @@
 (defn- rules
   "OPH users are allowed to call all endpoints without restrictions to organizer.
   Other users have access only to organizer they have permissions for."
-  [url-helper]
+  [url-helper db]
   [{:pattern #".*/auth/cas/callback"
     :handler any-access}
    {:pattern #".*/auth/login"
@@ -100,25 +109,25 @@
    {:pattern #".*/auth/initsession"
     :handler any-access}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
-    :handler {:and [authenticated {:or [oph-user-access permission-to-organization]}]}}
+    :handler {:and [(partial virkailija-authenticated db) {:or [oph-user-access permission-to-organization]}]}}
    {:pattern #".*/api/virkailija/organizer"
-    :handler authenticated ; authorized on database level
+    :handler (partial virkailija-authenticated db) ; authorized on database level
     :request-method :get}
    {:pattern #".*/api/virkailija/organizer.*"
-    :handler {:and [authenticated oph-user-access]}
+    :handler {:and [(partial virkailija-authenticated db) oph-user-access]}
     :request-method #{:post :put :delete}}
    {:pattern #".*/auth/cas.*"
-    :handler authenticated
+    :handler (partial virkailija-authenticated db)
     :on-error (fn [req _] (redirect-to-cas req url-helper))}
    {:pattern #".*/auth.*"
-    :handler authenticated
+    :handler participant-authenticated
     :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
    {:pattern #".*/payment/formdata"
-    :handler authenticated}
-   {:pattern #".*/payment/success" ;http://localhost:8080/yki/payment/success
-    :handler authenticated}
+    :handler participant-authenticated}
+   {:pattern #".*/payment/success"
+    :handler participant-authenticated}
    {:pattern #".*/payment/cancel"
-    :handler authenticated}
+    :handler participant-authenticated}
    {:pattern #".*/payment/notify"
     :handler any-access}
    {:pattern #".*/api.*"
@@ -126,10 +135,10 @@
    {:pattern #".*"
     :handler no-access}])
 
-(defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config]}]
+(defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
   (defn with-authentication [handler]
     (-> handler
-        (wrap-access-rules {:rules (rules url-helper)})
+        (wrap-access-rules {:rules (rules url-helper db)})
         (wrap-authentication backend)
         (wrap-authorization backend)
         (wrap-session {:store (cookie-store {:key (:key session-config)})

@@ -104,6 +104,9 @@
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
             VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " select-participant ", " select-exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
+(defn insert-cas-ticket []
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO cas_ticketstore (ticket) VALUES ('ST-15126') ON CONFLICT (ticket) DO NOTHING")))
+
 (defn login-with-login-link [session]
   (-> session
       (peridot/request (str routing/auth-root "/login?code=" code-ok))))

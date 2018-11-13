@@ -39,6 +39,7 @@
  :yki.boundary.files/liiteri-file-store {:url-helper #ig/ref :yki.util/url-helper}
 
  :yki.middleware.auth/with-authentication {:url-helper #ig/ref :yki.util/url-helper
+                                           :db #ig/ref :duct.database/sql
                                            :session-config {}}
 
  :yki.middleware.access-log/with-logging {}

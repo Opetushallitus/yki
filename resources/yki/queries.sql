@@ -342,3 +342,15 @@ SELECT nextval('payment_order_number_seq');
     modified = current_timestamp
 WHERE
   order_number = :order_number;
+
+-- name: insert-ticket!
+INSERT INTO cas_ticketstore (ticket) VALUES (:ticket);
+
+-- name: delete-ticket!
+DELETE FROM cas_ticketstore
+WHERE ticket = :ticket;
+
+-- name: select-ticket
+SELECT ticket
+FROM cas_ticketstore
+WHERE ticket = :ticket;

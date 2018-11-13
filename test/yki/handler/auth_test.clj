@@ -38,6 +38,7 @@
         db (sql/->Boundary @embedded-db/conn)
         auth (ig/init-key :yki.middleware.auth/with-authentication
                           {:url-helper url-helper
+                           :db db
                            :session-config {:key "ad7tbRZIG839gDo2"
                                             :cookie-attrs {:max-age 28800
                                                            :http-only true

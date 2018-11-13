@@ -39,6 +39,7 @@
  :yki.middleware.auth/with-authentication
    {:url-helper #ig/ref :yki.util/url-helper
     :session-config {:key "{{yki_session_cookie_secret}}"
+                     :db #ig/ref :duct.database/sql
                      :cookie-attrs {:max-age 28800
                                     :http-only false
                                     :secure true
