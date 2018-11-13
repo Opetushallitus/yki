@@ -118,7 +118,11 @@
     :request-method #{:post :put :delete}}
    {:pattern #".*/auth/cas.*"
     :handler (partial virkailija-authenticated db)
-    :on-error (fn [req _] (redirect-to-cas req url-helper))}
+    :on-error (fn [req _] (redirect-to-cas req url-helper))
+    :request-method :get}
+  {:pattern #".*/auth/cas"
+    :handler any-access
+    :request-method :post}
    {:pattern #".*/auth.*"
     :handler participant-authenticated
     :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}

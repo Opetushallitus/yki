@@ -3,6 +3,7 @@
             [integrant.core :as ig]
             [yki.handler.routing :as routing]
             [yki.middleware.access-log]
+            [yki.spec :as ys]
             [ring.util.http-response :refer [ok]]
             [yki.auth.cas-auth :as cas-auth]
             [yki.auth.code-auth :as code-auth]
@@ -19,8 +20,8 @@
      (GET "/login" [code lang]
        (code-auth/login db code lang url-helper))
      (context routing/virkailija-auth-uri []
-       (POST "/" [logoutRequest :as request])
-
+       (POST "/" request
+         (cas-auth/cas-logout db (slurp (:body request))))
        (GET "/callback" [ticket :as request]
          (cas-auth/login ticket request cas-client permissions-client url-helper db))
        (GET "/logout" {session :session}

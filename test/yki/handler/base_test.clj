@@ -34,6 +34,9 @@
 (def exam-sessions-json
   (j/read-value (slurp "test/resources/exam_sessions.json")))
 
+(def logout-request
+  (slurp "test/resources/logoutRequest.xml"))
+
 (def exam-session
   (slurp "test/resources/exam_session.json"))
 

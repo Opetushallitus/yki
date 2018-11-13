@@ -16,7 +16,7 @@
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn- yki-permission? [permission]
-  (= (permission "palvelu") "YKI")) ;use EPERUSTEET_YLOPS for testing
+  (= (permission "palvelu") "EPERUSTEET_YLOPS")) ;use EPERUSTEET_YLOPS for testing
 
 (defn- yki-permissions [org]
   {:oid (org "organisaatioOid")
@@ -54,14 +54,14 @@
       (error e "Cas ticket handling failed")
       (throw e))))
 
-; (defn cas-logout
-;   [logout-request session]
-;   (info "cas-initiated logout")
-;   (let [ticket (CasLogout/parseTicketFromLogoutRequest logout-request)]
-;     (if (.isEmpty ticket)
-;       (error "Could not parse ticket from CAS request")
-;       (cas-store/logout (.get ticket)))
-;     (ok)))
+(defn cas-logout
+  [db logout-request]
+  (info "cas-initiated logout")
+  (let [ticket (CasLogout/parseTicketFromLogoutRequest logout-request)]
+    (if (.isEmpty ticket)
+      (error "Could not parse ticket from CAS request")
+      (cas-ticket-db/delete-ticket! db (.get ticket)))
+    (ok)))
 
 (defn logout
   [session url-helper]
