@@ -2,7 +2,7 @@
   "exam_sessions": [
     {
       "id": 1,
-      "session_date": "2039-05-02T00:00:00.000Z",
+      "session_date": "2039-05-02",
       "language_code": "fi",
       "level_code": "PERUS",
       "max_participants": 50,

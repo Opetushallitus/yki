@@ -8,7 +8,7 @@
 
 (extend-protocol jdbc/IResultSetReadColumn
   java.sql.Date
-  (result-set-read-column [d _ _] (l/to-local-date-time d))
+  (result-set-read-column [d _ _] (.toString (l/to-local-date-time d) "YYYY-MM-dd"))
   java.sql.Time
   (result-set-read-column [d _ _] (.toString (l/to-local-date-time d) "HH:mm"))
   org.postgresql.jdbc.PgArray

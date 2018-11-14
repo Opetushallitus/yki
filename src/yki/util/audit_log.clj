@@ -5,7 +5,7 @@
            [org.ietf.jgss Oid]
            [com.google.gson JsonParser]
            [com.fasterxml.jackson.datatype.joda JodaModule]
-           [fi.vm.sade.auditlog Audit ApplicationType User Operation Target$Builder Changes$Builder]))
+           [fi.vm.sade.auditlog Audit ApplicationType User Operation Target$Builder Changes Changes$Builder]))
 
 (def mapper
   (json/object-mapper
@@ -38,15 +38,15 @@
 
 (defonce ^:private oppija-logger (Audit. logger-proxy "yki" ApplicationType/OPPIJA))
 
-(defn- add-changes [builder change]
+(defn- create-changes [change]
   (case (:type change)
     "update" (let [old  (.getAsJsonObject (.parse jsonParser (->json-string (:old change))))
                    new  (.getAsJsonObject (.parse jsonParser (->json-string (:new change))))]
-               (.updated builder "object" old new))
-    "delete" builder
-    "cancel" builder
+               (Changes/updatedDto new old))
+    "delete" (-> (Changes$Builder.)(.build))
+    "cancel" (-> (Changes$Builder.)(.build))
     "create" (let [new  (.getAsJsonObject (.parse jsonParser (->json-string (:new change))))]
-               (.added builder "object" new))))
+               (Changes/addedDto new))))
 
 (defn- oid-or-nil [oid]
   (if oid
@@ -63,9 +63,7 @@
         target          (-> (Target$Builder.)
                             (.setField (:k target-kv) (str (:v target-kv)))
                             (.build))
-        changes         (-> (Changes$Builder.)
-                            (add-changes change)
-                            (.build))]
+        changes         (create-changes change)]
     (.log virkailija-logger user op target changes)))
 
 (defn log-participant
@@ -79,7 +77,5 @@
         target          (-> (Target$Builder.)
                             (.setField (:k target-kv) (str (:v target-kv)))
                             (.build))
-        changes         (-> (Changes$Builder.)
-                            (add-changes change)
-                            (.build))]
+        changes         (create-changes change)]
     (.log oppija-logger user op target changes)))

@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS login_link (
  type login_link_type NOT NULL,
  expired_link_redirect TEXT NOT NULL,
  success_redirect TEXT NOT NULL,
- expires_at DATE NOT NULL,
+ expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
  created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
  modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
