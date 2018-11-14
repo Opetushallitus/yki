@@ -120,7 +120,7 @@
     :handler (partial virkailija-authenticated db)
     :on-error (fn [req _] (redirect-to-cas req url-helper))
     :request-method :get}
-  {:pattern #".*/auth/cas"
+   {:pattern #".*/auth/cas"
     :handler any-access
     :request-method :post}
    {:pattern #".*/auth.*"

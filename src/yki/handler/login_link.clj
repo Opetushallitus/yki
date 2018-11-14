@@ -5,6 +5,7 @@
             [yki.boundary.login-link-db :as login-link-db]
             [yki.spec :as ys]
             [pgqueue.core :as pgq]
+            [clj-time.core :as t]
             [yki.util.template-util :as template-util]
             [yki.job.job-queue]
             [ring.util.http-response :refer [ok]]
@@ -27,10 +28,15 @@
        (registration-db/create-participant-if-not-exists! db (:email login-link))
        (let [code (str (UUID/randomUUID))
              login-url (str (url-helper :host-yki-oppija) "?code=" code)
+             expires-at (t/plus (t/now) (t/days 1))
              hashed (sha256-hash code)]
          (when (login-link-db/create-login-link!
                 db
-                (assoc login-link :code hashed :type "REGISTRATION" :registration_id nil))
+                (assoc login-link
+                       :code hashed
+                       :type "REGISTRATION"
+                       :expires_at expires-at
+                       :registration_id nil))
            (pgq/put
             email-q
             {:recipients [(:email login-link)],

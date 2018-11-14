@@ -7,9 +7,6 @@
 
 (require-sql ["yki/queries.sql" :as q])
 
-(defn- convert-dates [login-link]
-  (update login-link :expires_at f/parse))
-
 (defprotocol LoginLinks
   (create-login-link! [db login-link])
   (get-login-link-by-code [db code]))
@@ -18,6 +15,6 @@
   duct.database.sql.Boundary
   (create-login-link! [{:keys [spec]} login-link]
     (jdbc/with-db-transaction [tx spec]
-      (q/insert-login-link<! tx (convert-dates login-link))))
+      (q/insert-login-link<! tx login-link)))
   (get-login-link-by-code [{:keys [spec]} code]
     (first (q/select-login-link-by-code spec {:code code}))))

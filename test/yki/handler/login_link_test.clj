@@ -26,8 +26,7 @@
         json-body (j/write-value-as-string {:email "test@test.com"
                                             :exam_session_id 1
                                             :expired_link_redirect "http://localhost:8080/expired"
-                                            :success_redirect "http://localhost:8080/success"
-                                            :expires_at "2040-01-01"})
+                                            :success_redirect "http://localhost:8080/success"})
         request (-> (mock/request :post (str routing/login-link-api-root "?lang=fi") json-body)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (send-request request email-q)
