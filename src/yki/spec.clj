@@ -106,13 +106,11 @@
 (s/def ::expired_link_redirect  (s/and string? #(<= (count %) 256)))
 (s/def ::success_redirect       (s/and string? #(<= (count %) 256)))
 (s/def ::user_data              (s/and string? #(<= (count %) 2560)))
-(s/def ::expires_at             ::date)
 
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id
                                      ::expired_link_redirect
-                                     ::success_redirect
-                                     ::expires_at]
+                                     ::success_redirect]
                             :opt-un [::user_data]))
 
 (defn- parse-int [int-str]
