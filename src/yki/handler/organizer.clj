@@ -41,26 +41,27 @@
        (PUT "/" request
          :body [organizer ::ys/organizer-type]
          :return ::ys/response
-         (if (= (organizer-db/update-organizer! db oid organizer) 1)
-           (let [current (first (organizer-db/get-organizers-by-oids db [oid]))]
-             (audit-log/log-participant {:request request
-                                         :target-kv {:k audit-log/organizer
-                                                     :v oid}
-                                         :change {:type audit-log/update-op
-                                                  :old current
-                                                  :new organizer}})
-             (response {:success true}))
-           (not-found {:success false
-                       :error "Organizer not found"})))
+         (let [old (first (organizer-db/get-organizers-by-oids db [oid]))]
+           (if (= (organizer-db/update-organizer! db oid organizer) 1)
+             (do
+               (audit-log/log {:request request
+                               :target-kv {:k audit-log/organizer
+                                           :v oid}
+                               :change {:type audit-log/update-op
+                                        :old old
+                                        :new organizer}})
+               (response {:success true}))
+             (not-found {:success false
+                         :error "Organizer not found"}))))
 
        (DELETE "/" request
          :return ::ys/response
          (if (= (organizer-db/delete-organizer! db oid) 1)
            (do
-             (audit-log/log-participant {:request request
-                                         :target-kv {:k audit-log/organizer
-                                                     :v oid}
-                                         :change {:type audit-log/delete-op}})
+             (audit-log/log {:request request
+                             :target-kv {:k audit-log/organizer
+                                         :v oid}
+                             :change {:type audit-log/delete-op}})
              (response {:success true}))
            (not-found {:success false
                        :error "Organizer not found"})))

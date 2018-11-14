@@ -2,8 +2,8 @@
     "organizers": [
         {
             "oid": "1.2.3.4",
-            "agreement_start_date": "2018-01-01T00:00:00.000Z",
-            "agreement_end_date": "2019-01-01T00:00:00.000Z",
+            "agreement_start_date": "2018-01-01",
+            "agreement_end_date": "2019-01-01",
             "contact_name": "name",
             "contact_email": "email@oph.fi",
             "contact_phone_number": "phone",
@@ -21,8 +21,8 @@
         },
         {
             "oid": "1.2.3.5",
-            "agreement_start_date": "2018-01-01T00:00:00.000Z",
-            "agreement_end_date": "2019-01-01T00:00:00.000Z",
+            "agreement_start_date": "2018-01-01",
+            "agreement_end_date": "2019-01-01",
             "contact_name": "name",
             "contact_email": "email@oph.fi",
             "contact_phone_number": "phone",
