@@ -159,3 +159,6 @@
 
 (s/def ::pt-payment-form-data (s/keys :req-un [::uri
                                                ::params]))
+
+;; registration
+(s/def ::registration-init (s/keys :req-un [::exam_session_id]))

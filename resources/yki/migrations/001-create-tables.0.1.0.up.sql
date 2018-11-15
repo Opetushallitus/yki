@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS participant (
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
-CREATE TYPE registration_state AS ENUM ('COMPLETED', 'INCOMPLETE', 'ERROR');
+CREATE TYPE registration_state AS ENUM ('COMPLETED', 'SUBMITTED', 'STARTED', 'ERROR');
 --;;
 CREATE TABLE IF NOT EXISTS registration (
   id BIGSERIAL PRIMARY KEY,
