@@ -13,7 +13,7 @@
   (complete-registration-and-payment! [db payment-params])
   (get-participant-email-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
-  (create-participant-if-not-exists! [db external-user-id]))
+  (get-or-create-participant! [db external-user-id email]))
 
 (extend-protocol Registration
   duct.database.sql.Boundary
@@ -44,7 +44,9 @@
   (get-registration
     [{:keys [spec]} registration-id external-user-id]
     (q/select-registration spec {:id registration-id :external_user_id external-user-id}))
-  (create-participant-if-not-exists!
-    [{:keys [spec]} external-user-id]
+  (get-or-create-participant!
+    [{:keys [spec]} external-user-id email]
     (jdbc/with-db-transaction [tx spec]
-      (q/insert-participant! tx {:external_user_id external-user-id}))))
+      (if-let [participant (first (q/select-participant tx {:external_user_id external-user-id}))]
+        participant
+        (q/insert-participant<! tx {:external_user_id external-user-id :email email})))))

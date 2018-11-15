@@ -75,7 +75,7 @@
                      (peridot/request (str routing/payment-root "/success" success-params "INVALID")))
         location (get-in response [:response :headers "Location"])]
     (testing "when return authcode is invalid should redirect to error url"
-      (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM registration")) {:state "INCOMPLETE"}))
+      (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM registration")) {:state "SUBMITTED"}))
       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM payment")) {:state "UNPAID"}))
       (is (s/includes? location "state=error")))))
 

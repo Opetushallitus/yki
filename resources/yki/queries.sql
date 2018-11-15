@@ -230,12 +230,14 @@ WHERE exam_session_id = :id;
 DELETE FROM exam_session
 WHERE id = :id;
 
--- name: insert-participant!
+-- name: insert-participant<!
 INSERT INTO participant(
-  external_user_id
+  external_user_id,
+  email
 ) VALUES (
-  :external_user_id
-) ON CONFLICT (external_user_id) DO NOTHING;
+  :external_user_id,
+  :email
+);
 
 -- name: insert-login-link<!
 INSERT INTO login_link(
@@ -250,7 +252,7 @@ INSERT INTO login_link(
 ) VALUES (
   :code,
   :type::login_link_type,
-  (SELECT id FROM participant WHERE external_user_id = :email),
+  :participant_id,
   :exam_session_id,
   :registration_id,
   :expired_link_redirect,
@@ -319,6 +321,11 @@ SELECT
   payed_at
  FROM payment
  WHERE registration_id = :registration_id;
+
+-- name: select-participant
+SELECT id, external_user_id, email
+FROM participant
+WHERE external_user_id = :external_user_id
 
 -- name: select-participant-email-by-order-number
 SELECT par.email,

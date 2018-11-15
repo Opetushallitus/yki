@@ -17,23 +17,24 @@
 (defn sha256-hash [code]
   (bytes->hex (hash/sha256 code)))
 
-(defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper]}]
+(defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper access-log]}]
   (api
    (context routing/login-link-api-root []
      :coercion :spec
+     :middleware [access-log]
      (POST "/" request
        :body [login-link ::ys/login-link]
        :query-params [lang :- ::ys/language_code]
        :return ::ys/response
-       (registration-db/create-participant-if-not-exists! db (:email login-link))
-       (let [code (str (UUID/randomUUID))
+       (let [participant-id (:id (registration-db/get-or-create-participant! db (:email login-link) (:email login-link)))
+             code (str (UUID/randomUUID))
              login-url (str (url-helper :host-yki-oppija) "?code=" code)
              expires-at (t/plus (t/now) (t/days 1))
              hashed (sha256-hash code)]
-         (when (login-link-db/create-login-link!
-                db
+         (when (login-link-db/create-login-link! db
                 (assoc login-link
                        :code hashed
+                       :participant_id participant-id
                        :type "REGISTRATION"
                        :expires_at expires-at
                        :registration_id nil))
