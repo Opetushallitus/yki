@@ -126,6 +126,8 @@
    {:pattern #".*/auth.*"
     :handler participant-authenticated
     :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
+   {:pattern #".*/api/registration.*"
+    :handler participant-authenticated}
    {:pattern #".*/payment/formdata"
     :handler participant-authenticated}
    {:pattern #".*/payment/success"

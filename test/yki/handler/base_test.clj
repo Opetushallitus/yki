@@ -6,6 +6,7 @@
             [clojure.java.io :as io]
             [yki.boundary.files :as files]
             [muuntaja.middleware :as middleware]
+            [compojure.core :refer :all]
             [peridot.core :as peridot]
             [muuntaja.core :as m]
             [clojure.java.jdbc :as jdbc]
@@ -14,6 +15,8 @@
             [yki.handler.routing :as routing]
             [yki.handler.exam-session]
             [yki.handler.file]
+            [yki.handler.registration]
+            [yki.util.url-helper]
             [yki.handler.organizer]))
 
 (def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
@@ -94,14 +97,13 @@
           VALUES (
             (SELECT id FROM organizer where oid = '1.2.3.4'),
             (SELECT id from exam_language WHERE language_code = 'fi'), 1, 50, null)"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') "))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') ")))
+
+(defn insert-payment []
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(state, exam_session_id, participant_id) values
-      ('SUBMITTED',
-        " select-exam-session ", " select-participant ")"))
+                                    "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', " select-exam-session ", " select-participant ")"))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
-
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
@@ -110,6 +112,9 @@
 (defn insert-cas-ticket []
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO cas_ticketstore (ticket) VALUES ('ST-15126') ON CONFLICT (ticket) DO NOTHING")))
 
+(defn select-one [query]
+  (first (jdbc/query @embedded-db/conn query)))
+
 (defn login-with-login-link [session]
   (-> session
       (peridot/request (str routing/auth-root "/login?code=" code-ok))))
@@ -117,18 +122,33 @@
 (defn create-url-helper [uri]
   (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"}))
 
+(defn create-routes [port]
+  (let [uri (str "localhost:" port)
+        db (duct.database.sql/->Boundary @embedded-db/conn)
+        url-helper (create-url-helper uri)
+        access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
+        file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
+        auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper
+                                                                    :db db
+                                                                    :session-config {:key "ad7tbRZIG839gDo2"
+                                                                                     :cookie-attrs {:max-age 28800
+                                                                                                    :http-only true
+                                                                                                    :domain "localhost"
+                                                                                                    :secure false
+                                                                                                    :path "/yki"}}})
+        auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
+                                                                             :db db
+                                                                             :url-helper url-helper}))
+        file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
+        organizer-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
+                                                                                       :url-helper url-helper
+                                                                                       :exam-session-handler exam-session-handler
+                                                                                       :file-handler file-handler}))]
+    (routes organizer-handler auth-handler)))
+
 (defn send-request-with-tx
   ([request]
-   (send-request-with-tx request ""))
+   (send-request-with-tx request 8080))
   ([request port]
-   (let [uri (str "localhost:" port)
-         db (duct.database.sql/->Boundary @embedded-db/conn)
-         url-helper (create-url-helper uri)
-         exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
-         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
-         file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
-         handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
-                                                                              :url-helper url-helper
-                                                                              :exam-session-handler exam-session-handler
-                                                                              :file-handler file-handler}))]
-     (handler request))))
+   ((create-routes port) request)))

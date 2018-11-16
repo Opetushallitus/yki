@@ -10,8 +10,7 @@
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
-            [yki.util.url-helper]
-            [yki.handler.organizer]))
+            [yki.util.url-helper]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)

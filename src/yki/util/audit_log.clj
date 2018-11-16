@@ -70,7 +70,7 @@
   [{:keys [request target-kv change]}]
   (let [inet-address    (InetAddress/getLocalHost)
         session         (:session request)
-        oid             (get-in session [:identity :external-user-id])
+        oid             nil ;TODO check if oid present for participant
         user-agent      ((:headers request) "user-agent")
         user            (User. (oid-or-nil oid) inet-address (:yki-session-id session) user-agent)
         op              (op (:type change))

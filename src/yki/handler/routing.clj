@@ -26,7 +26,7 @@
 
 (def payment-root (str app-root "/payment"))
 
-(def registration-root (str api-root "/registration"))
+(def registration-api-root (str api-root "/registration"))
 
 (def virkailija-api-root (str api-root "/virkailija"))
 

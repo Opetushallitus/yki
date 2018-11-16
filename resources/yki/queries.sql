@@ -279,16 +279,37 @@ UPDATE task_lock SET
 WHERE task = :task
   AND last_executed < (current_timestamp - :interval::interval);
 
+-- name: insert-registration<!
+INSERT INTO registration(
+  state,
+  exam_session_id,
+  participant_id,
+  started_at
+) VALUES (
+  'STARTED',
+  :exam_session_id,
+  :participant_id,
+  :started_at
+);
+
+-- name: update-registration-to-submitted!
+UPDATE registration SET
+  state = 'SUBMITTED',
+  modified = current_timestamp
+WHERE
+  id = :id
+  AND participant_id = :participant_id;
+
 -- name: select-registration
 SELECT state, exam_session_id, participant_id
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 WHERE re.id = :id AND p.external_user_id = :external_user_id;
 
--- name: update-registration!
+-- name: update-registration-to-completed!
 UPDATE registration
 SET
-  state = :state::registration_state,
+  state = 'COMPLETED',
   modified = current_timestamp
 WHERE
  id = (SELECT registration_id FROM payment WHERE order_number = :order_number) AND

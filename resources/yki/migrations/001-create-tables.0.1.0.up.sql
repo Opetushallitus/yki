@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS registration (
   state registration_state NOT NULL,
   exam_session_id BIGINT REFERENCES exam_session (id) NOT NULL,
   participant_id BIGINT REFERENCES participant (id) NOT NULL,
+  started_at TIMESTAMP WITH TIME ZONE,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   CONSTRAINT one_participation_per_session UNIQUE (exam_session_id, participant_id)

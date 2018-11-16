@@ -44,6 +44,7 @@
             [lein-kibit "0.1.6"]]
   :git-version {:version-file      "target/classes/buildversion.edn"
                 :version-file-keys [:ref :version :branch :message]}
+  :test-refresh {:changes-only true}
   :main ^:skip-aot yki.main
   :jvm-opts ["-Duser.timezone=UTC"]
   :resource-paths ["resources" "target/resources"]

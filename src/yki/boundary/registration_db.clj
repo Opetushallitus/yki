@@ -10,10 +10,12 @@
   (get-next-order-number-suffix! [db])
   (get-payment-by-registration-id [db registration-id])
   (create-payment! [db payment])
+  (create-payment-and-update-registration! [db payment registration])
+  (create-registration! [db registration])
   (complete-registration-and-payment! [db payment-params])
   (get-participant-email-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
-  (get-or-create-participant! [db external-user-id email]))
+  (get-or-create-participant! [db participant]))
 
 (extend-protocol Registration
   duct.database.sql.Boundary
@@ -28,8 +30,7 @@
                              :payed_at timestamp
                              :reference_number reference-number
                              :state "PAID"})
-      (q/update-registration! tx {:order_number order-number
-                                  :state "COMPLETED"})))
+      (q/update-registration-to-completed! tx {:order_number order-number})))
   (get-participant-email-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-participant-email-by-order-number spec {:order_number order-number})))
@@ -41,12 +42,23 @@
     [{:keys [spec]} payment]
     (jdbc/with-db-transaction [tx spec]
       (q/insert-payment<! tx payment)))
+  (create-payment-and-update-registration!
+    [{:keys [spec]} payment registration]
+    (jdbc/with-db-transaction [tx spec]
+      (let [order-number-suffix (:nextval (first (q/select-next-order-number-suffix tx)))
+            order-number (str "YKI" order-number-suffix)]
+        (q/update-registration-to-submitted! tx registration)
+        (q/insert-payment<! tx (assoc payment :order_number order-number)))))
+  (create-registration!
+    [{:keys [spec]} registration]
+    (jdbc/with-db-transaction [tx spec]
+      (q/insert-registration<! tx registration)))
   (get-registration
     [{:keys [spec]} registration-id external-user-id]
-    (q/select-registration spec {:id registration-id :external_user_id external-user-id}))
+    (first (q/select-registration spec {:id registration-id :external_user_id external-user-id})))
   (get-or-create-participant!
-    [{:keys [spec]} external-user-id email]
+    [{:keys [spec]} participant]
     (jdbc/with-db-transaction [tx spec]
-      (if-let [participant (first (q/select-participant tx {:external_user_id external-user-id}))]
+      (if-let [participant (first (q/select-participant tx participant))]
         participant
-        (q/insert-participant<! tx {:external_user_id external-user-id :email email})))))
+        (q/insert-participant<! tx participant)))))
