@@ -20,7 +20,7 @@
   (or (instance? DateTime maybe-date)
       (f/parse maybe-date)))
 
-(s/def ::non-blank-string (s/and string? #(not (str/blank? %))))
+(s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))
 (s/def ::date         (st/spec
                        {:spec (partial date?)
                         :type :date-time
@@ -162,3 +162,18 @@
 
 ;; registration
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
+
+(s/def ::name ::non-blank-string)
+(s/def ::post_office ::non-blank-string)
+(s/def ::zip ::non-blank-string)
+(s/def ::street_address ::non-blank-string)
+(s/def ::phone_number ::non-blank-string)
+(s/def ::country_code (s/and ::non-blank-string #(= (count %) 2)))
+
+(s/def ::registration (s/keys :opt-un [::name
+                                       ::post_office
+                                       ::zip
+                                       ::country_code
+                                       ::street_address
+                                       ::phone_number
+                                       ::email]))

@@ -12,6 +12,7 @@
 
 (deftest create-payment
   (base/insert-login-link-prereqs)
+  (base/insert-payment)
   (jdbc/execute! @embedded-db/conn "delete from payment")
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
         _ (paytrail-payment/create-payment db base/payment-config 1 "test@user.com" "fi")
