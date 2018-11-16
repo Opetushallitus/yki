@@ -11,7 +11,7 @@
             [yki.handler.base-test :as base]
             [yki.embedded-db :as embedded-db]
             [yki.handler.routing :as routing]
-            [yki.payment.paytrail-payment]
+            [yki.registration.paytrail-payment]
             [yki.handler.payment]))
 
 (defn insert-prereq-data [f]

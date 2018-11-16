@@ -1,4 +1,4 @@
-(ns yki.payment.paytrail-payment
+(ns yki.registration.paytrail-payment
   (:require [clojure.spec.alpha :as s]
             [yki.spec :as ys]
             [clojure.string :as str]
@@ -6,7 +6,7 @@
             [pgqueue.core :as pgq]
             [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
-            [yki.payment.payment-util :as payment-util]
+            [yki.registration.payment-util :as payment-util]
             [ring.util.http-response :refer [not-found]]
             [clojure.tools.logging :refer [info error]]
             [integrant.core :as ig]))

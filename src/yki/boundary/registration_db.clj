@@ -13,6 +13,7 @@
   (create-payment-and-update-registration! [db payment registration])
   (create-registration! [db registration])
   (complete-registration-and-payment! [db payment-params])
+  (update-participant-email! [db email participant-id])
   (get-participant-email-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
   (get-or-create-participant! [db participant]))
@@ -42,6 +43,10 @@
     [{:keys [spec]} payment]
     (jdbc/with-db-transaction [tx spec]
       (q/insert-payment<! tx payment)))
+  (update-participant-email!
+    [{:keys [spec]} email participant-id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/insert-payment<! tx email participant-id)))
   (create-payment-and-update-registration!
     [{:keys [spec]} payment registration]
     (jdbc/with-db-transaction [tx spec]

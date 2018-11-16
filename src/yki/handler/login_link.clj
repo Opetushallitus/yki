@@ -3,6 +3,7 @@
             [yki.handler.routing :as routing]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.login-link-db :as login-link-db]
+            [yki.registration.registration :as registration]
             [yki.spec :as ys]
             [pgqueue.core :as pgq]
             [clj-time.core :as t]
@@ -27,20 +28,10 @@
        :query-params [lang :- ::ys/language_code]
        :return ::ys/response
        (let [participant-id (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
-                                                                                 :email (:email login-link)}))
-             code (str (UUID/randomUUID))
-             login-url (str (url-helper :host-yki-oppija) "?code=" code)
-             expires-at (t/plus (t/now) (t/days 1))
-             hashed (sha256-hash code)]
-         (when (login-link-db/create-login-link! db
-                                                 (assoc login-link
-                                                        :code hashed
-                                                        :participant_id participant-id
-                                                        :type "REGISTRATION"
-                                                        :expires_at expires-at
-                                                        :registration_id nil))
-           (pgq/put email-q
-                    {:recipients [(:email login-link)],
-                     :subject (template-util/subject "login_link" lang),
-                     :body (template-util/render "login_link" lang {:login-url login-url})})
+                                                                                 :email (:email login-link)}))]
+         (when (registration/create-secure-link db url-helper email-q lang
+                                                (assoc login-link
+                                                       :participant_id participant-id
+                                                       :type "REGISTRATION"
+                                                       :registration_id nil) 1)
            (ok {:success true})))))))

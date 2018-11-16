@@ -1,4 +1,4 @@
-(ns yki.payment.payment-util
+(ns yki.registration.payment-util
   (:require [clojure.spec.alpha :as s]
             [yki.spec :as ys]
             [clojure.string :as str]
