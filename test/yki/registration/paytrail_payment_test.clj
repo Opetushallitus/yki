@@ -1,10 +1,10 @@
-(ns yki.payment.paytrail-payment-test
+(ns yki.registration.paytrail-payment-test
   (:require [clojure.test :refer :all]
             [yki.handler.base-test :as base]
             [duct.database.sql]
             [clojure.java.jdbc :as jdbc]
             [yki.embedded-db :as embedded-db]
-            [yki.payment.paytrail-payment :as paytrail-payment]
+            [yki.registration.paytrail-payment :as paytrail-payment]
             [jsonista.core :as j]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)

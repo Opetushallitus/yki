@@ -5,7 +5,7 @@
             [yki.boundary.registration-db :as registration-db]
             [yki.util.audit-log :as audit]
             [yki.spec :as ys]
-            [yki.payment.paytrail-payment :as paytrail-payment]
+            [yki.registration.paytrail-payment :as paytrail-payment]
             [yki.middleware.access-log]
             [ring.util.http-response :refer [ok internal-server-error found]]
             [integrant.core :as ig]))
