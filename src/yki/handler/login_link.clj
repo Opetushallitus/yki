@@ -30,11 +30,11 @@
        (let [participant-id (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                  :id nil
                                                                                  :email (:email login-link)}))]
-         (when (registration/create-secure-link db url-helper email-q lang
-                                                (assoc login-link
-                                                       :participant_id participant-id
-                                                       :type "LOGIN_LINK"
-                                                       :expired_link_redirect (url-helper :login-link.redirect)
-                                                       :success_redirect (url-helper :link-expired.redirect)
-                                                       :registration_id nil) 1)
+         (when (registration/create-and-send-link db url-helper email-q lang
+                                                  (assoc login-link
+                                                         :participant_id participant-id
+                                                         :type "LOGIN_LINK"
+                                                         :expired_link_redirect (url-helper :login-link.redirect)
+                                                         :success_redirect (url-helper :link-expired.redirect)
+                                                         :registration_id nil) {} 1)
            (ok {:success true})))))))

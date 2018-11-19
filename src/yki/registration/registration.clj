@@ -36,7 +36,7 @@
                                                                      :started_at (t/now)))]
     (:id registration)))
 
-(defn create-secure-link [db url-helper email-q lang login-link expires-in-days]
+(defn create-and-send-link [db url-helper email-q lang login-link template-data expires-in-days]
   (let [code (str (UUID/randomUUID))
         login-url (str (url-helper :host-yki-oppija) "?code=" code)
         expires-at (t/plus (t/now) (t/days expires-in-days))
@@ -51,7 +51,7 @@
     (pgq/put email-q
              {:recipients [email]
               :subject (template-util/subject link-type lang)
-              :body (template-util/render link-type lang {:login-url login-url})})))
+              :body (template-util/render link-type lang (assoc template-data :login-url login-url))})))
 
 (defn submit-registration
   [db url-helper email-q lang session id registration amount]
@@ -59,7 +59,8 @@
         email (:email registration)]
     (when (and email (:ssn session))
       (registration-db/update-participant-email! db email participant-id))
-    (let [payment {:registration_id id
+    (let [registration-data (assoc (registration-db/get-registration-data db id participant-id lang) :amount amount)
+          payment {:registration_id id
                    :lang lang
                    :amount amount}
           update-registration {:id id
@@ -71,4 +72,4 @@
                       :success_redirect (url-helper :link-expired.redirect)
                       :type "PAYMENT"}]
       (registration-db/create-payment-and-update-registration! db payment update-registration)
-      (create-secure-link db url-helper email-q lang login-link 8))))
+      (create-and-send-link db url-helper email-q lang login-link registration-data 8))))

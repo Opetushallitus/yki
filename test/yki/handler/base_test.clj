@@ -97,6 +97,17 @@
           VALUES (
             (SELECT id FROM organizer where oid = '1.2.3.4'),
             (SELECT id from exam_language WHERE language_code = 'fi'), 1, 50, null)"))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (street_address,
+    city,
+    other_location_info,
+    language_code,
+    exam_session_id)
+      VALUES (
+        'Upseerinkatu 11',
+        'Espoo',
+        'Other info',
+        'fi',
+        (SELECT id FROM exam_session where max_participants = 50))"))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') ")))
 
 (defn insert-payment []
