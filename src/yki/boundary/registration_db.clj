@@ -11,7 +11,7 @@
   (get-payment-by-registration-id [db registration-id])
   (get-participant [db participant-query])
   (create-payment! [db payment])
-  (create-payment-and-update-registration! [db payment registration])
+  (create-payment-and-update-registration! [db payment registration after-fn])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
   (complete-registration-and-payment! [db payment-params])
@@ -53,12 +53,13 @@
     (jdbc/with-db-transaction [tx spec]
       (q/insert-payment<! tx email participant-id)))
   (create-payment-and-update-registration!
-    [{:keys [spec]} payment registration]
+    [{:keys [spec]} payment registration after-fn]
     (jdbc/with-db-transaction [tx spec]
       (let [order-number-suffix (:nextval (first (q/select-next-order-number-suffix tx)))
             order-number (str "YKI" order-number-suffix)]
         (q/update-registration-to-submitted! tx registration)
-        (q/insert-payment<! tx (assoc payment :order_number order-number)))))
+        (q/insert-payment<! tx (assoc payment :order_number order-number))
+        (after-fn))))
   (create-registration!
     [{:keys [spec]} registration]
     (jdbc/with-db-transaction [tx spec]

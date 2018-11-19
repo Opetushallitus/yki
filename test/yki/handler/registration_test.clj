@@ -9,6 +9,7 @@
             [jsonista.core :as j]
             [compojure.core :as core]
             [muuntaja.middleware :as middleware]
+            [pgqueue.core :as pgq]
             [clojure.java.jdbc :as jdbc]
             [peridot.core :as peridot]
             [stub-http.core :refer :all]
@@ -21,7 +22,7 @@
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
 
-(defn- create-handlers []
+(defn- create-handlers [email-q]
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
         auth (ig/init-key :yki.middleware.auth/with-authentication
                           {:session-config {:key "ad7tbRZIG839gDo2"
@@ -31,9 +32,7 @@
                                                            :domain "localhost"
                                                            :path "/yki"}}})
         url-helper (base/create-url-helper "localhost:8080")
-        email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth}))
-        ; db auth access-log payment-config url-helper email-q
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db db
                                                                                              :url-helper url-helper
                                                                                              :email-q email-q
@@ -44,7 +43,8 @@
 (deftest registration-create-and-update-test
   (base/insert-login-link-prereqs)
   (base/insert-login-link base/code-ok "2038-01-01")
-  (let [handlers (create-handlers)
+  (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
+        handlers (create-handlers email-q)
         session (base/login-with-login-link (peridot/session handlers))
         create-response (-> session
                             (peridot/request routing/registration-api-root
@@ -59,14 +59,18 @@
                                              :content-type "application/json"
                                              :request-method :put))
         payment (base/select-one (str "SELECT * FROM payment WHERE registration_id = " id))
-        updated-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))]
+        payment-link (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
+        updated-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
+        email-request (pgq/take email-q)]
     (testing "post endpoint should create registration with status STARTED"
       (is (= (get-in create-response [:response :status]) 200))
       (is (= (:state registration) "STARTED"))
       (is (some? (:started_at registration))))
-    (testing "put endpoint should create payment and set registration status to SUBMITTED"
+    (testing "put endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
       (is (= (get-in update-response [:response :status]) 200))
       (is (= (:id payment) id))
+      (is (= (:subject email-request) "Maksulinkki"))
+      (is (= (:type payment-link) "PAYMENT"))
       (is (= (:order_number payment) "YKI1"))
       (is (= (:state updated-registration) "SUBMITTED"))
       (is (some? (:started_at registration))))))
