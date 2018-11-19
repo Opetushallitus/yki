@@ -37,13 +37,13 @@
     (:id registration)))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data expires-in-days]
-  (let [code (str (UUID/randomUUID))
-        login-url (str (url-helper :host-yki-oppija) "?code=" code)
-        expires-at (t/plus (t/now) (t/days expires-in-days))
-        email (:email (registration-db/get-participant db {:id (:participant_id login-link)
-                                                           :external_user_id nil}))
-        link-type (:type login-link)
-        hashed (sha256-hash code)]
+  (let [code          (str (UUID/randomUUID))
+        login-url     (str (url-helper :host-yki-oppija) "?code=" code)
+        expires-at    (t/plus (t/now) (t/days expires-in-days))
+        email         (:email (registration-db/get-participant db {:id (:participant_id login-link)
+                                                                   :external_user_id nil}))
+        link-type     (:type login-link)
+        hashed        (sha256-hash code)]
     (login-link-db/create-login-link! db
                                       (assoc login-link
                                              :expires_at expires-at
@@ -59,17 +59,17 @@
         email (:email registration)]
     (when (and email (:ssn session))
       (registration-db/update-participant-email! db email participant-id))
-    (let [registration-data (assoc (registration-db/get-registration-data db id participant-id lang) :amount amount)
-          payment {:registration_id id
-                   :lang lang
-                   :amount amount}
-          update-registration {:id id
-                               :participant_id participant-id}
-          login-link {:participant_id participant-id
-                      :exam_session_id nil
-                      :registration_id id
-                      :expired_link_redirect (url-helper :payment-link.redirect)
-                      :success_redirect (url-helper :link-expired.redirect)
-                      :type "PAYMENT"}]
-      (registration-db/create-payment-and-update-registration! db payment update-registration)
-      (create-and-send-link db url-helper email-q lang login-link registration-data 8))))
+    (let [registration-data       (assoc (registration-db/get-registration-data db id participant-id lang) :amount amount)
+          payment                 {:registration_id id
+                                   :lang lang
+                                   :amount amount}
+          update-registration     {:id id
+                                   :participant_id participant-id}
+          login-link              {:participant_id participant-id
+                                   :exam_session_id nil
+                                   :registration_id id
+                                   :expired_link_redirect (url-helper :payment-link.redirect)
+                                   :success_redirect (url-helper :link-expired.redirect)
+                                   :type "PAYMENT"}
+          create-and-send-link-fn   #(create-and-send-link db url-helper email-q lang login-link registration-data 8)]
+      (registration-db/create-payment-and-update-registration! db payment update-registration create-and-send-link-fn))))
