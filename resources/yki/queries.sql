@@ -306,6 +306,24 @@ FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 WHERE re.id = :id AND p.external_user_id = :external_user_id;
 
+-- name: select-registration-data
+SELECT re.state,
+       re.exam_session_id,
+       re.participant_id,
+       el.language_code,
+       el.level_code,
+       ed.exam_date,
+       esl.street_address,
+       esl.city
+FROM registration re
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_language el ON el.id = es.exam_language_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+WHERE re.id = :id
+  AND re.participant_id = :participant_id
+  AND esl.language_code = :lang;
+
 -- name: update-registration-to-completed!
 UPDATE registration
 SET
