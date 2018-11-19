@@ -16,7 +16,7 @@
 (defn get-participant-id [db session]
   (:id (registration-db/get-or-create-participant! db (get-participant-from-session session))))
 
-(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config]}]
+(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config url-helper email-q]}]
   (api
    (context routing/registration-api-root []
      :coercion :spec
@@ -27,9 +27,10 @@
        (let [id (registration/init-registration db (:session request) registration-init)]
          (ok {:id id})))
      (context "/:id" []
-       (PUT "/" [lang :as request]
+       (PUT "/" request
          :body [registration ::ys/registration]
          :path-params [id :- ::ys/id]
+         :query-params [lang :- ::ys/language-code]
          :return ::ys/response
-         (registration/submit-registration db (:session request) id lang registration (bigdec (payment-config :amount)))
+         (registration/submit-registration db url-helper email-q lang (:session request) id registration (bigdec (payment-config :amount)))
          (ok {:success true}))))))

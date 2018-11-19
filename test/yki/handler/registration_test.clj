@@ -31,9 +31,12 @@
                                                            :domain "localhost"
                                                            :path "/yki"}}})
         url-helper (base/create-url-helper "localhost:8080")
+        email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth}))
+        ; db auth access-log payment-config url-helper email-q
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db db
                                                                                              :url-helper url-helper
+                                                                                             :email-q email-q
                                                                                              :payment-config base/payment-config
                                                                                              :auth auth}))]
     (core/routes registration-handler auth-handler)))
@@ -51,7 +54,7 @@
         id ((base/body-as-json (:response create-response)) "id")
         registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
         update-response (-> session
-                            (peridot/request (str routing/registration-api-root "/" id)
+                            (peridot/request (str routing/registration-api-root "/" id "?lang=fi")
                                              :body (j/write-value-as-string {:exam_session_id 1})
                                              :content-type "application/json"
                                              :request-method :put))

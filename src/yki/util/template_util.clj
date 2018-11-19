@@ -1,17 +1,18 @@
 (ns yki.util.template-util
   (:require   [selmer.parser :as selmer]
+              [clojure.string :as str]
               [clojure.tools.logging :refer [info]]))
 
 (defn- template-name
   [base lang]
-  (str base "_" lang ".html"))
+  (str (str/lower-case base) "_" lang ".html"))
 
 (def subject-by-lang
-  {"fi" {"login_link"  "Ilmoittautuminen"
+  {"fi" {"LOGIN_LINK"  "Ilmoittautuminen"
          "payment_success" "Ilmoittautuminen maksettu"},
-   "sv" {"login_link"  "Ilmoittautuminen_sv"
+   "sv" {"LOGIN_LINK"  "Ilmoittautuminen_sv"
          "payment_success" "Ilmoittautuminen maksettu_sv"},
-   "en" {"login_link"  "Ilmoittautuminen_en"
+   "en" {"LOGIN_LINK"  "Ilmoittautuminen_en"
          "payment_success" "Ilmoittautuminen maksettu_en"}})
 
 (defn subject
