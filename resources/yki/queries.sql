@@ -346,7 +346,8 @@ SELECT
 -- name: select-participant
 SELECT id, external_user_id, email
 FROM participant
-WHERE external_user_id = :external_user_id
+WHERE id = COALESCE(:id, id)
+AND external_user_id = COALESCE(:external_user_id, external_user_id);
 
 -- name: select-participant-email-by-order-number
 SELECT par.email,

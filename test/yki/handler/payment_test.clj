@@ -68,7 +68,7 @@
     (testing "when payment is success should complete registration and redirect to success url"
       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM registration")) {:state "COMPLETED"}))
       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM payment")) {:state "PAID"}))
-      (is (s/includes? location "state=success")))))
+      (is (s/includes? location "action=payment-success")))))
 
 (deftest handle-payment-success-invalid-authcode-test
   (let [handler (create-handlers)
@@ -79,7 +79,7 @@
     (testing "when return authcode is invalid should redirect to error url"
       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM registration")) {:state "SUBMITTED"}))
       (is (= (first (jdbc/query @embedded-db/conn "SELECT state FROM payment")) {:state "UNPAID"}))
-      (is (s/includes? location "state=error")))))
+      (is (s/includes? location "action=payment-error")))))
 
 (deftest handle-payment-cancel
   (let [handler (create-handlers)
@@ -88,7 +88,7 @@
                      (peridot/request (str routing/payment-root "/cancel" cancel-params)))
         location (get-in response [:response :headers "Location"])]
     (testing "when payment is cancelled should redirect to cancelled url"
-      (is (s/includes? location "state=cancel")))))
+      (is (s/includes? location "action=payment-cancel")))))
 
 (deftest handle-payment-notify-test
   (let [handler (create-handlers)

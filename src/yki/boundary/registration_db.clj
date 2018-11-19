@@ -9,6 +9,7 @@
 (defprotocol Registration
   (get-next-order-number-suffix! [db])
   (get-payment-by-registration-id [db registration-id])
+  (get-participant [db participant-query])
   (create-payment! [db payment])
   (create-payment-and-update-registration! [db payment registration])
   (create-registration! [db registration])
@@ -32,6 +33,9 @@
                              :reference_number reference-number
                              :state "PAID"})
       (q/update-registration-to-completed! tx {:order_number order-number})))
+  (get-participant
+    [{:keys [spec]} participant-query]
+    (first (q/select-participant spec participant-query)))
   (get-participant-email-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-participant-email-by-order-number spec {:order_number order-number})))

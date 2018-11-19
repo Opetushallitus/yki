@@ -103,14 +103,10 @@
 ;; login link
 (s/def ::email                  ::email-type)
 (s/def ::exam_session_id        ::id)
-(s/def ::expired_link_redirect  (s/and string? #(<= (count %) 256)))
-(s/def ::success_redirect       (s/and string? #(<= (count %) 256)))
 (s/def ::user_data              (s/and string? #(<= (count %) 2560)))
 
 (s/def ::login-link (s/keys :req-un [::email
-                                     ::exam_session_id
-                                     ::expired_link_redirect
-                                     ::success_redirect]
+                                     ::exam_session_id]
                             :opt-un [::user_data]))
 
 (defn- parse-int [int-str]

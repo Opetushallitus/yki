@@ -103,13 +103,13 @@ CREATE TABLE IF NOT EXISTS registration (
   CONSTRAINT one_participation_per_session UNIQUE (exam_session_id, participant_id)
 );
 --;;
-CREATE TYPE login_link_type AS ENUM ('REGISTRATION', 'PAYMENT');
+CREATE TYPE login_link_type AS ENUM ('LOGIN_LINK', 'REGISTRATION', 'PAYMENT');
 --;;
 CREATE TABLE IF NOT EXISTS login_link (
  id BIGSERIAL PRIMARY KEY,
  code TEXT UNIQUE NOT NULL,
  participant_id BIGSERIAL REFERENCES participant (id) NOT NULL,
- exam_session_id BIGSERIAL REFERENCES exam_session (id),
+ exam_session_id BIGINT REFERENCES exam_session (id),
  registration_id BIGINT REFERENCES registration (id),
  type login_link_type NOT NULL,
  expired_link_redirect TEXT NOT NULL,

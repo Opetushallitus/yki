@@ -26,9 +26,7 @@
   (base/insert-login-link-prereqs)
   (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
         json-body (j/write-value-as-string {:email "test@test.com"
-                                            :exam_session_id 1
-                                            :expired_link_redirect "http://localhost:8080/expired"
-                                            :success_redirect "http://localhost:8080/success"})
+                                            :exam_session_id 1})
         request (-> (mock/request :post (str routing/login-link-api-root "?lang=fi") json-body)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (send-request request email-q)
