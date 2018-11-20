@@ -6,7 +6,7 @@
             [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.login-link-db :as login-link-db]
-            [ring.util.http-response :refer [not-found]]
+            [ring.util.http-response :refer [ok conflict not-found]]
             [buddy.core.hash :as hash]
             [buddy.core.codecs :refer :all]
             [clojure.tools.logging :refer [info error]])
@@ -31,10 +31,14 @@
 (defn init-registration
   [db session registration-init]
   (let [participant-id (get-participant-id db session)
-        registration (registration-db/create-registration! db (assoc registration-init
-                                                                     :participant_id participant-id
-                                                                     :started_at (t/now)))]
-    (:id registration)))
+        has-space? (registration-db/exam-session-has-space? db (:exam_session_id registration-init))
+        allowed-to-register? (registration-db/participant-allowed-to-register? db participant-id)]
+    (if (and has-space? allowed-to-register?)
+      (ok (registration-db/create-registration! db (assoc registration-init
+                                                          :participant_id participant-id
+                                                          :started_at (t/now))))
+      (conflict {:has_space has-space?
+                 :allowed_to_register allowed-to-register?}))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data expires-in-days]
   (let [code          (str (UUID/randomUUID))

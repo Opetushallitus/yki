@@ -11,8 +11,10 @@
 
 (defonce worker-id (str (UUID/randomUUID)))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/payment-state-handler [_ {:keys [db]}]
-  #(if (= (job-db/try-to-acquire-lock! db worker-id "PAYMENT_STATE_CHECKER" "9 MINUTES") 1)
+(defn handle-registration-state-changes [])
+
+(defmethod ig/init-key :yki.job.scheduled-tasks/registration-state-handler [_ {:keys [db]}]
+  #(if (= (job-db/try-to-acquire-lock! db worker-id "REGISTRATION_STATE_HANDLER" "9 MINUTES") 1)
      (info "payment-state-handler" (l/local-now))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader [_ {:keys [email-q url-helper]}]

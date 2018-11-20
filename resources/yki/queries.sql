@@ -285,12 +285,19 @@ INSERT INTO registration(
   exam_session_id,
   participant_id,
   started_at
-) VALUES (
+) SELECT
   'STARTED',
   :exam_session_id,
   :participant_id,
   :started_at
-);
+  -- only one registration per participant on same exam date
+  WHERE NOT EXISTS (SELECT es.exam_date_id
+          FROM exam_session es
+          INNER JOIN registration re ON es.id = re.exam_session_id
+          WHERE re.participant_id = :participant_id
+            AND re.state != 'EXPIRED'
+          GROUP BY exam_date_id);
+
 
 -- name: update-registration-to-submitted!
 UPDATE registration SET
@@ -299,6 +306,22 @@ UPDATE registration SET
 WHERE
   id = :id
   AND participant_id = :participant_id;
+
+-- name: select-exam-session-full
+SELECT CASE WHEN COUNT(1) = es.max_participants THEN 1 ELSE 0 END
+FROM exam_session es
+LEFT JOIN registration re ON es.id = re.exam_session_id
+WHERE re.exam_session_id = :id
+  AND re.state != 'EXPIRED'
+GROUP BY max_participants;
+
+-- name: select-participant-already-registered
+SELECT COUNT(1)
+FROM exam_session es
+INNER JOIN registration re ON es.id = re.exam_session_id
+WHERE re.participant_id = :participant_id
+  AND re.state != 'EXPIRED'
+GROUP BY exam_date_id;
 
 -- name: select-registration
 SELECT state, exam_session_id, participant_id
