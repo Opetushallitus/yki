@@ -24,8 +24,7 @@
      (POST "/" request
        :body [registration-init ::ys/registration-init]
        :return ::ys/id-response
-       (let [id (registration/init-registration db (:session request) registration-init)]
-         (ok {:id id})))
+       (registration/init-registration db (:session request) registration-init))
      (context "/:id" []
        (PUT "/" request
          :body [registration ::ys/registration]

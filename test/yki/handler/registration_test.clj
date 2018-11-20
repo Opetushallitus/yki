@@ -51,6 +51,11 @@
                                              :body (j/write-value-as-string {:exam_session_id 1})
                                              :content-type "application/json"
                                              :request-method :post))
+        create-twice-response (-> session
+                                  (peridot/request routing/registration-api-root
+                                                   :body (j/write-value-as-string {:exam_session_id 1})
+                                                   :content-type "application/json"
+                                                   :request-method :post))
         id ((base/body-as-json (:response create-response)) "id")
         registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
         update-response (-> session
@@ -66,6 +71,8 @@
       (is (= (get-in create-response [:response :status]) 200))
       (is (= (:state registration) "STARTED"))
       (is (some? (:started_at registration))))
+    (testing "second post with same data should return conflict"
+      (is (= (get-in create-twice-response [:response :status]) 409)))
     (testing "put endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
       (is (= (get-in update-response [:response :status]) 200))
       (is (= (:id payment) id))

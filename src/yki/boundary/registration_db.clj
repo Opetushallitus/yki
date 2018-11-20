@@ -10,11 +10,13 @@
   (get-next-order-number-suffix! [db])
   (get-payment-by-registration-id [db registration-id])
   (get-participant [db participant-query])
+  (participant-allowed-to-register? [db participant-id])
   (create-payment! [db payment])
   (create-payment-and-update-registration! [db payment registration after-fn])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
   (complete-registration-and-payment! [db payment-params])
+  (exam-session-has-space? [db exam-session-id])
   (update-participant-email! [db email participant-id])
   (get-participant-email-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
@@ -37,6 +39,10 @@
   (get-participant
     [{:keys [spec]} participant-query]
     (first (q/select-participant spec participant-query)))
+  (participant-allowed-to-register?
+    [{:keys [spec]} participant-id]
+    (let [result (first (q/select-participant-already-registered spec {:participant_id participant-id}))]
+      (not (= (:count result) 1))))
   (get-participant-email-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-participant-email-by-order-number spec {:order_number order-number})))
@@ -44,6 +50,10 @@
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (:nextval (first (q/select-next-order-number-suffix tx)))))
+  (exam-session-has-space? [{:keys [spec]} id]
+    (jdbc/with-db-transaction [tx spec {:id id}]
+      (let [result (first (q/select-exam-session-full tx {:id id}))]
+        (not (= (:case result) 1)))))
   (create-payment!
     [{:keys [spec]} payment]
     (jdbc/with-db-transaction [tx spec]

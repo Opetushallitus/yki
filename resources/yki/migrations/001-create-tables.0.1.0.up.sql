@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS participant (
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
-CREATE TYPE registration_state AS ENUM ('COMPLETED', 'SUBMITTED', 'STARTED', 'ERROR');
+CREATE TYPE registration_state AS ENUM ('COMPLETED', 'SUBMITTED', 'STARTED', 'EXPIRED', 'ERROR');
 --;;
 CREATE TABLE IF NOT EXISTS registration (
   id BIGSERIAL PRIMARY KEY,
@@ -99,8 +99,7 @@ CREATE TABLE IF NOT EXISTS registration (
   participant_id BIGINT REFERENCES participant (id) NOT NULL,
   started_at TIMESTAMP WITH TIME ZONE,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-  modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-  CONSTRAINT one_participation_per_session UNIQUE (exam_session_id, participant_id)
+  modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
 CREATE TYPE login_link_type AS ENUM ('LOGIN_LINK', 'REGISTRATION', 'PAYMENT');
