@@ -329,6 +329,22 @@ FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 WHERE re.id = :id AND p.external_user_id = :external_user_id;
 
+-- name: update-started-registrations-to-expired
+UPDATE registration
+SET state = 'EXPIRED'
+WHERE state = 'STARTED' AND (started_at + interval '1 hour') < current_timestamp
+RETURNING id as updated;
+
+-- name: update-submitted-registrations-to-expired
+UPDATE registration
+SET state = 'EXPIRED'
+WHERE state = 'SUBMITTED'
+  AND id IN (SELECT registration_id
+            FROM payment
+            WHERE state = 'UNPAID'
+            AND (created + interval '8 days') < current_timestamp)
+RETURNING id as updated;
+
 -- name: select-registration-data
 SELECT re.state,
        re.exam_session_id,

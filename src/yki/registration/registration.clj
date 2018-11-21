@@ -37,8 +37,8 @@
       (ok (registration-db/create-registration! db (assoc registration-init
                                                           :participant_id participant-id
                                                           :started_at (t/now))))
-      (conflict {:has_space has-space?
-                 :allowed_to_register allowed-to-register?}))))
+      (conflict {:error {:full (not has-space?)
+                         :not_allowed (not allowed-to-register?)}}))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data expires-in-days]
   (let [code          (str (UUID/randomUUID))

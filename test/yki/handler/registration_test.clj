@@ -40,9 +40,15 @@
                                                                                              :auth auth}))]
     (core/routes registration-handler auth-handler)))
 
+(defn- fill-exam-session []
+  (dotimes [_ 4]
+    (jdbc/execute! @embedded-db/conn
+                   "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', 1, 1)")))
+
 (deftest registration-create-and-update-test
   (base/insert-login-link-prereqs)
   (base/insert-login-link base/code-ok "2038-01-01")
+
   (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
         handlers (create-handlers email-q)
         session (base/login-with-login-link (peridot/session handlers))
@@ -51,11 +57,6 @@
                                              :body (j/write-value-as-string {:exam_session_id 1})
                                              :content-type "application/json"
                                              :request-method :post))
-        create-twice-response (-> session
-                                  (peridot/request routing/registration-api-root
-                                                   :body (j/write-value-as-string {:exam_session_id 1})
-                                                   :content-type "application/json"
-                                                   :request-method :post))
         id ((base/body-as-json (:response create-response)) "id")
         registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
         update-response (-> session
@@ -67,12 +68,12 @@
         payment-link (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
         updated-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
         email-request (pgq/take email-q)]
+
     (testing "post endpoint should create registration with status STARTED"
       (is (= (get-in create-response [:response :status]) 200))
       (is (= (:state registration) "STARTED"))
       (is (some? (:started_at registration))))
-    (testing "second post with same data should return conflict"
-      (is (= (get-in create-twice-response [:response :status]) 409)))
+
     (testing "put endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
       (is (= (get-in update-response [:response :status]) 200))
       (is (= (:id payment) id))
@@ -80,4 +81,24 @@
       (is (= (:type payment-link) "PAYMENT"))
       (is (= (:order_number payment) "YKI1"))
       (is (= (:state updated-registration) "SUBMITTED"))
-      (is (some? (:started_at registration))))))
+      (is (some? (:started_at registration))))
+
+    (testing "second post with same data should return conflict with proper error"
+      (let [create-twice-response (-> session
+                                      (peridot/request routing/registration-api-root
+                                                       :body (j/write-value-as-string {:exam_session_id 1})
+                                                       :content-type "application/json"
+                                                       :request-method :post))]
+
+        (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "not_allowed"]) true))
+        (is (= (get-in create-twice-response [:response :status]) 409))))
+
+    (testing "when session is full should return conflict with proper error"
+      (fill-exam-session)
+      (let [create-twice-response (-> session
+                                      (peridot/request routing/registration-api-root
+                                                       :body (j/write-value-as-string {:exam_session_id 1})
+                                                       :content-type "application/json"
+                                                       :request-method :post))]
+        (is (= (get-in create-twice-response [:response :status]) 409))
+        (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "full"]) true))))))

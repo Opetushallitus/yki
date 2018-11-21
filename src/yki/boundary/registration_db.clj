@@ -20,7 +20,9 @@
   (update-participant-email! [db email participant-id])
   (get-participant-email-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
-  (get-or-create-participant! [db participant]))
+  (get-or-create-participant! [db participant])
+  (update-started-registrations-to-expired! [db])
+  (update-submitted-registrations-to-expired! [db]))
 
 (extend-protocol Registration
   duct.database.sql.Boundary
@@ -74,6 +76,14 @@
     [{:keys [spec]} registration]
     (jdbc/with-db-transaction [tx spec]
       (q/insert-registration<! tx registration)))
+  (update-started-registrations-to-expired!
+    [{:keys [spec]}]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-started-registrations-to-expired tx)))
+  (update-submitted-registrations-to-expired!
+    [{:keys [spec]}]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-submitted-registrations-to-expired tx)))
   (get-participant-email-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-participant-email-by-order-number spec {:order_number order-number})))

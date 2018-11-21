@@ -4,6 +4,7 @@
             [integrant.core :as ig]
             [jsonista.core :as j]
             [pgqueue.core :as pgq]
+            [clojure.java.jdbc :as jdbc]
             [yki.handler.base-test :as base]
             [yki.embedded-db :as embedded-db]
             [yki.job.scheduled-tasks :as st]))
@@ -28,3 +29,25 @@
         (reader)
         (is (= (count (:recordings (first @(:routes server)))) 1))
         (is (= (pgq/count email-q) 0))))))
+
+(deftest handle-started-registration-expired-test
+  (base/insert-login-link-prereqs)
+  (jdbc/execute! @embedded-db/conn (str
+                                    "INSERT INTO registration(state, exam_session_id, participant_id, started_at) values ('STARTED'," base/select-exam-session "," base/select-participant ", (current_timestamp - interval '61 minutes'))"))
+
+  (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (duct.database.sql/->Boundary @embedded-db/conn)})
+        _ (registration-state-handler)
+        registration (base/select-one "SELECT * FROM registration")]
+    (testing "should set state of registration started over 1 hour ago to expired"
+      (is (= (:state registration) "EXPIRED")))))
+
+(deftest handle-submitted-registration-expired-test
+  (base/insert-login-link-prereqs)
+  (base/insert-payment)
+  (jdbc/execute! @embedded-db/conn
+                 "UPDATE payment SET created = (current_timestamp - interval '193 hours')")
+  (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (duct.database.sql/->Boundary @embedded-db/conn)})
+        _ (registration-state-handler)
+        registration (base/select-one "SELECT * FROM registration")]
+    (testing "when submitted registration has not been payed in 8 days then state is set to expired"
+      (is (= (:state registration) "EXPIRED")))))

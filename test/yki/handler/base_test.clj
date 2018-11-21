@@ -83,7 +83,7 @@
 
 (def select-participant "(SELECT id from participant WHERE external_user_id = 'test@user.com')")
 
-(def select-exam-session "(SELECT id from exam_session WHERE max_participants = 50)")
+(def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
 
 (defn insert-login-link-prereqs []
   (insert-organizer "'1.2.3.4'")
@@ -96,7 +96,8 @@
         published_at)
           VALUES (
             (SELECT id FROM organizer where oid = '1.2.3.4'),
-            (SELECT id from exam_language WHERE language_code = 'fi'), 1, 50, null)"))
+            (SELECT id from exam_language WHERE language_code = 'fi'), 1, 5, null)"))
+
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (street_address,
     city,
     other_location_info,
@@ -107,7 +108,8 @@
         'Espoo',
         'Other info',
         'fi',
-        (SELECT id FROM exam_session where max_participants = 50))"))
+        (SELECT id FROM exam_session where max_participants = 5))"))
+
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') ")))
 
 (defn insert-payment []
