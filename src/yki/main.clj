@@ -1,6 +1,7 @@
 (ns yki.main
   (:gen-class)
   (:require [clojure.java.io :as io]
+            [yki.job.scheduled-tasks]
             [duct.core :as duct]))
 
 (duct/load-hierarchy)
@@ -10,7 +11,9 @@
     (io/file "./oph-configuration/config.edn")))
 
 (defn -main [& args]
-  (let [keys (or (duct/parse-keys args) [:duct/daemon :duct.migrator/ragtime])]
+  (let [keys (or (duct/parse-keys args) [:duct/daemon
+                                         :duct.migrator/ragtime
+                                         :duct.scheduler/simple])]
     (-> (duct/read-config (read-external-config))
         (duct/prep keys)
         (duct/exec keys))))

@@ -16,7 +16,7 @@
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/registration-state-handler
   [_ {:keys [db]}]
-  #(if (= (job-db/try-to-acquire-lock! db worker-id "REGISTRATION_STATE_HANDLER" "9 MINUTES") 1)
+  #(if (= (job-db/try-to-acquire-lock! db worker-id "REGISTRATION_STATE_HANDLER" "599 SECONDS") 1)
      (do
        (try
          (info "Check started registrations expiry")
@@ -34,7 +34,6 @@
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader [_ {:keys [email-q url-helper]}]
   #(pgq/take-with
     [email-request email-q]
-    (do
-      (if email-request
-        (do (info "Email queue size" (pgq/count email-q))
-            (email/send-email url-helper email-request))))))
+    (when email-request
+      (info "Email queue size" (pgq/count email-q))
+      (email/send-email url-helper email-request))))
