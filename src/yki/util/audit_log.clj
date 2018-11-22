@@ -17,6 +17,8 @@
 (def cancel-op "cancel")
 (def organizer "organizer")
 (def payment "payment")
+(def registration "registration")
+(def registration-init "registration-init")
 (def exam-session "exam-session")
 
 (defonce jsonParser (JsonParser.))

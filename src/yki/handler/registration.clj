@@ -1,20 +1,12 @@
 (ns yki.handler.registration
   (:require [compojure.api.sweet :refer :all]
             [yki.handler.routing :as routing]
-            [yki.boundary.registration-db :as registration-db]
             [yki.registration.registration :as registration]
+            [yki.util.audit-log :as audit]
             [yki.spec :as ys]
             [clj-time.core :as t]
             [ring.util.http-response :refer [ok]]
             [integrant.core :as ig]))
-
-(defn- get-participant-from-session [session]
-  (let [identity (:identity session)]
-    {:external_user_id (or (:ssn identity) (:external-user-id identity))
-     :email (:external-user-id identity)}))
-
-(defn get-participant-id [db session]
-  (:id (registration-db/get-or-create-participant! db (get-participant-from-session session))))
 
 (defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config url-helper email-q]}]
   (api
@@ -24,6 +16,11 @@
      (POST "/" request
        :body [registration-init ::ys/registration-init]
        :return ::ys/id-response
+       (audit/log-participant {:request request
+                               :target-kv {:k audit/registration-init
+                                           :v (:exam_session_id registration-init)}
+                               :change {:type audit/create-op
+                                        :new registration-init}})
        (registration/init-registration db (:session request) registration-init))
      (context "/:id" []
        (PUT "/" request
@@ -31,4 +28,9 @@
          :path-params [id :- ::ys/id]
          :query-params [lang :- ::ys/language-code]
          :return ::ys/response
+         (audit/log-participant {:request request
+                                 :target-kv {:k audit/registration
+                                             :v id}
+                                 :change {:type audit/create-op
+                                          :new registration}})
          (registration/submit-registration db url-helper email-q lang (:session request) id registration (bigdec (payment-config :amount))))))))
