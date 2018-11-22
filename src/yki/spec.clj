@@ -40,6 +40,7 @@
 (s/def ::error                string?)
 (s/def ::contact_email        ::email-type)
 (s/def ::contact_shared_email (s/nilable ::email-type))
+(s/def ::extra                (s/and (s/nilable string?) #(<= (count %) 1024)))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
 (s/def ::language (s/keys :req-un [::language_code
                                    ::level_code]))
@@ -51,7 +52,7 @@
                                          ::contact_email
                                          ::contact_phone_number]
                                 :opt-un [::languages
-                                         ::contact_shared_email]))
+                                         ::extra]))
 (s/def ::organizers (s/coll-of ::organizer-type))
 (s/def ::organizers-response (s/keys :req-un [::organizers]))
 (s/def ::response (s/keys :req-un [::success]

@@ -1,5 +1,5 @@
 -- name: select-organizers
-SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.contact_shared_email,
+SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.extra,
 (
   SELECT array_to_json(array_agg(lang))
   FROM (
@@ -12,7 +12,7 @@ FROM organizer o
 WHERE deleted_at IS NULL;
 
 -- name: select-organizers-by-oids
-SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.contact_shared_email,
+SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.extra,
 (
   SELECT array_to_json(array_agg(lang))
   FROM (
@@ -33,7 +33,7 @@ SELECT
   o.contact_name,
   o.contact_email,
   o.contact_phone_number,
-  o.contact_shared_email
+  o.extra
 FROM organizer o
 WHERE o.oid = :oid AND o.deleted_at IS NULL;
 
@@ -45,7 +45,7 @@ INSERT INTO organizer (
   contact_name,
   contact_email,
   contact_phone_number,
-  contact_shared_email
+  extra
 ) VALUES (
   :oid,
   :agreement_start_date,
@@ -53,7 +53,7 @@ INSERT INTO organizer (
   :contact_name,
   :contact_email,
   :contact_phone_number,
-  :contact_shared_email
+  :extra
 );
 
 -- name: update-organizer!
@@ -64,7 +64,7 @@ SET
   contact_name = :contact_name,
   contact_email = :contact_email,
   contact_phone_number = :contact_phone_number,
-  contact_shared_email = :contact_shared_email,
+  extra = :extra,
   modified = current_timestamp
 WHERE oid = :oid;
 
@@ -291,12 +291,13 @@ INSERT INTO registration(
   :participant_id,
   :started_at
   -- only one registration per participant on same exam date
-  WHERE NOT EXISTS (SELECT es.exam_date_id
-          FROM exam_session es
-          INNER JOIN registration re ON es.id = re.exam_session_id
-          WHERE re.participant_id = :participant_id
-            AND re.state != 'EXPIRED'
-          GROUP BY exam_date_id);
+  WHERE NOT EXISTS (SELECT es.id
+                    FROM exam_session es
+                    INNER JOIN registration re ON es.id = re.exam_session_id
+                    WHERE re.participant_id = :participant_id
+                      AND re.state != 'EXPIRED'
+                      AND es.exam_date_id =
+                        (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
 
 
 -- name: update-registration-to-submitted!
@@ -305,23 +306,39 @@ UPDATE registration SET
   modified = current_timestamp
 WHERE
   id = :id
+  AND state = 'STARTED'
   AND participant_id = :participant_id;
 
--- name: select-exam-session-full
-SELECT CASE WHEN COUNT(1) = es.max_participants THEN 1 ELSE 0 END
-FROM exam_session es
-LEFT JOIN registration re ON es.id = re.exam_session_id
-WHERE re.exam_session_id = :id
-  AND re.state != 'EXPIRED'
-GROUP BY max_participants;
+-- name: select-exam-session-registration-open
+SELECT EXISTS (
+  SELECT es.id
+  FROM exam_session es
+  INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+  WHERE es.id = :exam_session_id
+    AND (ed.registration_start_date + time '06:00' AT TIME ZONE 'UTC') < current_timestamp
+    AND (ed.registration_end_date + time '22:00' AT TIME ZONE 'UTC') > current_timestamp
+) as exists;
 
--- name: select-participant-already-registered
-SELECT COUNT(1)
-FROM exam_session es
-INNER JOIN registration re ON es.id = re.exam_session_id
-WHERE re.participant_id = :participant_id
-  AND re.state != 'EXPIRED'
-GROUP BY exam_date_id;
+-- name: select-exam-session-space-left
+SELECT NOT EXISTS (
+	SELECT es.max_participants
+	FROM exam_session es
+	LEFT JOIN registration re ON es.id = re.exam_session_id
+	WHERE re.exam_session_id = :exam_session_id
+	  AND re.state != 'EXPIRED'
+	GROUP BY es.max_participants
+	HAVING (es.max_participants - COUNT(re.id)) <= 0
+) as exists;
+
+-- name: select-participant-not-registered
+SELECT NOT EXISTS (
+  SELECT es.id
+  FROM exam_session es
+  INNER JOIN registration re ON es.id = re.exam_session_id
+  WHERE re.participant_id = :participant_id
+    AND re.state != 'EXPIRED'
+    AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
+) as exists;
 
 -- name: select-registration
 SELECT state, exam_session_id, participant_id

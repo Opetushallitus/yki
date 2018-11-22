@@ -48,7 +48,6 @@
 (deftest registration-create-and-update-test
   (base/insert-login-link-prereqs)
   (base/insert-login-link base/code-ok "2038-01-01")
-
   (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
         handlers (create-handlers email-q)
         session (base/login-with-login-link (peridot/session handlers))
@@ -90,7 +89,7 @@
                                                        :content-type "application/json"
                                                        :request-method :post))]
 
-        (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "not_allowed"]) true))
+        (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
         (is (= (get-in create-twice-response [:response :status]) 409))))
 
     (testing "when session is full should return conflict with proper error"

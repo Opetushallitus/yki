@@ -27,7 +27,7 @@
                 :contact_email "fuu@bar.com"
                 :contact_name "fuu"
                 :contact_phone_number "123456"
-                :contact_shared_email "shared@oph.fi"
+                :extra "shared@oph.fi"
                 :languages [{:language_code "fi" :level_code "PERUS"},
                             {:language_code "en" :level_code "PERUS"}]})
 
@@ -71,7 +71,7 @@
   (j/read-value (slurp (:body response) :encoding "UTF-8")))
 
 (defn insert-organizer [oid]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, contact_shared_email)
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
         VALUES (" oid ", '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi')")))
 
 (defn insert-languages [oid]
@@ -79,7 +79,7 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
 (defn insert-exam-dates []
-  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-05-01', '2039-12-01')"))
+  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2000-05-01', '2039-12-01')"))
 
 (def select-participant "(SELECT id from participant WHERE external_user_id = 'test@user.com')")
 
@@ -89,6 +89,7 @@
   (insert-organizer "'1.2.3.4'")
   (insert-languages "'1.2.3.4'")
   (insert-exam-dates)
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
         exam_language_id,
         exam_date_id,

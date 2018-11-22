@@ -10,19 +10,25 @@
   (get-next-order-number-suffix! [db])
   (get-payment-by-registration-id [db registration-id])
   (get-participant [db participant-query])
-  (participant-allowed-to-register? [db participant-id])
+  (participant-not-registered? [db participant-id exam-session-id])
   (create-payment! [db payment])
   (create-payment-and-update-registration! [db payment registration after-fn])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
   (complete-registration-and-payment! [db payment-params])
-  (exam-session-has-space? [db exam-session-id])
+  (exam-session-space-left? [db exam-session-id])
+  (exam-session-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
   (get-participant-email-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
   (update-submitted-registrations-to-expired! [db]))
+
+(defn- int->boolean [value]
+  (if (= value 1)
+    true
+    false))
 
 (extend-protocol Registration
   duct.database.sql.Boundary
@@ -41,10 +47,11 @@
   (get-participant
     [{:keys [spec]} participant-query]
     (first (q/select-participant spec participant-query)))
-  (participant-allowed-to-register?
-    [{:keys [spec]} participant-id]
-    (let [result (first (q/select-participant-already-registered spec {:participant_id participant-id}))]
-      (not (= (:count result) 1))))
+  (participant-not-registered?
+    [{:keys [spec]} participant-id exam-session-id]
+    (let [exists (first (q/select-participant-not-registered spec {:participant_id participant-id
+                                                                   :exam_session_id exam-session-id}))]
+      (:exists exists)))
   (get-participant-email-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-participant-email-by-order-number spec {:order_number order-number})))
@@ -52,10 +59,14 @@
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (:nextval (first (q/select-next-order-number-suffix tx)))))
-  (exam-session-has-space? [{:keys [spec]} id]
-    (jdbc/with-db-transaction [tx spec {:id id}]
-      (let [result (first (q/select-exam-session-full tx {:id id}))]
-        (not (= (:case result) 1)))))
+  (exam-session-space-left?
+    [{:keys [spec]} id]
+    (let [exists (first (q/select-exam-session-space-left spec {:exam_session_id id}))]
+      (:exists exists)))
+  (exam-session-registration-open?
+    [{:keys [spec]} id]
+    (let [exists (first (q/select-exam-session-registration-open spec {:exam_session_id id}))]
+      (:exists exists)))
   (create-payment!
     [{:keys [spec]} payment]
     (jdbc/with-db-transaction [tx spec]
@@ -68,10 +79,12 @@
     [{:keys [spec]} payment registration after-fn]
     (jdbc/with-db-transaction [tx spec]
       (let [order-number-suffix (:nextval (first (q/select-next-order-number-suffix tx)))
-            order-number (str "YKI" order-number-suffix)]
-        (q/update-registration-to-submitted! tx registration)
-        (q/insert-payment<! tx (assoc payment :order_number order-number))
-        (after-fn))))
+            order-number (str "YKI" order-number-suffix)
+            update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
+        (when update-success
+          (q/insert-payment<! tx (assoc payment :order_number order-number))
+          (after-fn))
+        update-success)))
   (create-registration!
     [{:keys [spec]} registration]
     (jdbc/with-db-transaction [tx spec]
