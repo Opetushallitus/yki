@@ -308,7 +308,9 @@ INSERT INTO registration(
 -- name: update-registration-to-submitted!
 UPDATE registration SET
   state = 'SUBMITTED',
-  modified = current_timestamp
+  modified = current_timestamp,
+  form = :form,
+  form_version = :form_version
 WHERE
   id = :id
   AND state = 'STARTED'
