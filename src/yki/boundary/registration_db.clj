@@ -11,7 +11,6 @@
   (get-payment-by-registration-id [db registration-id])
   (get-participant [db participant-query])
   (participant-not-registered? [db participant-id exam-session-id])
-  (create-payment! [db payment])
   (create-payment-and-update-registration! [db payment registration after-fn])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
@@ -67,14 +66,10 @@
     [{:keys [spec]} id]
     (let [exists (first (q/select-exam-session-registration-open spec {:exam_session_id id}))]
       (:exists exists)))
-  (create-payment!
-    [{:keys [spec]} payment]
-    (jdbc/with-db-transaction [tx spec]
-      (q/insert-payment<! tx payment)))
   (update-participant-email!
     [{:keys [spec]} email participant-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/insert-payment<! tx email participant-id)))
+      (q/update-participant-email! tx {:email email :id participant-id})))
   (create-payment-and-update-registration!
     [{:keys [spec]} payment registration after-fn]
     (jdbc/with-db-transaction [tx spec]

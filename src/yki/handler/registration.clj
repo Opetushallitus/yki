@@ -3,12 +3,13 @@
             [yki.handler.routing :as routing]
             [yki.registration.registration :as registration]
             [yki.util.audit-log :as audit]
+            [ring.util.http-response :refer [ok conflict not-found internal-server-error]]
             [yki.spec :as ys]
             [clj-time.core :as t]
             [ring.util.http-response :refer [ok]]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config url-helper email-q]}]
+(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config url-helper email-q onr-client]}]
   (api
    (context routing/registration-api-root []
      :coercion :spec
@@ -28,9 +29,22 @@
          :path-params [id :- ::ys/id]
          :query-params [lang :- ::ys/language-code]
          :return ::ys/response
-         (audit/log-participant {:request request
-                                 :target-kv {:k audit/registration
-                                             :v id}
-                                 :change {:type audit/create-op
-                                          :new registration}})
-         (registration/submit-registration db url-helper email-q lang (:session request) id registration (bigdec (payment-config :amount))))))))
+         (let [oid (registration/submit-registration db
+                                                     url-helper
+                                                     email-q
+                                                     lang
+                                                     (:session request)
+                                                     id
+                                                     registration
+                                                     (bigdec (payment-config :amount))
+                                                     onr-client)]
+           (if oid
+             (do
+               (audit/log-participant {:request request
+                                       :oid oid
+                                       :target-kv {:k audit/registration
+                                                   :v id}
+                                       :change {:type audit/create-op
+                                                :new registration}})
+               (ok {:success true}))
+             (internal-server-error {:success false}))))))))

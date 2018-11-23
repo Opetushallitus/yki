@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS participant (
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
-CREATE TYPE registration_state AS ENUM ('COMPLETED', 'SUBMITTED', 'STARTED', 'EXPIRED', 'ERROR');
+CREATE TYPE registration_state AS ENUM ('COMPLETED', 'SUBMITTED', 'STARTED', 'EXPIRED', 'CANCELLED');
 --;;
 CREATE TABLE IF NOT EXISTS registration (
   id BIGSERIAL PRIMARY KEY,
@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS registration (
   exam_session_id BIGINT REFERENCES exam_session (id) NOT NULL,
   participant_id BIGINT REFERENCES participant (id) NOT NULL,
   started_at TIMESTAMP WITH TIME ZONE,
+  form JSONB,
+  form_version INTEGER,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
@@ -113,6 +115,7 @@ CREATE TABLE IF NOT EXISTS login_link (
  expired_link_redirect TEXT NOT NULL,
  success_redirect TEXT NOT NULL,
  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+ user_data JSONB,
  created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
  modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );

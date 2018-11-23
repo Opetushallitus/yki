@@ -160,17 +160,28 @@
 ;; registration
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
-(s/def ::name ::non-blank-string)
+(s/def ::first_name ::non-blank-string)
+(s/def ::last_name ::non-blank-string)
+(s/def ::gender ::non-blank-string)
+(s/def ::nationalities (s/coll-of ::non-blank-string))
+(s/def ::birth_date ::date)
 (s/def ::post_office ::non-blank-string)
 (s/def ::zip ::non-blank-string)
+(s/def ::certificate_lang ::language-code)
+(s/def ::exam_lang ::language-code)
+(s/def ::email ::email-type)
 (s/def ::street_address ::non-blank-string)
 (s/def ::phone_number ::non-blank-string)
-(s/def ::country_code (s/and ::non-blank-string #(= (count %) 2)))
 
-(s/def ::registration (s/keys :opt-un [::name
+(s/def ::registration (s/keys :opt-un [::first_name
+                                       ::last_name
+                                       ::gender
+                                       ::nationalities
+                                       ::birth_date
+                                       ::certificate_lang
+                                       ::exam_lang
                                        ::post_office
                                        ::zip
-                                       ::country_code
                                        ::street_address
                                        ::phone_number
                                        ::email]))

@@ -26,9 +26,7 @@
   (merge
    {"/oppijanumerorekisteri-service/henkilo/hetu=090940-9224" {:status 200 :content-type "application/json"
                                                                :body (slurp "test/resources/onr_henkilo_by_hetu.json")}
-    "/oppijanumerorekisteri-service/henkilo/hetu=260553-959D" {:status 404}
-    "/oppijanumerorekisteri-service/j_spring_cas_security_check" {:status 200
-                                                                  :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}}
+    "/oppijanumerorekisteri-service/henkilo/hetu=260553-959D" {:status 404}}
    (base/cas-mock-routes port)))
 
 (defn- create-routes [port]
@@ -73,6 +71,7 @@
              "nickname" "Emma"
              "ssn" "090940-9224"
              "post-office" ""
+             "oid" "1.2.246.562.24.81121191558"
              "external-user-id" "1.2.246.562.24.81121191558"
              "street-address" ""
              "firstname" "Emma"
@@ -82,7 +81,8 @@
              "nickname" nil
              "ssn" "260553-959D"
              "post-office" ""
-             "external-user-id" nil
+             "oid" nil
+             "external-user-id" "260553-959D"
              "street-address" "Ateläniitynpolku 29 G"
              "firstname" "Carl-Erik"
              "zip" ""})
