@@ -63,6 +63,8 @@
                       :method :post
                       :headers {"Location" (str "http://localhost:" port "/cas/v1/tickets/TGT-1-FFDFHDSJK")}
                       :body "ST-1-FFDFHDSJK2"}
+   "/oppijanumerorekisteri-service/j_spring_cas_security_check" {:status 200
+                                                                 :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}
    "/cas/v1/tickets/TGT-1-FFDFHDSJK" {:status 200
                                       :method :post
                                       :body "ST-1-FFDFHDSJK2"}})

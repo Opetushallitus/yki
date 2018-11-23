@@ -39,11 +39,12 @@
           (first
            (if etunimet
              (str/split etunimet #" ")
-             (str/split firstname #" "))),
-          :lastname (or sukunimi sn),
-          :nickname kutsumanimi,
-          :ssn nationalidentificationnumber,
-          :external-user-id oidHenkilo}
-         address),
+             (str/split firstname #" ")))
+          :lastname (or sukunimi sn)
+          :nickname kutsumanimi
+          :ssn nationalidentificationnumber
+          :oid oidHenkilo
+          :external-user-id (or oidHenkilo nationalidentificationnumber)}
+         address)
         :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))

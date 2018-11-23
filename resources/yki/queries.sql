@@ -239,6 +239,11 @@ INSERT INTO participant(
   :email
 );
 
+-- name: update-participant-email!
+UPDATE participant
+SET email = :email
+WHERE id = :id;
+
 -- name: insert-login-link<!
 INSERT INTO login_link(
   code,

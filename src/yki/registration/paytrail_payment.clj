@@ -11,11 +11,6 @@
             [clojure.tools.logging :refer [info error]]
             [integrant.core :as ig]))
 
-(defn- create-order-number [db external-user-id]
-  (let [order-number-prefix (last (str/split external-user-id #"\."))
-        order-number-suffix (registration-db/get-next-order-number-suffix! db)]
-    (str "YKI" order-number-prefix order-number-suffix)))
-
 (defn create-payment-form-data
   [db payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
@@ -29,17 +24,6 @@
 
 (defn valid-return-params? [payment-config params]
   (payment-util/valid-return-params? payment-config params))
-
-(defn create-payment
-  [db payment-config registration-id external-user-id lang]
-  (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
-    (let [order-number (create-order-number db external-user-id)
-          payment-id (registration-db/create-payment! db {:registration_id registration-id
-                                                          :lang (or lang "fi")
-                                                          :amount (bigdec (payment-config :amount))
-                                                          :order_number order-number})]
-      payment-id)
-    (error "Registration not found" registration-id)))
 
 (defn- handle-payment-success [db email-q payment-params]
   (let [email (registration-db/get-participant-email-by-order-number db (:order-number payment-params))

@@ -69,10 +69,10 @@
     (.log virkailija-logger user op target changes)))
 
 (defn log-participant
-  [{:keys [request target-kv change]}]
+  [{:keys [request target-kv change oid]}]
   (let [inet-address    (InetAddress/getLocalHost)
         session         (:session request)
-        oid             nil ;TODO check if oid present for participant
+        oid             (or oid (get-in session [:identity :oid]))
         user-agent      ((:headers request) "user-agent")
         user            (User. (oid-or-nil oid) inet-address (:yki-session-id session) user-agent)
         op              (op (:type change))

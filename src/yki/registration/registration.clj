@@ -6,6 +6,7 @@
             [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.login-link-db :as login-link-db]
+            [yki.boundary.onr :as onr]
             [ring.util.http-response :refer [ok conflict not-found internal-server-error]]
             [buddy.core.hash :as hash]
             [buddy.core.codecs :refer :all]
@@ -17,7 +18,7 @@
 
 (defn- get-external-id-from-session [session]
   (let [identity (:identity session)]
-    {:external_user_id (or (:ssn identity) (:external-user-id identity))
+    {:external_user_id  (:external-user-id identity)
      :id nil}))
 
 (defn get-participant-id
@@ -26,7 +27,34 @@
 
 (defn get-or-create-participant
   [db session]
-  (:id (registration-db/get-or-create-participant! db (get-external-id-from-session session))))
+  (:id (registration-db/get-or-create-participant! db ({:external_user_id (-> session :identity :external-user-id)
+                                                        :id nil}))))
+
+(defn- extract-nationalities
+  [nationalities]
+  (mapv (fn [[nat-code & _]] {:kansalaisuusKoodi nat-code}) nationalities))
+
+(defn- extract-person-from-registration
+  [{:keys [email first_name last_name gender lang nationalities ssn birth_date]}]
+  (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
+                                        :yhteystietoArvo   email}]
+                      :etunimet       first_name
+                      :sukunimi       last_name
+                      :sukupuoli      gender
+                      :aidinkieli     {:kieliKoodi lang}
+                      :asiointiKieli  {:kieliKoodi lang}
+                      :kansalaisuus   (extract-nationalities nationalities)
+                      :henkiloTyyppi  "OPPIJA"}]
+    (if ssn
+      (assoc
+       basic-fields
+       :hetu (clojure.string/upper-case ssn)
+       :eiSuomalaistaHetua false)
+      (assoc
+       basic-fields
+       :syntymaaika birth_date
+       :identifications [{:idpEntityId "oppijaToken" :identifier email}]
+       :eiSuomalaistaHetua true))))
 
 (defn init-registration
   [db session {:keys [exam_session_id]}]
@@ -60,28 +88,28 @@
               :body (template-util/render link-type lang (assoc template-data :login-url login-url))})))
 
 (defn submit-registration
-  [db url-helper email-q lang session id registration amount]
+  [db url-helper email-q lang session id registration-form amount onr-client]
   (let [participant-id (get-participant-id db session)
-        email (:email registration)]
-    (when (and email (:ssn session))
+        email (:email registration-form)]
+    (when email
       (registration-db/update-participant-email! db email participant-id))
-    (let [registration-data         (assoc (registration-db/get-registration-data db id participant-id lang) :amount amount)
+    (let [{:strs [henkiloOid]}      (onr/get-or-create-person onr-client (extract-person-from-registration registration-form))
+          registration-data         (assoc (registration-db/get-registration-data db id participant-id lang) :amount amount)
           payment                   {:registration_id id
                                      :lang lang
                                      :amount amount}
           update-registration       {:id id
                                      :participant_id participant-id}
-          login-link                {:participant_id participant-id
+          payment-link              {:participant_id participant-id
                                      :exam_session_id nil
                                      :registration_id id
                                      :expired_link_redirect (url-helper :payment-link.redirect)
                                      :success_redirect (url-helper :link-expired.redirect)
                                      :type "PAYMENT"}
-          create-and-send-link-fn   #(create-and-send-link db url-helper email-q lang login-link registration-data 8)
+          create-and-send-link-fn   #(create-and-send-link db url-helper email-q lang payment-link registration-data 8)
           success                   (registration-db/create-payment-and-update-registration! db
                                                                                              payment
                                                                                              update-registration
                                                                                              create-and-send-link-fn)]
       (if success
-        (ok {:success success})
-        (internal-server-error {:success success})))))
+        henkiloOid))))
