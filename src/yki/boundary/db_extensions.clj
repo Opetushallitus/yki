@@ -4,7 +4,16 @@
    [clj-time.format :as f]
    [clj-time.jdbc]
    [cheshire.core :as json]
-   [clojure.java.jdbc :as jdbc]))
+   [clojure.java.jdbc :as jdbc])
+  (:import
+   (org.postgresql.util PGobject)))
+
+(extend-protocol jdbc/ISQLValue
+  clojure.lang.IPersistentCollection
+  (sql-value [value]
+    (doto (PGobject.)
+      (.setType "jsonb")
+      (.setValue (json/generate-string value)))))
 
 (extend-protocol jdbc/IResultSetReadColumn
   java.sql.Date

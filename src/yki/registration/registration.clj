@@ -99,6 +99,8 @@
                                      :lang lang
                                      :amount amount}
           update-registration       {:id id
+                                     :form registration-form
+                                     :form_version 1
                                      :participant_id participant-id}
           payment-link              {:participant_id participant-id
                                      :exam_session_id nil
