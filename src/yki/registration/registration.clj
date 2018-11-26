@@ -22,12 +22,12 @@
      :id nil}))
 
 (defn get-participant-id
-  [db session]
-  (:id (registration-db/get-participant db (get-external-id-from-session session))))
+  [db identity]
+  (:id (registration-db/get-participant db (get-external-id-from-session identity))))
 
 (defn get-or-create-participant
   [db session]
-  (:id (registration-db/get-or-create-participant! db {:external_user_id (-> session :identity :external-user-id)
+  (:id (registration-db/get-or-create-participant! db {:external_user_id (:external-user-id identity)
                                                        :email nil
                                                        :id nil})))
 
@@ -40,6 +40,7 @@
   (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
                                         :yhteystietoArvo   email}]
                       :etunimet       first_name
+                      :kutsumanimi    first_name
                       :sukunimi       last_name
                       :sukupuoli      gender
                       :aidinkieli     {:kieliKoodi lang}
@@ -90,30 +91,41 @@
 
 (defn submit-registration
   [db url-helper email-q lang session id registration-form amount onr-client]
-  (let [participant-id (get-participant-id db session)
-        email (:email registration-form)]
+  (let [identity        (:identity session)
+        participant-id  (get-participant-id db session)
+        email           (:email registration-form)]
     (when email
       (registration-db/update-participant-email! db email participant-id))
-    (let [{:strs [henkiloOid]}      (onr/get-or-create-person onr-client
-                                                              (extract-person-from-registration registration-form (-> session :identity :ssn)))
-          registration-data         (assoc (registration-db/get-registration-data db id participant-id lang) :amount amount)
-          payment                   {:registration_id id
-                                     :lang lang
-                                     :amount amount}
-          update-registration       {:id id
-                                     :form registration-form
-                                     :form_version 1
-                                     :participant_id participant-id}
-          payment-link              {:participant_id participant-id
-                                     :exam_session_id nil
-                                     :registration_id id
-                                     :expired_link_redirect (url-helper :payment-link.redirect)
-                                     :success_redirect (url-helper :link-expired.redirect)
-                                     :type "PAYMENT"}
-          create-and-send-link-fn   #(create-and-send-link db url-helper email-q lang payment-link registration-data 8)
-          success                   (registration-db/create-payment-and-update-registration! db
-                                                                                             payment
-                                                                                             update-registration
-                                                                                             create-and-send-link-fn)]
-      (if success
-        henkiloOid))))
+    (let [registration-data (registration-db/get-registration-data db id participant-id lang)
+          oid                 (or (:oid identity)
+                                  (onr/get-or-create-person onr-client
+                                                            (extract-person-from-registration registration-form (:ssn identity))))]
+      (if (and registration-data oid)
+        (let [payment                   {:registration_id id
+                                         :lang lang
+                                         :amount amount}
+              update-registration       {:id id
+                                         :form registration-form
+                                         :form_version 1
+                                         :participant_id participant-id}
+              payment-link              {:participant_id participant-id
+                                         :exam_session_id nil
+                                         :registration_id id
+                                         :expired_link_redirect (url-helper :payment-link.redirect)
+                                         :success_redirect (url-helper :link-expired.redirect)
+                                         :type "PAYMENT"}
+              create-and-send-link-fn   #(create-and-send-link db
+                                                               url-helper
+                                                               email-q
+                                                               lang
+                                                               payment-link
+                                                               (assoc registration-data :amount amount)
+                                                               8)
+              success                   (registration-db/create-payment-and-update-registration! db
+                                                                                                 payment
+                                                                                                 update-registration
+                                                                                                 create-and-send-link-fn)]
+          (if success
+            oid
+            (error "Registration" id "submit failed with data:" registration-data "and oid:" oid)))
+        (error "Registration" id  "submit failed with data:" registration-data "and oid:" oid)))))

@@ -386,6 +386,7 @@ INNER JOIN exam_language el ON el.id = es.exam_language_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
+  AND re.state != 'EXPIRED'
   AND re.participant_id = :participant_id
   AND esl.language_code = :lang;
 
