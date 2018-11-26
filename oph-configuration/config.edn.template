@@ -24,6 +24,7 @@
 
  :yki.handler/payment {:db #ig/ref :duct.database/sql
                        :auth #ig/ref :yki.middleware.auth/with-authentication
+                       :access-log #ig/ref :yki.middleware.access-log/with-logging
                        :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                         :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"
                                         :merchant-id 13466
@@ -32,14 +33,16 @@
                                         :msg {:fi "Tutkintomaksu"
                                               :sv "Tutkintomaksu_sv"
                                               :en "Tutkintomaksu_en"}}}
-
+:yki.handler/registration {:db #ig/ref :duct.database/sql
+                           :auth #ig/ref :yki.middleware.auth/with-authentication
+                           :access-log #ig/ref :yki.middleware.access-log/with-logging
+                           :payment-config {:amount "100.00"}}
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {:username "{{yki_cas_username}}"
                                            :password "{{yki_cas_password}}"}}
  :yki.middleware.auth/with-authentication
    {:url-helper #ig/ref :yki.util/url-helper
     :session-config {:key "{{yki_session_cookie_secret}}"
-                     :db #ig/ref :duct.database/sql
                      :cookie-attrs {:max-age 28800
                                     :http-only false
                                     :secure true
