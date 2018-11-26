@@ -16,7 +16,7 @@
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn- yki-permission? [permission]
-  (= (permission "palvelu") "YKI")) ;use EPERUSTEET_YLOPS for testing
+  (= (permission "palvelu") "EPERUSTEET_YLOPS")) ;use EPERUSTEET_YLOPS for testing
 
 (defn- yki-permissions [org]
   {:oid (org "organisaatioOid")
