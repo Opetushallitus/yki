@@ -27,15 +27,16 @@
 
 (defn get-or-create-participant
   [db session]
-  (:id (registration-db/get-or-create-participant! db ({:external_user_id (-> session :identity :external-user-id)
-                                                        :id nil}))))
+  (:id (registration-db/get-or-create-participant! db {:external_user_id (-> session :identity :external-user-id)
+                                                       :email nil
+                                                       :id nil})))
 
 (defn- extract-nationalities
   [nationalities]
   (mapv (fn [[nat-code & _]] {:kansalaisuusKoodi nat-code}) nationalities))
 
 (defn- extract-person-from-registration
-  [{:keys [email first_name last_name gender lang nationalities ssn birth_date]}]
+  [{:keys [email first_name last_name gender lang nationalities birth_date]} ssn]
   (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
                                         :yhteystietoArvo   email}]
                       :etunimet       first_name
@@ -58,7 +59,7 @@
 
 (defn init-registration
   [db session {:keys [exam_session_id]}]
-  (let [participant-id (get-participant-id db session)
+  (let [participant-id (get-or-create-participant db session)
         exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
         exam-session-space-left? (registration-db/exam-session-space-left? db exam_session_id)
         participant-not-registered? (registration-db/participant-not-registered? db participant-id exam_session_id)]
@@ -93,7 +94,8 @@
         email (:email registration-form)]
     (when email
       (registration-db/update-participant-email! db email participant-id))
-    (let [{:strs [henkiloOid]}      (onr/get-or-create-person onr-client (extract-person-from-registration registration-form))
+    (let [{:strs [henkiloOid]}      (onr/get-or-create-person onr-client
+                                                              (extract-person-from-registration registration-form (-> session :identity :ssn)))
           registration-data         (assoc (registration-db/get-registration-data db id participant-id lang) :amount amount)
           payment                   {:registration_id id
                                      :lang lang

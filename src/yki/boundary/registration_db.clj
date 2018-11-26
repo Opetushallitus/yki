@@ -104,6 +104,6 @@
   (get-or-create-participant!
     [{:keys [spec]} participant]
     (jdbc/with-db-transaction [tx spec]
-      (if-let [participant (first (q/select-participant tx participant))]
-        participant
+      (if-let [existing (first (q/select-participant tx participant))]
+        existing
         (q/insert-participant<! tx participant)))))

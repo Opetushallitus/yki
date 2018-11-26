@@ -355,13 +355,15 @@ WHERE re.id = :id AND p.external_user_id = :external_user_id;
 
 -- name: update-started-registrations-to-expired
 UPDATE registration
-SET state = 'EXPIRED'
+SET state = 'EXPIRED',
+    modified = current_timestamp
 WHERE state = 'STARTED' AND (started_at + interval '1 hour') < current_timestamp
 RETURNING id as updated;
 
 -- name: update-submitted-registrations-to-expired
 UPDATE registration
-SET state = 'EXPIRED'
+SET state = 'EXPIRED',
+    modified = current_timestamp
 WHERE state = 'SUBMITTED'
   AND id IN (SELECT registration_id
             FROM payment
