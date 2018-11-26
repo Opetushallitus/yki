@@ -3,6 +3,7 @@
    [clj-time.local :as l]
    [clj-time.format :as f]
    [clj-time.jdbc]
+   [clojure.string :as str]
    [cheshire.core :as json]
    [clojure.java.jdbc :as jdbc])
   (:import
@@ -25,8 +26,9 @@
     (remove nil? (vec (.getArray pgobj))))
   org.postgresql.util.PGobject
   (result-set-read-column [pgobj _ _]
-    (let [type (.getType pgobj)
+    (let [type  (.getType pgobj)
           value (.getValue pgobj)]
-      (if (= "json" type)
-        (json/parse-string value true)
-        value))))
+      (case type
+        "json" (json/parse-string value true)
+        "jsonb" (json/parse-string value true)
+        :else value))))

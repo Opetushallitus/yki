@@ -93,6 +93,7 @@
           payment-link (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           email-request (pgq/take email-q)]
+
       (testing "post endpoint should create registration with status STARTED"
         (is (= (get-in create-response [:response :status]) 200))
         (is (= (:state registration) "STARTED"))
@@ -105,7 +106,7 @@
         (is (= (:type payment-link) "PAYMENT"))
         (is (= (:order_number payment) "YKI1"))
         (is (= (:state submitted-registration) "SUBMITTED"))
-        (is (some? (:form submitted-registration)))
+        (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))
 
       (testing "second post with same data should return conflict with proper error"
