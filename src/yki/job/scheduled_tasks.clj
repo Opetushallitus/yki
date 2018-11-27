@@ -39,4 +39,5 @@
         (info "Sending email" email-request)
         (email/send-email url-helper email-request))
       (catch Exception e
-        (error e "Email queue reader failed")))))
+        (error e "Email queue reader failed"
+        (throw e))))))
