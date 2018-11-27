@@ -10,6 +10,7 @@
             [integrant.core :as ig]))
 
 (defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config url-helper email-q onr-client]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? payment-config) (some? url-helper) (some? email-q) (some? onr-client)]}
   (api
    (context routing/registration-api-root []
      :coercion :spec

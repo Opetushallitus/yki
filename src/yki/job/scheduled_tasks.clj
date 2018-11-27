@@ -34,6 +34,7 @@
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader [_ {:keys [email-q url-helper]}]
   #(pgq/take-with
     [email-request email-q]
+    (info "polling email queue")
     (when email-request
       (info "Email queue size" (pgq/count email-q))
       (email/send-email url-helper email-request))))

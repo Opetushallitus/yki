@@ -34,6 +34,7 @@
                                                            :domain "localhost"
                                                            :path "/yki"}}})
         url-helper (base/create-url-helper (str "localhost:" port))
+        access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         cas-client (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
                                                                :cas-creds {:username "username"
                                                                            :password "password"}})
@@ -43,6 +44,7 @@
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db db
                                                                                              :url-helper url-helper
                                                                                              :email-q email-q
+                                                                                             :access-log access-log
                                                                                              :payment-config base/payment-config
                                                                                              :onr-client onr-client
                                                                                              :auth auth}))]
