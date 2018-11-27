@@ -35,9 +35,8 @@
   #(pgq/take-with
     [email-request email-q]
     (try
-      (info "Polling email queue" email-request email-q)
       (when email-request
-        ; (info "Email queue size" (pgq/count email-q))
+        (info "Sending email" email-request)
         (email/send-email url-helper email-request))
       (catch Exception e
         (error e "Email queue reader failed")))))
