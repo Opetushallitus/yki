@@ -39,11 +39,17 @@
 (defn- handle-payment-cancelled [db payment-params]
   (info "Payment cancelled" payment-params))
 
+(defn- number-or-nil [maybe-number]
+  (try
+    (Integer/valueOf maybe-number)
+    (catch Exception e
+      nil)))
+
 (defn handle-payment-return
   [db email-q {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD SETTLEMENT_REFERENCE_NUMBER]}]
   (let [payment-params {:order-number ORDER_NUMBER
                         :payment-id PAYMENT_ID
-                        :reference-number (Integer/valueOf SETTLEMENT_REFERENCE_NUMBER)
+                        :reference-number (number-or-nil SETTLEMENT_REFERENCE_NUMBER)
                         :payment-method PAYMENT_METHOD
                         :timestamp (c/from-long (* 1000 (Long/valueOf TIMESTAMP)))}]
     (case STATUS

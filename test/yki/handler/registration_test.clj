@@ -11,6 +11,7 @@
             [muuntaja.middleware :as middleware]
             [pgqueue.core :as pgq]
             [clojure.java.jdbc :as jdbc]
+            [clojure.string :as s]
             [peridot.core :as peridot]
             [stub-http.core :refer :all]
             [yki.boundary.cas :as cas]
@@ -106,6 +107,7 @@
         (is (= (:id payment) id))
         (is (= (:subject email-request) "Maksulinkki"))
         (is (= (:type payment-link) "PAYMENT"))
+        (is (s/includes? (:success_redirect payment-link) "paytrail"))
         (is (= (:order_number payment) "YKI1"))
         (is (= (:state submitted-registration) "SUBMITTED"))
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
