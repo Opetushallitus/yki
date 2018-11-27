@@ -32,12 +32,12 @@
            (error e "Check submitted registrations expiry"))))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader [_ {:keys [email-q url-helper]}]
-  #(pgq/take-with
-    [email-request email-q]
-    (try
+  #(try
+     (pgq/take-with
+      [email-request email-q]
       (when email-request
         (info "Sending email" email-request)
-        (email/send-email url-helper email-request))
-      (catch Exception e
-        (error e "Email queue reader failed"
-        (throw e))))))
+        (email/send-email url-helper email-request)))
+     (catch Exception e
+       (error e "Email queue reader failed"))))
+
