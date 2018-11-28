@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS registration (
   started_at TIMESTAMP WITH TIME ZONE,
   form JSONB,
   form_version INTEGER,
+  person_oid TEXT,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );

@@ -30,15 +30,15 @@
   (mapv (fn [[nat-code & _]] {:kansalaisuusKoodi nat-code}) nationalities))
 
 (defn- extract-person-from-registration
-  [{:keys [email first_name last_name gender lang nationalities birth_date]} ssn]
+  [{:keys [email first_name last_name gender exam_lang nationalities birth_date]} ssn]
   (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
                                         :yhteystietoArvo   email}]
                       :etunimet       first_name
                       :kutsumanimi    first_name
                       :sukunimi       last_name
                       :sukupuoli      gender
-                      :aidinkieli     {:kieliKoodi lang}
-                      :asiointiKieli  {:kieliKoodi lang}
+                      :aidinkieli     {:kieliKoodi exam_lang}
+                      :asiointiKieli  {:kieliKoodi exam_lang}
                       :kansalaisuus   (extract-nationalities nationalities)
                       :henkiloTyyppi  "OPPIJA"}]
     (if ssn
@@ -99,10 +99,10 @@
       (if (and registration-data oid)
         (let [payment                   {:registration_id id
                                          :lang lang
-                                         :oid oid
                                          :amount amount}
               update-registration       {:id id
                                          :form registration-form
+                                         :oid oid
                                          :form_version 1
                                          :participant_id participant-id}
               payment-link              {:participant_id participant-id

@@ -58,7 +58,7 @@
 
 (def form {:first_name "Fuu"
            :last_name "Bar"
-           :gender "M"
+           :gender "1"
            :nationalities []
            :birth_date "1999-01-01"
            :certificate_lang "fi"

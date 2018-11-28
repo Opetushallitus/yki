@@ -310,6 +310,7 @@ UPDATE registration SET
   state = 'SUBMITTED',
   modified = current_timestamp,
   form = :form,
+  person_oid = :oid,
   form_version = :form_version
 WHERE
   id = :id

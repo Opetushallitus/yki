@@ -81,7 +81,7 @@
     (jdbc/with-db-transaction [tx spec]
       (try
         (let [order-number-seq (:nextval (first (q/select-next-order-number-suffix tx)))
-              oid-last-part (last (str/split (:oid payment) #"\."))
+              oid-last-part (last (str/split (:oid registration) #"\."))
               order-number (str "YKI" oid-last-part (format "%09d" order-number-seq))
               update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
           (when update-success
