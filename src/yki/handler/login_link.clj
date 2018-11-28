@@ -19,6 +19,7 @@
   (bytes->hex (hash/sha256 code)))
 
 (defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper access-log]}]
+  {:pre [(some? db) (some? access-log) (some? url-helper) (some? email-q)]}
   (api
    (context routing/login-link-api-root []
      :coercion :spec
