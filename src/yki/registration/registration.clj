@@ -103,6 +103,7 @@
       (if (and registration-data oid)
         (let [payment                   {:registration_id id
                                          :lang lang
+                                         :oid oid
                                          :amount amount}
               update-registration       {:id id
                                          :form registration-form
@@ -112,7 +113,7 @@
                                          :exam_session_id nil
                                          :registration_id id
                                          :expired_link_redirect (url-helper :link-expired.redirect)
-                                         :success_redirect (url-helper :payment-link.redirect)
+                                         :success_redirect (url-helper :payment-link.redirect id)
                                          :type "PAYMENT"}
               create-and-send-link-fn   #(create-and-send-link db
                                                                url-helper

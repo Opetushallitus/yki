@@ -23,7 +23,7 @@
   (try
     (f)
     (catch Exception e
-      (error e "Payment handling failed failed")
+      (error e "Payment handling failed")
       (error-redirect url-helper))))
 
 (defmethod ig/init-key :yki.handler/payment [_ {:keys [db auth access-log payment-config url-helper email-q]}]

@@ -34,7 +34,7 @@
                                                   (assoc login-link
                                                          :participant_id participant-id
                                                          :type "LOGIN_LINK"
-                                                         :expired_link_redirect (url-helper :login-link.redirect)
-                                                         :success_redirect (url-helper :link-expired.redirect)
+                                                         :expired_link_redirect (url-helper :link-expired.redirect)
+                                                         :success_redirect (url-helper :login-link.redirect (:exam_session_id login-link))
                                                          :registration_id nil) {} 1)
            (ok {:success true})))))))
