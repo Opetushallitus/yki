@@ -91,8 +91,11 @@
       (registration-db/update-participant-email! db email participant-id))
     (let [registration-data (registration-db/get-registration-data db id participant-id lang)
           oid                 (or (:oid identity)
-                                  (onr/get-or-create-person onr-client
-                                                            (extract-person-from-registration registration-form (:ssn identity))))]
+                                  (onr/get-or-create-person
+                                   onr-client
+                                   (extract-person-from-registration
+                                    (if (= (:auth-method session) "EMAIL") (assoc registration-form :email (:external-user-id identity)) registration-form)
+                                    (:ssn identity))))]
       (if (and registration-data oid)
         (let [payment                   {:registration_id id
                                          :lang lang

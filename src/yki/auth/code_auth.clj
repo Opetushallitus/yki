@@ -23,6 +23,7 @@
          (found (:success_redirect login-link))
          :session
          {:identity {:external-user-id (:external_user_id login-link)},
+          :auth-method "EMAIL"
           :yki-session-id (str (UUID/randomUUID))})
         (found (:expired_link_redirect login-link)))
       unauthorized)

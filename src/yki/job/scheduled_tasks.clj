@@ -26,7 +26,7 @@
        (let [updated (registration-db/update-submitted-registrations-to-expired! db)]
          (info "Submitted registrations set to expired" updated)))
      (catch Exception e
-       (error e "Email queue reader failed"))))
+       (error e "Registration state handler failed"))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader
   [_ {:keys [email-q url-helper]}]

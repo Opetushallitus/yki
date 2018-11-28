@@ -46,5 +46,6 @@
           :oid oidHenkilo
           :external-user-id (or oidHenkilo nationalidentificationnumber)}
          address)
+        :auth-method "SUOMIFI"
         :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))
