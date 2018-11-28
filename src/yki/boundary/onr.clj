@@ -15,7 +15,9 @@
     (let [url (url-helper :onr-service.get-or-create-person)
           {:keys [status body]} (cas/cas-authenticated-post cas-client url person)]
       (if (or (= 200 status) (= 201 status))
-        ((json/read-value body) "henkiloOid")
+        (let [json-body (json/read-value body)]
+          (info "onr response:" json-body)
+          (json-body "henkiloOid"))
         (error "ONR get-or-create-person request:" (str person " status: " status " : " body)))))
   (get-person-by-ssn [_ ssn]
     (let [url (url-helper :onr-service.henkilo-by-hetu ssn)

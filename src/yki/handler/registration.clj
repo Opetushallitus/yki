@@ -30,15 +30,15 @@
          :path-params [id :- ::ys/id]
          :query-params [lang :- ::ys/language-code]
          :return ::ys/response
-         (let [oid (registration/submit-registration db
-                                                     url-helper
-                                                     email-q
-                                                     lang
-                                                     (:session request)
-                                                     id
-                                                     registration
-                                                     (bigdec (payment-config :amount))
-                                                     onr-client)]
+         (let [{:keys [oid error]} (registration/submit-registration db
+                                                                     url-helper
+                                                                     email-q
+                                                                     lang
+                                                                     (:session request)
+                                                                     id
+                                                                     registration
+                                                                     (bigdec (payment-config :amount))
+                                                                     onr-client)]
            (if oid
              (do
                (audit/log-participant {:request request
@@ -48,4 +48,7 @@
                                        :change {:type audit/create-op
                                                 :new registration}})
                (ok {:success true}))
-             (internal-server-error {:success false}))))))))
+             (do
+               (error "Registration id:" id "failed with error" error)
+               (internal-server-error {:success false
+                                       :error error})))))))))
