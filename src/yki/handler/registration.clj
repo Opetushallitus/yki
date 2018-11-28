@@ -6,6 +6,7 @@
             [ring.util.http-response :refer [ok conflict not-found internal-server-error]]
             [yki.spec :as ys]
             [clj-time.core :as t]
+            [clojure.tools.logging :as log]
             [ring.util.http-response :refer [ok]]
             [integrant.core :as ig]))
 
@@ -49,6 +50,6 @@
                                                 :new registration}})
                (ok {:success true}))
              (do
-               (error "Registration id:" id "failed with error" error)
+               (log/error "Registration id:" id "failed with error" error)
                (internal-server-error {:success false
                                        :error error})))))))))

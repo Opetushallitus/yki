@@ -33,10 +33,21 @@
   {:pre [(some? url-helper) (some? email-q)]}
   #(try
      (pgq/take-with
-      [email-request email-q]
-      (when email-request
-        (info "Email queue reader sending email to:" (:recipients email-request))
-        (email/send-email url-helper email-request)))
+      [email-req email-q]
+      (when email-req
+        (info "Email queue reader sending email to:" (:recipients email-req))
+        (email/send-email url-helper email-req)))
      (catch Exception e
        (error e "Email queue reader failed"))))
+
+(defmethod ig/init-key :yki.job.scheduled-tasks/exam-session-queue-reader
+  [_ {:keys [exam-session-q url-helper]}]
+  {:pre [(some? url-helper) (some? exam-session-q)]}
+  #(try
+     (pgq/take-with
+      [exam-session-req exam-session-q]
+      (when exam-session-req
+        (info "Received request to sync exam session" exam-session-req)))
+     (catch Exception e
+       (error e "Exam session queue reader failed"))))
 

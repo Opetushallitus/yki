@@ -76,7 +76,7 @@
     (fn [server]
       (merge (base/cas-mock-routes (:port server))
              {"/oppijanumerorekisteri-service/s2s/findOrCreateHenkiloPerustieto" {:status 200 :content-type "application/json"
-                                                                                  :body   (j/write-value-as-string {:henkiloOid "1.2.4.5.6"})}}))
+                                                                                  :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}}))
     (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
           handlers (create-handlers email-q (:port server))
           session (base/login-with-login-link (peridot/session handlers))
