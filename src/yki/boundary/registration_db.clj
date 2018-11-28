@@ -11,7 +11,8 @@
 (defprotocol Registration
   (get-next-order-number-suffix! [db])
   (get-payment-by-registration-id [db registration-id])
-  (get-participant [db participant-query])
+  (get-participant-by-id [db id])
+  (get-participant-by-external-id [db external-id])
   (participant-not-registered? [db participant-id exam-session-id])
   (create-payment-and-update-registration! [db payment registration after-fn])
   (create-registration! [db registration])
@@ -45,9 +46,12 @@
                              :reference_number reference-number
                              :state "PAID"})
       (q/update-registration-to-completed! tx {:order_number order-number})))
-  (get-participant
-    [{:keys [spec]} participant-query]
-    (first (q/select-participant spec participant-query)))
+  (get-participant-by-id
+    [{:keys [spec]} id]
+    (first (q/select-participant-by-id spec {:id id})))
+  (get-participant-by-external-id
+    [{:keys [spec]} external-id]
+    (first (q/select-participant-by-external-id spec {:external_user_id external-id})))
   (participant-not-registered?
     [{:keys [spec]} participant-id exam-session-id]
     (let [exists (first (q/select-participant-not-registered spec {:participant_id participant-id
@@ -112,6 +116,6 @@
   (get-or-create-participant!
     [{:keys [spec]} participant]
     (jdbc/with-db-transaction [tx spec]
-      (if-let [existing (first (q/select-participant tx participant))]
+      (if-let [existing (first (q/select-participant-by-external-id tx participant))]
         existing
         (q/insert-participant<! tx participant)))))

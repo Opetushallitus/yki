@@ -16,20 +16,14 @@
 (defn sha256-hash [code]
   (bytes->hex (hash/sha256 code)))
 
-(defn- get-external-id-from-session [session]
-  (let [identity (:identity session)]
-    {:external_user_id  (:external-user-id identity)
-     :id nil}))
-
 (defn get-participant-id
   [db identity]
-  (:id (registration-db/get-participant db (get-external-id-from-session identity))))
+  (:id (registration-db/get-participant-by-external-id db (:external-user-id identity))))
 
 (defn get-or-create-participant
-  [db session]
+  [db identity]
   (:id (registration-db/get-or-create-participant! db {:external_user_id (:external-user-id identity)
-                                                       :email nil
-                                                       :id nil})))
+                                                       :email nil})))
 
 (defn- extract-nationalities
   [nationalities]
@@ -60,7 +54,7 @@
 
 (defn init-registration
   [db session {:keys [exam_session_id]}]
-  (let [participant-id (get-or-create-participant db session)
+  (let [participant-id (get-or-create-participant db (:identity session))
         exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
         exam-session-space-left? (registration-db/exam-session-space-left? db exam_session_id)
         participant-not-registered? (registration-db/participant-not-registered? db participant-id exam_session_id)]
@@ -76,8 +70,7 @@
   (let [code          (str (UUID/randomUUID))
         login-url     (str (url-helper :yki.login-link.url) "?code=" code)
         expires-at    (t/plus (t/now) (t/days expires-in-days))
-        email         (:email (registration-db/get-participant db {:id (:participant_id login-link)
-                                                                   :external_user_id nil}))
+        email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
         link-type     (:type login-link)
         hashed        (sha256-hash code)]
     (login-link-db/create-login-link! db
@@ -92,7 +85,7 @@
 (defn submit-registration
   [db url-helper email-q lang session id registration-form amount onr-client]
   (let [identity        (:identity session)
-        participant-id  (get-participant-id db session)
+        participant-id  (get-participant-id db identity)
         email           (:email registration-form)]
     (when email
       (registration-db/update-participant-email! db email participant-id))

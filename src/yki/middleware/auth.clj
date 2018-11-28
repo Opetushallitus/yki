@@ -104,7 +104,7 @@
   [url-helper db]
   [{:pattern #".*/auth/cas/callback"
     :handler any-access}
-   {:pattern #".*/auth/login"
+   {:pattern #".*/auth/login.*"
     :handler any-access}
    {:pattern #".*/auth/initsession"
     :handler any-access}

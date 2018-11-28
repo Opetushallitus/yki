@@ -29,7 +29,6 @@
        :query-params [lang :- ::ys/language_code]
        :return ::ys/response
        (let [participant-id (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
-                                                                                 :id nil
                                                                                  :email (:email login-link)}))]
          (when (registration/create-and-send-link db url-helper email-q lang
                                                   (assoc login-link

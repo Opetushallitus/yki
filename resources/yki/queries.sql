@@ -427,11 +427,15 @@ SELECT
  FROM payment
  WHERE registration_id = :registration_id;
 
--- name: select-participant
+-- name: select-participant-by-external-id
 SELECT id, external_user_id, email
 FROM participant
-WHERE id = COALESCE(:id, id)
-AND external_user_id = COALESCE(:external_user_id, external_user_id);
+WHERE external_user_id = :external_user_id;
+
+-- name: select-participant-by-id
+SELECT id, external_user_id, email
+FROM participant
+WHERE id = :id;
 
 -- name: select-participant-email-by-order-number
 SELECT par.email,
