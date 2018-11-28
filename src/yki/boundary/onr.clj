@@ -16,7 +16,7 @@
           {:keys [status body]} (cas/cas-authenticated-post cas-client url person)]
       (if (or (= 200 status) (= 201 status))
         ((json/read-value body) "henkiloOid")
-        (error "ONR get-or-create-person error:" (str status " : " body)))))
+        (error "ONR get-or-create-person request:" (str person " status: " status " : " body)))))
   (get-person-by-ssn [_ ssn]
     (let [url (url-helper :onr-service.henkilo-by-hetu ssn)
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
