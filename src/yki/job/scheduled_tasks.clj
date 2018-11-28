@@ -16,6 +16,7 @@
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/registration-state-handler
   [_ {:keys [db]}]
+  {:pre [(some? db)]}
   #(try
      (when (= (job-db/try-to-acquire-lock! db worker-id "REGISTRATION_STATE_HANDLER" "599 SECONDS") 1)
        (info "Check started registrations expiry")
@@ -27,7 +28,9 @@
      (catch Exception e
        (error e "Email queue reader failed"))))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader [_ {:keys [email-q url-helper]}]
+(defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader
+  [_ {:keys [email-q url-helper]}]
+  {:pre [(some? url-helper) (some? email-q)]}
   #(try
      (pgq/take-with
       [email-request email-q]
