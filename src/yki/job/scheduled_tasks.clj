@@ -16,24 +16,27 @@
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/registration-state-handler
   [_ {:keys [db]}]
-  #(if (= (job-db/try-to-acquire-lock! db worker-id "REGISTRATION_STATE_HANDLER" "599 SECONDS") 1)
-     (do
-       (try
-         (info "Check started registrations expiry")
-         (let [updated (registration-db/update-started-registrations-to-expired! db)]
-           (info "Started registrations set to expired" updated))
-         (catch Exception e
-           (error e "Check started registrations expiry")))
-       (try
-         (info "Check submitted registrations expiry")
-         (let [updated (registration-db/update-submitted-registrations-to-expired! db)]
-           (info "Submitted registrations set to expired" updated))
-         (catch Exception e
-           (error e "Check submitted registrations expiry"))))))
+  {:pre [(some? db)]}
+  #(try
+     (when (= (job-db/try-to-acquire-lock! db worker-id "REGISTRATION_STATE_HANDLER" "599 SECONDS") 1)
+       (info "Check started registrations expiry")
+       (let [updated (registration-db/update-started-registrations-to-expired! db)]
+         (info "Started registrations set to expired" updated))
+       (info "Check submitted registrations expiry")
+       (let [updated (registration-db/update-submitted-registrations-to-expired! db)]
+         (info "Submitted registrations set to expired" updated)))
+     (catch Exception e
+       (error e "Email queue reader failed"))))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader [_ {:keys [email-q url-helper]}]
-  #(pgq/take-with
-    [email-request email-q]
-    (when email-request
-      (info "Email queue size" (pgq/count email-q))
-      (email/send-email url-helper email-request))))
+(defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader
+  [_ {:keys [email-q url-helper]}]
+  {:pre [(some? url-helper) (some? email-q)]}
+  #(try
+     (pgq/take-with
+      [email-request email-q]
+      (when email-request
+        (info "Email queue reader sending email to:" (:recipients email-request))
+        (email/send-email url-helper email-request)))
+     (catch Exception e
+       (error e "Email queue reader failed"))))
+

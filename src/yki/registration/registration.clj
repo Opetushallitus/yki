@@ -74,7 +74,7 @@
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data expires-in-days]
   (let [code          (str (UUID/randomUUID))
-        login-url     (str (url-helper :host-yki-oppija) "?code=" code)
+        login-url     (str (url-helper :yki.login-link.url) "?code=" code)
         expires-at    (t/plus (t/now) (t/days expires-in-days))
         email         (:email (registration-db/get-participant db {:id (:participant_id login-link)
                                                                    :external_user_id nil}))
@@ -111,8 +111,8 @@
               payment-link              {:participant_id participant-id
                                          :exam_session_id nil
                                          :registration_id id
-                                         :expired_link_redirect (url-helper :payment-link.redirect)
-                                         :success_redirect (url-helper :link-expired.redirect)
+                                         :expired_link_redirect (url-helper :link-expired.redirect)
+                                         :success_redirect (url-helper :payment-link.redirect)
                                          :type "PAYMENT"}
               create-and-send-link-fn   #(create-and-send-link db
                                                                url-helper

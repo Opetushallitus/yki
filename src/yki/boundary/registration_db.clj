@@ -2,6 +2,7 @@
   (:require [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
             [clojure.java.jdbc :as jdbc]
+            [clojure.tools.logging :refer [error]]
             [duct.database.sql]))
 
 (require-sql ["yki/queries.sql" :as q])
@@ -73,13 +74,18 @@
   (create-payment-and-update-registration!
     [{:keys [spec]} payment registration after-fn]
     (jdbc/with-db-transaction [tx spec]
-      (let [order-number-suffix (:nextval (first (q/select-next-order-number-suffix tx)))
-            order-number (str "YKI" order-number-suffix)
-            update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
-        (when update-success
-          (q/insert-payment<! tx (assoc payment :order_number order-number))
-          (after-fn))
-        update-success)))
+      (try
+        (let [order-number-suffix (:nextval (first (q/select-next-order-number-suffix tx)))
+              order-number (str "YKI" order-number-suffix)
+              update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
+          (when update-success
+            (q/insert-payment<! tx (assoc payment :order_number order-number))
+            (after-fn))
+          update-success)
+        (catch Exception e
+          (.rollback (:connection tx))
+          (error e "Create payment and update registration failed. Rolling back transaction")
+          (throw e)))))
   (create-registration!
     [{:keys [spec]} registration]
     (jdbc/with-db-transaction [tx spec]

@@ -11,6 +11,7 @@
             [muuntaja.middleware :as middleware]
             [pgqueue.core :as pgq]
             [clojure.java.jdbc :as jdbc]
+            [clojure.string :as s]
             [peridot.core :as peridot]
             [stub-http.core :refer :all]
             [yki.boundary.cas :as cas]
@@ -34,6 +35,7 @@
                                                            :domain "localhost"
                                                            :path "/yki"}}})
         url-helper (base/create-url-helper (str "localhost:" port))
+        access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         cas-client (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
                                                                :cas-creds {:username "username"
                                                                            :password "password"}})
@@ -43,6 +45,7 @@
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db db
                                                                                              :url-helper url-helper
                                                                                              :email-q email-q
+                                                                                             :access-log access-log
                                                                                              :payment-config base/payment-config
                                                                                              :onr-client onr-client
                                                                                              :auth auth}))]
@@ -104,6 +107,7 @@
         (is (= (:id payment) id))
         (is (= (:subject email-request) "Maksulinkki"))
         (is (= (:type payment-link) "PAYMENT"))
+        (is (s/includes? (:success_redirect payment-link) "paytrail"))
         (is (= (:order_number payment) "YKI1"))
         (is (= (:state submitted-registration) "SUBMITTED"))
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))

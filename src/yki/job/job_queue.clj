@@ -3,5 +3,5 @@
                        [pgqueue.core :as pgq]))
 
 (defmethod ig/init-key :yki.job.job-queue/email-q [_ {:keys [db-config]}]
-  (pgq/queue :email-send db-config))
+  (pgq/queue :email-send (assoc db-config :delete false)))
 
