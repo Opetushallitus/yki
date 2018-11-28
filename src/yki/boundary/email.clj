@@ -3,7 +3,8 @@
             [clojure.string :as string]
             [jsonista.core :as json]))
 
-(defn send-email [url-helper {:keys [recipients subject body]}]
+(defn send-email
+  [url-helper {:keys [recipients subject body]}]
   (let [url                (url-helper :ryhmasahkoposti-service)
         wrapped-recipients (mapv (fn [rcp] {:email rcp}) recipients)
         response           (http-util/do-post url {:headers      {"content-type" "application/json"}

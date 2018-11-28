@@ -16,34 +16,29 @@
 (defn sha256-hash [code]
   (bytes->hex (hash/sha256 code)))
 
-(defn- get-external-id-from-session [session]
-  (let [identity (:identity session)]
-    {:external_user_id  (:external-user-id identity)
-     :id nil}))
-
 (defn get-participant-id
-  [db session]
-  (:id (registration-db/get-participant db (get-external-id-from-session session))))
+  [db identity]
+  (:id (registration-db/get-participant-by-external-id db (:external-user-id identity))))
 
 (defn get-or-create-participant
-  [db session]
-  (:id (registration-db/get-or-create-participant! db {:external_user_id (-> session :identity :external-user-id)
-                                                       :email nil
-                                                       :id nil})))
+  [db identity]
+  (:id (registration-db/get-or-create-participant! db {:external_user_id (:external-user-id identity)
+                                                       :email nil})))
 
 (defn- extract-nationalities
   [nationalities]
   (mapv (fn [[nat-code & _]] {:kansalaisuusKoodi nat-code}) nationalities))
 
 (defn- extract-person-from-registration
-  [{:keys [email first_name last_name gender lang nationalities birth_date]} ssn]
+  [{:keys [email first_name last_name gender exam_lang nationalities birth_date]} ssn]
   (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
                                         :yhteystietoArvo   email}]
                       :etunimet       first_name
+                      :kutsumanimi    first_name
                       :sukunimi       last_name
                       :sukupuoli      gender
-                      :aidinkieli     {:kieliKoodi lang}
-                      :asiointiKieli  {:kieliKoodi lang}
+                      :aidinkieli     {:kieliKoodi exam_lang}
+                      :asiointiKieli  {:kieliKoodi exam_lang}
                       :kansalaisuus   (extract-nationalities nationalities)
                       :henkiloTyyppi  "OPPIJA"}]
     (if ssn
@@ -59,7 +54,7 @@
 
 (defn init-registration
   [db session {:keys [exam_session_id]}]
-  (let [participant-id (get-or-create-participant db session)
+  (let [participant-id (get-or-create-participant db (:identity session))
         exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
         exam-session-space-left? (registration-db/exam-session-space-left? db exam_session_id)
         participant-not-registered? (registration-db/participant-not-registered? db participant-id exam_session_id)]
@@ -73,10 +68,9 @@
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data expires-in-days]
   (let [code          (str (UUID/randomUUID))
-        login-url     (str (url-helper :host-yki-oppija) "?code=" code)
+        login-url     (str (url-helper :yki.login-link.url) "?code=" code)
         expires-at    (t/plus (t/now) (t/days expires-in-days))
-        email         (:email (registration-db/get-participant db {:id (:participant_id login-link)
-                                                                   :external_user_id nil}))
+        email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
         link-type     (:type login-link)
         hashed        (sha256-hash code)]
     (login-link-db/create-login-link! db
@@ -90,30 +84,46 @@
 
 (defn submit-registration
   [db url-helper email-q lang session id registration-form amount onr-client]
-  (let [participant-id (get-participant-id db session)
-        email (:email registration-form)]
+  (let [identity        (:identity session)
+        participant-id  (get-participant-id db identity)
+        email           (:email registration-form)]
     (when email
       (registration-db/update-participant-email! db email participant-id))
-    (let [{:strs [henkiloOid]}      (onr/get-or-create-person onr-client
-                                                              (extract-person-from-registration registration-form (-> session :identity :ssn)))
-          registration-data         (assoc (registration-db/get-registration-data db id participant-id lang) :amount amount)
-          payment                   {:registration_id id
-                                     :lang lang
-                                     :amount amount}
-          update-registration       {:id id
-                                     :form registration-form
-                                     :form_version 1
-                                     :participant_id participant-id}
-          payment-link              {:participant_id participant-id
-                                     :exam_session_id nil
-                                     :registration_id id
-                                     :expired_link_redirect (url-helper :payment-link.redirect)
-                                     :success_redirect (url-helper :link-expired.redirect)
-                                     :type "PAYMENT"}
-          create-and-send-link-fn   #(create-and-send-link db url-helper email-q lang payment-link registration-data 8)
-          success                   (registration-db/create-payment-and-update-registration! db
-                                                                                             payment
-                                                                                             update-registration
-                                                                                             create-and-send-link-fn)]
-      (if success
-        henkiloOid))))
+    (if-let [registration-data (registration-db/get-registration-data db id participant-id lang)]
+      (if-let [oid                 (or (:oid identity)
+                                       (onr/get-or-create-person
+                                        onr-client
+                                        (extract-person-from-registration
+                                         (if (= (:auth-method session) "EMAIL") (assoc registration-form :email (:external-user-id identity)) registration-form)
+                                         (:ssn identity))))]
+        (let [payment                   {:registration_id id
+                                         :lang lang
+                                         :amount amount}
+              update-registration       {:id id
+                                         :form registration-form
+                                         :oid oid
+                                         :form_version 1
+                                         :participant_id participant-id}
+              payment-link              {:participant_id participant-id
+                                         :exam_session_id nil
+                                         :registration_id id
+                                         :expired_link_redirect (url-helper :link-expired.redirect)
+                                         :success_redirect (url-helper :payment-link.redirect id)
+                                         :type "PAYMENT"}
+              create-and-send-link-fn   #(create-and-send-link db
+                                                               url-helper
+                                                               email-q
+                                                               lang
+                                                               payment-link
+                                                               (assoc registration-data :amount amount)
+                                                               8)
+              success                   (registration-db/create-payment-and-update-registration! db
+                                                                                                 payment
+                                                                                                 update-registration
+                                                                                                 create-and-send-link-fn)]
+          (if success
+            {:oid oid}
+            {:error {:create_payment true}}))
+        {:error {:person_creation true}})
+      {:error {:expired true}})))
+

@@ -48,6 +48,7 @@
              :oid person-oid,
              :organizations organizations,
              :ticket ticket},
+            :auth-method "CAS"
             :yki-session-id (str (UUID/randomUUID))})))
       unauthorized)
     (catch Exception e

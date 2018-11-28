@@ -138,11 +138,13 @@
 (defn create-url-helper [uri]
   (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"}))
 
+(defn access-log []
+  (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"}))
+
 (defn create-routes [port]
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
         url-helper (create-url-helper uri)
-        access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
         auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper

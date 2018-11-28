@@ -15,6 +15,7 @@
 
 (s/def ::language-code (s/and string? #(= (count %) 2)))
 (s/def ::yki-language-code  #{"fi" "sv" "en"})
+(s/def ::gender-code  #{"1" "2"})
 
 (defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
@@ -162,7 +163,7 @@
 
 (s/def ::first_name ::non-blank-string)
 (s/def ::last_name ::non-blank-string)
-(s/def ::gender ::non-blank-string)
+(s/def ::gender ::gender-code)
 (s/def ::nationalities (s/coll-of ::non-blank-string))
 (s/def ::birth_date ::date)
 (s/def ::post_office ::non-blank-string)

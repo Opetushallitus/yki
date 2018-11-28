@@ -19,7 +19,15 @@
 (defn- cancel-redirect [url-helper]
   (found (url-helper :payment.cancel-redirect)))
 
+(defn- handle-exceptions [url-helper f]
+  (try
+    (f)
+    (catch Exception e
+      (error e "Payment handling failed")
+      (error-redirect url-helper))))
+
 (defmethod ig/init-key :yki.handler/payment [_ {:keys [db auth access-log payment-config url-helper email-q]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? payment-config) (some? url-helper) (some? email-q)]}
   (api
    (context routing/payment-root []
      :coercion :spec
@@ -35,28 +43,30 @@
      (GET "/success" request
        (let [params (:params request)]
          (info "Received payment success params" params)
-         (if (paytrail-payment/valid-return-params? payment-config params)
-           (do
-             (paytrail-payment/handle-payment-return db email-q params)
-             (audit/log-participant {:request request
-                                     :target-kv {:k audit/payment
-                                                 :v (:ORDER_NUMBER params)}
-                                     :change {:type audit/create-op
-                                              :new params}})
-             (success-redirect url-helper))
-           (error-redirect url-helper))))
+         (handle-exceptions url-helper
+                            #(if (paytrail-payment/valid-return-params? payment-config params)
+                               (do
+                                 (paytrail-payment/handle-payment-return db email-q params)
+                                 (audit/log-participant {:request request
+                                                         :target-kv {:k audit/payment
+                                                                     :v (:ORDER_NUMBER params)}
+                                                         :change {:type audit/create-op
+                                                                  :new params}})
+                                 (success-redirect url-helper))
+                               (error-redirect url-helper)))))
      (GET "/cancel" request
        (let [params (:params request)]
          (info "Received payment cancel params" params)
-         (if (paytrail-payment/valid-return-params? payment-config params)
-           (do
-             (audit/log-participant {:request request
-                                     :target-kv {:k audit/payment
-                                                 :v (:ORDER_NUMBER params)}
-                                     :change {:type audit/cancel-op
-                                              :new params}})
-             (cancel-redirect url-helper))
-           (error-redirect url-helper))))
+         (handle-exceptions url-helper
+                            #(if (paytrail-payment/valid-return-params? payment-config params)
+                               (do
+                                 (audit/log-participant {:request request
+                                                         :target-kv {:k audit/payment
+                                                                     :v (:ORDER_NUMBER params)}
+                                                         :change {:type audit/cancel-op
+                                                                  :new params}})
+                                 (cancel-redirect url-helper))
+                               (error-redirect url-helper)))))
      (GET "/notify" {params :params}
        (info "Received payment notify params" params)
        (if (paytrail-payment/valid-return-params? payment-config params)

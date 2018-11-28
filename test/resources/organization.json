@@ -1,0 +1,168 @@
+{
+  "alkuPvm": "1992-01-01",
+  "lisatiedot": [],
+  "kieletUris": ["oppilaitoksenopetuskieli_1#1"],
+  "kotipaikkaUri": "kunta_091",
+  "kuvaus2": {},
+  "maaUri": "maatjavaltiot1_fin",
+  "metadata": {
+    "hakutoimistonNimi": {
+      "kieli_fi#1": "Asiakaspalvelu"
+    },
+    "yhteystiedot": [
+      {
+        "osoiteTyyppi": "kaynti",
+        "kieli": "kieli_fi#1",
+        "postinumeroUri": "posti_00380",
+        "yhteystietoOid": "1.2.246.562.5.99483081543",
+        "id": "2153066",
+        "postitoimipaikka": "HELSINKI",
+        "osoite": "Valimotie 8"
+      },
+      {
+        "osoiteTyyppi": "posti",
+        "kieli": "kieli_fi#1",
+        "postinumeroUri": "posti_00381",
+        "yhteystietoOid": "1.2.246.562.5.57451100505",
+        "id": "2153067",
+        "postitoimipaikka": "HELSINKI",
+        "osoite": "PL 151"
+      }
+    ],
+    "hakutoimistoEctsEmail": {},
+    "hakutoimistoEctsNimi": {},
+    "hakutoimistoEctsPuhelin": {},
+    "hakutoimistoEctsTehtavanimike": {},
+    "luontiPvm": 1387538333562,
+    "muokkausPvm": 1387538333562,
+    "nimi": {},
+    "data": {
+      "KANSAINVALISET_KOULUTUSOHJELMAT": {},
+      "YLEISKUVAUS": {
+        "kieli_fi#1": "<p>Amiedussa saat ammatin, pätevöidyt tai kehität itseäsi. Voit nostaa osaamistasi joustavasti viihtyisässä ja modernissa oppimisympäristössä. Yli 23 000 aikuista kehittää vuosittain osaamistaan Amiedussa  <br />tarjolla olevien yli 90 perus-, ammatti- ja erikoisammattitutkinnon, 60 ammattikohtaisen sertifikaatin sekä 120 eri ammattialojen täydennyskoulutuksen avulla.</p> <p>Voit opiskella seuraavia aloja:<br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/elaintenhoito\">Eläintenhoito</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/johtaminen-esimiestyo\">Johtaminen ja esimiestyö</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/kauppa-liiketalous\">Kauppa ja liiketalous</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/kone-metalli\">Kone ja metalli</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/kiinteistopalvelut\">Kiinteistöpalvelut</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/maahanmuuttaja\">Maahanmuuttajakoulutus</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/puhdistuspalvelut-kotityopalvelut\">Puhdistus- ja kotityöpalvelu</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/rakentaminen-ja-lvi\">Rakentaminen ja LVI</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/sosiaaliala-terveysala\">Sosiaali- ja terveysala</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/suomenkieli-kielitutkinto\">Suomen kieli ja yleiset kielitutkinnot</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/sahko-automaatio\">Sähkö ja automaatio</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/taloushallinto\">Taloushallinto</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/tietotekniikka-viestintatekniikka\">Tieto- ja viestintätekniikka</a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/turvallisuus\">Turvallisuus </a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/uravalmennus\">Uravalmennus</a> <br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/valinehuolto-ja-hygieniaosaaminen\">Välinehuolto </a><br />◾<a href=\"http://www.amiedu.fi/henkiloasiakas/ammattiala/yrittajyys\">Yrittäjyys</a> </p>"
+      },
+      "KIELIOPINNOT": {},
+      "TERVEYDENHUOLTOPALVELUT": {},
+      "TEHTAVANIMIKE": {},
+      "SAHKOPOSTIOSOITE": {},
+      "RAHOITUS": {},
+      "AIEMMIN_HANKITTU_OSAAMINEN": {},
+      "sosiaalinenmedia_7#1": {},
+      "sosiaalinenmedia_5#1": {
+        "kieli_fi#1": "http://www.amicase.fi/"
+      },
+      "sosiaalinenmedia_6#1": {},
+      "OPISKELIJALIIKKUVUUS": {},
+      "VAKUUTUKSET": {},
+      "OPISKELIJA_JARJESTOT": {},
+      "VALINTAMENETTELY": {},
+      "sosiaalinenmedia_3#1": {
+        "kieli_fi#1": "http://www.linkedin.com/company/amiedu"
+      },
+      "sosiaalinenmedia_4#1": {
+        "kieli_fi#1": "https://twitter.com/amiedu"
+      },
+      "sosiaalinenmedia_1#1": {
+        "kieli_fi#1": "https://www.facebook.com/amiedu"
+      },
+      "VASTUUHENKILOT": {},
+      "KUSTANNUKSET": {},
+      "OPPIMISYMPARISTO": {},
+      "sosiaalinenmedia_2#1": {},
+      "PUHELINNUMERO": {},
+      "NIMI": {},
+      "OPISKELIJALIIKUNTA": {},
+      "VUOSIKELLO": {},
+      "OPISKELIJARUOKAILU": {},
+      "VAPAA_AIKA": {},
+      "ESTEETOMYYS": {},
+      "TIETOA_ASUMISESTA": {},
+      "TYOHARJOITTELU": {}
+    }
+  },
+  "nimet": [
+    {
+      "nimi": {
+        "fi": "Ammatti-instituutti, Pääkaupunkiseudun ammatillinen aikuiskoulutuskeskus"
+      },
+      "alkuPvm": "1992-01-01",
+      "version": 0
+    },
+    {
+      "nimi": {
+        "fi": "Amiedu"
+      },
+      "alkuPvm": "1999-01-01",
+      "version": 0
+    }
+  ],
+  "oppilaitosKoodi": "01708",
+  "oppilaitosTyyppiUri": "oppilaitostyyppi_24#1",
+  "toimipistekoodi": "01708",
+  "tyypit": ["organisaatiotyyppi_02"],
+  "vuosiluokat": [],
+  "yhteystiedot": [
+    {
+      "kieli": "kieli_fi#1",
+      "www": "http://www.amiedu.fi",
+      "yhteystietoOid": "1.2.246.562.5.17918887682",
+      "id": "2153075"
+    },
+    {
+      "kieli": "kieli_fi#1",
+      "yhteystietoOid": "1.2.246.562.5.81939862066",
+      "id": "2153077",
+      "email": "asiakaspalvelu@amiedu.fi"
+    },
+    {
+      "osoiteTyyppi": "posti",
+      "kieli": "kieli_fi#1",
+      "postinumeroUri": "posti_00381",
+      "yhteystietoOid": "1.2.246.562.5.72680991303",
+      "id": "2153073",
+      "postitoimipaikka": "HELSINKI",
+      "osoite": "PL 151"
+    },
+    {
+      "osoiteTyyppi": "kaynti",
+      "kieli": "kieli_fi#1",
+      "postinumeroUri": "posti_00380",
+      "yhteystietoOid": "1.2.246.562.5.11173130326",
+      "id": "2153072",
+      "postitoimipaikka": "HELSINKI",
+      "osoite": "Valimotie 8"
+    },
+    {
+      "kieli": "kieli_fi#1",
+      "numero": "010 80 80 90",
+      "tyyppi": "puhelin",
+      "yhteystietoOid": "1.2.246.562.5.20636671115",
+      "id": "2153074"
+    }
+  ],
+  "kayntiosoite": {
+    "postinumeroUri": "posti_00380",
+    "osoiteTyyppi": "kaynti",
+    "yhteystietoOid": "1.2.246.562.5.11173130326",
+    "postitoimipaikka": "HELSINKI",
+    "osoite": "Valimotie 8"
+  },
+  "parentOid": "1.2.246.562.10.23429950928",
+  "postiosoite": {
+    "postinumeroUri": "posti_00381",
+    "osoiteTyyppi": "posti",
+    "yhteystietoOid": "1.2.246.562.5.72680991303",
+    "postitoimipaikka": "HELSINKI",
+    "osoite": "PL 151"
+  },
+  "ryhmatyypit": [],
+  "kayttoryhmat": [],
+  "nimi": {
+    "fi": "Amiedu"
+  },
+  "yhteystietoArvos": [],
+  "parentOidPath": "|1.2.246.562.10.00000000001|1.2.246.562.10.23429950928|",
+  "oid": "1.2.246.562.10.28646781493",
+  "version": 18,
+  "status": "AKTIIVINEN"
+}

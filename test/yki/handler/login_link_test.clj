@@ -19,6 +19,7 @@
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
         handler (middleware/wrap-format (ig/init-key :yki.handler/login-link {:db db
                                                                               :email-q email-q
+                                                                              :access-log (base/access-log)
                                                                               :url-helper (base/create-url-helper "localhost")}))]
     (handler request)))
 
@@ -30,11 +31,14 @@
         request (-> (mock/request :post (str routing/login-link-api-root "?lang=fi") json-body)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (send-request request email-q)
-        code (:code (first (jdbc/query @embedded-db/conn "SELECT code FROM login_link")))
+        login-link (first (jdbc/query @embedded-db/conn "SELECT * FROM login_link"))
+        code (:code login-link)
+        success-redirect (:success_redirect login-link)
         response-body (base/body-as-json response)
         email-request (pgq/take email-q)]
     (testing "login link should be created with hashed code"
       (is (= (count code) 64))
+      (is (= success-redirect "http://yki.localhost/yki/ilmoittautuminen?action=login&id=1"))
       (is (= (:status response) 200))
       (testing "email send request should be send to job queue"
         (is (= (:subject email-request) "Ilmoittautuminen"))

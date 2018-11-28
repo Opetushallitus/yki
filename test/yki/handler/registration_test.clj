@@ -11,6 +11,7 @@
             [muuntaja.middleware :as middleware]
             [pgqueue.core :as pgq]
             [clojure.java.jdbc :as jdbc]
+            [clojure.string :as s]
             [peridot.core :as peridot]
             [stub-http.core :refer :all]
             [yki.boundary.cas :as cas]
@@ -34,6 +35,7 @@
                                                            :domain "localhost"
                                                            :path "/yki"}}})
         url-helper (base/create-url-helper (str "localhost:" port))
+        access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         cas-client (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
                                                                :cas-creds {:username "username"
                                                                            :password "password"}})
@@ -43,6 +45,7 @@
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db db
                                                                                              :url-helper url-helper
                                                                                              :email-q email-q
+                                                                                             :access-log access-log
                                                                                              :payment-config base/payment-config
                                                                                              :onr-client onr-client
                                                                                              :auth auth}))]
@@ -55,7 +58,7 @@
 
 (def form {:first_name "Fuu"
            :last_name "Bar"
-           :gender "M"
+           :gender "1"
            :nationalities []
            :birth_date "1999-01-01"
            :certificate_lang "fi"
@@ -73,7 +76,7 @@
     (fn [server]
       (merge (base/cas-mock-routes (:port server))
              {"/oppijanumerorekisteri-service/s2s/findOrCreateHenkiloPerustieto" {:status 200 :content-type "application/json"
-                                                                                  :body   (j/write-value-as-string {:henkiloOid "1.2.4.5.6"})}}))
+                                                                                  :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}}))
     (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
           handlers (create-handlers email-q (:port server))
           session (base/login-with-login-link (peridot/session handlers))
@@ -104,7 +107,8 @@
         (is (= (:id payment) id))
         (is (= (:subject email-request) "Maksulinkki"))
         (is (= (:type payment-link) "PAYMENT"))
-        (is (= (:order_number payment) "YKI1"))
+        (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/ilmoittautuminen?action=redirect-to-paytrail&id=" id)))
+        (is (= (:order_number payment) "YKI6000000001"))
         (is (= (:state submitted-registration) "SUBMITTED"))
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))

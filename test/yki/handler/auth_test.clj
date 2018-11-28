@@ -32,7 +32,6 @@
 (defn- create-routes [port]
   (let [uri (str "localhost:" port)
         url-helper (base/create-url-helper uri)
-        access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         db (sql/->Boundary @embedded-db/conn)
         auth (ig/init-key :yki.middleware.auth/with-authentication
                           {:url-helper url-helper
@@ -51,7 +50,7 @@
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
                                                                              :db db
                                                                              :url-helper url-helper
-                                                                             :access-log access-log
+                                                                             :access-log (base/access-log)
                                                                              :permissions-client {}
                                                                              :onr-client onr-client
                                                                              :cas-client cas-client}))]

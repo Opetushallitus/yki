@@ -19,6 +19,7 @@
   (bytes->hex (hash/sha256 code)))
 
 (defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper access-log]}]
+  {:pre [(some? db) (some? access-log) (some? url-helper) (some? email-q)]}
   (api
    (context routing/login-link-api-root []
      :coercion :spec
@@ -28,13 +29,12 @@
        :query-params [lang :- ::ys/language_code]
        :return ::ys/response
        (let [participant-id (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
-                                                                                 :id nil
                                                                                  :email (:email login-link)}))]
          (when (registration/create-and-send-link db url-helper email-q lang
                                                   (assoc login-link
                                                          :participant_id participant-id
                                                          :type "LOGIN_LINK"
-                                                         :expired_link_redirect (url-helper :login-link.redirect)
-                                                         :success_redirect (url-helper :link-expired.redirect)
+                                                         :expired_link_redirect (url-helper :link-expired.redirect)
+                                                         :success_redirect (url-helper :login-link.redirect (:exam_session_id login-link))
                                                          :registration_id nil) {} 1)
            (ok {:success true})))))))

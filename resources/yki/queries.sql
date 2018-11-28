@@ -310,6 +310,7 @@ UPDATE registration SET
   state = 'SUBMITTED',
   modified = current_timestamp,
   form = :form,
+  person_oid = :oid,
   form_version = :form_version
 WHERE
   id = :id
@@ -386,6 +387,7 @@ INNER JOIN exam_language el ON el.id = es.exam_language_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
+  AND re.state = 'STARTED'
   AND re.participant_id = :participant_id
   AND esl.language_code = :lang;
 
@@ -426,11 +428,15 @@ SELECT
  FROM payment
  WHERE registration_id = :registration_id;
 
--- name: select-participant
+-- name: select-participant-by-external-id
 SELECT id, external_user_id, email
 FROM participant
-WHERE id = COALESCE(:id, id)
-AND external_user_id = COALESCE(:external_user_id, external_user_id);
+WHERE external_user_id = :external_user_id;
+
+-- name: select-participant-by-id
+SELECT id, external_user_id, email
+FROM participant
+WHERE id = :id;
 
 -- name: select-participant-email-by-order-number
 SELECT par.email,
