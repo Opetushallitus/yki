@@ -32,6 +32,7 @@
     (when (= updated 1)
       (pgq/put email-q
                {:recipients [(:email email)],
+                :created (System/currentTimeMillis)
                 :subject (template-util/subject "payment_success" lang),
                 :body (template-util/render "payment_success" lang {})}))
     updated))
