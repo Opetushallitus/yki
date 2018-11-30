@@ -79,6 +79,7 @@
                                              :code hashed))
     (pgq/put email-q
              {:recipients [email]
+              :created (System/currentTimeMillis)
               :subject (template-util/subject link-type lang)
               :body (template-util/render link-type lang (assoc template-data :login-url login-url))})))
 

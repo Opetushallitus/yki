@@ -8,12 +8,32 @@
             [yki.sync.yki-register :as yki-register]
             [yki.job.job-queue]
             [clj-time.local :as l]
+            [clj-time.coerce :as c]
+            [clj-time.core :as t]
             [yki.boundary.job-db :as job-db])
   (:import [java.util UUID]))
 
 (defonce worker-id (str (UUID/randomUUID)))
 
-(defn handle-registration-state-changes [])
+(defn take-with-error-handling
+  "Takes message from queue and executes handler function with message.
+  Rethrows exceptions if retry until limit is not reached so that message is not
+  removed from queue and can be processed again."
+  [queue retry-duration-in-days handler-fn]
+  (try
+    (pgq/take-with
+     [request queue]
+     (when request
+       (try
+         (handler-fn request)
+         (catch Exception e
+           (let [created (c/from-long (:created request))
+                 retry-until (t/plus created (t/days retry-duration-in-days))]
+             (if (t/after? (t/now) retry-until)
+               (log/error "Stopped retrying" request)
+               (throw e)))))))
+    (catch Exception e
+      (log/error e "Queue reader failed"))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/registration-state-handler
   [_ {:keys [db]}]
@@ -30,26 +50,18 @@
        (log/error e "Registration state handler failed"))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader
-  [_ {:keys [email-q url-helper]}]
-  {:pre [(some? url-helper) (some? email-q)]}
-  #(try
-     (pgq/take-with
-      [email-req email-q]
-      (when email-req
-        (log/info "Email queue reader sending email to:" (:recipients email-req))
-        (email/send-email url-helper email-req)))
-     (catch Exception e
-       (log/error e "Email queue reader failed"))))
+  [_ {:keys [email-q url-helper retry-duration-in-days]}]
+  {:pre [(some? url-helper) (some? email-q) (some? retry-duration-in-days)]}
+  #(take-with-error-handling email-q retry-duration-in-days
+                             (fn [email-req]
+                               (log/info "Email queue reader sending email to:" (:recipients email-req))
+                               (email/send-email url-helper email-req))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/exam-session-queue-reader
-  [_ {:keys [exam-session-q url-helper db]}]
-  {:pre [(some? url-helper) (some? exam-session-q) (some? db)]}
-  #(try
-     (pgq/take-with
-      [exam-session-req exam-session-q]
-      (when exam-session-req
-        (log/info "Received request to sync exam session" exam-session-req)
-        (yki-register/sync-exam-session-and-organizer db url-helper (:exam-session-id exam-session-req))))
-     (catch Exception e
-       (log/error e "Exam session queue reader failed"))))
+  [_ {:keys [exam-session-q url-helper db retry-duration-in-days]}]
+  {:pre [(some? url-helper) (some? exam-session-q) (some? db) (some? retry-duration-in-days)]}
+  #(take-with-error-handling exam-session-q retry-duration-in-days
+                             (fn [exam-session-req]
+                               (log/info "Received request to sync exam session" exam-session-req)
+                               (yki-register/sync-exam-session-and-organizer db url-helper (:exam-session-id exam-session-req)))))
 

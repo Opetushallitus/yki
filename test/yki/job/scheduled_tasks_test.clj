@@ -9,21 +9,27 @@
             [yki.embedded-db :as embedded-db]
             [yki.job.scheduled-tasks :as st]))
 
-(use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
-(use-fixtures :each embedded-db/with-transaction)
+; (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
+(use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
 (def email-req
   {:recipients ["test@test.com"]
+   :created (System/currentTimeMillis)
    :subject "subject"
    :body "body"})
 
+(defn create-email-q-reader
+  [port retry-duration-in-days]
+  (ig/init-key :yki.job.scheduled-tasks/email-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
+                                                            :retry-duration-in-days retry-duration-in-days
+                                                            :email-q (base/email-q)}))
 (deftest handle-email-request-test
   (with-routes!
     {"/ryhmasahkoposti-service/email/firewall" {:status 200 :content-type "application/json"
                                                 :body   (j/write-value-as-string {:id 1})}}
-    (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
+    (let [email-q (base/email-q)
           _ (pgq/put email-q email-req)
-          reader (ig/init-key :yki.job.scheduled-tasks/email-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port)) :email-q email-q})]
+          reader (create-email-q-reader port 1)]
       (testing "should read email request from queue and send email"
         (is (= (pgq/count email-q) 1))
         (reader)
@@ -60,13 +66,38 @@
                                                            :body   (slurp "test/resources/organization.json")}}
     (let [exam-session-q (base/exam-session-q)
           exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
-          _ (pgq/put exam-session-q {:exam-session-id exam-session-id :created (System/currentTimeMillis)})
+          _ (pgq/put exam-session-q {:exam-session-id exam-session-id
+                                     :created (System/currentTimeMillis)})
           reader (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
                                                                                   :db (base/db)
+                                                                                  :retry-duration-in-days 1
                                                                                   :exam-session-q exam-session-q})]
       (testing "should read email request from queue and send email"
         (is (= (pgq/count exam-session-q) 1))
         (reader)
-        ; (is (= (count (:recordings (first @(:routes server)))) 1))
         (is (= (pgq/count exam-session-q) 0))))))
+
+(deftest queue-reader-retry-if-execution-fails-test
+  (with-routes!
+    {"/ryhmasahkoposti-service/email/firewall" {:status 500 :content-type "application/json"
+                                                :body   (j/write-value-as-string {:error "fail"})}}
+    (let [email-q (base/email-q)
+          _ (pgq/put email-q email-req)
+          reader (create-email-q-reader port 1)]
+      (testing "should return request to queue if execution fails"
+        (is (= (pgq/count email-q) 1))
+        (reader)
+        (is (= (pgq/count email-q) 1))))))
+
+(deftest queue-reader-no-retry-when-retry-duration-reached-test
+  (with-routes!
+    {"/ryhmasahkoposti-service/email/firewall" {:status 500 :content-type "application/json"
+                                                :body   (j/write-value-as-string {:error "fail"})}}
+    (let [email-q (base/email-q)
+          _ (pgq/put email-q email-req)
+          reader (create-email-q-reader port 0)]
+      (testing "should remove message from queue"
+        (is (= (pgq/count email-q) 1))
+        (reader)
+        (is (= (pgq/count email-q) 0))))))
 
