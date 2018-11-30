@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS exam_level (
 --;;
 CREATE TABLE IF NOT EXISTS organizer (
   id BIGSERIAL PRIMARY KEY,
-  oid TEXT,
+  oid TEXT NOT NULL,
   agreement_start_date DATE NOT NULL,
   agreement_end_date DATE NOT NULL,
   contact_name TEXT,
@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS exam_session (
   exam_language_id BIGSERIAL NOT NULL REFERENCES exam_language(id),
   exam_date_id BIGSERIAL NOT NULL REFERENCES exam_date(id),
   max_participants INTEGER NOT NULL,
+  office_oid TEXT,
   published_at TIMESTAMP WITH TIME ZONE  DEFAULT NULL,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,

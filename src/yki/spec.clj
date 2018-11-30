@@ -75,6 +75,7 @@
 
 ;; exam-session
 (s/def ::organizer_oid              ::oid)
+(s/def ::office_oid                 (s/nilable ::oid))
 (s/def ::session_date               ::date)
 (s/def ::max_participants           pos-int?)
 (s/def ::published_at               (s/nilable ::date))
@@ -88,6 +89,7 @@
                                        ::published_at
                                        ::location]
                               :opt-un [::id
+                                       ::office_oid
                                        ::organizer_oid]))
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))

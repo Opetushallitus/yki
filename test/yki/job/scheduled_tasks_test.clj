@@ -51,3 +51,22 @@
         registration (base/select-one "SELECT * FROM registration")]
     (testing "when submitted registration has not been payed in 8 days then state is set to expired"
       (is (= (:state registration) "EXPIRED")))))
+
+(deftest handle-exam-session-request-test
+  (base/insert-login-link-prereqs)
+  (with-routes!
+    {"/organisaatio-service/rest/organisaatio/v4/1.2.3.4" {:status 200
+                                                           :content-type "application/json"
+                                                           :body   (slurp "test/resources/organization.json")}}
+    (let [exam-session-q (base/exam-session-q)
+          exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
+          _ (pgq/put exam-session-q {:exam-session-id exam-session-id :created (System/currentTimeMillis)})
+          reader (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
+                                                                                  :db (base/db)
+                                                                                  :exam-session-q exam-session-q})]
+      (testing "should read email request from queue and send email"
+        (is (= (pgq/count exam-session-q) 1))
+        (reader)
+        ; (is (= (count (:recordings (first @(:routes server)))) 1))
+        (is (= (pgq/count exam-session-q) 0))))))
+

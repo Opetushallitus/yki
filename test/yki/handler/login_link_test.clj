@@ -25,7 +25,7 @@
 
 (deftest login-link-create-test
   (base/insert-login-link-prereqs)
-  (let [email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
+  (let [email-q (base/email-q)
         json-body (j/write-value-as-string {:email "test@test.com"
                                             :exam_session_id 1})
         request (-> (mock/request :post (str routing/login-link-api-root "?lang=fi") json-body)

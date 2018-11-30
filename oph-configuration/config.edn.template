@@ -17,7 +17,7 @@
 
   :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
 
-  :yki.job.job-queue/email-q {:db-config {:db {:subprotocol "postgresql"
+  :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
                                          :subname "//{{host_postgresql_yki}}:{{host_postgresql_yki_port}}/yki"
                                          :user "{{host_postgresql_yki_user}}"
                                          :password "{{host_postgresql_yki_password}}"}}}

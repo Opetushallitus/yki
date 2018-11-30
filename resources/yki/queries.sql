@@ -110,6 +110,7 @@ INSERT INTO exam_session (
   exam_language_id,
   exam_date_id,
   max_participants,
+  office_oid,
   published_at
 ) VALUES (
   (SELECT id FROM organizer
@@ -120,6 +121,7 @@ INSERT INTO exam_session (
       AND el.level_code = :level_code),
   (SELECT id from exam_date WHERE exam_date = :session_date),
   :max_participants,
+  :office_oid,
   :published_at
 );
 
@@ -158,6 +160,7 @@ SELECT
   el.level_code,
   ed.exam_date AS session_date,
   e.max_participants,
+  e.office_oid,
   e.published_at,
   o.oid as organizer_oid,
 (
@@ -184,7 +187,10 @@ WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
 SELECT
   e.id,
   ed.exam_date,
+  el.language_code,
+  el.level_code,
   e.max_participants,
+  e.office_oid,
   e.published_at,
   o.oid as organizer_oid,
 (
@@ -202,6 +208,7 @@ SELECT
 ) AS location
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
+INNER JOIN exam_language el ON e.exam_language_id = el.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE e.id = :id;
 
@@ -218,6 +225,7 @@ SET
       AND el.language_code = :language_code
       AND el.level_code = :level_code),
   max_participants = :max_participants,
+  office_oid = :office_oid,
   published_at = :published_at,
   modified = current_timestamp
 WHERE id = :id;

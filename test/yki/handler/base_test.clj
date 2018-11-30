@@ -15,6 +15,8 @@
             [yki.handler.routing :as routing]
             [yki.handler.exam-session]
             [yki.handler.file]
+            [yki.handler.auth]
+            [yki.job.job-queue]
             [yki.handler.registration]
             [yki.util.url-helper]
             [yki.handler.organizer]))
@@ -43,6 +45,9 @@
 (def exam-session
   (slurp "test/resources/exam_session.json"))
 
+(def organization
+  (slurp "test/resources/organization.json"))
+
 (def payment-formdata-json
   (j/read-value (slurp "test/resources/payment_formdata.json")))
 
@@ -69,8 +74,22 @@
                                       :method :post
                                       :body "ST-1-FFDFHDSJK2"}})
 
+(defn body [response]
+  (slurp (:body response) :encoding "UTF-8"))
+
+(defn db []
+  (duct.database.sql/->Boundary @embedded-db/conn))
+
+(defn email-q []
+  (ig/init-key :yki.job.job-queue/init {:db-config {:db embedded-db/db-spec}})
+  (ig/init-key :yki.job.job-queue/email-q {}))
+
+(defn exam-session-q []
+  (ig/init-key :yki.job.job-queue/init {:db-config {:db embedded-db/db-spec}})
+  (ig/init-key :yki.job.job-queue/exam-session-q {}))
+
 (defn body-as-json [response]
-  (j/read-value (slurp (:body response) :encoding "UTF-8")))
+  (j/read-value (body response)))
 
 (defn insert-organizer [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
@@ -145,7 +164,7 @@
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
         url-helper (create-url-helper uri)
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :exam-session-q (exam-session-q)})
         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
         auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper
                                                                     :db db

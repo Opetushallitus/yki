@@ -27,11 +27,11 @@
         resp (http-util/do-request (merge {:url url :method method}
                                           (create-params cas-session-id body)))]
     (if (= 302 (:status resp))
-      (do
-        (reset! cas-session-id (.run (.fetchCasSession cas-client cas-params)))
-        (http-util/do-request (merge {:url url :method method}
-                                     (create-params cas-session-id body))))
-      resp)))
+      (let [new-cas-session-id (.run (.fetchCasSession cas-client cas-params))
+            new-resp (http-util/do-request (merge {:url url :method method}
+                                                  (create-params cas-session-id body)))]
+        new-resp))
+    resp))
 
 (defrecord CasClient [url-helper cas-params]
   CasAccess

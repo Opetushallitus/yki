@@ -8,5 +8,6 @@
   [url-helper oid]
   (let [url                (url-helper :organisaatio-service.get-by-oid oid)
         response           (http-util/do-get url {})]
-    (when (not= 200 (:status response))
-      (throw (Exception. (str "Could get organzisation " oid))))))
+    (if (= 200 (:status response))
+      (json/read-value (:body response))
+      (throw (Exception. (str "Could not get organzisation " oid))))))

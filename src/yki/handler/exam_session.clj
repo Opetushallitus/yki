@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.util.audit-log :as audit-log]
+            [pgqueue.core :as pgq]
             [ring.util.response :refer [response not-found]]
             [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [bad-request]]
@@ -9,7 +10,12 @@
             [yki.spec :as ys]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db]}]
+(defn- send-to-queue [exam-session-q exam-session-id]
+  (pgq/put exam-session-q {:exam-session-id exam-session-id
+                           :created (System/currentTimeMillis)}))
+
+(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db exam-session-q]}]
+  {:pre [(some? db) (some? exam-session-q)]}
   (fn [oid]
     (context "/" []
       (GET "/" []
@@ -20,7 +26,10 @@
         :body [exam-session ::ys/exam-session]
         :return ::ys/id-response
         (try
-          (if-let [exam-session-id (exam-session-db/create-exam-session! db oid exam-session)]
+          (if-let [exam-session-id (exam-session-db/create-exam-session! db
+                                                                         oid
+                                                                         exam-session
+                                                                         (partial send-to-queue exam-session-q))]
             (do
               (audit-log/log {:request request
                               :target-kv {:k audit-log/exam-session
@@ -36,7 +45,7 @@
           :body [exam-session ::ys/exam-session]
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if (exam-session-db/update-exam-session! db oid id exam-session)
+          (if (exam-session-db/update-exam-session! db oid id exam-session (partial send-to-queue exam-session-q))
             (let [current (exam-session-db/get-exam-session-by-id db id)]
               (audit-log/log {:request request
                               :target-kv {:k audit-log/exam-session
