@@ -1,0 +1,20 @@
+{
+  "oid": "1.2.246.562.10.28646781493",
+  "nimi": "Amiedu",
+  "katuosoite": "PL 151",
+  "postinumero": "00381",
+  "postitoimipaikka": "HELSINKI",
+  "yhteyshenkilo": "Maija Meikäläinen",
+  "sposoite": "maija.meikalainen@esimerkkijarjestaja.fi",
+  "wwwosoite": "http://www.amiedu.fi",
+  "tutkintotarjonta": [
+    {
+      "tutkintokieli": "en",
+      "taso": "KT"
+    },
+    {
+      "tutkintokieli": "es",
+      "taso": "PT"
+    }
+  ]
+}

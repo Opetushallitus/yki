@@ -34,14 +34,13 @@
                                                            :path "/yki"}}})
         url-helper (base/create-url-helper "localhost:8080")
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
-        email-q (ig/init-key :yki.job.job-queue/email-q {:db-config {:db embedded-db/db-spec}})
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth}))
         payment-handler (middleware/wrap-format (ig/init-key :yki.handler/payment {:db db
                                                                                    :payment-config base/payment-config
                                                                                    :url-helper url-helper
                                                                                    :auth auth
                                                                                    :access-log access-log
-                                                                                   :email-q email-q}))]
+                                                                                   :email-q (base/email-q)}))]
     (core/routes auth-handler payment-handler)))
 
 (deftest get-payment-formdata-test

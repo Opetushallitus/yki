@@ -1,0 +1,19 @@
+{
+  "oid": "1.2.246.562.5.99483081542",
+  "agreement_start_date": "2018-01-01",
+  "agreement_end_date": "2019-01-01",
+  "contact_name": "Maija Meikäläinen",
+  "contact_email": "maija.meikalainen@esimerkkijarjestaja.fi",
+  "contact_phone_number": "phone",
+  "extra": "shared@oph.fi",
+  "languages": [
+    {
+      "language_code": "en",
+      "level_code": "KESKI"
+    },
+    {
+      "language_code": "es",
+      "level_code": "PERUS"
+    }
+  ]
+}

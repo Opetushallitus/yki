@@ -5,6 +5,7 @@
             [duct.database.sql]
             [jsonista.core :as j]
             [clojure.java.io :as io]
+            [pgqueue.core :as pgq]
             [muuntaja.middleware :as middleware]
             [clojure.java.jdbc :as jdbc]
             [yki.embedded-db :as embedded-db]
@@ -31,36 +32,42 @@
   (base/insert-languages "'1.2.3.4'")
   (base/insert-exam-dates)
 
-  (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
-                    (mock/content-type "application/json; charset=UTF-8"))
-        response (base/send-request-with-tx request)
-        response-body (base/body-as-json response)]
-    (testing "post exam session endpoint should return add valid exam session to database"
+  (testing "post exam session endpoint should return add valid exam session to database and send sync request to queue"
+    (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
+                      (mock/content-type "application/json; charset=UTF-8"))
+          response (base/send-request-with-tx request)
+          response-body (base/body-as-json response)
+          exam-session-q (base/exam-session-q)
+          sync-req (pgq/take exam-session-q)]
       (is (= '({:count 1})
              (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session")))
       (is (= '({:count 3})
              (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session_location")))
-      (is (= (:status response) 200))))
+      (is (= (:status response) 200)
+          (is (= (:exam-session-id sync-req) 1)))))
 
-  (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session"))
-        response (base/send-request-with-tx request)
-        response-body (base/body-as-json response)]
-    (testing "get exam session endpoint should return exam session with location"
-      (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8")))
-    (is (= (:status response) 200))
-    (is (= response-body base/exam-sessions-json)))
+  (testing "get exam session endpoint should return exam session with location"
+    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session"))
+          response (base/send-request-with-tx request)
+          response-body (base/body-as-json response)]
+      (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
+      (is (= (:status response) 200))
+      (is (= response-body base/exam-sessions-json))))
 
-  (let [updated-exam-session (base/change-entry base/exam-session "max_participants" 51)
-        request (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.4/exam-session/1") updated-exam-session)
-                    (mock/content-type "application/json; charset=UTF-8"))
-        response (base/send-request-with-tx request)]
-    (testing "put exam session endpoint should update exam session based on id query parameter"
+  (testing "put exam session endpoint should update exam session based on id query parameter and send change to queue"
+    (let [updated-exam-session (base/change-entry base/exam-session "max_participants" 51)
+          request (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.4/exam-session/1") updated-exam-session)
+                      (mock/content-type "application/json; charset=UTF-8"))
+          response (base/send-request-with-tx request)
+          exam-session-q (base/exam-session-q)
+          sync-req (pgq/take exam-session-q)]
       (is (= '({:max_participants 51})
-             (jdbc/query @embedded-db/conn "SELECT max_participants FROM exam_session where id = 1")))))
+             (jdbc/query @embedded-db/conn "SELECT max_participants FROM exam_session where id = 1")))
+      (is (= (:exam-session-id sync-req) 1))))
 
-  (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/1"))
-        response (base/send-request-with-tx request)]
-    (testing "delete exam session endpoint should remove exam session and it's location"
+  (testing "delete exam session endpoint should remove exam session and it's location"
+    (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/1"))
+          response (base/send-request-with-tx request)]
       (is (= (:status response) 200))
       (is (= '({:count 0})
              (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session")))
