@@ -10,8 +10,9 @@
             [yki.spec :as ys]
             [integrant.core :as ig]))
 
-(defn- send-to-queue [data-sync-q  exam-session-id]
+(defn- send-to-queue [data-sync-q type exam-session-id]
   (pgq/put data-sync-q  {:exam-session-id exam-session-id
+                         :type type
                          :created (System/currentTimeMillis)}))
 
 (defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q]}]
@@ -59,7 +60,7 @@
         (DELETE "/" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if (= (exam-session-db/delete-exam-session! db id) 1)
+          (if (exam-session-db/delete-exam-session! db id (partial send-to-queue data-sync-q))
             (do
               (audit-log/log {:request request
                               :target-kv {:k audit-log/exam-session

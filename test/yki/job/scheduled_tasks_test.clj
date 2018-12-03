@@ -57,21 +57,22 @@
     (testing "when submitted registration has not been payed in 8 days then state is set to expired"
       (is (= (:state registration) "EXPIRED")))))
 
-(deftest handle-exam-session-request-test
+(deftest handle-exam-session-create-request-test
   (base/insert-login-link-prereqs)
   (with-routes!
     {"/organisaatio-service/rest/organisaatio/v4/1.2.3.4" {:status 200
                                                            :content-type "application/json"
                                                            :body   (slurp "test/resources/organization.json")}
-     "/tutkintotilaisuus" {:status 200
+     "/tutkintotilaisuus" {:status 201
                            :content-type "application/json"
                            :body   "{}"}
-     "/jarjestaja" {:status 200
+     "/jarjestaja" {:status 201
                     :content-type "application/json"
                     :body   "{}"}}
     (let [data-sync-q  (base/data-sync-q)
           exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
           _ (pgq/put data-sync-q  {:exam-session-id exam-session-id
+                                   :type "CREATE"
                                    :created (System/currentTimeMillis)})
           reader (ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
                                                                                :db (base/db)

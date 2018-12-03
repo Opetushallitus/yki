@@ -34,28 +34,60 @@
    :pvm session_date
    :jarjestaja (or office_oid organizer_oid)})
 
+(defn- do-post [url request]
+  (let [response (http-util/do-post url {:headers {"content-type" "application/json; charset=UTF-8"}
+                                         :body    (json/write-value-as-string request)})
+        status (:status response)]
+    (when (and (not= 200 status) (not= 201 status))
+      (log/error "Failed to sync data, error response" response)
+      (throw (Exception. (str "Could not sync request " request))))))
+
+(defn- do-delete [url]
+  (let [response (http-util/do-delete url)
+        status (:status response)]
+    (when (and (not= 200 status) (not= 202 status))
+      (log/error "Failed to sync data, error response" response)
+      (throw (Exception. (str "Could not sync deletion " url))))))
+
 (defn- sync-organizer
   [db url-helper disabled organizer-oid office-oid]
   (let [organizer (first (organizer-db/get-organizers-by-oids db [organizer-oid]))
         organization (organization/get-organization-by-oid url-helper (or office-oid organizer-oid))
         request (create-sync-organizer-req organizer organization)]
     (if disabled
-      (log/info "Sending organizer" request))))
+      (log/info "Sending disabled. Logging request " request)
+      (do-post (url-helper :yki-register.organizer) request))))
+
+(defn- remove-organizer [url-helper disabled oid]
+  (if disabled
+    (log/info "Sending disabled. Logging delete" oid)
+    (do-delete (str (url-helper :yki-register.organizer) "?oid=" oid))))
+
+(defn- remove-exam-session [url-helper disabled {:keys [language_code level_code session_date office_oid organizer_oid] :as exam-session}]
+  (if disabled
+    (log/info "Sending disabled. Logging delete" exam-session)
+    (do-delete (str (url-helper :yki-register.exam-session)
+                    "?tutkintokieli=" language_code
+                    "&taso=" (convert-level level_code)
+                    "&pvm=" session_date
+                    "&jarjestaja=" (or office_oid organizer_oid)))))
 
 (defn- sync-exam-session
   [url-helper disabled exam-session]
   (let [request (create-sync-exam-session-req exam-session)]
     (if disabled
-      (log/info "Sending exam session" request)
-      (let [url                (url-helper :yki-register.exam-session)
-            response           (http-util/do-post url {:headers {"content-type" "application/json; charset=UTF-8"}
-                                                       :body    (json/write-value-as-string request)})]
-        (when (and (not= 200 (:status response)) (not= 201 (:status response)))
-          (println response)
-          (throw (Exception. (str "Could not sync exam session " request))))))))
+      (log/info "Sending disabled. Logging request" request)
+      (do-post (url-helper :yki-register.exam-session) request))))
 
 (defn sync-exam-session-and-organizer
-  [db url-helper disabled exam-session-id]
-  (let [{:keys [organizer_oid office_oid] :as exam-session} (exam-session-db/get-exam-session-by-id db exam-session-id)
-        organizer-res (sync-organizer db url-helper disabled organizer_oid office_oid)
-        exam-session-res (sync-exam-session url-helper disabled exam-session)]))
+  "When exam session is synced to YKI register also organizer data is synced."
+  [db url-helper disabled {:keys [type exam-session-id organizer-oid]}]
+  (case type
+    "DELETE" (if exam-session-id
+               (remove-exam-session url-helper disabled (exam-session-db/get-exam-session-by-id db exam-session-id))
+               (remove-organizer url-helper disabled organizer-oid))
+    (if exam-session-id
+      (let [{:keys [organizer_oid office_oid] :as exam-session} (exam-session-db/get-exam-session-by-id db exam-session-id)
+            organizer-res (sync-organizer db url-helper disabled organizer_oid office_oid)
+            exam-session-res (sync-exam-session url-helper disabled exam-session)])
+      (sync-organizer db url-helper disabled organizer-oid nil))))
