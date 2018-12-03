@@ -13,6 +13,7 @@
                         :alb-host            "{{host_alb}}"
                         :tunnistus-host      "{{host_tunnistus}}"
                         :oppija-host         "{{host_oppija}}"
+                        :yki-register-host   "http://localhost:8080"
                         :yki-host-virkailija "{{host_ilb}}"}
 
   :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
@@ -21,6 +22,12 @@
                                          :subname "//{{host_postgresql_yki}}:{{host_postgresql_yki_port}}/yki"
                                          :user "{{host_postgresql_yki_user}}"
                                          :password "{{host_postgresql_yki_password}}"}}}
+
+  :yki.job.scheduled-tasks/exam-session-queue-reader {:exam-session-q #ig/ref :yki.job.job-queue/exam-session-q
+                                                      :db #ig/ref :duct.database/sql
+                                                      :disabled {{yki_register_sync_disabled}}
+                                                      :url-helper #ig/ref :yki.util/url-helper
+                                                      :retry-duration-in-days 14}
 
   :yki.handler/payment {:db #ig/ref :duct.database/sql
                         :auth #ig/ref :yki.middleware.auth/with-authentication

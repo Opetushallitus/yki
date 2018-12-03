@@ -1,6 +1,7 @@
-(ns yki.sync.yki-register
+(ns yki.boundary.yki-register
   (:require [clojure.tools.logging :refer [info]]
             [clojure.string :as str]
+            [yki.util.http-util :as http-util]
             [yki.boundary.organizer-db :as organizer-db]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.organization :as organization]
@@ -34,19 +35,27 @@
    :jarjestaja (or office_oid organizer_oid)})
 
 (defn- sync-organizer
-  [db url-helper organizer-oid office-oid]
+  [db url-helper disabled organizer-oid office-oid]
   (let [organizer (first (organizer-db/get-organizers-by-oids db [organizer-oid]))
         organization (organization/get-organization-by-oid url-helper (or office-oid organizer-oid))
         request (create-sync-organizer-req organizer organization)]
-    (log/info "Sending organizer" request)))
+    (if disabled
+      (log/info "Sending organizer" request))))
 
 (defn- sync-exam-session
-  [url-helper exam-session]
+  [url-helper disabled exam-session]
   (let [request (create-sync-exam-session-req exam-session)]
-    (log/info "Sending exam session" request)))
+    (if disabled
+      (log/info "Sending exam session" request)
+      (let [url                (url-helper :yki-register.exam-session)
+            response           (http-util/do-post url {:headers {"content-type" "application/json; charset=UTF-8"}
+                                                       :body    (json/write-value-as-string request)})]
+        (when (and (not= 200 (:status response)) (not= 201 (:status response)))
+          (println response)
+          (throw (Exception. (str "Could not sync exam session " request))))))))
 
 (defn sync-exam-session-and-organizer
-  [db url-helper exam-session-id]
+  [db url-helper disabled exam-session-id]
   (let [{:keys [organizer_oid office_oid] :as exam-session} (exam-session-db/get-exam-session-by-id db exam-session-id)
-        organizer-res (sync-organizer db url-helper organizer_oid office_oid)
-        exam-session-res (sync-exam-session url-helper exam-session)]))
+        organizer-res (sync-organizer db url-helper disabled organizer_oid office_oid)
+        exam-session-res (sync-exam-session url-helper disabled exam-session)]))
