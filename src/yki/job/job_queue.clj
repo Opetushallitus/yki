@@ -10,8 +10,8 @@
 (defmethod ig/init-key :yki.job.job-queue/email-q [_ _]
   (pgq/queue :email-send-v1 @queue-config))
 
-(defmethod ig/init-key :yki.job.job-queue/exam-session-q [_ _]
-  (pgq/queue :exam-session-send-v1 @queue-config))
+(defmethod ig/init-key :yki.job.job-queue/data-sync-q [_ _]
+  (pgq/queue :data-sync-v1 @queue-config))
 
 
 

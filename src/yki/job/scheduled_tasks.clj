@@ -57,10 +57,10 @@
                                (log/info "Email queue reader sending email to:" (:recipients email-req))
                                (email/send-email url-helper email-req))))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/exam-session-queue-reader
-  [_ {:keys [exam-session-q url-helper db retry-duration-in-days disabled]}]
-  {:pre [(some? url-helper) (some? exam-session-q) (some? db) (some? retry-duration-in-days)]}
-  #(take-with-error-handling exam-session-q retry-duration-in-days
+(defmethod ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader
+  [_ {:keys [data-sync-q url-helper db retry-duration-in-days disabled]}]
+  {:pre [(some? url-helper) (some? data-sync-q) (some? db) (some? retry-duration-in-days)]}
+  #(take-with-error-handling data-sync-q retry-duration-in-days
                              (fn [exam-session-req]
                                (log/info "Received request to sync exam session" exam-session-req)
                                (yki-register/sync-exam-session-and-organizer db url-helper disabled (:exam-session-id exam-session-req)))))

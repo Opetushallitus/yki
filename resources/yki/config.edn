@@ -21,7 +21,7 @@
 
  :yki.job.job-queue/email-q {:init #ig/ref :yki.job.job-queue/init}
 
- :yki.job.job-queue/exam-session-q {:init #ig/ref :yki.job.job-queue/init}
+ :yki.job.job-queue/data-sync-q  {:init #ig/ref :yki.job.job-queue/init}
 
  :yki.job.scheduled-tasks/registration-state-handler {:db #ig/ref :duct.database/sql}
 
@@ -29,16 +29,16 @@
                                               :url-helper #ig/ref :yki.util/url-helper
                                               :retry-duration-in-days 14}
 
- :yki.job.scheduled-tasks/exam-session-queue-reader {:exam-session-q #ig/ref :yki.job.job-queue/exam-session-q
-                                                     :db #ig/ref :duct.database/sql
-                                                     :disabled true
-                                                     :url-helper #ig/ref :yki.util/url-helper
-                                                     :retry-duration-in-days 14}
+ :yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
+                                                  :db #ig/ref :duct.database/sql
+                                                  :disabled true
+                                                  :url-helper #ig/ref :yki.util/url-helper
+                                                  :retry-duration-in-days 14}
 
  :duct.scheduler/simple
  {:thread-pool-size 10
   :jobs [{:interval 600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/registration-state-handler}
-         {:interval 5 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}]}
+         {:interval 5 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/data-sync-queue-reader}]}
 
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {}}
@@ -86,7 +86,7 @@
                             :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
  :yki.handler/exam-session {:db #ig/ref :duct.database/sql
-                            :exam-session-q #ig/ref :yki.job.job-queue/exam-session-q}
+                            :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q}
 
  :yki.handler/login-link {:db #ig/ref :duct.database/sql
                           :url-helper #ig/ref :yki.util/url-helper

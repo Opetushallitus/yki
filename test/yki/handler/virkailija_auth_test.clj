@@ -54,7 +54,7 @@
         permissions-client (ig/init-key  :yki.boundary.permissions/permissions-client
                                          {:url-helper url-helper
                                           :cas-client cas-client})
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :exam-session-q (base/exam-session-q)})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :data-sync-q  (base/data-sync-q)})
         org-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
                                                                                  :url-helper url-helper
                                                                                  :exam-session-handler exam-session-handler
