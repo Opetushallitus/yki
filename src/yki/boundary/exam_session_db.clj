@@ -20,6 +20,11 @@
   (if (some? date)
     (f/parse date)))
 
+(defn- int->boolean [value]
+  (if (= value 1)
+    true
+    false))
+
 (defn rollback-on-exception [tx f]
   (try
     (f)
@@ -31,7 +36,7 @@
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
   (update-exam-session! [db oid id exam-session send-to-queue-fn])
-  (delete-exam-session! [db id])
+  (delete-exam-session! [db id send-to-queue-fn])
   (get-exam-session-by-id [db id])
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and from arguments"))
@@ -48,7 +53,7 @@
               exam-session-id (:id result)]
           (doseq [loc (:location exam-session)]
             (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))
-          (send-to-queue-fn exam-session-id)
+          (send-to-queue-fn "CREATE" exam-session-id)
           exam-session-id))))
   (update-exam-session!
     [{:keys [spec]} oid id exam-session send-to-queue-fn]
@@ -59,11 +64,19 @@
           (q/delete-exam-session-location! tx {:id id})
           (doseq [location (:location exam-session)]
             (q/insert-exam-session-location! tx (assoc location :exam_session_id id)))
-          (q/update-exam-session! tx (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid :id id)))
-          (send-to-queue-fn id)))))
-  (delete-exam-session! [{:keys [spec]} id]
+          (let [updated (int->boolean (q/update-exam-session! tx
+                                                              (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid :id id))))]
+            (when updated
+              (send-to-queue-fn "UPDATE" id))
+            updated)))))
+  (delete-exam-session! [{:keys [spec]} id send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
-      (q/delete-exam-session! tx {:id id})))
+      (rollback-on-exception
+       tx
+       #(let [deleted (int->boolean (q/delete-exam-session! tx {:id id}))]
+          (when deleted
+            (send-to-queue-fn "DELETE" id))
+          deleted))))
   (get-exam-session-by-id [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (first (q/select-exam-session-by-id tx {:id id}))))

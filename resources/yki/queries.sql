@@ -186,7 +186,7 @@ WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
 -- name: select-exam-session-by-id
 SELECT
   e.id,
-  ed.exam_date,
+  ed.exam_date AS session_date,
   el.language_code,
   el.level_code,
   e.max_participants,

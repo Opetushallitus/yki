@@ -61,7 +61,7 @@
   [_ {:keys [data-sync-q url-helper db retry-duration-in-days disabled]}]
   {:pre [(some? url-helper) (some? data-sync-q) (some? db) (some? retry-duration-in-days)]}
   #(take-with-error-handling data-sync-q retry-duration-in-days
-                             (fn [exam-session-req]
-                               (log/info "Received request to sync exam session" exam-session-req)
-                               (yki-register/sync-exam-session-and-organizer db url-helper disabled (:exam-session-id exam-session-req)))))
+                             (fn [data-sync-req]
+                               (log/info "Received request to sync data to yki register" data-sync-req)
+                               (yki-register/sync-exam-session-and-organizer db url-helper disabled data-sync-req))))
 

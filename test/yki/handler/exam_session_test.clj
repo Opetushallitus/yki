@@ -37,14 +37,15 @@
                       (mock/content-type "application/json; charset=UTF-8"))
           response (base/send-request-with-tx request)
           response-body (base/body-as-json response)
-          data-sync-q  (base/data-sync-q)
+          data-sync-q (base/data-sync-q)
           sync-req (pgq/take data-sync-q)]
       (is (= '({:count 1})
              (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session")))
       (is (= '({:count 3})
              (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session_location")))
-      (is (= (:status response) 200)
-          (is (= (:exam-session-id sync-req) 1)))))
+      (is (= (:status response) 200))
+      (is (= (:exam-session-id sync-req) 1))
+      (is (= (:type sync-req) "CREATE"))))
 
   (testing "get exam session endpoint should return exam session with location"
     (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session"))
@@ -63,14 +64,19 @@
           sync-req (pgq/take data-sync-q)]
       (is (= '({:max_participants 51})
              (jdbc/query @embedded-db/conn "SELECT max_participants FROM exam_session where id = 1")))
+      (is (= (:type sync-req) "UPDATE"))
       (is (= (:exam-session-id sync-req) 1))))
 
   (testing "delete exam session endpoint should remove exam session and it's location"
     (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/1"))
-          response (base/send-request-with-tx request)]
+          response (base/send-request-with-tx request)
+          data-sync-q (base/data-sync-q)
+          sync-req (pgq/take data-sync-q)]
       (is (= (:status response) 200))
       (is (= '({:count 0})
              (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session")))
       (is (= '({:count 0})
-             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session_location"))))))
+             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session_location")))
+      (is (= (:exam-session-id sync-req) 1))
+      (is (= (:type sync-req) "DELETE")))))
 

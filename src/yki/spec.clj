@@ -188,3 +188,17 @@
                                        ::street_address
                                        ::phone_number
                                        ::email]))
+
+
+;; YKI register sync
+
+
+(s/def :sync/type         #{"CREATE" "UPDATE" "DELETE"})
+(s/def ::created          number?)
+(s/def ::exam-session-id  (s/nilable ::id))
+(s/def ::organizer-oid    (s/nilable ::oid))
+
+(s/def ::data-sync-request  (s/keys :req [:sync/type
+                                          ::created]
+                                    :opt [::exam-session-id
+                                          ::organizer-oid]))
