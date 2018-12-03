@@ -10,12 +10,12 @@
             [yki.spec :as ys]
             [integrant.core :as ig]))
 
-(defn- send-to-queue [exam-session-q exam-session-id]
-  (pgq/put exam-session-q {:exam-session-id exam-session-id
-                           :created (System/currentTimeMillis)}))
+(defn- send-to-queue [data-sync-q  exam-session-id]
+  (pgq/put data-sync-q  {:exam-session-id exam-session-id
+                         :created (System/currentTimeMillis)}))
 
-(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db exam-session-q]}]
-  {:pre [(some? db) (some? exam-session-q)]}
+(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q]}]
+  {:pre [(some? db) (some? data-sync-q)]}
   (fn [oid]
     (context "/" []
       (GET "/" []
@@ -29,7 +29,7 @@
           (if-let [exam-session-id (exam-session-db/create-exam-session! db
                                                                          oid
                                                                          exam-session
-                                                                         (partial send-to-queue exam-session-q))]
+                                                                         (partial send-to-queue data-sync-q))]
             (do
               (audit-log/log {:request request
                               :target-kv {:k audit-log/exam-session
@@ -45,7 +45,7 @@
           :body [exam-session ::ys/exam-session]
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if (exam-session-db/update-exam-session! db oid id exam-session (partial send-to-queue exam-session-q))
+          (if (exam-session-db/update-exam-session! db oid id exam-session (partial send-to-queue data-sync-q))
             (let [current (exam-session-db/get-exam-session-by-id db id)]
               (audit-log/log {:request request
                               :target-kv {:k audit-log/exam-session

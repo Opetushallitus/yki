@@ -69,19 +69,19 @@
      "/jarjestaja" {:status 200
                     :content-type "application/json"
                     :body   "{}"}}
-    (let [exam-session-q (base/exam-session-q)
+    (let [data-sync-q  (base/data-sync-q)
           exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
-          _ (pgq/put exam-session-q {:exam-session-id exam-session-id
-                                     :created (System/currentTimeMillis)})
-          reader (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
-                                                                                  :db (base/db)
-                                                                                  :disabled false
-                                                                                  :retry-duration-in-days 1
-                                                                                  :exam-session-q exam-session-q})]
+          _ (pgq/put data-sync-q  {:exam-session-id exam-session-id
+                                   :created (System/currentTimeMillis)})
+          reader (ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
+                                                                               :db (base/db)
+                                                                               :disabled false
+                                                                               :retry-duration-in-days 1
+                                                                               :data-sync-q  data-sync-q})]
       (testing "should read email request from queue and send email"
-        (is (= (pgq/count exam-session-q) 1))
+        (is (= (pgq/count data-sync-q) 1))
         (reader)
-        (is (= (pgq/count exam-session-q) 0))))))
+        (is (= (pgq/count data-sync-q) 0))))))
 
 (deftest queue-reader-retry-if-execution-fails-test
   (with-routes!

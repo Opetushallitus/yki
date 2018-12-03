@@ -84,9 +84,9 @@
   (ig/init-key :yki.job.job-queue/init {:db-config {:db embedded-db/db-spec}})
   (ig/init-key :yki.job.job-queue/email-q {}))
 
-(defn exam-session-q []
+(defn data-sync-q  []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db embedded-db/db-spec}})
-  (ig/init-key :yki.job.job-queue/exam-session-q {}))
+  (ig/init-key :yki.job.job-queue/data-sync-q  {}))
 
 (defn body-as-json [response]
   (j/read-value (body response)))
@@ -164,7 +164,7 @@
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
         url-helper (create-url-helper uri)
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :exam-session-q (exam-session-q)})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :data-sync-q  (data-sync-q)})
         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
         auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper
                                                                     :db db

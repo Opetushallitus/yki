@@ -37,8 +37,8 @@
                       (mock/content-type "application/json; charset=UTF-8"))
           response (base/send-request-with-tx request)
           response-body (base/body-as-json response)
-          exam-session-q (base/exam-session-q)
-          sync-req (pgq/take exam-session-q)]
+          data-sync-q  (base/data-sync-q)
+          sync-req (pgq/take data-sync-q)]
       (is (= '({:count 1})
              (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session")))
       (is (= '({:count 3})
@@ -59,8 +59,8 @@
           request (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.4/exam-session/1") updated-exam-session)
                       (mock/content-type "application/json; charset=UTF-8"))
           response (base/send-request-with-tx request)
-          exam-session-q (base/exam-session-q)
-          sync-req (pgq/take exam-session-q)]
+          data-sync-q  (base/data-sync-q)
+          sync-req (pgq/take data-sync-q)]
       (is (= '({:max_participants 51})
              (jdbc/query @embedded-db/conn "SELECT max_participants FROM exam_session where id = 1")))
       (is (= (:exam-session-id sync-req) 1))))
