@@ -155,7 +155,7 @@
       (peridot/request (str routing/auth-root "/login?code=" code-ok))))
 
 (defn create-url-helper [uri]
-  (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"}))
+  (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"}))
 
 (defn access-log []
   (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"}))

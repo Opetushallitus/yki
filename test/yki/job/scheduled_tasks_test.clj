@@ -9,7 +9,6 @@
             [yki.embedded-db :as embedded-db]
             [yki.job.scheduled-tasks :as st]))
 
-; (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
 (def email-req
@@ -63,13 +62,20 @@
   (with-routes!
     {"/organisaatio-service/rest/organisaatio/v4/1.2.3.4" {:status 200
                                                            :content-type "application/json"
-                                                           :body   (slurp "test/resources/organization.json")}}
+                                                           :body   (slurp "test/resources/organization.json")}
+     "/tutkintotilaisuus" {:status 200
+                           :content-type "application/json"
+                           :body   "{}"}
+     "/jarjestaja" {:status 200
+                    :content-type "application/json"
+                    :body   "{}"}}
     (let [exam-session-q (base/exam-session-q)
           exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
           _ (pgq/put exam-session-q {:exam-session-id exam-session-id
                                      :created (System/currentTimeMillis)})
           reader (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
                                                                                   :db (base/db)
+                                                                                  :disabled false
                                                                                   :retry-duration-in-days 1
                                                                                   :exam-session-q exam-session-q})]
       (testing "should read email request from queue and send email"

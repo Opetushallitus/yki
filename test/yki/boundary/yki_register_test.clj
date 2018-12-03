@@ -1,8 +1,8 @@
-(ns yki.sync.yki-register-test
+(ns yki.boundary.yki-register-test
   (:require [clojure.test :refer :all]
             [clojure.string :as s]
             [jsonista.core :as j]
-            [yki.sync.yki-register :as yki-register]))
+            [yki.boundary.yki-register :as yki-register]))
 
 (def exam-session {:id 1
                    :language_code "fi"

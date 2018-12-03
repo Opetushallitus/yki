@@ -18,6 +18,7 @@
 
  :yki.util/url-helper {:virkailija-host        "virkailija.untuvaopintopolku.fi"
                        :oppija-host            "untuvaopintopolku.fi"
+                       :yki-register-host      "http://localhost:8080"
                        :alb-host               "https://virkailija.untuvaopintopolku.fi"
                        :tunnistus-host         "tunnistus.untuvaopintopolku.fi"
                        :yki-host-virkailija    "http://localhost:8080"}
@@ -32,6 +33,11 @@
                                         :msg {:fi "Tutkintomaksu"
                                               :sv "Tutkintomaksu_sv"
                                               :en "Tutkintomaksu_en"}}}
+
+ :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
+                                           :subname "//localhost:5432/yki"
+                                           :user "admin"
+                                           :password "admin"}}}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
