@@ -5,6 +5,7 @@
             [clj-time.format :as f]
             [clj-time.jdbc]
             [yki.boundary.db-extensions]
+            [clojure.tools.logging :as log]
             [cheshire.core :as json]
             [clojure.java.jdbc :as jdbc]
             [duct.database.sql]))
@@ -17,7 +18,7 @@
 
 (defprotocol Organizers
   (create-organizer! [db organizer])
-  (delete-organizer! [db oid])
+  (delete-organizer! [db oid send-to-queue-fn])
   (update-organizer! [db oid organizer])
   (get-organizers [db])
   (get-organizers-by-oids [db oids])
@@ -37,10 +38,19 @@
     (jdbc/with-db-transaction [tx spec]
       (q/insert-attachment-metadata! tx {:oid oid :external_id external-id :type attachment-type})))
   (delete-organizer!
-    [{:keys [spec]} oid]
+    [{:keys [spec]} oid send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
-      (q/delete-organizer-languages! tx {:oid oid})
-      (q/delete-organizer! tx {:oid oid})))
+      (try
+        (q/delete-organizer-languages! tx {:oid oid})
+        (let [deleted (q/delete-organizer! tx {:oid oid})
+              oids (map :office_oid (q/select-exam-session-office-oids tx {:oid oid}))]
+          (when (= deleted 1)
+            (send-to-queue-fn (conj oids oid))
+            deleted))
+        (catch Exception e
+          (.rollback (:connection tx))
+          (log/error e "Execution failed. Rolling back transaction.")
+          (throw e)))))
   (update-organizer!
     [{:keys [spec]} oid organizer]
     (jdbc/with-db-transaction [tx spec]

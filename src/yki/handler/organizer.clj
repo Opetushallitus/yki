@@ -5,6 +5,7 @@
             [yki.middleware.auth :as auth]
             [yki.util.audit-log :as audit-log]
             [yki.spec :as ys]
+            [pgqueue.core :as pgq]
             [yki.middleware.access-log]
             [clojure.tools.logging :refer [info error]]
             [ring.util.response :refer [response not-found header]]
@@ -16,7 +17,14 @@
 (defn- get-oids [session]
   (map :oid (auth/get-organizations-from-session session)))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler access-log]}]
+(defn- send-delete-reqs-to-queue [data-sync-q oids]
+  (doseq [oid oids]
+    (pgq/put data-sync-q  {:organizer-oid oid
+                           :type "DELETE"
+                           :created (System/currentTimeMillis)})))
+
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler data-sync-q access-log]}]
+  {:pre [(some? db) (some? url-helper) (some? auth) (some? file-handler) (some? exam-session-handler) (some? data-sync-q) (some? access-log)]}
   (api
    (context routing/organizer-api-root []
      :middleware [auth access-log]
@@ -56,7 +64,7 @@
 
        (DELETE "/" request
          :return ::ys/response
-         (if (= (organizer-db/delete-organizer! db oid) 1)
+         (if (= (organizer-db/delete-organizer! db oid (partial send-delete-reqs-to-queue data-sync-q)) 1)
            (do
              (audit-log/log {:request request
                              :target-kv {:k audit-log/organizer

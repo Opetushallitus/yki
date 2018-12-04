@@ -62,14 +62,15 @@ CREATE TABLE IF NOT EXISTS exam_date_language (
 CREATE TABLE IF NOT EXISTS exam_session (
   id BIGSERIAL PRIMARY KEY,
   organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
-  exam_language_id BIGSERIAL NOT NULL REFERENCES exam_language(id),
+  language_code CHAR(2) REFERENCES language (code) NOT NULL,
+  level_code TEXT REFERENCES exam_level (code) NOT NULL,
   exam_date_id BIGSERIAL NOT NULL REFERENCES exam_date(id),
   max_participants INTEGER NOT NULL,
   office_oid TEXT,
   published_at TIMESTAMP WITH TIME ZONE  DEFAULT NULL,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-  UNIQUE (organizer_id, exam_language_id, exam_date_id)
+  UNIQUE (organizer_id, language_code, level_code, exam_date_id)
 );
 --;;
 CREATE TABLE IF NOT EXISTS exam_session_location (

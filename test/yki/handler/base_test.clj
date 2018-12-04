@@ -17,6 +17,7 @@
             [yki.handler.file]
             [yki.handler.auth]
             [yki.job.job-queue]
+            [yki.middleware.no-auth]
             [yki.handler.registration]
             [yki.util.url-helper]
             [yki.handler.organizer]))
@@ -112,13 +113,15 @@
   (insert-exam-dates)
   (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
-        exam_language_id,
+        language_code,
+        level_code,
+        office_oid,
         exam_date_id,
         max_participants,
         published_at)
           VALUES (
             (SELECT id FROM organizer where oid = '1.2.3.4'),
-            (SELECT id from exam_language WHERE language_code = 'fi'), 1, 5, null)"))
+            'fi', 'PERUS', '1.2.3.4.5', 1, 5, null)"))
 
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (street_address,
     city,
@@ -166,19 +169,22 @@
         url-helper (create-url-helper uri)
         exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :data-sync-q  (data-sync-q)})
         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
-        auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper
-                                                                    :db db
-                                                                    :session-config {:key "ad7tbRZIG839gDo2"
-                                                                                     :cookie-attrs {:max-age 28800
-                                                                                                    :http-only true
-                                                                                                    :domain "localhost"
-                                                                                                    :secure false
-                                                                                                    :path "/yki"}}})
+        auth (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper url-helper
+                                                                       :db db
+                                                                       :session-config {:key "ad7tbRZIG839gDo2"
+                                                                                        :cookie-attrs {:max-age 28800
+                                                                                                       :http-only true
+                                                                                                       :domain "localhost"
+                                                                                                       :secure false
+                                                                                                       :path "/yki"}}})
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
                                                                              :db db
                                                                              :url-helper url-helper}))
         file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
         organizer-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
+                                                                                       :auth auth
+                                                                                       :data-sync-q (data-sync-q)
+                                                                                       :access-log (access-log)
                                                                                        :url-helper url-helper
                                                                                        :exam-session-handler exam-session-handler
                                                                                        :file-handler file-handler}))]

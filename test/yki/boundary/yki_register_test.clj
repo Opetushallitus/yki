@@ -39,7 +39,7 @@
   (base/insert-login-link-prereqs)
   (testing "should send delete requests"
     (with-routes!
-      {{:path "/tutkintotilaisuus" :query-params {:tutkintokieli "fi" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4"}} {:status 202}
+      {{:path "/tutkintotilaisuus" :query-params {:tutkintokieli "fi" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 202}
        {:path "/jarjestaja" :query-params {:oid "1.2.3.4"}} {:status 202}}
       (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
             db (base/db)

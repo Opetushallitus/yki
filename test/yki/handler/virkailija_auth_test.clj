@@ -56,6 +56,8 @@
                                           :cas-client cas-client})
         exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :data-sync-q  (base/data-sync-q)})
         org-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
+                                                                                 :access-log (base/access-log)
+                                                                                 :data-sync-q  (base/data-sync-q)
                                                                                  :url-helper url-helper
                                                                                  :exam-session-handler exam-session-handler
                                                                                  :auth auth

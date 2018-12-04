@@ -63,6 +63,9 @@
     {"/organisaatio-service/rest/organisaatio/v4/1.2.3.4" {:status 200
                                                            :content-type "application/json"
                                                            :body   (slurp "test/resources/organization.json")}
+     "/organisaatio-service/rest/organisaatio/v4/1.2.3.4.5" {:status 200
+                                                             :content-type "application/json"
+                                                             :body   (slurp "test/resources/organization.json")}
      "/tutkintotilaisuus" {:status 201
                            :content-type "application/json"
                            :body   "{}"}
