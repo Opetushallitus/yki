@@ -107,7 +107,8 @@ INSERT INTO attachment_metadata (
 -- name: insert-exam-session<!
 INSERT INTO exam_session (
   organizer_id,
-  exam_language_id,
+  language_code,
+  level_code,
   exam_date_id,
   max_participants,
   office_oid,
@@ -115,7 +116,11 @@ INSERT INTO exam_session (
 ) VALUES (
   (SELECT id FROM organizer
     WHERE oid = :oid AND deleted_at IS NULL AND agreement_end_date >= :session_date AND agreement_start_date <= :session_date),
-  (SELECT id FROM exam_language el
+  (SELECT language_code FROM exam_language el
+    WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+      AND el.language_code = :language_code
+      AND el.level_code = :level_code),
+  (SELECT level_code FROM exam_language el
     WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
       AND el.language_code = :language_code
       AND el.level_code = :level_code),
@@ -153,11 +158,17 @@ INSERT INTO exam_date(
   :registration_end_date
 );
 
+-- name: select-exam-session-office-oids
+SELECT es.office_oid
+FROM exam_session es
+INNER JOIN organizer o ON es.organizer_id = o.id
+WHERE o.oid = :oid;
+
 -- name: select-exam-sessions
 SELECT
   e.id,
-  el.language_code,
-  el.level_code,
+  language_code,
+  level_code,
   ed.exam_date AS session_date,
   e.max_participants,
   e.office_oid,
@@ -178,7 +189,6 @@ SELECT
 ) AS location
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
-INNER JOIN exam_language el ON e.exam_language_id = el.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
   AND o.oid = COALESCE(:oid, o.oid);
@@ -187,8 +197,8 @@ WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
 SELECT
   e.id,
   ed.exam_date AS session_date,
-  el.language_code,
-  el.level_code,
+  language_code,
+  level_code,
   e.max_participants,
   e.office_oid,
   e.published_at,
@@ -208,7 +218,6 @@ SELECT
 ) AS location
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
-INNER JOIN exam_language el ON e.exam_language_id = el.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE e.id = :id;
 
@@ -216,8 +225,16 @@ WHERE e.id = :id;
 UPDATE exam_session
 SET
   exam_date_id = (SELECT id FROM exam_date WHERE exam_date = :session_date),
-  exam_language_id =
-  (SELECT id FROM exam_language el
+  language_code =
+  (SELECT language_code FROM exam_language el
+    WHERE el.organizer_id = (SELECT id FROM organizer
+                              WHERE oid = :oid
+                                AND deleted_at IS NULL AND agreement_end_date >= :session_date
+                                AND agreement_start_date <= :session_date)
+      AND el.language_code = :language_code
+      AND el.level_code = :level_code),
+  level_code =
+  (SELECT level_code FROM exam_language el
     WHERE el.organizer_id = (SELECT id FROM organizer
                               WHERE oid = :oid
                                 AND deleted_at IS NULL AND agreement_end_date >= :session_date
@@ -384,14 +401,13 @@ RETURNING id as updated;
 SELECT re.state,
        re.exam_session_id,
        re.participant_id,
-       el.language_code,
-       el.level_code,
+       es.language_code,
+       es.level_code,
        ed.exam_date,
        esl.street_address,
        esl.city
 FROM registration re
 INNER JOIN exam_session es ON es.id = re.exam_session_id
-INNER JOIN exam_language el ON el.id = es.exam_language_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id

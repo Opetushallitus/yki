@@ -102,5 +102,6 @@
                          :file-handler #ig/ref  :yki.handler/file
                          :access-log #ig/ref :yki.middleware.access-log/with-logging
                          :exam-session-handler #ig/ref :yki.handler/exam-session
+                         :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
                          :auth #ig/ref :yki.middleware.auth/with-authentication}}
 

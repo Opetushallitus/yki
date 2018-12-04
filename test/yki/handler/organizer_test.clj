@@ -8,6 +8,7 @@
             [muuntaja.middleware :as middleware]
             [muuntaja.core :as m]
             [clojure.java.jdbc :as jdbc]
+            [pgqueue.core :as pgq]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
@@ -62,10 +63,21 @@
       (is (= (:status response) 200)))))
 
 (deftest delete-organizer-test
-  (base/insert-organizer  "'1.2.3.4'")
+  (base/insert-login-link-prereqs)
   (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4"))
-        response (base/send-request-with-tx request)]
-    (testing "delete organizer endpoint should remove organizer"
+        response (base/send-request-with-tx request)
+        data-sync-q (base/data-sync-q)
+        sync-req-1 (pgq/take data-sync-q)
+        sync-req-2 (pgq/take data-sync-q)]
+    (testing "delete organizer endpoint should mark organizer as deleted in db"
       (is (= (:status response) 200))
       (is (= '({:count 0})
-             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM organizer where deleted_at IS NULL"))))))
+             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM organizer where deleted_at IS NULL")))
+      (is (= '({:count 1})
+             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM organizer where deleted_at IS NOT NULL"))))
+
+    (testing "delete organizer endpoint should send organizer and office ois to sync queue"
+      (is (= (:type sync-req-1) "DELETE"))
+      (is (= (:organizer-oid sync-req-1) "1.2.3.4"))
+      (is (= (:type sync-req-2) "DELETE"))
+      (is (= (:organizer-oid sync-req-2) "1.2.3.4.5")))))
