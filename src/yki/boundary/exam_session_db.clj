@@ -21,9 +21,7 @@
     (f/parse date)))
 
 (defn- int->boolean [value]
-  (if (= value 1)
-    true
-    false))
+  (= value 1))
 
 (defn rollback-on-exception [tx f]
   (try
