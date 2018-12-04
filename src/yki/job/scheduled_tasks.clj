@@ -15,11 +15,12 @@
 
 (defonce worker-id (str (UUID/randomUUID)))
 
-(defn take-with-error-handling
+(defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
   Rethrows exceptions if retry until limit is not reached so that message is not
   removed from queue and can be processed again."
   [queue retry-duration-in-days handler-fn]
+  (log/info "Executing handler on queue" (:name queue))
   (try
     (pgq/take-with
      [request queue]
