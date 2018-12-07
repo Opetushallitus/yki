@@ -5,15 +5,23 @@
             [clojure.tools.logging :as log]
             [yki.boundary.email :as email]
             [yki.boundary.registration-db :as registration-db]
+            [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.yki-register :as yki-register]
             [yki.job.job-queue]
-            [clj-time.local :as l]
             [clj-time.coerce :as c]
             [clj-time.core :as t]
             [yki.boundary.job-db :as job-db])
   (:import [java.util UUID]))
 
 (defonce worker-id (str (UUID/randomUUID)))
+
+(defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
+                                          :task "REGISTRATION_STATE_HANDLER"
+                                          :interval "599 SECONDS"})
+
+(defonce participants-sync-handler-conf {:worker-id (str (UUID/randomUUID))
+                                         :task "PARTICIPANTS_SYNC_HANDLER"
+                                         :interval "59 MINUTES"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -40,7 +48,7 @@
   [_ {:keys [db]}]
   {:pre [(some? db)]}
   #(try
-     (when (= (job-db/try-to-acquire-lock! db worker-id "REGISTRATION_STATE_HANDLER" "599 SECONDS") 1)
+     (when (job-db/try-to-acquire-lock! db registration-state-handler-conf)
        (log/info "Check started registrations expiry")
        (let [updated (registration-db/update-started-registrations-to-expired! db)]
          (log/info "Started registrations set to expired" updated))
@@ -49,6 +57,22 @@
          (log/info "Submitted registrations set to expired" updated)))
      (catch Exception e
        (log/error e "Registration state handler failed"))))
+
+(defmethod ig/init-key :yki.job.scheduled-tasks/participants-sync-handler
+  [_ {:keys [db url-helper disabled]}]
+  {:pre [(some? db) (some? url-helper)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
+       (log/info "Check participants sync")
+       (let [exam-sessions (map :exam_session_id (exam-session-db/get-not-synced-exam-sessions db))]
+         (log/info "Syncronizing participants of exam sessions" exam-sessions)
+         (doseq [exam-session-id exam-sessions]
+           (try
+             (yki-register/sync-exam-session-participants db url-helper disabled exam-session-id)
+             (catch Exception e
+               (log/error e "Failed to syncronize participants of exam session" exam-session-id))))))
+     (catch Exception e
+       (log/error e "Participant sync handler failed"))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader
   [_ {:keys [email-q url-helper retry-duration-in-days]}]

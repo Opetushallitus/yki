@@ -19,9 +19,9 @@
 
 (defn- send-delete-reqs-to-queue [data-sync-q oids]
   (doseq [oid oids]
-    (pgq/put data-sync-q  {:organizer-oid oid
-                           :type "DELETE"
-                           :created (System/currentTimeMillis)})))
+    (pgq/put data-sync-q {:organizer-oid oid
+                          :type "DELETE"
+                          :created (System/currentTimeMillis)})))
 
 (defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler data-sync-q access-log]}]
   {:pre [(some? db) (some? url-helper) (some? auth) (some? file-handler) (some? exam-session-handler) (some? data-sync-q) (some? access-log)]}

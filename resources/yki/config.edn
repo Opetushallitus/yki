@@ -25,21 +25,26 @@
 
  :yki.job.scheduled-tasks/registration-state-handler {:db #ig/ref :duct.database/sql}
 
+ :yki.job.scheduled-tasks/participants-sync-handler {:db #ig/ref :duct.database/sql
+                                                     :disabled true
+                                                     :url-helper #ig/ref :yki.util/url-helper}
+
  :yki.job.scheduled-tasks/email-queue-reader {:email-q #ig/ref :yki.job.job-queue/email-q
                                               :url-helper #ig/ref :yki.util/url-helper
-                                              :retry-duration-in-days 14}
+                                              :retry-duration-in-days 30}
 
  :yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
                                                   :db #ig/ref :duct.database/sql
                                                   :disabled true
                                                   :url-helper #ig/ref :yki.util/url-helper
-                                                  :retry-duration-in-days 14}
+                                                  :retry-duration-in-days 30}
 
  :duct.scheduler/simple
  {:thread-pool-size 10
-  :jobs [{:interval 600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/registration-state-handler}
-         {:interval 5 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}
-         {:interval 600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/data-sync-queue-reader}]}
+  :jobs [{:interval 600  :delay 60 :run #ig/ref :yki.job.scheduled-tasks/registration-state-handler}
+         {:interval 3600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/participants-sync-handler}
+         {:interval 5    :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}
+         {:interval 600  :delay 60 :run #ig/ref :yki.job.scheduled-tasks/data-sync-queue-reader}]}
 
  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {}}

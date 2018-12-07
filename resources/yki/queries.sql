@@ -496,3 +496,38 @@ WHERE ticket = :ticket;
 SELECT ticket
 FROM cas_ticketstore
 WHERE ticket = :ticket;
+
+--name: insert-participants-sync-status!
+INSERT INTO participant_sync_status(
+  exam_session_id
+) SELECT
+  :exam_session_id
+  WHERE NOT EXISTS (SELECT exam_session_id
+                    FROM participant_sync_status
+                    WHERE exam_session_id = :exam_session_id
+                      AND success_at IS NULL)
+ON CONFLICT DO NOTHING;
+
+-- name: select-not-synced-exam-sessions
+SELECT es.id as exam_session_id
+FROM exam_session es
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+WHERE ed.registration_end_date < current_date
+AND NOT EXISTS (
+  SELECT id
+  FROM participant_sync_status
+  WHERE exam_session_id = es.id
+  AND success_at IS NOT NULL
+);
+
+-- name: update-participant-sync-to-success!
+UPDATE participant_sync_status
+SET success_at = current_timestamp
+WHERE exam_session_id = :exam_session_id
+AND success_at IS NULL;
+
+--name: select-exam-session-participants
+SELECT r.form, r.person_oid
+FROM exam_session es
+INNER JOIN registration r ON es.id = r.exam_session_id
+WHERE es.id = :id;

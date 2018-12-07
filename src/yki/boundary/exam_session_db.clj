@@ -35,7 +35,11 @@
   (create-exam-session! [db oid exam-session send-to-queue-fn])
   (update-exam-session! [db oid id exam-session send-to-queue-fn])
   (delete-exam-session! [db id send-to-queue-fn])
+  (init-participants-sync-status! [db exam-session-id])
+  (set-participants-sync-to-success! [db exam-session-id])
   (get-exam-session-by-id [db id])
+  (get-exam-session-participants [db id])
+  (get-not-synced-exam-sessions [db])
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and from arguments"))
 
@@ -53,6 +57,14 @@
             (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))
           (send-to-queue-fn "CREATE" exam-session-id)
           exam-session-id))))
+  (init-participants-sync-status!
+    [{:keys [spec]} exam-session-id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/insert-participants-sync-status! tx {:exam_session_id exam-session-id})))
+  (set-participants-sync-to-success!
+    [{:keys [spec]} exam-session-id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-participant-sync-to-success! tx {:exam_session_id exam-session-id})))
   (update-exam-session!
     [{:keys [spec]} oid id exam-session send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
@@ -76,8 +88,11 @@
             (send-to-queue-fn "DELETE" id))
           deleted))))
   (get-exam-session-by-id [{:keys [spec]} id]
-    (jdbc/with-db-transaction [tx spec]
-      (first (q/select-exam-session-by-id tx {:id id}))))
+    (first (q/select-exam-session-by-id spec {:id id})))
+  (get-not-synced-exam-sessions [{:keys [spec]}]
+    (q/select-not-synced-exam-sessions spec))
+  (get-exam-session-participants [{:keys [spec]} id]
+    (q/select-exam-session-participants spec {:id id}))
   (get-exam-sessions [{:keys [spec]} oid from]
     (q/select-exam-sessions spec {:oid oid
                                   :from (string->date from)})))

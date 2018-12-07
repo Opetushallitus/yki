@@ -15,7 +15,7 @@
 
 (s/def ::language-code (s/and string? #(= (count %) 2)))
 (s/def ::yki-language-code  #{"fi" "sv" "en"})
-(s/def ::gender-code  #{"1" "2"})
+(s/def ::gender-code  #{"0" "1" "2" "9"})
 
 (defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
@@ -166,7 +166,7 @@
 (s/def ::first_name ::non-blank-string)
 (s/def ::last_name ::non-blank-string)
 (s/def ::gender ::gender-code)
-(s/def ::nationalities (s/coll-of ::non-blank-string))
+(s/def ::nationalities (s/coll-of (s/and ::non-blank-string #(= (count %) 3))))
 (s/def ::birth_date ::date)
 (s/def ::post_office ::non-blank-string)
 (s/def ::zip ::non-blank-string)
@@ -181,6 +181,7 @@
                                        ::gender
                                        ::nationalities
                                        ::birth_date
+                                       ::ssn
                                        ::certificate_lang
                                        ::exam_lang
                                        ::post_office
@@ -189,9 +190,7 @@
                                        ::phone_number
                                        ::email]))
 
-
 ;; YKI register sync
-
 
 (s/def :sync/type         #{"CREATE" "UPDATE" "DELETE"})
 (s/def ::created          number?)
@@ -202,3 +201,9 @@
                                           ::created]
                                     :opt [::exam-session-id
                                           ::organizer-oid]))
+
+(def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
+
+(def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
+
+(s/def ::ssn (s/and string? #(re-matches ssn-regexp %)))
