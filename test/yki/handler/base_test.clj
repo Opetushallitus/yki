@@ -92,6 +92,32 @@
 (defn body-as-json [response]
   (j/read-value (body response)))
 
+(def registration-form {:first_name  "Aku"
+                        :last_name  "Ankka"
+                        :gender "1"
+                        :nationalities ["FIN"]
+                        :birth_date "1999-01-01"
+                        :certificate_lang "fi"
+                        :exam_lang "fi"
+                        :post_office "Ankkalinna"
+                        :zip "12345"
+                        :email "aa@al.fi"
+                        :street_address "Katu 3"
+                        :phone_number "+3584012345"})
+
+(def registration-form-2 {:first_name  "Aku2"
+                          :last_name  "Ankka2"
+                          :gender "1"
+                          :nationalities ["FIN"]
+                          :ssn "301079-122F"
+                          :certificate_lang "fi"
+                          :exam_lang "fi"
+                          :post_office "Ankkalinna"
+                          :zip "12346"
+                          :email "aa@al.fi"
+                          :street_address "Katu 4"
+                          :phone_number "+3584012346"})
+
 (defn insert-organizer [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
         VALUES (" oid ", '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi')")))
@@ -142,6 +168,15 @@
                                     "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', " select-exam-session ", " select-participant ")"))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
+
+(defn insert-registrations []
+  (jdbc/execute! @embedded-db/conn (str
+                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
+    ('5.4.3.2.2', 'SUBMITTED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
+  (jdbc/execute! @embedded-db/conn (str
+                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
+                                    ('5.4.3.2.1', 'SUBMITTED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')")))
+
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)

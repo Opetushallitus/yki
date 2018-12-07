@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS task_lock (
 );
 --;;
 INSERT INTO task_lock(task, last_executed)
-VALUES ('PAYMENT_STATE_HANDLER', '-infinity');
+VALUES ('PARTICIPANTS_SYNC_HANDLER', '-infinity');
 --;;
 INSERT INTO task_lock(task, last_executed)
 VALUES ('REGISTRATION_STATE_HANDLER', '-infinity');

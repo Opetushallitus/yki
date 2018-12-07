@@ -147,3 +147,10 @@ create table cas_ticketstore (
   logged_in TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
+CREATE TABLE participant_sync_status (
+  id BIGSERIAL PRIMARY KEY,
+  exam_session_id BIGSERIAL REFERENCES exam_session(id),
+  success_at TIMESTAMP WITH TIME ZONE,
+  created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
+);
+--;;

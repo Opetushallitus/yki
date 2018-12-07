@@ -5,6 +5,9 @@
             [jsonista.core :as j]
             [pgqueue.core :as pgq]
             [clojure.java.jdbc :as jdbc]
+            [yki.util.constants :as c]
+            [clj-time.format :as f]
+            [clj-time.core :as t]
             [yki.handler.base-test :as base]
             [yki.embedded-db :as embedded-db]
             [yki.job.scheduled-tasks :as st]))
@@ -38,7 +41,8 @@
 (deftest handle-started-registration-expired-test
   (base/insert-login-link-prereqs)
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(state, exam_session_id, participant_id, started_at) values ('STARTED'," base/select-exam-session "," base/select-participant ", (current_timestamp - interval '61 minutes'))"))
+                                    "INSERT INTO registration(state, exam_session_id, participant_id, started_at) values
+                                    ('STARTED'," base/select-exam-session "," base/select-participant ", (current_timestamp - interval '61 minutes'))"))
 
   (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (duct.database.sql/->Boundary @embedded-db/conn)})
         _ (registration-state-handler)
@@ -110,4 +114,28 @@
         (is (= (pgq/count email-q) 1))
         (reader)
         (is (= (pgq/count email-q) 0))))))
+
+(def date-formatter (f/formatter c/date-format))
+
+(defn yesterday []
+  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 1))))
+
+(deftest handle-exam-session-participants-sync-test
+  (base/insert-login-link-prereqs)
+  (base/insert-registrations)
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (yesterday) "'"))
+  (with-routes!
+    {"/osallistujat" {:status 200
+                      :body "{}"}}
+    (let [handler (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db (duct.database.sql/->Boundary @embedded-db/conn)
+                                                                                   :disabled false
+                                                                                   :url-helper (base/create-url-helper (str "localhost:" port))})
+          _ (handler)
+          sync_status (base/select-one "SELECT * FROM participant_sync_status")]
+      (testing "should send participants to yki register and set sync status to success"
+        (is (= (count (:recordings (first @(:routes server)))) 1))
+        (is (some? (:success_at sync_status))))
+      (testing "should send participants only once"
+        (handler)
+        (is (= (count (:recordings (first @(:routes server)))) 1))))))
 

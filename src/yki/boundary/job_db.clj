@@ -7,11 +7,13 @@
 (require-sql ["yki/queries.sql" :as q])
 
 (defprotocol Job
-  (try-to-acquire-lock! [db worker-id task interval]))
+  "Returns true if lock is succesfully acquired."
+  "Lock is used for ensuring that single instance of a job is running."
+  (try-to-acquire-lock! [db config]))
 
 (extend-protocol Job
   duct.database.sql.Boundary
   (try-to-acquire-lock!
-    [{:keys [spec]} worker-id task interval]
+    [{:keys [spec]} {:keys [worker-id task interval]}]
     (jdbc/with-db-transaction [tx spec]
-      (q/try-to-acquire-lock! tx {:worker_id worker-id :task task :interval interval}))))
+      (> (q/try-to-acquire-lock! tx {:worker_id worker-id :task task :interval interval}) 0))))

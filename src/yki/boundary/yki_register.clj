@@ -2,6 +2,7 @@
   (:require [clojure.tools.logging :refer [info]]
             [clojure.string :as str]
             [yki.util.http-util :as http-util]
+            [clj-time.format :as f]
             [yki.boundary.organizer-db :as organizer-db]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.organization :as organization]
@@ -34,13 +35,16 @@
    :pvm session_date
    :jarjestaja (or office_oid organizer_oid)})
 
-(defn- do-post [url request]
-  (let [response (http-util/do-post url {:headers {"content-type" "application/json; charset=UTF-8"}
-                                         :body    (json/write-value-as-string request)})
-        status (:status response)]
-    (when (and (not= 200 status) (not= 201 status))
-      (log/error "Failed to sync data, error response" response)
-      (throw (Exception. (str "Could not sync request " request))))))
+(defn- do-post
+  ([url body-as-string]
+   (do-post url body-as-string "application/json; charset=UTF-8"))
+  ([url body-as-string content-type]
+   (let [response (http-util/do-post url {:headers {"content-type" content-type}
+                                          :body    body-as-string})
+         status (:status response)]
+     (when (and (not= 200 status) (not= 201 status))
+       (log/error "Failed to sync data, error response" response)
+       (throw (Exception. (str "Could not sync request " body-as-string)))))))
 
 (defn- do-delete [url]
   (let [response (http-util/do-delete url)
@@ -56,38 +60,91 @@
         request (create-sync-organizer-req organizer organization)]
     (if disabled
       (log/info "Sending disabled. Logging request " request)
-      (do-post (url-helper :yki-register.organizer) request))))
+      (do-post (url-helper :yki-register.organizer) (json/write-value-as-string request)))))
+
+(defn- create-url-params
+  [{:keys [language_code level_code session_date office_oid organizer_oid]}]
+  (str
+   "?tutkintokieli=" language_code
+   "&taso=" (convert-level level_code)
+   "&pvm=" session_date
+   "&jarjestaja=" (or office_oid organizer_oid)))
 
 (defn- remove-organizer [url-helper disabled oid]
   (if disabled
     (log/info "Sending disabled. Logging delete" oid)
     (do-delete (str (url-helper :yki-register.organizer) "?oid=" oid))))
 
-(defn- remove-exam-session [url-helper disabled {:keys [language_code level_code session_date office_oid organizer_oid] :as exam-session}]
+(defn- remove-exam-session [url-helper disabled  exam-session]
   (if disabled
     (log/info "Sending disabled. Logging delete" exam-session)
     (do-delete (str (url-helper :yki-register.exam-session)
-                    "?tutkintokieli=" language_code
-                    "&taso=" (convert-level level_code)
-                    "&pvm=" session_date
-                    "&jarjestaja=" (or office_oid organizer_oid)))))
+                    (create-url-params exam-session)))))
+
+(defn- ssn-or-birthdate [ssn birthdate]
+  (or ssn
+      (let [[year month day] (str/split birthdate #"-")]
+        (str
+         day
+         month
+         year
+         (if (< (Integer/valueOf year) 2000) "-" "A")))))
+
+(defn- convert-gender [gender]
+  (case gender
+    "1" "M"
+    "2" "N"
+    ""))
 
 (defn- sync-exam-session
   [url-helper disabled exam-session]
   (let [request (create-sync-exam-session-req exam-session)]
     (if disabled
       (log/info "Sending disabled. Logging request" request)
-      (do-post (url-helper :yki-register.exam-session) request))))
+      (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string request)))))
+
+(defn create-partipant-csv [registration-form oid]
+  (let [{:keys [first_name last_name gender nationalities birth_date ssn certificate_lang
+                exam_lang post_office zip street_address phone_number email]} registration-form]
+    (str oid ";"
+         (ssn-or-birthdate ssn birth_date) ";"
+         first_name ";"
+         last_name ";"
+         (convert-gender gender) ";"
+         (first nationalities) ";"
+         street_address ";"
+         zip ";"
+         post_office ";"
+         email ";"
+         exam_lang ";"
+         certificate_lang)))
+
+(defn create-participants-csv [participants]
+  (map #(create-partipant-csv (:form %) (:person_oid %)) participants))
+
+(defn sync-exam-session-participants
+  [db url-helper disabled exam-session-id]
+  (let [exam-session (exam-session-db/get-exam-session-by-id db exam-session-id)
+        participants (exam-session-db/get-exam-session-participants db exam-session-id)
+        url (str (url-helper :yki-register.participants)
+                 (create-url-params exam-session))
+        request (str/join (System/lineSeparator) (create-participants-csv participants))]
+    (if disabled
+      (log/info "Sending disabled. Logging participants" participants)
+      (do
+        (exam-session-db/init-participants-sync-status! db exam-session-id)
+        (do-post url request "text/csv; charset=UTF-8")
+        (exam-session-db/set-participants-sync-to-success! db exam-session-id)))))
 
 (defn sync-exam-session-and-organizer
-  "When exam session is synced to YKI register also organizer data is synced."
+  "When exam session is synced to YKI register then also organizer data is synced."
   [db url-helper disabled {:keys [type exam-session-id organizer-oid]}]
   (case type
     "DELETE" (if exam-session-id
                (remove-exam-session url-helper disabled (exam-session-db/get-exam-session-by-id db exam-session-id))
                (remove-organizer url-helper disabled organizer-oid))
     (if exam-session-id
-      (let [{:keys [organizer_oid office_oid] :as exam-session} (exam-session-db/get-exam-session-by-id db exam-session-id)
-            organizer-res (sync-organizer db url-helper disabled organizer_oid office_oid)
-            exam-session-res (sync-exam-session url-helper disabled exam-session)])
+      (let [{:keys [organizer_oid office_oid] :as exam-session} (exam-session-db/get-exam-session-by-id db exam-session-id)]
+        (sync-organizer db url-helper disabled organizer_oid office_oid)
+        (sync-exam-session url-helper disabled exam-session))
       (sync-organizer db url-helper disabled organizer-oid nil))))
