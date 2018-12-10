@@ -45,14 +45,15 @@
          (info "Received payment success params" params)
          (handle-exceptions url-helper
                             #(if (paytrail-payment/valid-return-params? db params)
-                               (do
-                                 (paytrail-payment/handle-payment-return db email-q params)
-                                 (audit/log-participant {:request request
-                                                         :target-kv {:k audit/payment
-                                                                     :v (:ORDER_NUMBER params)}
-                                                         :change {:type audit/create-op
-                                                                  :new params}})
-                                 (success-redirect url-helper))
+                               (if (paytrail-payment/handle-payment-return db email-q params)
+                                 (do
+                                   (audit/log-participant {:request request
+                                                           :target-kv {:k audit/payment
+                                                                       :v (:ORDER_NUMBER params)}
+                                                           :change {:type audit/create-op
+                                                                    :new params}})
+                                   (success-redirect url-helper))
+                                 (error-redirect url-helper))
                                (error-redirect url-helper)))))
      (GET "/cancel" request
        (let [params (:params request)]
@@ -70,7 +71,7 @@
      (GET "/notify" {params :params}
        (info "Received payment notify params" params)
        (if (paytrail-payment/valid-return-params? db params)
-         (do
-           (paytrail-payment/handle-payment-return db email-q params)
-           (ok "OK"))
+         (if (paytrail-payment/handle-payment-return db email-q params)
+           (ok "OK")
+           (internal-server-error "Error in payment notify handling"))
          (internal-server-error "Error in payment notify handling"))))))

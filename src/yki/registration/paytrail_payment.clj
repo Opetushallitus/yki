@@ -12,6 +12,27 @@
             [clojure.tools.logging :refer [info error]]
             [integrant.core :as ig]))
 
+(defn- handle-payment-success [db email-q payment-params]
+  (let [email (registration-db/get-participant-email-by-order-number db (:order-number payment-params))
+        lang (:lang email)
+        success (registration-db/complete-registration-and-payment! db payment-params)]
+    (when success
+      (pgq/put email-q
+               {:recipients [(:email email)],
+                :created (System/currentTimeMillis)
+                :subject (template-util/subject "payment_success" lang),
+                :body (template-util/render "payment_success" lang {})}))
+    success))
+
+(defn- handle-payment-cancelled [db payment-params]
+  (info "Payment cancelled" payment-params))
+
+(defn- number-or-nil [maybe-number]
+  (try
+    (Integer/valueOf maybe-number)
+    (catch Exception e
+      nil)))
+
 (defn create-payment-form-data
   [db payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
@@ -27,27 +48,6 @@
 (defn valid-return-params? [db params]
   (let [{:keys [merchant_secret]} (registration-db/get-payment-config-by-order-number db (:ORDER_NUMBER params))]
     (payment-util/valid-return-params? merchant_secret params)))
-
-(defn- handle-payment-success [db email-q payment-params]
-  (let [email (registration-db/get-participant-email-by-order-number db (:order-number payment-params))
-        lang (:lang email)
-        updated (registration-db/complete-registration-and-payment! db payment-params)]
-    (when (= updated 1)
-      (pgq/put email-q
-               {:recipients [(:email email)],
-                :created (System/currentTimeMillis)
-                :subject (template-util/subject "payment_success" lang),
-                :body (template-util/render "payment_success" lang {})}))
-    updated))
-
-(defn- handle-payment-cancelled [db payment-params]
-  (info "Payment cancelled" payment-params))
-
-(defn- number-or-nil [maybe-number]
-  (try
-    (Integer/valueOf maybe-number)
-    (catch Exception e
-      nil)))
 
 (defn handle-payment-return
   [db email-q {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD SETTLEMENT_REFERENCE_NUMBER]}]

@@ -5,7 +5,7 @@
             [jsonista.core :as j]
             [pgqueue.core :as pgq]
             [clojure.java.jdbc :as jdbc]
-            [yki.util.constants :as c]
+            [yki.util.common :as c]
             [clj-time.format :as f]
             [clj-time.core :as t]
             [yki.handler.base-test :as base]

@@ -1,6 +1,6 @@
 (ns yki.boundary.db-extensions
   (:require
-   [yki.util.constants :as c]
+   [yki.util.common :as c]
    [clj-time.local :as l]
    [clj-time.format :as f]
    [clj-time.jdbc]
