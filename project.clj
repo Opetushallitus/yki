@@ -6,6 +6,7 @@
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.9.0"]
+                 [clj-time "0.15.0"]
                  [duct/core "0.6.2"]
                  [duct/module.logging "0.3.1"]
                  [duct/module.web "0.6.4"]
