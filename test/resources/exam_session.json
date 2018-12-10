@@ -1,6 +1,6 @@
 {
   "session_date": "2039-05-02",
-  "language_code": "fi",
+  "language_code": "fin",
   "level_code": "PERUS",
   "max_participants": 50,
   "office_oid": null,
@@ -11,21 +11,21 @@
       "city": "Tampere",
       "other_location_info": "auditorio A2",
       "extra_information": null,
-      "language_code": "fi"
+      "language_code": "fin"
     },
     {
       "street_address": "Jokukatu 4",
       "city": "Tammerfors",
       "other_location_info": "auditorium A2",
       "extra_information": null,
-      "language_code": "sv"
+      "language_code": "swe"
     },
     {
       "street_address": "Jokukatu 4",
       "city": "Tampere",
       "other_location_info": "auditorium A2",
       "extra_information": null,
-      "language_code": "en"
+      "language_code": "eng"
     }
   ]
 }

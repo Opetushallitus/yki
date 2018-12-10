@@ -27,7 +27,7 @@
      :middleware [access-log]
      (POST "/" request
        :body [login-link ::ys/login-link]
-       :query-params [lang :- ::ys/language_code]
+       :query-params [lang :- ::ys/language-code]
        :return ::ys/response
        (let [participant-id (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                  :email (:email login-link)}))]

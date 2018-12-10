@@ -415,8 +415,7 @@ INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
   AND (ed.registration_end_date  + time '23:59') AT TIME ZONE 'Europe/Helsinki' >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND re.state = 'STARTED'
-  AND re.participant_id = :participant_id
-  AND esl.language_code = :lang;
+  AND re.participant_id = :participant_id;
 
 -- name: update-registration-to-completed!
 UPDATE registration

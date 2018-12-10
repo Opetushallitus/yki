@@ -8,11 +8,11 @@
   "extra": "shared@oph.fi",
   "languages": [
     {
-      "language_code": "en",
+      "language_code": "eng",
       "level_code": "KESKI"
     },
     {
-      "language_code": "es",
+      "language_code": "spa",
       "level_code": "PERUS"
     }
   ]

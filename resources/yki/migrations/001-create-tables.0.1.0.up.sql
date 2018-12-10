@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS language (
-  code CHAR(2) PRIMARY KEY,
+  code CHAR(3) PRIMARY KEY,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
@@ -28,7 +28,7 @@ WHERE deleted_at IS NULL;
 --;;
 CREATE TABLE IF NOT EXISTS exam_language (
   id BIGSERIAL PRIMARY KEY,
-  language_code CHAR(2) REFERENCES language (code) NOT NULL,
+  language_code CHAR(3) REFERENCES language (code) NOT NULL,
   level_code TEXT REFERENCES exam_level (code) NOT NULL,
   organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
@@ -55,14 +55,14 @@ CREATE TABLE IF NOT EXISTS exam_date (
 CREATE TABLE IF NOT EXISTS exam_date_language (
   id BIGSERIAL PRIMARY KEY,
   exam_date_id BIGSERIAL REFERENCES exam_date(id) NOT NULL,
-  language_code CHAR(2) REFERENCES language(code) NOT NULL,
+  language_code CHAR(3) REFERENCES language(code) NOT NULL,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
 CREATE TABLE IF NOT EXISTS exam_session (
   id BIGSERIAL PRIMARY KEY,
   organizer_id BIGSERIAL NOT NULL REFERENCES organizer(id),
-  language_code CHAR(2) REFERENCES language (code) NOT NULL,
+  language_code CHAR(3) REFERENCES language (code) NOT NULL,
   level_code TEXT REFERENCES exam_level (code) NOT NULL,
   exam_date_id BIGSERIAL NOT NULL REFERENCES exam_date(id),
   max_participants INTEGER NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS exam_session_location (
   city TEXT NOT NULL,
   other_location_info TEXT NOT NULL,
   extra_information TEXT,
-  language_code CHAR(2) REFERENCES language(code) NOT NULL,
+  language_code CHAR(3) REFERENCES language(code) NOT NULL,
   exam_session_id BIGINT NOT NULL REFERENCES exam_session(id) ON DELETE CASCADE,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS payment (
   state payment_state NOT NULL,
   registration_id BIGSERIAL REFERENCES registration (id) NOT NULL UNIQUE,
   amount NUMERIC NOT NULL,
-  lang TEXT NOT NULL,
+  lang CHAR(2) NOT NULL,
   reference_number NUMERIC,
   order_number TEXT NOT NULL UNIQUE,
   external_payment_id TEXT UNIQUE,

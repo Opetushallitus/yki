@@ -11,7 +11,7 @@
 (use-fixtures :each embedded-db/with-transaction)
 
 (def exam-session {:id 1
-                   :language_code "fi"
+                   :language_code "fin"
                    :level_code "PERUS"
                    :session_date "2039-05-02"
                    :max_participants 50
@@ -19,7 +19,7 @@
                    :organizer_oid "1.2.3.4"
                    :office_oid "1.2.3.5"})
 
-(def assert-exam-session-req {:tutkintokieli "fi"
+(def assert-exam-session-req {:tutkintokieli "fin"
                               :taso "PT"
                               :pvm "2039-05-02"
                               :jarjestaja "1.2.3.5"})
@@ -51,7 +51,7 @@
   (base/insert-login-link-prereqs)
   (testing "should send delete requests"
     (with-routes!
-      {{:path "/tutkintotilaisuus" :query-params {:tutkintokieli "fi" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 202}
+      {{:path "/tutkintotilaisuus" :query-params {:tutkintokieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 202}
        {:path "/jarjestaja" :query-params {:oid "1.2.3.4"}} {:status 202}}
       (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
             db (base/db)
@@ -72,7 +72,7 @@
   (base/insert-registrations)
   (testing "should send participants as csv"
     (with-routes!
-      {{:path "/osallistujat" :query-params {:tutkintokieli "fi" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}}
+      {{:path "/osallistujat" :query-params {:tutkintokieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}}
       (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
             db (base/db)
             url-helper (base/create-url-helper (str "localhost:" port))

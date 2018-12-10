@@ -33,7 +33,7 @@
      :coercion :spec
      :middleware [auth access-log]
      (GET "/formdata" {session :session}
-       :query-params [registration-id :- ::ys/id {lang :- ::ys/yki-language-code "fi"}]
+       :query-params [registration-id :- ::ys/id {lang :- ::ys/language-code "fi"}]
        :return ::ys/pt-payment-form-data
        (let [external-user-id (get-in session [:identity :external-user-id])
              formdata (paytrail-payment/create-payment-form-data db payment-config registration-id external-user-id lang)]

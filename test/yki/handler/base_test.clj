@@ -31,8 +31,8 @@
                 :contact_name "fuu"
                 :contact_phone_number "123456"
                 :extra "shared@oph.fi"
-                :languages [{:language_code "fi" :level_code "PERUS"},
-                            {:language_code "en" :level_code "PERUS"}]})
+                :languages [{:language_code "fin" :level_code "PERUS"},
+                            {:language_code "eng" :level_code "PERUS"}]})
 
 (def organizers-json
   (j/read-value (slurp "test/resources/organizers.json")))
@@ -125,8 +125,8 @@
         VALUES ((SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL), 12345, 'SECRET_KEY')")))
 
 (defn insert-languages [oid]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('fin', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('swe', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
 (defn insert-exam-dates []
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2000-05-01', '2039-12-01')"))
@@ -150,7 +150,7 @@
         published_at)
           VALUES (
             (SELECT id FROM organizer where oid = '1.2.3.4'),
-            'fi', 'PERUS', '1.2.3.4.5', 1, 5, null)"))
+            'fin', 'PERUS', '1.2.3.4.5', 1, 5, null)"))
 
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (street_address,
     city,
@@ -161,7 +161,7 @@
         'Upseerinkatu 11',
         'Espoo',
         'Other info',
-        'fi',
+        'fin',
         (SELECT id FROM exam_session where max_participants = 5))"))
 
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') ")))

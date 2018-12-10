@@ -13,8 +13,8 @@
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 
-(s/def ::language-code (s/and string? #(= (count %) 2)))
-(s/def ::yki-language-code  #{"fi" "sv" "en"})
+(s/def ::exam-language-code (s/and string? #(= (count %) 3)))
+(s/def ::language-code  #{"fi" "sv" "en"})
 (s/def ::gender-code  #{"0" "1" "2" "9"})
 
 (defn date? [maybe-date]
@@ -35,7 +35,7 @@
 (s/def ::agreement_start_date ::date)
 (s/def ::agreement_end_date   ::date)
 (s/def ::contact_name         (s/and string? #(<= (count %) 256)))
-(s/def ::language_code        ::language-code)
+(s/def ::language_code        ::exam-language-code)
 (s/def ::level_code           (s/and string? #(<= (count %) 16)))
 (s/def ::success              boolean?)
 (s/def ::error                string?)
