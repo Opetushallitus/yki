@@ -93,6 +93,7 @@
                                                :content-type "application/json"
                                                :request-method :put))
           payment (base/select-one (str "SELECT * FROM payment WHERE registration_id = " id))
+          exam-session (base/select-one "SELECT * FROM exam_date WHERE id = 1")
           payment-link (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           email-request (pgq/take email-q)]
@@ -113,7 +114,7 @@
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))
 
-      (testing "second post with same data should return conflict with proper error"
+      (testing "second post with same data should return conflict with proper error message"
         (let [create-twice-response (-> session
                                         (peridot/request routing/registration-api-root
                                                          :body (j/write-value-as-string {:exam_session_id 1})
@@ -123,7 +124,7 @@
           (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
           (is (= (get-in create-twice-response [:response :status]) 409))))
 
-      (testing "when session is full should return conflict with proper error"
+      (testing "when session is full should return conflict with proper error message"
         (fill-exam-session)
         (let [create-twice-response (-> session
                                         (peridot/request routing/registration-api-root

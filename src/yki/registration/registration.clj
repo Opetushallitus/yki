@@ -3,10 +3,12 @@
             [yki.spec :as ys]
             [pgqueue.core :as pgq]
             [clj-time.core :as t]
+            [clj-time.format :as f]
             [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
+            [yki.util.common :as c]
             [ring.util.http-response :refer [ok conflict not-found internal-server-error]]
             [buddy.core.hash :as hash]
             [buddy.core.codecs :refer :all]
@@ -66,16 +68,14 @@
                          :closed (not exam-session-registration-open?)
                          :registered (not participant-not-registered?)}}))))
 
-(defn create-and-send-link [db url-helper email-q lang login-link template-data expires-in-days]
+(defn create-and-send-link [db url-helper email-q lang login-link template-data]
   (let [code          (str (UUID/randomUUID))
         login-url     (str (url-helper :yki.login-link.url) "?code=" code)
-        expires-at    (t/plus (t/now) (t/days expires-in-days))
         email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
         link-type     (:type login-link)
         hashed        (sha256-hash code)]
     (login-link-db/create-login-link! db
                                       (assoc login-link
-                                             :expires_at expires-at
                                              :code hashed))
     (pgq/put email-q
              {:recipients [email]
@@ -105,9 +105,12 @@
                                          :oid oid
                                          :form_version 1
                                          :participant_id participant-id}
+              registration-end-time     (c/next-start-of-day (f/parse (:registration_end_date registration-data)))
+              expiration-date           (t/min-date (c/date-from-now 8) registration-end-time)
               payment-link              {:participant_id participant-id
                                          :exam_session_id nil
                                          :registration_id id
+                                         :expires_at expiration-date
                                          :expired_link_redirect (url-helper :link-expired.redirect)
                                          :success_redirect (url-helper :payment-link.redirect id)
                                          :type "PAYMENT"}
@@ -116,8 +119,7 @@
                                                                email-q
                                                                lang
                                                                payment-link
-                                                               (assoc registration-data :amount amount)
-                                                               8)
+                                                               (assoc registration-data :amount amount))
               success                   (registration-db/create-payment-and-update-registration! db
                                                                                                  payment
                                                                                                  update-registration
@@ -126,5 +128,5 @@
             {:oid oid}
             {:error {:create_payment true}}))
         {:error {:person_creation true}})
-      {:error {:expired true}})))
+      {:error {:closed true}})))
 

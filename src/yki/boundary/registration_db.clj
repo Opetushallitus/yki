@@ -29,7 +29,7 @@
   (update-submitted-registrations-to-expired! [db]))
 
 (defn- int->boolean [value]
-  (= value 1))
+  (> value 0))
 
 (extend-protocol Registration
   duct.database.sql.Boundary
@@ -44,7 +44,7 @@
                              :payed_at timestamp
                              :reference_number reference-number
                              :state "PAID"})
-      (q/update-registration-to-completed! tx {:order_number order-number})))
+      (int->boolean (q/update-registration-to-completed! tx {:order_number order-number}))))
   (get-participant-by-id
     [{:keys [spec]} id]
     (first (q/select-participant-by-id spec {:id id})))

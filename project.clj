@@ -38,6 +38,7 @@
             [lein-cljfmt "0.6.1"]
             [jonase/eastwood "0.3.3"]
             [lein-bikeshed "0.5.1"]
+            [lein-ancient "0.6.15"]
             [com.jakemccrary/lein-test-refresh "0.23.0"]
             [lein-cloverage "1.0.13"]
             [me.arrdem/lein-git-version "2.0.8"]

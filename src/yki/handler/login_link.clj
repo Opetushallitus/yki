@@ -5,6 +5,7 @@
             [yki.boundary.login-link-db :as login-link-db]
             [yki.registration.registration :as registration]
             [yki.spec :as ys]
+            [yki.util.common :as c]
             [pgqueue.core :as pgq]
             [clj-time.core :as t]
             [yki.util.template-util :as template-util]
@@ -34,7 +35,8 @@
                                                   (assoc login-link
                                                          :participant_id participant-id
                                                          :type "LOGIN_LINK"
+                                                         :expires_at (c/date-from-now 1)
                                                          :expired_link_redirect (url-helper :link-expired.redirect)
                                                          :success_redirect (url-helper :login-link.redirect (:exam_session_id login-link))
-                                                         :registration_id nil) {} 1)
+                                                         :registration_id nil) {})
            (ok {:success true})))))))

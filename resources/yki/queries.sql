@@ -348,8 +348,8 @@ SELECT EXISTS (
   FROM exam_session es
   INNER JOIN exam_date ed ON es.exam_date_id = ed.id
   WHERE es.id = :exam_session_id
-    AND (ed.registration_start_date + time '06:00' AT TIME ZONE 'UTC') < current_timestamp
-    AND (ed.registration_end_date + time '22:00' AT TIME ZONE 'UTC') > current_timestamp
+    AND ((ed.registration_start_date + time '08:00') AT TIME ZONE 'Europe/Helsinki') < current_timestamp AT TIME ZONE 'Europe/Helsinki'
+    AND ((ed.registration_end_date + time '23:59') AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki'
 ) as exists;
 
 -- name: select-exam-session-space-left
@@ -405,6 +405,7 @@ SELECT re.state,
        es.language_code,
        es.level_code,
        ed.exam_date,
+       ed.registration_end_date,
        esl.street_address,
        esl.city
 FROM registration re
@@ -412,6 +413,7 @@ INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
+  AND (ed.registration_end_date  + time '23:59') AT TIME ZONE 'Europe/Helsinki' >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND re.state = 'STARTED'
   AND re.participant_id = :participant_id
   AND esl.language_code = :lang;
