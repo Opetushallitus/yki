@@ -90,7 +90,7 @@
         email           (:email registration-form)]
     (when email
       (registration-db/update-participant-email! db email participant-id))
-    (if-let [registration-data (registration-db/get-registration-data db id participant-id lang)]
+    (if-let [registration-data (registration-db/get-registration-data db id participant-id)]
       (if-let [oid                 (or (:oid identity)
                                        (onr/get-or-create-person
                                         onr-client

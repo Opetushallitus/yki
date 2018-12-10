@@ -10,11 +10,11 @@
             "extra": "shared@oph.fi",
             "languages": [
                 {
-                    "language_code": "fi",
+                    "language_code": "fin",
                     "level_code": "PERUS"
                 },
                 {
-                    "language_code": "sv",
+                    "language_code": "swe",
                     "level_code": "PERUS"
                 }
             ]
