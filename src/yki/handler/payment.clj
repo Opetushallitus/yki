@@ -44,7 +44,7 @@
        (let [params (:params request)]
          (info "Received payment success params" params)
          (handle-exceptions url-helper
-                            #(if (paytrail-payment/valid-return-params? payment-config params)
+                            #(if (paytrail-payment/valid-return-params? db params)
                                (do
                                  (paytrail-payment/handle-payment-return db email-q params)
                                  (audit/log-participant {:request request
@@ -58,7 +58,7 @@
        (let [params (:params request)]
          (info "Received payment cancel params" params)
          (handle-exceptions url-helper
-                            #(if (paytrail-payment/valid-return-params? payment-config params)
+                            #(if (paytrail-payment/valid-return-params? db params)
                                (do
                                  (audit/log-participant {:request request
                                                          :target-kv {:k audit/payment
@@ -69,7 +69,7 @@
                                (error-redirect url-helper)))))
      (GET "/notify" {params :params}
        (info "Received payment notify params" params)
-       (if (paytrail-payment/valid-return-params? payment-config params)
+       (if (paytrail-payment/valid-return-params? db params)
          (do
            (paytrail-payment/handle-payment-return db email-q params)
            (ok "OK"))
