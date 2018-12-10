@@ -58,9 +58,7 @@
 
 (def payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                      :yki-payment-uri "http://localhost:8080/yki/payment"
-                     :merchant-id 12345
                      :amount "100.00"
-                     :merchant-secret "SECRET_KEY"
                      :msg {:fi "msg_fi"
                            :sv "msg_sv"}})
 
@@ -122,6 +120,10 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
         VALUES (" oid ", '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi')")))
 
+(defn insert-payment-config [oid]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO payment_config (organizer_id, merchant_id, merchant_secret)
+        VALUES ((SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL), 12345, 'SECRET_KEY')")))
+
 (defn insert-languages [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('fi', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('sv', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
@@ -135,6 +137,7 @@
 
 (defn insert-login-link-prereqs []
   (insert-organizer "'1.2.3.4'")
+  (insert-payment-config "'1.2.3.4'")
   (insert-languages "'1.2.3.4'")
   (insert-exam-dates)
   (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")

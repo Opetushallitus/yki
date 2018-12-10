@@ -34,9 +34,7 @@
                         :access-log #ig/ref :yki.middleware.access-log/with-logging
                         :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                          :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"
-                                         :merchant-id 13466
                                          :amount "100.00"
-                                         :merchant-secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
                                          :msg {:fi "Tutkintomaksu"
                                                :sv "Tutkintomaksu_sv"
                                                :en "Tutkintomaksu_en"}}}

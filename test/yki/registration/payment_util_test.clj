@@ -19,9 +19,9 @@
                                  :ORDER_NUMBER "1234"}})
 (def payment-config {:paytrail-host "https://paytrail.com"
                      :yki-payment-uri "http://localhost:8080/payment"
-                     :merchant-id 12345
                      :amount "100.00"
-                     :merchant-secret "SECRET_KEY"
+                     :merchant_id 12345
+                     :merchant_secret "SECRET_KEY"
                      :msg {:fi "msg_fi"
                            :sv "msg_sv"}})
 
@@ -40,7 +40,7 @@
                       :STATUS "PAID"
                       :PAYMENT_METHOD "1"
                       :RETURN_AUTHCODE "B4479EF810E59170D46B11A512C726650B57E08E1BD1EC13018C45BCB2A14D99"}
-        result (payment/valid-return-params? payment-config query-params)]
+        result (payment/valid-return-params? "SECRET_KEY" query-params)]
     (testing "should validate form params"
       (is (= result true)))))
 

@@ -17,6 +17,7 @@
   (create-payment-and-update-registration! [db payment registration after-fn])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
+  (get-payment-config-by-order-number [db order-number])
   (complete-registration-and-payment! [db payment-params])
   (exam-session-space-left? [db exam-session-id])
   (exam-session-registration-open? [db exam-session-id])
@@ -47,6 +48,9 @@
   (get-participant-by-id
     [{:keys [spec]} id]
     (first (q/select-participant-by-id spec {:id id})))
+  (get-payment-config-by-order-number
+    [{:keys [spec]} order-number]
+    (first (q/select-payment-config-by-order-number spec {:order_number order-number})))
   (get-participant-by-external-id
     [{:keys [spec]} external-id]
     (first (q/select-participant-by-external-id spec {:external_user_id external-id})))

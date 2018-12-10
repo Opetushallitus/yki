@@ -6,6 +6,7 @@
             [pgqueue.core :as pgq]
             [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
+            [yki.boundary.organizer-db :as organizer-db]
             [yki.registration.payment-util :as payment-util]
             [ring.util.http-response :refer [not-found]]
             [clojure.tools.logging :refer [info error]]
@@ -17,13 +18,15 @@
     (if-let [payment (registration-db/get-payment-by-registration-id db registration-id)]
       (let [payment-data {:language-code lang
                           :order-number (:order_number payment)}
-            form-data (payment-util/generate-form-data payment-config payment-data)]
+            organizer-specific-config (organizer-db/get-payment-config db (:organizer_id registration))
+            form-data (payment-util/generate-form-data (merge organizer-specific-config payment-config) payment-data)]
         form-data)
       (error "Payment not found for registration-id" registration-id))
     (error "Registration not found" registration-id)))
 
-(defn valid-return-params? [payment-config params]
-  (payment-util/valid-return-params? payment-config params))
+(defn valid-return-params? [db params]
+  (let [{:keys [merchant_secret]} (registration-db/get-payment-config-by-order-number db (:ORDER_NUMBER params))]
+    (payment-util/valid-return-params? merchant_secret params)))
 
 (defn- handle-payment-success [db email-q payment-params]
   (let [email (registration-db/get-participant-email-by-order-number db (:order-number payment-params))

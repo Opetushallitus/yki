@@ -154,3 +154,10 @@ CREATE TABLE participant_sync_status (
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
+CREATE TABLE payment_config (
+  id BIGSERIAL PRIMARY KEY,
+  organizer_id BIGSERIAL REFERENCES organizer(id),
+  merchant_id INT,
+  merchant_secret TEXT
+);
+--;;

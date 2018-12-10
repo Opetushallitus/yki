@@ -20,6 +20,9 @@
   (create-organizer! [db organizer])
   (delete-organizer! [db oid send-to-queue-fn])
   (update-organizer! [db oid organizer])
+  (get-payment-config [db organizer-id])
+  (crete-payment-config! [db payment-config])
+  (update-payment-config! [db payment-config])
   (get-organizers [db])
   (get-organizers-by-oids [db oids])
   (create-attachment-metadata! [db oid attachment-type external-id]))
@@ -58,6 +61,14 @@
       (doseq [lang (:languages organizer)]
         (q/insert-organizer-language! tx (merge lang {:oid oid})))
       (q/update-organizer! tx (assoc (convert-dates organizer) :oid oid))))
+  (get-payment-config [{:keys [spec]} organizer-id]
+    (first (q/select-payment-config spec {:organizer_id organizer-id})))
+  (create-payment-config! [{:keys [spec]} payment-config]
+    (jdbc/with-db-transaction [tx spec]
+      (q/insert-payment-config! tx payment-config)))
+  (update-payment-config! [{:keys [spec]} payment-config]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-payment-config! tx payment-config)))
   (get-organizers [{:keys [spec]}]
     (q/select-organizers spec))
   (get-organizers-by-oids [{:keys [spec]} oids]

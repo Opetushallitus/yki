@@ -374,9 +374,10 @@ SELECT NOT EXISTS (
 ) as exists;
 
 -- name: select-registration
-SELECT state, exam_session_id, participant_id
+SELECT state, exam_session_id, participant_id, es.organizer_id
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
+INNER JOIN exam_session es ON es.id = re.exam_session_id
 WHERE re.id = :id AND p.external_user_id = :external_user_id;
 
 -- name: update-started-registrations-to-expired
@@ -526,8 +527,45 @@ SET success_at = current_timestamp
 WHERE exam_session_id = :exam_session_id
 AND success_at IS NULL;
 
---name: select-exam-session-participants
+-- name: select-exam-session-participants
 SELECT r.form, r.person_oid
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 WHERE es.id = :id;
+
+-- name: insert-payment-config!
+INSERT INTO payment_config(
+  organizer_id,
+  merchant_id,
+  merchant_secret
+) VALUES (
+  (SELECT id FROM organizer
+   WHERE oid = :oid
+   AND deleted_at IS NULL),
+  :merchant_id,
+  :merchant_secret
+);
+
+-- name: select-payment-config
+SELECT
+  organizer_id,
+  merchant_id,
+  merchant_secret
+FROM payment_config
+WHERE organizer_id = :organizer_id;
+
+-- name: select-payment-config-by-order-number
+SELECT
+  pc.organizer_id,
+  pc.merchant_id,
+  pc.merchant_secret
+FROM payment_config pc
+INNER JOIN organizer o ON pc.organizer_id = o.id
+INNER JOIN exam_session es ON o.id = es.organizer_id
+INNER JOIN registration re ON es.id = re.exam_session_id
+INNER JOIN payment p ON re.id = p.registration_id
+WHERE p.order_number = :order_number;
+
+-- name: update-payment-config!
+UPDATE payment_config
+SET merchant_secret = :merchant_secret;
