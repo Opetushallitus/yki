@@ -25,10 +25,8 @@
     (let [request (mock/request :get routing/localisation-api-root)
           response ((create-route port) request)
           response-body (base/body-as-json response)]
-      (testing "get localisation endpoint should return translations"
-        (is (= (count response-body) 3)))
       (testing "translations should be grouped by locale"
-        (is (= (response-body "fi.address_field_email_osoite") "Email"))
-        (is (= (response-body "sv.address_field_email_osoite") "Epostadress"))
-        (is (= (response-body "en.address_field_email_osoite") "Email"))))))
+        (is (= (response-body "fi.email.login.subject") "Ilmoittautuminen"))
+        (is (= (response-body "sv.email.login.subject") "Ilmoittautuminen_sv"))
+        (is (= (response-body "en.email.login.subject") "Ilmoittautuminen_en"))))))
 

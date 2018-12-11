@@ -45,7 +45,7 @@
          (info "Received payment success params" params)
          (handle-exceptions url-helper
                             #(if (paytrail-payment/valid-return-params? db params)
-                               (if (paytrail-payment/handle-payment-return db email-q params)
+                               (if (paytrail-payment/handle-payment-return db email-q url-helper params)
                                  (do
                                    (audit/log-participant {:request request
                                                            :target-kv {:k audit/payment
@@ -71,7 +71,7 @@
      (GET "/notify" {params :params}
        (info "Received payment notify params" params)
        (if (paytrail-payment/valid-return-params? db params)
-         (if (paytrail-payment/handle-payment-return db email-q params)
+         (if (paytrail-payment/handle-payment-return db email-q url-helper params)
            (ok "OK")
            (internal-server-error "Error in payment notify handling"))
          (internal-server-error "Error in payment notify handling"))))))

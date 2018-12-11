@@ -80,8 +80,8 @@
     (pgq/put email-q
              {:recipients [email]
               :created (System/currentTimeMillis)
-              :subject (template-util/subject link-type lang)
-              :body (template-util/render link-type lang (assoc template-data :login-url login-url))})))
+              :subject (template-util/subject url-helper link-type lang template-data)
+              :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
 (defn submit-registration
   [db url-helper email-q lang session id registration-form amount onr-client]
@@ -90,7 +90,7 @@
         email           (:email registration-form)]
     (when email
       (registration-db/update-participant-email! db email participant-id))
-    (if-let [registration-data (registration-db/get-registration-data db id participant-id)]
+    (if-let [registration-data (registration-db/get-registration-data db id participant-id lang)]
       (if-let [oid                 (or (:oid identity)
                                        (onr/get-or-create-person
                                         onr-client

@@ -75,11 +75,12 @@ CREATE TABLE IF NOT EXISTS exam_session (
 --;;
 CREATE TABLE IF NOT EXISTS exam_session_location (
   id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
   street_address TEXT NOT NULL,
   city TEXT NOT NULL,
   other_location_info TEXT NOT NULL,
   extra_information TEXT,
-  language_code CHAR(3) REFERENCES language(code) NOT NULL,
+  lang CHAR(2) NOT NULL,
   exam_session_id BIGINT NOT NULL REFERENCES exam_session(id) ON DELETE CASCADE,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
@@ -106,7 +107,7 @@ CREATE TABLE IF NOT EXISTS registration (
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
-CREATE TYPE login_link_type AS ENUM ('LOGIN_LINK', 'REGISTRATION', 'PAYMENT');
+CREATE TYPE login_link_type AS ENUM ('LOGIN', 'REGISTRATION', 'PAYMENT');
 --;;
 CREATE TABLE IF NOT EXISTS login_link (
  id BIGSERIAL PRIMARY KEY,

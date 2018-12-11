@@ -152,16 +152,18 @@
             (SELECT id FROM organizer where oid = '1.2.3.4'),
             'fin', 'PERUS', '1.2.3.4.5', 1, 5, null)"))
 
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (street_address,
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
+    street_address,
     city,
     other_location_info,
-    language_code,
+    lang,
     exam_session_id)
       VALUES (
+        'Omenia',
         'Upseerinkatu 11',
         'Espoo',
         'Other info',
-        'fin',
+        'fi',
         (SELECT id FROM exam_session where max_participants = 5))"))
 
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') ")))

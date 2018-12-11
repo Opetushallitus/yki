@@ -2,12 +2,12 @@
 {% block content %}
 <tr>
     <td style="padding-left: 20px; padding-top: 20px;">
-      Pääset kirjautumaan oheisen linkin kautta.
+      {% i18n email.login.content %}
     </td>
   </tr>
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    <a style="color: #0093C4;" href="{{login-url}}" target="_blank">Kirjaudu</a>
+    <a style="color: #0093C4;" href="{{login-url}}" target="_blank">{% i18n email.login.link_text %}</a>
   </td>
 </tr>
 {% endblock %}

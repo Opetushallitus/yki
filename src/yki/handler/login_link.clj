@@ -2,13 +2,13 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.handler.routing :as routing]
             [yki.boundary.registration-db :as registration-db]
+            [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.registration.registration :as registration]
             [yki.spec :as ys]
             [yki.util.common :as c]
             [pgqueue.core :as pgq]
             [clj-time.core :as t]
-            [yki.util.template-util :as template-util]
             [yki.job.job-queue]
             [ring.util.http-response :refer [ok]]
             [buddy.core.hash :as hash]
@@ -29,14 +29,16 @@
        :body [login-link ::ys/login-link]
        :query-params [lang :- ::ys/language-code]
        :return ::ys/response
-       (let [participant-id (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
-                                                                                 :email (:email login-link)}))]
+       (let [participant-id   (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
+                                                                                   :email (:email login-link)}))
+             exam-session-id  (:exam_session_id login-link)
+             exam-session     (exam-session-db/get-exam-session-with-location db exam-session-id lang)]
          (when (registration/create-and-send-link db url-helper email-q lang
                                                   (assoc login-link
                                                          :participant_id participant-id
-                                                         :type "LOGIN_LINK"
+                                                         :type "LOGIN"
                                                          :expires_at (c/date-from-now 1)
                                                          :expired_link_redirect (url-helper :link-expired.redirect)
-                                                         :success_redirect (url-helper :login-link.redirect (:exam_session_id login-link))
-                                                         :registration_id nil) {})
+                                                         :success_redirect (url-helper :login-link.redirect exam-session-id)
+                                                         :registration_id nil) exam-session)
            (ok {:success true})))))))

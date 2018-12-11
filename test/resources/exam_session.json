@@ -7,25 +7,28 @@
   "published_at": "2018-01-01T00:00:00.000Z",
   "location": [
     {
+      "name": "Omenia",
       "street_address": "Jokukatu 4",
       "city": "Tampere",
       "other_location_info": "auditorio A2",
       "extra_information": null,
-      "language_code": "fin"
+      "lang": "fi"
     },
     {
+      "name": "Omenia",
       "street_address": "Jokukatu 4",
       "city": "Tammerfors",
       "other_location_info": "auditorium A2",
       "extra_information": null,
-      "language_code": "swe"
+      "lang": "sv"
     },
     {
+      "name": "Omenia",
       "street_address": "Jokukatu 4",
       "city": "Tampere",
       "other_location_info": "auditorium A2",
       "extra_information": null,
-      "language_code": "eng"
+      "lang": "en"
     }
   ]
 }
