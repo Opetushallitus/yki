@@ -1,12 +1,12 @@
 {% extends "yki/templates/base.html" %} {% block content %}
 <tr>
     <td style="padding-left: 20px; padding-top: 20px;">
-      Tärkeää! Mikäli maksua ei ole maksettu eräpäivään mennessä, ilmoittautumisesii perutaan.
+      {% i18n email.payment.content.line1 %}
     </td>
 </tr>
 <tr>
     <td style="padding-left: 20px; padding-top: 20px;">
-      Olet ilmoittautumassa seuraavaan kielitutkintoon:
+      {% i18n email.payment.content.line2 %}
     </td>
 </tr>
 <tr>
@@ -26,22 +26,22 @@
 </tr>
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    Tutkintomaksu {{amount|replace-dot-with-comma}} €
+    {% i18n email.payment.content.line3 %} {{amount|replace-dot-with-comma}} €
   </td>
 </tr>
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    Tutkintomaksu maksetaan oheisen linkin kautta.
+    {% i18n email.payment.content.line4 %}
   </td>
 </tr>
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    <a style="color: #0093C4;" href="{{login-url}}" target="_blank">Maksulinkki</a>
+    <a style="color: #0093C4;" href="{{login-url}}" target="_blank">{% i18n email.payment.link_text %}</a>
   </td>
 </tr>
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    Tämä on automaattinen viesti, älä vastaa tähän viestiin.
+    {% i18n email.payment.content.line5 %}
   </td>
 </tr>
 {% endblock %}
