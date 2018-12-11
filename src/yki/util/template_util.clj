@@ -6,6 +6,7 @@
    [selmer.filters :as filters]
    [clj-time.format :as f]
    [clj-time.core :as t]
+   [clojure.tools.logging :as log]
    [clojure.string :as str]
    [clojure.tools.logging :refer [info]]))
 
@@ -28,6 +29,12 @@
 
 (filters/add-filter! :replace-dot-with-comma
                      #(str/replace % "." ","))
+
+(defn missing-value-fn [tag context-map]
+  (log/warn "Missing template value:" (or (:tag-value tag) (:tag-name tag)))
+  "")
+
+(selmer.util/set-missing-value-formatter! missing-value-fn)
 
 (defn subject
   [url-helper template lang params]
