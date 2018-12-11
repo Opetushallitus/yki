@@ -1,5 +1,6 @@
 (ns yki.boundary.localisation
   (:require [yki.util.http-util :as http-util]
+            [yki.util.url-helper :as url-helper]
             [clojure.core.memoize :as memo]
             [jsonista.core :as json]))
 
@@ -22,8 +23,12 @@
 (def get-localisation-memoized
   (memo/ttl get-localisation :ttl/threshold one-hour))
 
-(defn get-translations [category key url-helper]
+(defn get-translations [url-helper category key]
   (let [url       (url-helper :localisation.service)
         response  (get-localisation-memoized category key url)]
     (when (= (:status response) 200)
       (:json response))))
+
+(defn get-translation [url-helper key lang]
+  (get (get-translations url-helper "yki" key) (str lang "." key)))
+

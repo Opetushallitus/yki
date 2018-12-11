@@ -12,7 +12,7 @@
             [clojure.tools.logging :refer [info error]]
             [integrant.core :as ig]))
 
-(defn- handle-payment-success [db email-q payment-params]
+(defn- handle-payment-success [db email-q url-helper payment-params]
   (let [email (registration-db/get-participant-email-by-order-number db (:order-number payment-params))
         lang (:lang email)
         success (registration-db/complete-registration-and-payment! db payment-params)]
@@ -20,8 +20,8 @@
       (pgq/put email-q
                {:recipients [(:email email)],
                 :created (System/currentTimeMillis)
-                :subject (template-util/subject "payment_success" lang),
-                :body (template-util/render "payment_success" lang {})}))
+                :subject (template-util/subject url-helper "payment_success" lang {})
+                :body (template-util/render url-helper "payment_success" lang {})}))
     success))
 
 (defn- handle-payment-cancelled [db payment-params]
@@ -50,14 +50,14 @@
     (payment-util/valid-return-params? merchant_secret params)))
 
 (defn handle-payment-return
-  [db email-q {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD SETTLEMENT_REFERENCE_NUMBER]}]
+  [db email-q url-helper {:keys [ORDER_NUMBER PAYMENT_ID AMOUNT TIMESTAMP STATUS PAYMENT_METHOD SETTLEMENT_REFERENCE_NUMBER]}]
   (let [payment-params {:order-number ORDER_NUMBER
                         :payment-id PAYMENT_ID
                         :reference-number (number-or-nil SETTLEMENT_REFERENCE_NUMBER)
                         :payment-method PAYMENT_METHOD
                         :timestamp (c/from-long (* 1000 (Long/valueOf TIMESTAMP)))}]
     (case STATUS
-      "PAID" (handle-payment-success db email-q payment-params)
+      "PAID" (handle-payment-success db email-q url-helper payment-params)
       "CANCELLED" (handle-payment-cancelled db payment-params)
       (error "Unknown return status" STATUS))))
 

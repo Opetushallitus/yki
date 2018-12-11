@@ -36,9 +36,9 @@
                                                            :path "/yki"}}})
         url-helper (base/create-url-helper (str "localhost:" port))
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
-        cas-client (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
-                                                               :cas-creds {:username "username"
-                                                                           :password "password"}})
+        cas-client (ig/init-key :yki.boundary.cas/cas-client {:url-helper url-helper
+                                                              :cas-creds {:username "username"
+                                                                          :password "password"}})
         onr-client (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
                                                               :cas-client cas-client})
         auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth}))
@@ -75,6 +75,8 @@
   (with-routes!
     (fn [server]
       (merge (base/cas-mock-routes (:port server))
+             {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
+                                                        :body (slurp "test/resources/localisation.json")}}
              {"/oppijanumerorekisteri-service/s2s/findOrCreateHenkiloPerustieto" {:status 200 :content-type "application/json"
                                                                                   :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}}))
     (let [email-q (base/email-q)
@@ -106,7 +108,7 @@
       (testing "put endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
         (is (= (get-in update-response [:response :status]) 200))
         (is (= (:id payment) id))
-        (is (= (:subject email-request) "Maksulinkki"))
+        (is (= (:subject email-request) "Maksulinkki: fin PERUS - Omenia, 27.1.2018"))
         (is (= (:type payment-link) "PAYMENT"))
         (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/ilmoittautuminen?action=redirect-to-paytrail&id=" id)))
         (is (= (:order_number payment) "YKI6000000001"))

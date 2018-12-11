@@ -38,6 +38,7 @@
   (init-participants-sync-status! [db exam-session-id])
   (set-participants-sync-to-success! [db exam-session-id])
   (get-exam-session-by-id [db id])
+  (get-exam-session-with-location [db id lang])
   (get-exam-session-participants [db id])
   (get-not-synced-exam-sessions [db])
   (get-exam-sessions [db oid from]
@@ -87,6 +88,8 @@
           (when deleted
             (send-to-queue-fn "DELETE" id))
           deleted))))
+  (get-exam-session-with-location [{:keys [spec]} id lang]
+    (first (q/select-exam-session-with-location spec {:id id :lang lang})))
   (get-exam-session-by-id [{:keys [spec]} id]
     (first (q/select-exam-session-by-id spec {:id id})))
   (get-not-synced-exam-sessions [{:keys [spec]}]

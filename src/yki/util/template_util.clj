@@ -1,20 +1,26 @@
 (ns yki.util.template-util
-  (:require [selmer.parser :as parser]
-            [selmer.filters :as filters]
-            [clj-time.format :as f]
-            [clj-time.core :as t]
-            [clojure.string :as str]
-            [clojure.tools.logging :refer [info]]))
+  (:require
+   [yki.boundary.localisation :as localisation]
+   [integrant.core :as ig]
+   [selmer.parser :as parser]
+   [selmer.filters :as filters]
+   [clj-time.format :as f]
+   [clj-time.core :as t]
+   [clojure.string :as str]
+   [clojure.tools.logging :refer [info]]))
 
-(defn- template-name
-  [base lang]
-  (str (str/lower-case base) "_" lang ".html"))
+(defn- template-name [name]
+  (str (str/lower-case name) ".html"))
 
 (def date-formatter (f/formatter "d.M.YYYY"))
 
-; (filters/add-tag! :i18n
-;                   (fn [[k] context]
-;                     ("implement_me")))
+(parser/cache-off!)
+
+(parser/add-tag! :i18n
+                 (fn [[key] context]
+                   (let [url-helper (context :url-helper)
+                         lang (or (context :lang) "fi")]
+                     (localisation/get-translation url-helper key lang))))
 
 (filters/add-filter! :date-format-with-dots
                      (fn [date-string]
@@ -22,21 +28,14 @@
 
 (filters/add-filter! :replace-dot-with-comma
                      #(str/replace % "." ","))
-(def subject-by-lang
-  {"fi" {"LOGIN_LINK"  "Ilmoittautuminen"
-         "PAYMENT" "Maksulinkki"
-         "payment_success" "Ilmoittautuminen maksettu"},
-   "sv" {"LOGIN_LINK"  "Ilmoittautuminen_sv"
-         "PAYMENT" "Maksulinkki_sv"
-         "payment_success" "Ilmoittautuminen maksettu_sv"},
-   "en" {"LOGIN_LINK"  "Ilmoittautuminen_en"
-         "PAYMENT" "Maksulinkki"
-         "payment_success" "Ilmoittautuminen maksettu_en"}})
 
 (defn subject
-  [template lang]
-  (get-in subject-by-lang [lang template]))
+  [url-helper template lang params]
+  (let [subject (localisation/get-translation url-helper (str "email." (str/lower-case template) ".subject") lang)]
+    ;; TODO localise language_code and level_code
+    (parser/render "{{subject}}: {{language_code}} {{level_code}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject))))
 
 (defn render
-  [template lang params]
-  (parser/render-file (str "yki/templates/" (template-name template lang)) params))
+  [url-helper template lang params]
+  (parser/render-file (str "yki/templates/" (template-name template)) (assoc params :url-helper url-helper :lang lang)))
+

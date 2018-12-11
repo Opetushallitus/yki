@@ -132,18 +132,20 @@ INSERT INTO exam_session (
 
 -- name: insert-exam-session-location!
 INSERT INTO exam_session_location(
+  name,
   street_address,
   city,
   other_location_info,
   extra_information,
-  language_code,
+  lang,
   exam_session_id
 ) VALUES (
+  :name,
   :street_address,
   :city,
   :other_location_info,
   :extra_information,
-  :language_code,
+  :lang,
   :exam_session_id
 );
 
@@ -178,11 +180,12 @@ SELECT
   SELECT array_to_json(array_agg(loc))
   FROM (
     SELECT
+      name,
       street_address,
       city,
       other_location_info,
       extra_information,
-      language_code
+      lang
     FROM exam_session_location
     WHERE exam_session_id = e.id
   ) loc
@@ -207,11 +210,12 @@ SELECT
   SELECT array_to_json(array_agg(loc))
   FROM (
     SELECT
+      name,
       street_address,
       city,
       other_location_info,
       extra_information,
-      language_code
+      lang
     FROM exam_session_location
     WHERE exam_session_id = e.id
   ) loc
@@ -220,6 +224,21 @@ FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE e.id = :id;
+
+-- name: select-exam-session-with-location
+SELECT
+  es.language_code,
+  es.level_code,
+  ed.exam_date,
+  ed.registration_end_date,
+  esl.street_address,
+  esl.city,
+  esl.name
+FROM exam_session es
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+WHERE es.id = :id
+  AND esl.lang = :lang;
 
 -- name: update-exam-session!
 UPDATE exam_session
@@ -407,7 +426,8 @@ SELECT re.state,
        ed.exam_date,
        ed.registration_end_date,
        esl.street_address,
-       esl.city
+       esl.city,
+       esl.name
 FROM registration re
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
@@ -415,6 +435,7 @@ INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
   AND (ed.registration_end_date  + time '23:59') AT TIME ZONE 'Europe/Helsinki' >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND re.state = 'STARTED'
+  AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
 -- name: update-registration-to-completed!
