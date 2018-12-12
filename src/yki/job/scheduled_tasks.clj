@@ -28,7 +28,7 @@
   Rethrows exceptions if retry until limit is not reached so that message is not
   removed from queue and can be processed again."
   [queue retry-duration-in-days handler-fn]
-  (log/info "Executing handler on queue" (:name queue))
+  (log/debug "Executing handler on queue" (:name queue))
   (try
     (pgq/take-with
      [request queue]
@@ -49,10 +49,10 @@
   {:pre [(some? db)]}
   #(try
      (when (job-db/try-to-acquire-lock! db registration-state-handler-conf)
-       (log/info "Check started registrations expiry")
+       (log/debug "Check started registrations expiry")
        (let [updated (registration-db/update-started-registrations-to-expired! db)]
          (log/info "Started registrations set to expired" updated))
-       (log/info "Check submitted registrations expiry")
+       (log/debug "Check submitted registrations expiry")
        (let [updated (registration-db/update-submitted-registrations-to-expired! db)]
          (log/info "Submitted registrations set to expired" updated)))
      (catch Exception e

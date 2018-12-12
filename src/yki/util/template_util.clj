@@ -31,7 +31,7 @@
                      #(str/replace % "." ","))
 
 (defn missing-value-fn [tag context-map]
-  (log/warn "Missing template value:" (or (:tag-value tag) (:tag-name tag)))
+  (log/warn "Missing template value:" (:tag-name tag) " " (:tag-value tag))
   "")
 
 (selmer.util/set-missing-value-formatter! missing-value-fn)

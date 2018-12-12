@@ -25,7 +25,7 @@
                               :jarjestaja "1.2.3.5"})
 
 (deftest sync-exam-session-requests-test
-  (let [organizer (j/read-value (slurp "test/resources/organizer.json"))
+  (let [organizer (j/read-value (slurp "test/resources/organizer.json") (j/object-mapper {:decode-key-fn true}))
         organization (j/read-value (slurp "test/resources/organization.json"))
         assert-organizer-req (j/read-value (slurp "test/resources/organizer_sync_req.json") (j/object-mapper {:decode-key-fn true}))
         organizer-req (yki-register/create-sync-organizer-req organizer organization)

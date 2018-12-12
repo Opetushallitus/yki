@@ -1,7 +1,10 @@
 {:duct.core/project-ns  yki
  :duct.core/environment :production
 
- :duct.module/logging {}
+ :duct.logger/timbre {:level     :error
+                      :appenders {:println #ig/ref :duct.logger.timbre/println}}
+
+ :duct.logger.timbre/println {}
  :duct.module.web/api {}
  :duct.module/sql {}
  :duct.server.http/jetty {:port 8080}

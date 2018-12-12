@@ -16,7 +16,7 @@
   ((first (filter #(some? (% "www")) contacts)) "www"))
 
 (defn create-sync-organizer-req
-  [{:strs [languages contact_name contact_email]} {:strs [oid nimi postiosoite yhteystiedot]}]
+  [{:keys [languages contact_name contact_email]} {:strs [oid nimi postiosoite yhteystiedot]}]
   {:oid oid
    :nimi (or (nimi "fi") (nimi "sv") (nimi "en"))
    :katuosoite (postiosoite "osoite")
@@ -25,8 +25,8 @@
    :yhteyshenkilo contact_name
    :sposoite contact_email
    :wwwosoite (find-web-address yhteystiedot)
-   :tutkintotarjonta (map (fn [x] {:tutkintokieli (x "language_code")
-                                   :taso (convert-level (x "level_code"))}) languages)})
+   :tutkintotarjonta (map (fn [l] {:tutkintokieli (:language_code l)
+                                   :taso (convert-level (:level_code l))}) languages)})
 
 (defn create-sync-exam-session-req
   [{:keys [language_code level_code session_date office_oid organizer_oid]}]
