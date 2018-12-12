@@ -7,16 +7,22 @@
  :duct.logger.timbre/println {}
  :duct.module.web/api {}
  :duct.module/sql {}
- :duct.server.http/jetty {:port 8080}
  :duct.migrator/ragtime {:resource-path "yki/migrations"}
  :duct-migrations-auto-cfg/module {}
- :duct.router/cascading [#ig/ref :yki.handler/status
-                         #ig/ref :yki.handler/auth
-                         #ig/ref :yki.handler/payment
-                         #ig/ref :yki.handler/login-link
-                         #ig/ref :yki.handler/localisation
-                         #ig/ref :yki.handler/registration
-                         #ig/ref :yki.handler/organizer]
+
+ :duct.server.http/jetty {:port 8080
+                          :handler #ig/ref :yki/api-handler}
+
+ [:duct.core/handler :yki/api-handler]
+ {:router     #ig/ref :yki/api}
+
+ :yki/api [#ig/ref :yki.handler/status
+           #ig/ref :yki.handler/auth
+           #ig/ref :yki.handler/payment
+           #ig/ref :yki.handler/login-link
+           #ig/ref :yki.handler/localisation
+           #ig/ref :yki.handler/registration
+           #ig/ref :yki.handler/organizer]
 
  :yki.util/url-helper {}
 

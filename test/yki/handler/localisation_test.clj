@@ -1,6 +1,7 @@
 (ns yki.handler.localisation-test
   (:require [clojure.test :refer :all]
             [integrant.core :as ig]
+            [compojure.api.sweet :refer :all]
             [ring.mock.request :as mock]
             [jsonista.core :as j]
             [stub-http.core :refer :all]
@@ -17,7 +18,7 @@
   [port]
   (let [uri (str "localhost:" port)
         url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"})
-        localisation-handler (ig/init-key :yki.handler/localisation {:url-helper url-helper})]
+        localisation-handler (api (ig/init-key :yki.handler/localisation {:url-helper url-helper}))]
     localisation-handler))
 
 (deftest get-localisation-test

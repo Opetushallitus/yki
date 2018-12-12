@@ -12,6 +12,7 @@
 (defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client onr-client permissions-client access-log db]}]
   (api
    (context routing/auth-root []
+     :no-doc true
      :middleware [auth access-log]
      (GET "/initsession" [lang :as request]
        (header-auth/login request onr-client url-helper))
