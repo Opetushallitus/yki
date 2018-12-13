@@ -12,7 +12,7 @@ INSERT INTO language(code) VALUES ('fre');
 --;;
 INSERT INTO language(code) VALUES ('sme');
 --;;
-INSERT INTO language(code) VALUES ('ger');
+INSERT INTO language(code) VALUES ('deu');
 --;;
 INSERT INTO language(code) VALUES ('rus');
 --;;
@@ -40,7 +40,7 @@ INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id F
 --;;
 INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2018-11-17'), 'sme');
 --;;
-INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2018-11-17'), 'ger');
+INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2018-11-17'), 'deu');
 --;;
 INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2019-01-26', '2018-12-03', '2018-12-14');
 --;;
