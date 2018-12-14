@@ -27,7 +27,7 @@
           response ((create-route port) request)
           response-body (base/body-as-json response)]
       (testing "translations should be grouped by locale"
-        (is (= (response-body "fi.email.login.subject") "Ilmoittautuminen"))
-        (is (= (response-body "sv.email.login.subject") "Ilmoittautuminen_sv"))
-        (is (= (response-body "en.email.login.subject") "Ilmoittautuminen_en"))))))
+        (is (= (response-body "email.login.subject.fi") "Ilmoittautuminen"))
+        (is (= (response-body "email.login.subject.sv") "Ilmoittautuminen_sv"))
+        (is (= (response-body "email.login.subject.en") "Ilmoittautuminen_en"))))))
 
