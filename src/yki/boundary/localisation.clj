@@ -12,7 +12,7 @@
                                                                               :key key})))
         status            (:status response)
         json              (json/read-value (:body response))
-        composite-keys    (map #(assoc % :composite-key (str (% "locale") "." (% "key"))) json)
+        composite-keys    (map #(assoc % :composite-key (str (% "key") "." (% "locale"))) json)
         grouped-by-key    (group-by :composite-key composite-keys)
         flattened-to-map  (reduce-kv #(assoc %1 %2 ((first %3) "value")) {} grouped-by-key)]
     {:json flattened-to-map
@@ -30,5 +30,5 @@
       (:json response))))
 
 (defn get-translation [url-helper key lang]
-  (get (get-translations url-helper "yki" key) (str lang "." key)))
+  (get (get-translations url-helper "yki" key) (str key "." lang)))
 
