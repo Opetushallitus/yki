@@ -39,8 +39,8 @@
                       :kutsumanimi    first_name
                       :sukunimi       last_name
                       :sukupuoli      gender
-                      :aidinkieli     {:kieliKoodi exam_lang}
-                      :asiointiKieli  {:kieliKoodi exam_lang}
+                      :aidinkieli     exam_lang
+                      :asiointiKieli  exam_lang
                       :kansalaisuus   (extract-nationalities nationalities)
                       :henkiloTyyppi  "OPPIJA"}]
     (if ssn

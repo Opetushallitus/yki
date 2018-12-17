@@ -11,6 +11,8 @@
   (context routing/localisation-api-root []
     :coercion :spec
     :middleware [access-log]
-    :query-params [{category :- ::ys/category "yki"} {key :- ::ys/key nil}]
+    :query-params [{category :- ::ys/category "yki"}
+                   {key :- ::ys/key nil}
+                   {lang :- ::ys/lang "fi"}]
     (GET "/" []
-      (response (localisation/get-translations url-helper category key)))))
+      (response (localisation/get-translations url-helper category key lang)))))
