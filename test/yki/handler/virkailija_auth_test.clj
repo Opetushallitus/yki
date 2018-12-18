@@ -29,6 +29,8 @@
   (merge
    {"/kayttooikeus-service/kayttooikeus/kayttaja" {:status 200 :content-type "application/json"
                                                    :body (slurp (str "test/resources/" user ".json"))}
+    "/oppijanumerorekisteri-service/henkilo/1.2.3.4.5/master" {:status 200 :content-type "application/json"
+                                                               :body (slurp "test/resources/onr_henkilo_by_hetu.json")}
     "/kayttooikeus-service/j_spring_cas_security_check" {:status 200
                                                          :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}
     "/cas/serviceValidate" {:status 200 :content-type "application/xml;charset=UTF-8"
@@ -39,21 +41,13 @@
   [port]
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija "" :alb-host (str "http://" uri) :scheme "http"})
-        auth (ig/init-key :yki.middleware.auth/with-authentication {:url-helper url-helper
-                                                                    :db db
-                                                                    :session-config {:key "ad7tbRZIG839gDo2"
-                                                                                     :cookie-attrs {:max-age 28800
-                                                                                                    :http-only true
-                                                                                                    :domain "localhost"
-                                                                                                    :secure false
-                                                                                                    :path "/yki"}}})
-        cas-client (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
-                                                               :cas-creds {:username "username"
-                                                                           :password "password"}})
-        permissions-client (ig/init-key  :yki.boundary.permissions/permissions-client
-                                         {:url-helper url-helper
-                                          :cas-client cas-client})
+        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri
+                                                      :oppija-host uri
+                                                      :yki-register-host uri
+                                                      :yki-host-virkailija ""
+                                                      :alb-host (str "http://" uri)
+                                                      :scheme "http"})
+        auth (base/auth url-helper)
         exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :data-sync-q  (base/data-sync-q)})
         org-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
                                                                                  :access-log (base/access-log)
@@ -62,11 +56,7 @@
                                                                                  :exam-session-handler exam-session-handler
                                                                                  :auth auth
                                                                                  :file-handler {}}))
-        auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
-                                                                             :db db
-                                                                             :url-helper url-helper
-                                                                             :permissions-client permissions-client
-                                                                             :cas-client cas-client}))]
+        auth-handler (base/auth-handler auth url-helper)]
     (routes org-handler auth-handler)))
 
 (defn- login [port]
@@ -146,6 +136,8 @@
           organizations (identity "organizations")]
       (testing "callback endpoint should set identity returned from cas client to session"
         (is (= (identity "username") "test")))
+      (testing "callback endpoint should set lang returned from onr to session"
+        (is (= (identity "lang") "sv")))
       (testing "callback endpoint should set person oid returned from permissions client to session"
         (is (= (identity "oid") "1.2.3.4.5")))
       (testing "callback endpoint should set only YKI permissions returned from permissions client to session"
