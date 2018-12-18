@@ -31,7 +31,6 @@
     (let [request (mock/request :get routing/localisation-api-root)
           response ((create-route port) request)
           response-body (base/body-as-json response)]
-; (println response-body)
       (testing "translations"
         (is (= (response-body "email.login.subject") "Ilmoittautuminen"))))))
 

@@ -173,8 +173,13 @@ SELECT
   level_code,
   ed.exam_date AS session_date,
   e.max_participants,
+  ed.registration_start_date,
+  ed.registration_end_date,
   e.office_oid,
   e.published_at,
+  (SELECT COUNT(1)
+    FROM registration re
+    WHERE re.exam_session_id = e.id AND re.state = 'COMPLETED') as participants,
   o.oid as organizer_oid,
 (
   SELECT array_to_json(array_agg(loc))
