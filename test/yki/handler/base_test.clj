@@ -76,9 +76,43 @@
 (defn body [response]
   (slurp (:body response) :encoding "UTF-8"))
 
+(defn access-log []
+  (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"}))
+
 (defn db []
   (duct.database.sql/->Boundary @embedded-db/conn))
 
+(defn auth [url-helper]
+  (ig/init-key :yki.middleware.auth/with-authentication
+               {:url-helper url-helper
+                :db (db)
+                :session-config {:key "ad7tbRZIG839gDo2"
+                                 :cookie-attrs {:max-age 28800
+                                                :http-only true
+                                                :secure false
+                                                :domain "localhost"
+                                                :path "/yki"}}}))
+(defn cas-client [url-helper]
+  (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
+                                              :cas-creds {:username "username"
+                                                          :password "password"}}))
+(defn onr-client [url-helper]
+  onr-client (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
+                                                        :cas-client (cas-client url-helper)}))
+(defn permissions-client [url-helper]
+  (ig/init-key  :yki.boundary.permissions/permissions-client
+                {:url-helper url-helper
+                 :cas-client (cas-client url-helper)}))
+
+(defn auth-handler
+  [auth url-helper]
+  (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
+                                                          :db (db)
+                                                          :onr-client (onr-client url-helper)
+                                                          :url-helper url-helper
+                                                          :access-log (access-log)
+                                                          :permissions-client (permissions-client url-helper)
+                                                          :cas-client (cas-client url-helper)})))
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db embedded-db/db-spec}})
   (ig/init-key :yki.job.job-queue/email-q {}))
@@ -200,9 +234,6 @@
 (defn create-url-helper [uri]
   (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"}))
 
-(defn access-log []
-  (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"}))
-
 (defn create-routes [port]
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
@@ -217,9 +248,7 @@
                                                                                                        :domain "localhost"
                                                                                                        :secure false
                                                                                                        :path "/yki"}}})
-        auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
-                                                                             :db db
-                                                                             :url-helper url-helper}))
+        auth-handler (auth-handler auth url-helper)
         file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
         organizer-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
                                                                                        :auth auth

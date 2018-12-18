@@ -33,27 +33,8 @@
   (let [uri (str "localhost:" port)
         url-helper (base/create-url-helper uri)
         db (sql/->Boundary @embedded-db/conn)
-        auth (ig/init-key :yki.middleware.auth/with-authentication
-                          {:url-helper url-helper
-                           :db db
-                           :session-config {:key "ad7tbRZIG839gDo2"
-                                            :cookie-attrs {:max-age 28800
-                                                           :http-only true
-                                                           :secure false
-                                                           :domain "localhost"
-                                                           :path "/yki"}}})
-        cas-client (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
-                                                               :cas-creds {:username "username"
-                                                                           :password "password"}})
-        onr-client (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
-                                                              :cas-client cas-client})
-        auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
-                                                                             :db db
-                                                                             :url-helper url-helper
-                                                                             :access-log (base/access-log)
-                                                                             :permissions-client {}
-                                                                             :onr-client onr-client
-                                                                             :cas-client cas-client}))]
+        auth (base/auth url-helper)
+        auth-handler (base/auth-handler auth url-helper)]
     auth-handler))
 
 (deftest redirect-unauthenticated-user-to-authentication-test
