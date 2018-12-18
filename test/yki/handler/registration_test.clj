@@ -27,27 +27,16 @@
 (defn- create-handlers
   [email-q port]
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
-        auth (ig/init-key :yki.middleware.auth/with-authentication
-                          {:session-config {:key "ad7tbRZIG839gDo2"
-                                            :cookie-attrs {:max-age 28800
-                                                           :http-only true
-                                                           :secure false
-                                                           :domain "localhost"
-                                                           :path "/yki"}}})
         url-helper (base/create-url-helper (str "localhost:" port))
+        auth (base/auth url-helper)
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
-        cas-client (ig/init-key :yki.boundary.cas/cas-client {:url-helper url-helper
-                                                              :cas-creds {:username "username"
-                                                                          :password "password"}})
-        onr-client (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
-                                                              :cas-client cas-client})
-        auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth}))
+        auth-handler (base/auth-handler auth url-helper)
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db db
                                                                                              :url-helper url-helper
                                                                                              :email-q email-q
                                                                                              :access-log access-log
                                                                                              :payment-config base/payment-config
-                                                                                             :onr-client onr-client
+                                                                                             :onr-client (base/onr-client url-helper)
                                                                                              :auth auth}))]
     (core/routes registration-handler auth-handler)))
 

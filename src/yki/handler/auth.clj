@@ -10,6 +10,7 @@
             [yki.auth.header-auth :as header-auth]))
 
 (defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client onr-client permissions-client access-log db]}]
+  {:pre [(some? auth) (some? url-helper) (some? cas-client) (some? onr-client) (some? permissions-client) (some? access-log) (some? db)]}
   (api
    (context routing/auth-root []
      :no-doc true
@@ -24,7 +25,7 @@
        (POST "/" request
          (cas-auth/cas-logout db (slurp (:body request))))
        (GET "/callback" [ticket :as request]
-         (cas-auth/login ticket request cas-client permissions-client url-helper db))
+         (cas-auth/login ticket request cas-client permissions-client onr-client url-helper db))
        (GET "/logout" {session :session}
          (cas-auth/logout session url-helper))
        (GET "/user" {session :session}

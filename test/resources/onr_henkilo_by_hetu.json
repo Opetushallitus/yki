@@ -21,7 +21,11 @@
   "modified": 1523425304247,
   "vtjsynced": null,
   "kasittelijaOid": "1.2.246.562.24.30121845486",
-  "asiointiKieli": null,
+  "asiointiKieli": {
+    "id": 1,
+    "kieliKoodi": "sv",
+    "kieliTyyppi": "ruotsi"
+  },
   "aidinkieli": {
     "id": 1,
     "kieliKoodi": "fi",

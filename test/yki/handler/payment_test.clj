@@ -25,16 +25,10 @@
 
 (defn- create-handlers []
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
-        auth (ig/init-key :yki.middleware.auth/with-authentication
-                          {:session-config {:key "ad7tbRZIG839gDo2"
-                                            :cookie-attrs {:max-age 28800
-                                                           :http-only true
-                                                           :secure false
-                                                           :domain "localhost"
-                                                           :path "/yki"}}})
         url-helper (base/create-url-helper "localhost:8080")
+        auth (base/auth url-helper)
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
-        auth-handler (middleware/wrap-format (ig/init-key :yki.handler/auth {:db db :auth auth}))
+        auth-handler (base/auth-handler auth url-helper)
         payment-handler (middleware/wrap-format (ig/init-key :yki.handler/payment {:db db
                                                                                    :payment-config base/payment-config
                                                                                    :url-helper url-helper
