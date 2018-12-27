@@ -1,0 +1,36 @@
+[
+  {
+    "exam_date": "2018-01-27",
+    "registration_start_date": "2017-12-01",
+    "registration_end_date": "2017-12-08",
+    "languages": [{ "language_code": "fin" }]
+  },
+  {
+    "exam_date": "2018-10-27",
+    "registration_start_date": "2018-09-03",
+    "registration_end_date": "2018-09-28",
+    "languages": [{ "language_code": "eng" }]
+  },
+  {
+    "": "2018-11-10",
+    "registration_start_date": "2018-09-03",
+    "registration_end_date": "2018-09-28",
+    "languages": [{ "language_code": "fin" }]
+  },
+  {
+    "exam_date": "2018-11-17",
+    "registration_start_date": "2018-09-03",
+    "registration_end_date": "2018-09-28",
+    "languages": [
+      { "language_code": "spa" },
+      { "language_code": "sme" },
+      { "language_code": "deu" }
+    ]
+  },
+  {
+    "exam_date": "2019-01-26",
+    "registration_start_date": "2018-12-03",
+    "registration_end_date": "2018-12-14",
+    "languages": [{ "language_code": "fin" }]
+  }
+]

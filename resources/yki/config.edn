@@ -17,6 +17,7 @@
  {:router     #ig/ref :yki/api}
 
  :yki/api [#ig/ref :yki.handler/status
+           #ig/ref :yki.handler/exam-date
            #ig/ref :yki.handler/auth
            #ig/ref :yki.handler/payment
            #ig/ref :yki.handler/login-link
@@ -81,6 +82,8 @@
                     :url-helper #ig/ref :yki.util/url-helper}
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
+
+ :yki.handler/exam-date {:db #ig/ref :duct.database/sql}
 
  :yki.handler/registration {:db #ig/ref :duct.database/sql
                             :auth #ig/ref :yki.middleware.auth/with-authentication
