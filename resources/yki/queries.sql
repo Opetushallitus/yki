@@ -597,3 +597,16 @@ WHERE p.order_number = :order_number;
 -- name: update-payment-config!
 UPDATE payment_config
 SET merchant_secret = :merchant_secret;
+
+-- name: select-exam-dates
+SELECT  ed.exam_date, ed.registration_start_date, ed.registration_end_date,
+(
+  SELECT array_to_json(array_agg(lang))
+  FROM (
+    SELECT language_code
+    FROM exam_date_language
+    WHERE exam_date_id = ed.id
+  ) lang
+) AS languages
+FROM exam_date ed
+WHERE ed.exam_date >= current_date;

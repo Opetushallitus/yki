@@ -43,8 +43,8 @@
 (s/def ::contact_shared_email (s/nilable ::email-type))
 (s/def ::extra                (s/and (s/nilable string?) #(<= (count %) 1024)))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
-(s/def ::language (s/keys :req-un [::language_code
-                                   ::level_code]))
+(s/def ::language (s/keys :req-un [::language_code]
+                          :opt-un [::level_code]))
 (s/def ::languages (s/or :null nil? :array (s/coll-of ::language)))
 (s/def ::organizer-type (s/keys :req-un [::oid
                                          ::agreement_start_date
@@ -102,6 +102,17 @@
 (s/def ::external-id-type (s/keys :req-un [::external_id]))
 
 (s/def ::id-response (s/keys :req-un [::id]))
+
+;; exam date
+(s/def ::exam_date   ::date)
+(s/def ::registration_start_date   ::date)
+(s/def ::registration_end_date   ::date)
+(s/def ::exam-date-type (s/keys :req-un [::exam_date
+                                         ::registration_start_date
+                                         ::registration_end_date
+                                         ::languages]))
+(s/def ::dates (s/coll-of ::exam-date-type))
+(s/def ::exam-date-response (s/keys :req-un [::dates]))
 
 ;; localisation
 (s/def ::category (s/and string? #(<= (count %) 256)))
