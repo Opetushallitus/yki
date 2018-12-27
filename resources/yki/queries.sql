@@ -199,7 +199,8 @@ FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
-  AND o.oid = COALESCE(:oid, o.oid);
+  AND o.oid = COALESCE(:oid, o.oid)
+ORDER BY ed.exam_date ASC;
 
 -- name: select-exam-session-by-id
 SELECT

@@ -8,7 +8,7 @@ INSERT INTO language(code) VALUES ('spa');
 --;;
 INSERT INTO language(code) VALUES ('ita');
 --;;
-INSERT INTO language(code) VALUES ('fre');
+INSERT INTO language(code) VALUES ('fra');
 --;;
 INSERT INTO language(code) VALUES ('sme');
 --;;
