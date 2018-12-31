@@ -76,9 +76,8 @@ CREATE TABLE IF NOT EXISTS exam_session (
 CREATE TABLE IF NOT EXISTS exam_session_location (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
-  street_address TEXT NOT NULL,
-  city TEXT NOT NULL,
-  other_location_info TEXT NOT NULL,
+  address TEXT NOT NULL,
+  other_location_info TEXT,
   extra_information TEXT,
   lang CHAR(2) NOT NULL,
   exam_session_id BIGINT NOT NULL REFERENCES exam_session(id) ON DELETE CASCADE,

@@ -187,15 +187,13 @@
             'fin', 'PERUS', '1.2.3.4.5', 1, 5, null)"))
 
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
-    street_address,
-    city,
+    address,
     other_location_info,
     lang,
     exam_session_id)
       VALUES (
         'Omenia',
-        'Upseerinkatu 11',
-        'Espoo',
+        'Upseerinkatu 11, Espoo',
         'Other info',
         'fi',
         (SELECT id FROM exam_session where max_participants = 5))"))

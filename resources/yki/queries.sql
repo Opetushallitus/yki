@@ -133,16 +133,14 @@ INSERT INTO exam_session (
 -- name: insert-exam-session-location!
 INSERT INTO exam_session_location(
   name,
-  street_address,
-  city,
+  address,
   other_location_info,
   extra_information,
   lang,
   exam_session_id
 ) VALUES (
   :name,
-  :street_address,
-  :city,
+  :address,
   :other_location_info,
   :extra_information,
   :lang,
@@ -186,8 +184,7 @@ SELECT
   FROM (
     SELECT
       name,
-      street_address,
-      city,
+      address,
       other_location_info,
       extra_information,
       lang
@@ -217,8 +214,7 @@ SELECT
   FROM (
     SELECT
       name,
-      street_address,
-      city,
+      address,
       other_location_info,
       extra_information,
       lang
@@ -237,8 +233,7 @@ SELECT
   es.level_code,
   ed.exam_date,
   ed.registration_end_date,
-  esl.street_address,
-  esl.city,
+  esl.address,
   esl.name
 FROM exam_session es
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
@@ -431,8 +426,7 @@ SELECT re.state,
        es.level_code,
        ed.exam_date,
        ed.registration_end_date,
-       esl.street_address,
-       esl.city,
+       esl.address,
        esl.name
 FROM registration re
 INNER JOIN exam_session es ON es.id = re.exam_session_id
@@ -599,7 +593,7 @@ UPDATE payment_config
 SET merchant_secret = :merchant_secret;
 
 -- name: select-exam-dates
-SELECT  ed.exam_date, ed.registration_start_date, ed.registration_end_date,
+SELECT ed.exam_date, ed.registration_start_date, ed.registration_end_date,
 (
   SELECT array_to_json(array_agg(lang))
   FROM (
@@ -609,4 +603,5 @@ SELECT  ed.exam_date, ed.registration_start_date, ed.registration_end_date,
   ) lang
 ) AS languages
 FROM exam_date ed
-WHERE ed.exam_date >= current_date;
+WHERE ed.exam_date >= current_date
+ORDER BY ed.exam_date ASC;

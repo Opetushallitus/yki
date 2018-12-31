@@ -8,24 +8,21 @@
   "location": [
     {
       "name": "Omenia",
-      "street_address": "Jokukatu 4",
-      "city": "Tampere",
+      "address": "Jokukatu 4, 00100 Tampere",
       "other_location_info": "auditorio A2",
       "extra_information": null,
       "lang": "fi"
     },
     {
       "name": "Omenia",
-      "street_address": "Jokukatu 4",
-      "city": "Tammerfors",
+      "address": "Jokukatu 4, 00100 Tammerfors",
       "other_location_info": "auditorium A2",
       "extra_information": null,
       "lang": "sv"
     },
     {
       "name": "Omenia",
-      "street_address": "Jokukatu 4",
-      "city": "Tampere",
+      "address": "Jokukatu 4, 00100 Tampere",
       "other_location_info": "auditorium A2",
       "extra_information": null,
       "lang": "en"
