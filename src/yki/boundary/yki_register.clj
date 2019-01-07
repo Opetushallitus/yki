@@ -87,14 +87,21 @@
         (str
          day
          month
-         year
+         (subs year 2 4)
          (if (< (Integer/valueOf year) 2000) "-" "A")))))
 
-(defn- convert-gender [gender]
-  (case gender
-    "1" "M"
-    "2" "N"
-    ""))
+(defn- convert-gender
+  [gender ssn]
+  (if ssn
+    (let [identifier (Integer/valueOf (subs ssn 7 10))
+          remainder (rem identifier 2)]
+      (if (= remainder 1)
+        "M"
+        "N"))
+    (case gender
+      "1" "M"
+      "2" "N"
+      "")))
 
 (defn- sync-exam-session
   [url-helper disabled exam-session]
@@ -110,7 +117,7 @@
          (ssn-or-birthdate ssn birth_date) ";"
          first_name ";"
          last_name ";"
-         (convert-gender gender) ";"
+         (convert-gender gender ssn) ";"
          (first nationalities) ";"
          street_address ";"
          zip ";"

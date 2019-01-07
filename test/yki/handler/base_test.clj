@@ -137,9 +137,9 @@
                         :street_address "Katu 3"
                         :phone_number "+3584012345"})
 
-(def registration-form-2 {:first_name  "Aku2"
-                          :last_name  "Ankka2"
-                          :gender "1"
+(def registration-form-2 {:first_name  "Iines"
+                          :last_name  "Ankka"
+                          :gender nil
                           :nationalities ["FIN"]
                           :ssn "301079-122F"
                           :certificate_lang "fi"
