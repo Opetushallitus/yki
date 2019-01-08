@@ -41,8 +41,9 @@
                               "fi")
             organizations (get-organizations-with-yki-permissions (permissions "organisaatiot"))
             session       (:session request)
-            redirect-uri  (or (:success-redirect session)
-                              (url-helper :yki.default.cas.login-success.redirect lang))]
+            redirect-uri  (if (:success-redirect session)
+                            (str (:success-redirect session) "?lang=" lang)
+                            (url-helper :yki.default.cas.login-success.redirect lang))]
         (info "User" username "logged in")
         (if (empty? organizations)
           unauthorized
