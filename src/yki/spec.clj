@@ -80,6 +80,7 @@
 (s/def ::session_date               ::date)
 (s/def ::max_participants           pos-int?)
 (s/def ::published_at               (s/nilable ::date))
+(s/def ::participants               (s/coll-of ::registration))
 
 (s/def ::from                       ::date)
 
@@ -91,6 +92,7 @@
                                        ::location]
                               :opt-un [::id
                                        ::office_oid
+                                       ::participants
                                        ::organizer_oid]))
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))

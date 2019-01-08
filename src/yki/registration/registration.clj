@@ -84,10 +84,11 @@
               :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
 (defn submit-registration
-  [db url-helper email-q lang session id registration-form amount onr-client]
+  [db url-helper email-q lang session id form amount onr-client]
   (let [identity        (:identity session)
+        form-with-email (if (= (:auth-method session) "EMAIL") (assoc form :email (:external-user-id identity)) form)
         participant-id  (get-participant-id db identity)
-        email           (:email registration-form)]
+        email           (:email form)]
     (when email
       (registration-db/update-participant-email! db email participant-id))
     (if-let [registration-data (registration-db/get-registration-data db id participant-id lang)]
@@ -95,13 +96,13 @@
                                        (onr/get-or-create-person
                                         onr-client
                                         (extract-person-from-registration
-                                         (if (= (:auth-method session) "EMAIL") (assoc registration-form :email (:external-user-id identity)) registration-form)
+                                         form-with-email
                                          (:ssn identity))))]
         (let [payment                   {:registration_id id
                                          :lang lang
                                          :amount amount}
               update-registration       {:id id
-                                         :form registration-form
+                                         :form form-with-email
                                          :oid oid
                                          :form_version 1
                                          :participant_id participant-id}

@@ -175,11 +175,17 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
-  (SELECT COUNT(1)
+  (
+  SELECT COALESCE(array_to_json(array_agg(par)), '[]')
+  FROM (
+    SELECT
+      form
     FROM registration re
-    WHERE re.exam_session_id = e.id AND re.state = 'COMPLETED') as participants,
+    WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+  ) par
+ ) AS participants,
   o.oid as organizer_oid,
-(
+ (
   SELECT array_to_json(array_agg(loc))
   FROM (
     SELECT
@@ -191,11 +197,11 @@ SELECT
     FROM exam_session_location
     WHERE exam_session_id = e.id
   ) loc
-) AS location
+ ) AS location
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
-WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
+WHERE ed.registration_end_date >= COALESCE(:from, ed.registration_end_date)
   AND o.oid = COALESCE(:oid, o.oid)
 ORDER BY ed.exam_date ASC;
 
