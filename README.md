@@ -23,10 +23,19 @@ Before launching local development environment start PostgreSQL in docker contai
 docker run --name postgres-yki -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -p 5432:5432 -d postgres:10.4
 ```
 
-And create yki database.
+Create yki database.
 
 ```sh
 psql -h localhost -U admin -d yki -c 'create database yki'
+```
+
+Create local.edn with correct username and password.
+
+```clojure
+{:duct.core/include ["dev"]
+ :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
+                               :cas-creds {:username "replace_with_secret"
+                                           :password "replace_with_password"}}}
 ```
 
 To begin developing, start with a REPL.

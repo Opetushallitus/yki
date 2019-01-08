@@ -3,7 +3,7 @@ DECLARE
   current_registrations NUMERIC := (
     SELECT count(*) FROM registration
     WHERE exam_session_id = NEW.exam_session_id
-    AND state != 'EXPIRED'
+    AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
   );
   session_limit NUMERIC := (
     SELECT max_participants FROM exam_session WHERE id = NEW.exam_session_id

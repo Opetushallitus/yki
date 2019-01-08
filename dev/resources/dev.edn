@@ -32,6 +32,19 @@
                                               :sv "Tutkintomaksu_sv"
                                               :en "Tutkintomaksu_en"}}}
 
+ :yki.handler/registration {:db #ig/ref :duct.database/sql
+                            :auth #ig/ref :yki.middleware.auth/with-authentication
+                            :url-helper #ig/ref :yki.util/url-helper
+                            :email-q #ig/ref :yki.job.job-queue/email-q
+                            :onr-client #ig/ref :yki.boundary.onr/onr-client
+                            :access-log #ig/ref :yki.middleware.access-log/with-logging
+                            :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                                             :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                             :amount "100.00"
+                                             :msg {:fi "Tutkintomaksu"
+                                                   :sv "Tutkintomaksu_sv"
+                                                   :en "Tutkintomaksu_en"}}}
+
  :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
                                            :subname "//localhost:5432/yki"
                                            :user "admin"
