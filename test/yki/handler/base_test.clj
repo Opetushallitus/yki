@@ -206,13 +206,13 @@
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
 
-(defn insert-registrations []
+(defn insert-registrations [state]
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-    ('5.4.3.2.2', 'SUBMITTED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
+    ('5.4.3.2.2', '" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                    ('5.4.3.2.1', 'SUBMITTED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')")))
+                                    ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')")))
 
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
@@ -224,6 +224,9 @@
 
 (defn select-one [query]
   (first (jdbc/query @embedded-db/conn query)))
+
+(defn get-exam-session-id []
+  (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))
 
 (defn login-with-login-link [session]
   (-> session

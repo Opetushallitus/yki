@@ -122,7 +122,7 @@
 
 (deftest handle-exam-session-participants-sync-test
   (base/insert-login-link-prereqs)
-  (base/insert-registrations)
+  (base/insert-registrations "COMPLETED")
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (yesterday) "'"))
   (with-routes!
     {"/osallistujat" {:status 200

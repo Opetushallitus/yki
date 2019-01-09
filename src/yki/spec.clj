@@ -80,7 +80,7 @@
 (s/def ::session_date               ::date)
 (s/def ::max_participants           pos-int?)
 (s/def ::published_at               (s/nilable ::date))
-(s/def ::participants               (s/coll-of ::registration))
+(s/def ::participants               int?)
 
 (s/def ::from                       ::date)
 
@@ -179,7 +179,7 @@
 
 (s/def ::first_name ::non-blank-string)
 (s/def ::last_name ::non-blank-string)
-(s/def ::gender ::gender-code)
+(s/def ::gender (s/nilable ::gender-code))
 (s/def ::nationalities (s/coll-of (s/and ::non-blank-string #(= (count %) 3))))
 (s/def ::birth_date ::date)
 (s/def ::post_office ::non-blank-string)
@@ -204,8 +204,15 @@
                                        ::phone_number
                                        ::email]))
 
-;; YKI register sync
+;; exam session participant
+(s/def ::state                    ::non-blank-string)
+(s/def ::form                     ::registration)
+(s/def ::exam-session-participant (s/keys :req-un [::form
+                                                   ::state]))
+(s/def :exam-session/participants (s/coll-of ::exam-session-participant))
+(s/def ::participants-response    (s/keys :req-un [:exam-session/participants]))
 
+;; YKI register sync
 (s/def :sync/type         #{"CREATE" "UPDATE" "DELETE"})
 (s/def ::created          number?)
 (s/def ::exam-session-id  (s/nilable ::id))

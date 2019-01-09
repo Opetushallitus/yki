@@ -40,6 +40,7 @@
   (get-exam-session-by-id [db id])
   (get-exam-session-with-location [db id lang])
   (get-exam-session-participants [db id])
+  (get-completed-exam-session-participants [db id])
   (get-not-synced-exam-sessions [db])
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and from arguments"))
@@ -96,6 +97,8 @@
     (q/select-not-synced-exam-sessions spec))
   (get-exam-session-participants [{:keys [spec]} id]
     (q/select-exam-session-participants spec {:id id}))
+  (get-completed-exam-session-participants [{:keys [spec]} id]
+    (q/select-completed-exam-session-participants spec {:id id}))
   (get-exam-sessions [{:keys [spec]} oid from]
     (q/select-exam-sessions spec {:oid oid
                                   :from (string->date from)})))

@@ -69,7 +69,7 @@
 
 (deftest sync-exam-session-participants-test
   (base/insert-login-link-prereqs)
-  (base/insert-registrations)
+  (base/insert-registrations "COMPLETED")
   (testing "should send participants as csv"
     (with-routes!
       {{:path "/osallistujat" :query-params {:tutkintokieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}}

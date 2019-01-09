@@ -1,6 +1,7 @@
 (ns yki.handler.exam-session
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.exam-session-db :as exam-session-db]
+            [yki.handler.routing :as routing]
             [yki.util.audit-log :as audit-log]
             [pgqueue.core :as pgq]
             [ring.util.response :refer [response not-found]]
@@ -41,6 +42,7 @@
           (catch Exception e
             (error e "Creating exam session failed")
             (throw e))))
+
       (context "/:id" []
         (PUT "/" request
           :body [exam-session ::ys/exam-session]
@@ -68,5 +70,11 @@
                               :change {:type audit-log/delete-op}})
               (response {:success true}))
             (not-found {:success false
-                        :error "Exam session not found"})))))))
+                        :error "Exam session not found"})))
+
+        (context routing/participant-uri []
+          (GET "/" {session :session}
+            :path-params [id :- ::ys/id]
+            :return ::ys/participants-response
+            (response {:participants (exam-session-db/get-exam-session-participants db id)})))))))
 
