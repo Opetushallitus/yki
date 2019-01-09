@@ -52,4 +52,6 @@
              (do
                (log/error "Registration id:" id "failed with error" error)
                (internal-server-error {:success false
-                                       :error error})))))))))
+                                       :error
+
+                                       error})))))))))

@@ -39,3 +39,5 @@
 (def file-uri "/file")
 
 (def exam-session-uri "/exam-session")
+
+(def participant-uri "/participant")

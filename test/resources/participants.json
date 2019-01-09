@@ -1,0 +1,38 @@
+{
+  "participants": [
+    {
+      "form": {
+        "post_office": "Ankkalinna",
+        "ssn": "301079-122F",
+        "exam_lang": "fi",
+        "phone_number": "+3584012346",
+        "gender": null,
+        "email": "aa@al.fi",
+        "certificate_lang": "fi",
+        "last_name": "Ankka",
+        "first_name": "Iines",
+        "nationalities": ["FIN"],
+        "street_address": "Katu 4",
+        "zip": "12346"
+      },
+      "state": "COMPLETED"
+    },
+    {
+      "form": {
+        "post_office": "Ankkalinna",
+        "exam_lang": "fi",
+        "phone_number": "+3584012345",
+        "gender": "1",
+        "email": "aa@al.fi",
+        "certificate_lang": "fi",
+        "birth_date": "1999-01-01",
+        "last_name": "Ankka",
+        "first_name": "Aku",
+        "nationalities": ["FIN"],
+        "street_address": "Katu 3",
+        "zip": "12345"
+      },
+      "state": "COMPLETED"
+    }
+  ]
+}

@@ -29,7 +29,7 @@
         }
       ],
       "session_date": "2039-05-02",
-      "participants": [],
+      "participants": 0,
       "max_participants": 50,
       "registration_start_date": "2000-05-01",
       "organizer_oid": "1.2.3.4",

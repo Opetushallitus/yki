@@ -175,15 +175,9 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
-  (
-  SELECT COALESCE(array_to_json(array_agg(par)), '[]')
-  FROM (
-    SELECT
-      form
+ (SELECT COUNT(1)
     FROM registration re
-    WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-  ) par
- ) AS participants,
+    WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
   o.oid as organizer_oid,
  (
   SELECT array_to_json(array_agg(loc))
@@ -197,7 +191,7 @@ SELECT
     FROM exam_session_location
     WHERE exam_session_id = e.id
   ) loc
- ) AS location
+ ) as location
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -555,11 +549,19 @@ SET success_at = current_timestamp
 WHERE exam_session_id = :exam_session_id
 AND success_at IS NULL;
 
--- name: select-exam-session-participants
+-- name: select-completed-exam-session-participants
 SELECT r.form, r.person_oid
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
-WHERE es.id = :id;
+WHERE es.id = :id
+AND r.state = 'COMPLETED';
+
+-- name: select-exam-session-participants
+SELECT r.form, r.state
+FROM exam_session es
+INNER JOIN registration r ON es.id = r.exam_session_id
+WHERE es.id = :id
+AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED');
 
 -- name: insert-payment-config!
 INSERT INTO payment_config(

@@ -132,7 +132,7 @@
 (defn sync-exam-session-participants
   [db url-helper disabled exam-session-id]
   (let [exam-session (exam-session-db/get-exam-session-by-id db exam-session-id)
-        participants (exam-session-db/get-exam-session-participants db exam-session-id)
+        participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
         url (str (url-helper :yki-register.participants)
                  (create-url-params exam-session))
         request (str/join (System/lineSeparator) (create-participants-csv participants))]
