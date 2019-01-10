@@ -37,7 +37,7 @@
        :query-params [registration-id :- ::ys/id {lang :- ::ys/language-code "fi"}]
        :return ::ys/pt-payment-form-data
        (let [external-user-id (get-in session [:identity :external-user-id])
-             formdata (paytrail-payment/create-payment-form-data db payment-config registration-id external-user-id lang)]
+             formdata (paytrail-payment/create-payment-form-data db url-helper payment-config registration-id external-user-id lang)]
          (if formdata
            (ok formdata)
            (internal-server-error {:error "Payment form data creation failed"}))))

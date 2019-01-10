@@ -4,6 +4,7 @@
             [ring.mock.request :as mock]
             [peridot.core :as peridot]
             [duct.database.sql]
+            [stub-http.core :refer :all]
             [muuntaja.middleware :as middleware]
             [compojure.core :as core]
             [clojure.java.jdbc :as jdbc]
@@ -23,9 +24,9 @@
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction insert-prereq-data)
 
-(defn- create-handlers []
+(defn- create-handlers [port]
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
-        url-helper (base/create-url-helper "localhost:8080")
+        url-helper (base/create-url-helper (str "localhost:" port))
         auth (base/auth url-helper)
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler (base/auth-handler auth url-helper)
@@ -38,15 +39,18 @@
     (core/routes auth-handler payment-handler)))
 
 (deftest get-payment-formdata-test
-  (let [registration-id (:registration_id (first (jdbc/query @embedded-db/conn "SELECT registration_id FROM payment")))
-        handler (create-handlers)
-        session (base/login-with-login-link (peridot/session handler))
-        response (-> session
-                     (peridot/request (str routing/payment-root "/formdata?registration-id=" registration-id)))
-        response-body (base/body-as-json (:response response))]
-    (testing "payment form data endpoint should return payment url and formdata"
-      (is (= (get-in response [:response :status]) 200))
-      (is (= base/payment-formdata-json response-body)))))
+  (with-routes!
+    {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
+                                               :body (slurp "test/resources/localisation.json")}}
+    (let [registration-id (:registration_id (first (jdbc/query @embedded-db/conn "SELECT registration_id FROM payment")))
+          handler (create-handlers port)
+          session (base/login-with-login-link (peridot/session handler))
+          response (-> session
+                       (peridot/request (str routing/payment-root "/formdata?registration-id=" registration-id)))
+          response-body (base/body-as-json (:response response))]
+      (testing "payment form data endpoint should return payment url and formdata"
+        (is (= (get-in response [:response :status]) 200))
+        (is (= base/payment-formdata-json response-body))))))
 
 (def success-params
   "?ORDER_NUMBER=order1234&PAYMENT_ID=101687270712&AMOUNT=100.00&TIMESTAMP=1541585404&STATUS=PAID&PAYMENT_METHOD=1&SETTLEMENT_REFERENCE_NUMBER=1232&RETURN_AUTHCODE=312BF5EA52575FCEAECEE3A18153CB9C759E6CBFE2622670EC9902964C2C4EC5")
@@ -55,7 +59,7 @@
   "?ORDER_NUMBER=order1234&PAYMENT_ID=101687270712&AMOUNT=100.00&TIMESTAMP=1541585404&STATUS=CANCELLED&PAYMENT_METHOD=1&SETTLEMENT_REFERENCE_NUMBER=1232&RETURN_AUTHCODE=7874413040C8F6BF5D005B6BD3F22C14AB1C99B841C3FE7733E9D12D5D7F4175")
 
 (deftest handle-payment-success-test
-  (let [handler (create-handlers)
+  (let [handler (create-handlers 8080)
         session (base/login-with-login-link (peridot/session handler))
         response (-> session
                      (peridot/request (str routing/payment-root "/success" success-params)))
@@ -66,7 +70,7 @@
       (is (s/includes? location "action=payment-success")))))
 
 (deftest handle-payment-success-invalid-authcode-test
-  (let [handler (create-handlers)
+  (let [handler (create-handlers 8080)
         session (base/login-with-login-link (peridot/session handler))
         response (-> session
                      (peridot/request (str routing/payment-root "/success" success-params "INVALID")))
@@ -79,7 +83,7 @@
 (deftest handle-payment-success-registration-not-found-test
   (jdbc/execute! @embedded-db/conn "DELETE FROM payment")
   (jdbc/execute! @embedded-db/conn "DELETE FROM registration")
-  (let [handler (create-handlers)
+  (let [handler (create-handlers 8080)
         session (base/login-with-login-link (peridot/session handler))
         response (-> session
                      (peridot/request (str routing/payment-root "/success" success-params)))
@@ -88,7 +92,7 @@
       (is (s/includes? location "action=payment-error")))))
 
 (deftest handle-payment-cancel
-  (let [handler (create-handlers)
+  (let [handler (create-handlers 8080)
         session (base/login-with-login-link (peridot/session handler))
         response (-> session
                      (peridot/request (str routing/payment-root "/cancel" cancel-params)))
@@ -97,7 +101,7 @@
       (is (s/includes? location "action=payment-cancel")))))
 
 (deftest handle-payment-notify-test
-  (let [handler (create-handlers)
+  (let [handler (create-handlers 8080)
         session (base/login-with-login-link (peridot/session handler))
         response (-> session
                      (peridot/request (str routing/payment-root "/notify" success-params)))

@@ -6,6 +6,7 @@
             [pgqueue.core :as pgq]
             [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
+            [yki.boundary.localisation :as localisation]
             [yki.boundary.organizer-db :as organizer-db]
             [yki.registration.payment-util :as payment-util]
             [ring.util.http-response :refer [not-found]]
@@ -34,11 +35,12 @@
       nil)))
 
 (defn create-payment-form-data
-  [db payment-config registration-id external-user-id lang]
+  [db url-helper payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
     (if-let [payment (registration-db/get-payment-by-registration-id db registration-id)]
       (let [payment-data {:language-code lang
-                          :order-number (:order_number payment)}
+                          :order-number (:order_number payment)
+                          :msg (localisation/get-translation url-helper "common.paymentMessage" lang)}
             organizer-specific-config (organizer-db/get-payment-config db (:organizer_id registration))
             form-data (payment-util/generate-form-data (merge organizer-specific-config payment-config) payment-data)]
         form-data)

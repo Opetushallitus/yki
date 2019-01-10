@@ -34,10 +34,8 @@
                         :access-log #ig/ref :yki.middleware.access-log/with-logging
                         :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                          :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"
-                                         :amount "100.00"
-                                         :msg {:fi "Tutkintomaksu"
-                                               :sv "Tutkintomaksu_sv"
-                                               :en "Tutkintomaksu_en"}}}
+                                         :amount "100.00"}}
+
  :yki.handler/registration {:db #ig/ref :duct.database/sql
                             :auth #ig/ref :yki.middleware.auth/with-authentication
                             :onr-client #ig/ref :yki.boundary.onr/onr-client

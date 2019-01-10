@@ -97,7 +97,7 @@
       (testing "put endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
         (is (= (get-in update-response [:response :status]) 200))
         (is (= (:id payment) id))
-        (is (= (:subject email-request) "Maksulinkki: fin PERUS - Omenia, 27.1.2018"))
+        (is (= (:subject email-request) "Maksulinkki: fin perustaso - Omenia, 27.1.2018"))
         (is (= (:type payment-link) "PAYMENT"))
         (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/ilmoittautuminen?action=redirect-to-paytrail&id=" id)))
         (is (= (:order_number payment) "YKI6000000001"))
