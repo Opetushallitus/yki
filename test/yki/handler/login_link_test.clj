@@ -45,6 +45,6 @@
         (is (= success-redirect (str "http://yki.localhost:" port "/yki/ilmoittautuminen?action=login&id=1")))
         (is (= (:status response) 200))
         (testing "email send request should be send to job queue"
-          (is (= (:subject email-request) "Ilmoittautuminen: fin PERUS - Omenia, 27.1.2018"))
+          (is (= (:subject email-request) "Ilmoittautuminen: fin perustaso - Omenia, 27.1.2018"))
           (is (= (:recipients email-request) ["test@test.com"])))))))
 

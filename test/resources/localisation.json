@@ -166,5 +166,61 @@
     "key": "email.payment_success.subject",
     "locale": "fi",
     "value": "Maksu onnistui"
+  },
+  {
+    "accesscount": 0,
+    "id": 21025,
+    "category": "yki",
+    "accessed": 1544528116682,
+    "created": 1544528116682,
+    "createdBy": "1.2.246.562.24.86420489115",
+    "modified": 1544528116682,
+    "modifiedBy": "1.2.246.562.24.86420489115",
+    "force": false,
+    "key": "common.paymentMessage",
+    "locale": "fi",
+    "value": "msg_fi"
+  },
+  {
+    "accesscount": 0,
+    "id": 21025,
+    "category": "yki",
+    "accessed": 1544528116682,
+    "created": 1544528116682,
+    "createdBy": "1.2.246.562.24.86420489115",
+    "modified": 1544528116682,
+    "modifiedBy": "1.2.246.562.24.86420489115",
+    "force": false,
+    "key": "common.level.basic",
+    "locale": "fi",
+    "value": "Perustaso"
+  },
+  {
+    "accesscount": 0,
+    "id": 21025,
+    "category": "yki",
+    "accessed": 1544528116682,
+    "created": 1544528116682,
+    "createdBy": "1.2.246.562.24.86420489115",
+    "modified": 1544528116682,
+    "modifiedBy": "1.2.246.562.24.86420489115",
+    "force": false,
+    "key": "common.level.middle",
+    "locale": "fi",
+    "value": "Keskitaso"
+  },
+  {
+    "accesscount": 0,
+    "id": 21025,
+    "category": "yki",
+    "accessed": 1544528116682,
+    "created": 1544528116682,
+    "createdBy": "1.2.246.562.24.86420489115",
+    "modified": 1544528116682,
+    "modifiedBy": "1.2.246.562.24.86420489115",
+    "force": false,
+    "key": "common.level.high",
+    "locale": "fi",
+    "value": "Ylintaso"
   }
 ]

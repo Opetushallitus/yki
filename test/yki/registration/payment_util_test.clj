@@ -17,17 +17,17 @@
                                  :MSG_SETTLEMENT_PAYER "msg_fi"
                                  :MSG_UI_MERCHANT_PANEL "msg_fi"
                                  :ORDER_NUMBER "1234"}})
+
 (def payment-config {:paytrail-host "https://paytrail.com"
                      :yki-payment-uri "http://localhost:8080/payment"
                      :amount "100.00"
                      :merchant_id 12345
-                     :merchant_secret "SECRET_KEY"
-                     :msg {:fi "msg_fi"
-                           :sv "msg_sv"}})
+                     :merchant_secret "SECRET_KEY"})
 
 (deftest generate-payment-form-data
   (let [payment {:language-code "fi"
-                 :order-number "1234"}
+                 :order-number "1234"
+                 :msg "msg_fi"}
         form-data (payment/generate-form-data payment-config payment)]
     (testing "should create payment form data"
       (is (= payment-form-data form-data)))))

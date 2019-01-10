@@ -15,6 +15,11 @@
 
 (def date-formatter (f/formatter "d.M.YYYY"))
 
+(def level-translation-key
+  {"PERUS" "common.level.basic"
+   "KESKI" "common.level.middle"
+   "YLIN" "common.level.high"})
+
 (parser/cache-off!)
 
 (parser/add-tag! :i18n
@@ -38,9 +43,10 @@
 
 (defn subject
   [url-helper template lang params]
-  (let [subject (localisation/get-translation url-helper (str "email." (str/lower-case template) ".subject") lang)]
-    ;; TODO localise language_code and level_code
-    (parser/render "{{subject}}: {{language_code}} {{level_code}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject))))
+  (let [subject (localisation/get-translation url-helper (str "email." (str/lower-case template) ".subject") lang)
+        level (localisation/get-translation url-helper (level-translation-key (:level_code params)) lang)]
+    ; TODO: localize language_code
+    (parser/render "{{subject}}: {{language_code}} {{level|lower}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject :level level))))
 
 (defn render
   [url-helper template lang params]
