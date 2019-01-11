@@ -14,4 +14,4 @@
   (set-timezone (t/with-time-at-start-of-day (t/plus date (t/days 1)))))
 
 (defn date-from-now [days]
-  (set-timezone (t/with-time-at-start-of-day (t/plus (t/now) (t/days (+ days 1))))))
+  (set-timezone (t/with-time-at-start-of-day (t/plus (t/now) (t/days (inc days))))))

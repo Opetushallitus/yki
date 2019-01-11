@@ -45,8 +45,8 @@
     "update" (let [old  (.getAsJsonObject (.parse jsonParser (->json-string (:old change))))
                    new  (.getAsJsonObject (.parse jsonParser (->json-string (:new change))))]
                (Changes/updatedDto new old))
-    "delete" (-> (Changes$Builder.) (.build))
-    "cancel" (-> (Changes$Builder.) (.build))
+    "delete" (.build (Changes$Builder.))
+    "cancel" (.build (Changes$Builder.))
     "create" (let [new  (.getAsJsonObject (.parse jsonParser (->json-string (:new change))))]
                (Changes/addedDto new))))
 
