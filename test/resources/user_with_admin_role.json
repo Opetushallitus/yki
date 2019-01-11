@@ -1,0 +1,28 @@
+[
+  {
+    "oidHenkilo": "1.2.3.4.5",
+    "username": "testaaja",
+    "kayttajaTyyppi": "VIRKAILIJA",
+    "organisaatiot": [
+      {
+        "organisaatioOid": "1.2.3.4",
+        "kayttooikeudet": [
+          { "palvelu": "YKI", "oikeus": "YLLAPITAJA" }
+        ]
+      },
+      {
+        "organisaatioOid": "1.2.3.5",
+        "kayttooikeudet": [
+          { "palvelu": "YKI", "oikeus": "YLLAPITAJA" }
+        ]
+      },
+      {
+        "organisaatioOid": "1.2.3.6",
+        "kayttooikeudet": [
+          { "palvelu": "YKI", "oikeus": "YLLAPITAJA" },
+          { "palvelu": "OTHER", "oikeus": "ADMIN" }
+        ]
+      }
+    ]
+  }
+]

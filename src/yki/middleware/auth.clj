@@ -18,6 +18,10 @@
 
 (def oph-oid "1.2.246.562.10.00000000001")
 
+(def admin-role "YLLAPITAJA")
+
+(def organizer-role "JARJESTAJA")
+
 (def organizer-routes
   ["*/organizer/:oid"
    "*/organizer/:oid/*"])
@@ -61,6 +65,14 @@
   [session oid]
   (some #(= (:oid %) oid) (get-organizations-from-session session)))
 
+;({:oid 1.2.3.9999, :permissions ({oikeus JARJESTAJA, palvelu YKI})})
+(defn- allowed-organization-for-role?
+  [session oid role]
+  (if-let [organization (first (filter #(= (:oid %) oid) (get-organizations-from-session session)))]
+    (let [permissions (:permissions organization)
+          allowed (some #(= (:oikeus %) role) permissions)]
+      allowed)))
+
 (defn oph-user?
   [session]
   (if (allowed-organization? session oph-oid)
@@ -74,10 +86,18 @@
     (error forbidden)))
 
 (defn- permission-to-organization
-  "If request uri contains oid then it's checked that user has permissions for it."
+  "If request uri contains oid then it's checked that user
+  has any permission for it."
   [request]
   (if-let [oid (match-oid-in-uri request organizer-routes)]
     (allowed-organization? (:session request) oid)
+    true))
+
+(defn- admin-permission-to-organization
+  "If request uri contains oid then it's checked that user has admin permission for it."
+  [request]
+  (if-let [oid (match-oid-in-uri request organizer-routes)]
+    (allowed-organization-for-role? (:session request) oid "YLLAPITAJA")
     true))
 
 (defn- redirect-to-cas
@@ -109,12 +129,12 @@
    {:pattern #".*/auth/initsession"
     :handler any-access}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
-    :handler {:and [(partial virkailija-authenticated db) {:or [oph-user-access permission-to-organization]}]}}
+    :handler {:and [(partial virkailija-authenticated db) permission-to-organization]}}
    {:pattern #".*/api/virkailija/organizer"
     :handler (partial virkailija-authenticated db) ; authorized on database level
     :request-method :get}
-   {:pattern #".*/api/virkailija/organizer.*"
-    :handler {:and [(partial virkailija-authenticated db) oph-user-access]}
+   {:pattern #".*/api/virkailija/organizer/.*"
+    :handler {:and [(partial virkailija-authenticated db) admin-permission-to-organization]}
     :request-method #{:post :put :delete}}
    {:pattern #".*/auth/cas.*"
     :handler (partial virkailija-authenticated db)

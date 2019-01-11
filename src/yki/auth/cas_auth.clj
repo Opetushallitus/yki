@@ -17,11 +17,11 @@
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn- yki-permission? [permission]
-  (= (permission "palvelu") "YKI")) ;use EPERUSTEET_YLOPS for testing
+  (= (:palvelu permission) "YKI")) ;use EPERUSTEET_YLOPS for testing
 
 (defn- yki-permissions [org]
-  {:oid (org "organisaatioOid")
-   :permissions (filter yki-permission? (org "kayttooikeudet"))})
+  {:oid (:organisaatioOid org)
+   :permissions (filter yki-permission? (:kayttooikeudet org))})
 
 (defn- get-organizations-with-yki-permissions [organizations]
   (filter
@@ -34,12 +34,12 @@
       (let [username      (cas/validate-ticket (cas-client "/") ticket)
             _             (cas-ticket-db/create-ticket! db ticket)
             permissions   (permissions/virkailija-by-username permissions-client username)
-            person-oid    (permissions "oidHenkilo")
+            person-oid    (:oidHenkilo permissions)
             person        (onr/get-person-by-oid onr-client person-oid)
             lang          (or (some #{(get-in person ["asiointiKieli" "kieliKoodi"])}
                                     ["fi" "sv"])
                               "fi")
-            organizations (get-organizations-with-yki-permissions (permissions "organisaatiot"))
+            organizations (get-organizations-with-yki-permissions (:organisaatiot permissions))
             session       (:session request)
             redirect-uri  (if (:success-redirect session)
                             (str (:success-redirect session) "?lang=" lang)

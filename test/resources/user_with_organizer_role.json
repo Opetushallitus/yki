@@ -7,7 +7,7 @@
       {
         "organisaatioOid": "1.2.3.4",
         "kayttooikeudet": [
-          { "palvelu": "YKI", "oikeus": "ADMIN" },
+          { "palvelu": "YKI", "oikeus": "JARJESTAJA" },
           { "palvelu": "OTHER", "oikeus": "ADMIN" }
         ]
       },

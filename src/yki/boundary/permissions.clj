@@ -14,7 +14,7 @@
                           {"username" username})
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
-        (if-let [virkailija (first (json/read-value body))]
+        (if-let [virkailija (first (json/read-value body (json/object-mapper {:decode-key-fn true})))]
           virkailija
           (throw (new RuntimeException
                       (str "No virkailija found by username " username))))

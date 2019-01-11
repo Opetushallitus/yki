@@ -71,7 +71,7 @@
 (defn- fire-requests [port]
   (let [session (login port)
         organizer-post (-> session
-                           (peridot/request routing/organizer-api-root
+                           (peridot/request (str routing/organizer-api-root "/1.2.3.4")
                                             :body (j/write-value-as-string base/organizer)
                                             :content-type "application/json"
                                             :request-method :post))
@@ -122,7 +122,7 @@
 (deftest handle-authentication-success-callback-test
   (with-routes!
     (fn [server]
-      (get-mock-routes (:port server) "yki_user"))
+      (get-mock-routes (:port server) "user_with_organizer_role"))
     (let [routes (create-routes port)
           session (peridot/session routes)
           response (-> session
@@ -142,7 +142,7 @@
         (is (= (identity "oid") "1.2.3.4.5")))
       (testing "callback endpoint should set only YKI permissions returned from permissions client to session"
         (is (= organizations
-               [{"oid" "1.2.3.4" "permissions" [{"oikeus" "ADMIN" "palvelu" "YKI"}]}]))))))
+               [{"oid" "1.2.3.4" "permissions" [{"oikeus" "JARJESTAJA" "palvelu" "YKI"}]}]))))))
 
 (deftest handle-authentication-callback-without-ticket-test
   (let [handler (create-routes "")
@@ -156,7 +156,7 @@
 (deftest handle-logout-test
   (with-routes!
     (fn [server]
-      (get-mock-routes (:port server) "yki_user"))
+      (get-mock-routes (:port server) "user_with_organizer_role"))
     (let [handler (create-routes port)
           session (peridot/session (routes handler))
           response (-> session
@@ -168,7 +168,7 @@
       (testing "logout endpoint redirects to cas logout"
         (is (= (get-in response [:response :status]) 302))))))
 
-(deftest user-with-yki-permissions-authorization-test
+(deftest user-with-organizer-role-authorization-test
   (base/insert-organizer "'1.2.3.4'")
   (base/insert-organizer "'1.2.3.5'")
   (base/insert-languages "'1.2.3.4'")
@@ -177,7 +177,7 @@
 
   (with-routes!
     (fn [server]
-      (get-mock-routes (:port server) "yki_user"))
+      (get-mock-routes (:port server) "user_with_organizer_role"))
     (let [responses (fire-requests port)
           org-responses (:org responses)
           exam-responses (:exam responses)
@@ -200,20 +200,25 @@
       (testing "delete exam-session should be allowed"
         (is (= (-> exam-responses :get :response :status) 200))))))
 
-(deftest user-with-oph-permissions-authorization-test
+(deftest user-with-admin-permissions-authorization-test
+  ; no permissions for this organizer
+  (base/insert-organizer "'1.2.3.3'")
   (base/insert-organizer "'1.2.3.5'")
   (base/insert-exam-dates)
 
   (with-routes!
     (fn [server]
-      (get-mock-routes (:port server) "oph_user"))
+      (get-mock-routes (:port server) "user_with_admin_role"))
     (let [responses (fire-requests port)
           org-responses (:org responses)
           exam-responses (:exam responses)
           organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
-      (testing "should allow all endpoints"
+      (testing "should allow all operations on organizer"
         (assert-status-code (:get org-responses) 200)
-        (is (= (count organizers) 2))
+        ; created from POST
+        (is (= ((first organizers) "oid") "1.2.3.4"))
+        ; inserted before executing test
+        (is (= ((last organizers) "oid") "1.2.3.5"))
         (assert-status-code (:put org-responses) 200)
         (assert-status-code (:delete org-responses) 404)
         (assert-status-code (:post org-responses) 200)
@@ -244,7 +249,7 @@
 (deftest handle-cas-logout-test
   (with-routes!
     (fn [server]
-      (get-mock-routes (:port server) "yki_user"))
+      (get-mock-routes (:port server) "user_with_organizer_role"))
     (let [handler (create-routes port)
           session (peridot/session (routes handler))
           response (-> session

@@ -20,7 +20,7 @@
 
 (deftest organizer-validation-test
   (let [json-body (j/write-value-as-string (assoc-in base/organizer [:agreement_start_date] "NOT_A_VALID_DATE"))
-        request (-> (mock/request :post routing/organizer-api-root json-body)
+        request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.5") json-body)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (base/send-request-with-tx request)]
     (testing "post organizer endpoint should return 400 status code for validation errors"
@@ -43,7 +43,7 @@
 
 (deftest add-organizer-test
   (let [json-body (j/write-value-as-string base/organizer)
-        request (-> (mock/request :post routing/organizer-api-root json-body)
+        request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.5") json-body)
                     (mock/content-type "application/json; charset=UTF-8"))
         response (base/send-request-with-tx request)]
     (testing "post organizer endpoint should add organizer"
