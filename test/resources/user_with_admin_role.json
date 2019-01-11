@@ -5,22 +5,9 @@
     "kayttajaTyyppi": "VIRKAILIJA",
     "organisaatiot": [
       {
-        "organisaatioOid": "1.2.3.4",
+        "organisaatioOid": "1.2.246.562.10.00000000001",
         "kayttooikeudet": [
           { "palvelu": "YKI", "oikeus": "YLLAPITAJA" }
-        ]
-      },
-      {
-        "organisaatioOid": "1.2.3.5",
-        "kayttooikeudet": [
-          { "palvelu": "YKI", "oikeus": "YLLAPITAJA" }
-        ]
-      },
-      {
-        "organisaatioOid": "1.2.3.6",
-        "kayttooikeudet": [
-          { "palvelu": "YKI", "oikeus": "YLLAPITAJA" },
-          { "palvelu": "OTHER", "oikeus": "ADMIN" }
         ]
       }
     ]

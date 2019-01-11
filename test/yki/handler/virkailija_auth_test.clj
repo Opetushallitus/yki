@@ -71,7 +71,7 @@
 (defn- fire-requests [port]
   (let [session (login port)
         organizer-post (-> session
-                           (peridot/request (str routing/organizer-api-root "/1.2.3.4")
+                           (peridot/request routing/organizer-api-root
                                             :body (j/write-value-as-string base/organizer)
                                             :content-type "application/json"
                                             :request-method :post))
@@ -201,8 +201,6 @@
         (is (= (-> exam-responses :get :response :status) 200))))))
 
 (deftest user-with-admin-permissions-authorization-test
-  ; no permissions for this organizer
-  (base/insert-organizer "'1.2.3.3'")
   (base/insert-organizer "'1.2.3.5'")
   (base/insert-exam-dates)
 
@@ -215,10 +213,7 @@
           organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "should allow all operations on organizer"
         (assert-status-code (:get org-responses) 200)
-        ; created from POST
-        (is (= ((first organizers) "oid") "1.2.3.4"))
-        ; inserted before executing test
-        (is (= ((last organizers) "oid") "1.2.3.5"))
+        (is (= (count organizers) 2))
         (assert-status-code (:put org-responses) 200)
         (assert-status-code (:delete org-responses) 404)
         (assert-status-code (:post org-responses) 200)
@@ -250,7 +245,7 @@
   (let [routes (create-routes 8080)
         session (peridot/session routes)
         response (-> session
-                     (peridot/request (str routing/organizer-api-root "/1.2.3.4")
+                     (peridot/request routing/organizer-api-root
                                       :body (j/write-value-as-string base/organizer)
                                       :content-type "application/json"
                                       :request-method :post))]
