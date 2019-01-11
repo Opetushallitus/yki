@@ -48,10 +48,6 @@
       true)
     (error {:status 401 :body "Unauthorized"})))
 
-(defn- has-oid?
-  [permission oid]
-  (= (permission "oid") oid))
-
 (defn- match-oid-in-uri
   "This is a workaround for clout uri matching which matches against :path-info if it exists,
   rather than using full :uri."
@@ -73,16 +69,8 @@
   has admin or organizer permission for it."
   [request]
   (if-let [oid (match-oid-in-uri request organizer-routes)]
-    (or (allowed-organization-for-role? (:session request) oid "YLLAPITAJA")
-        (allowed-organization-for-role? (:session request) oid "JARJESTAJA"))
-    true))
-
-(defn- admin-permission-to-organization
-  "If request uri contains oid then it's checked that user
-  has admin permission for it."
-  [request]
-  (if-let [oid (match-oid-in-uri request organizer-routes)]
-    (allowed-organization-for-role? (:session request) oid "YLLAPITAJA")
+    (or (allowed-organization-for-role? (:session request) oid admin-role)
+        (allowed-organization-for-role? (:session request) oid organizer-role))
     true))
 
 (defn- redirect-to-cas
@@ -91,6 +79,15 @@
    (found (url-helper :cas.login))
    :session
    {:success-redirect ((:query-params request) "success-redirect")}))
+
+(defn oph-admin?
+  [session]
+  (allowed-organization-for-role? session oph-oid admin-role))
+
+(defn- oph-admin-access
+  "Checks if user has YKI admin role for OPH organization"
+  [request]
+  (oph-admin? (:session request)))
 
 (defn- redirect-to-shibboleth
   [request url-helper]
@@ -104,6 +101,8 @@
      {:success-redirect ((:query-params request) "success-redirect")})))
 
 (defn- rules
+  "OPH users with admin role are allowed to call all endpoints without restrictions to organizer.
+  Other users have access only to organizer they have permissions for."
   [url-helper db]
   [{:pattern #".*/auth/cas/callback"
     :handler any-access}
@@ -112,12 +111,12 @@
    {:pattern #".*/auth/initsession"
     :handler any-access}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
-    :handler {:and [(partial virkailija-authenticated db) permission-to-organization]}}
+    :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
    {:pattern #".*/api/virkailija/organizer"
     :handler (partial virkailija-authenticated db) ; authorized on database level
     :request-method :get}
-   {:pattern #".*/api/virkailija/organizer/.*"
-    :handler {:and [(partial virkailija-authenticated db) admin-permission-to-organization]}
+   {:pattern #".*/api/virkailija/organizer.*"
+    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}
     :request-method #{:post :put :delete}}
    {:pattern #".*/auth/cas.*"
     :handler (partial virkailija-authenticated db)
