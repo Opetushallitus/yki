@@ -16,4 +16,4 @@
   (try-to-acquire-lock!
     [{:keys [spec]} {:keys [worker-id task interval]}]
     (jdbc/with-db-transaction [tx spec]
-      (> (q/try-to-acquire-lock! tx {:worker_id worker-id :task task :interval interval}) 0))))
+      (pos? (q/try-to-acquire-lock! tx {:task task, :worker_id worker-id, :interval interval})))))

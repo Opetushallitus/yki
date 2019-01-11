@@ -146,11 +146,7 @@
 
 (defn on-error
   [request value]
-  (if value
-    value
-    {:status 403
-     :headers {}
-     :body "Forbidden"}))
+  (or value {:headers {}, :status 403, :body "Forbidden"}))
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
 

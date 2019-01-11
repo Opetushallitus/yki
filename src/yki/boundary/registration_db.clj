@@ -29,7 +29,7 @@
   (update-submitted-registrations-to-expired! [db]))
 
 (defn- int->boolean [value]
-  (> value 0))
+  (pos? value))
 
 (extend-protocol Registration
   duct.database.sql.Boundary

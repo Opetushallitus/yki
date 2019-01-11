@@ -120,8 +120,6 @@ lein kibit
 lein bikeshed
 ```
 
-
-
 ## Legal
 
 Copyright (c) 2013-2019 Finnish National Agency for Education - Opetushallitus

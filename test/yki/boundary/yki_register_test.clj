@@ -63,7 +63,8 @@
                                       :type "DELETE"
                                       :created (System/currentTimeMillis)}
             delete-organizer-res (yki-register/sync-exam-session-and-organizer db url-helper false delete-organizer-req)
-            delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper false delete-exam-session-req)]))))
+            delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper false delete-exam-session-req)]
+        "tests that exception is not thrown"))))
 
 (def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-122F;Iines;Ankka;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;010199-;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]))
 
