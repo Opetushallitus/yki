@@ -183,11 +183,11 @@
           exam-responses (:exam responses)
           organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "post organizer should not be allowed"
-        (is (= (-> org-responses :post :response :status) 401)))
+        (is (= (-> org-responses :post :response :status) 403)))
       (testing "put organizer should not be allowed"
-        (is (= (-> org-responses :put :response :status) 401)))
+        (is (= (-> org-responses :put :response :status) 403)))
       (testing "delete organizer should not be allowed"
-        (is (= (-> org-responses :delete :response :status) 401)))
+        (is (= (-> org-responses :delete :response :status) 403)))
       (testing "get organizer should return only organizers that user has permissions to see"
         (is (= (count organizers) 1))
         (is (= (get (first organizers) "oid") "1.2.3.4")))
@@ -238,13 +238,25 @@
       (testing "should not allow any endpoints"
         (assert-status-code (:get org-responses) 200)
         (is (= (count organizers) 0))
-        (assert-status-code (:put org-responses) 401)
-        (assert-status-code (:delete org-responses) 401)
-        (assert-status-code (:post org-responses) 401)
-        (assert-status-code (:get exam-responses) 401)
-        (assert-status-code (:put exam-responses) 401)
-        (assert-status-code (:delete exam-responses) 401)
-        (assert-status-code (:post exam-responses) 401)))))
+        (assert-status-code (:put org-responses) 403)
+        (assert-status-code (:delete org-responses) 403)
+        (assert-status-code (:post org-responses) 403)
+        (assert-status-code (:get exam-responses) 403)
+        (assert-status-code (:put exam-responses) 403)
+        (assert-status-code (:delete exam-responses) 403)
+        (assert-status-code (:post exam-responses) 403)))))
+
+(deftest unauthenticated-user-test
+  (let [routes (create-routes 8080)
+        session (peridot/session routes)
+        response (-> session
+                     (peridot/request (str routing/organizer-api-root "/1.2.3.4")
+                                      :body (j/write-value-as-string base/organizer)
+                                      :content-type "application/json"
+                                      :request-method :post))]
+
+    (testing "should return 401 for unauthenticated user"
+      (is (= (get-in response [:response :status]) 401)))))
 
 (deftest handle-cas-logout-test
   (with-routes!

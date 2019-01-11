@@ -38,7 +38,7 @@
     (do
       (MDC/put "user" (:external-id identity))
       true)
-    (error unauthorized)))
+    (error {:status 401 :body "Unauthorized"})))
 
 (defn- virkailija-authenticated
   [db request]
@@ -46,7 +46,7 @@
     (do
       (MDC/put "user" (:username identity))
       true)
-    (error unauthorized)))
+    (error {:status 401 :body "Unauthorized"})))
 
 (defn- has-oid?
   [permission oid]
@@ -61,11 +61,6 @@
 (defn get-organizations-from-session [session]
   (get-in session [:identity :organizations]))
 
-(defn- allowed-organization?
-  [session oid]
-  (some #(= (:oid %) oid) (get-organizations-from-session session)))
-
-;({:oid 1.2.3.9999, :permissions ({oikeus JARJESTAJA, palvelu YKI})})
 (defn- allowed-organization-for-role?
   [session oid role]
   (if-let [organization (first (filter #(= (:oid %) oid) (get-organizations-from-session session)))]
@@ -73,28 +68,18 @@
           allowed (some #(= (:oikeus %) role) permissions)]
       allowed)))
 
-(defn oph-user?
-  [session]
-  (if (allowed-organization? session oph-oid)
-    true))
-
-(defn- oph-user-access
-  "Checks if user is part of OPH organization."
-  [request]
-  (if (oph-user? (:session request))
-    true
-    (error forbidden)))
-
 (defn- permission-to-organization
   "If request uri contains oid then it's checked that user
-  has any permission for it."
+  has admin or organizer permission for it."
   [request]
   (if-let [oid (match-oid-in-uri request organizer-routes)]
-    (allowed-organization? (:session request) oid)
+    (or (allowed-organization-for-role? (:session request) oid "YLLAPITAJA")
+        (allowed-organization-for-role? (:session request) oid "JARJESTAJA"))
     true))
 
 (defn- admin-permission-to-organization
-  "If request uri contains oid then it's checked that user has admin permission for it."
+  "If request uri contains oid then it's checked that user
+  has admin permission for it."
   [request]
   (if-let [oid (match-oid-in-uri request organizer-routes)]
     (allowed-organization-for-role? (:session request) oid "YLLAPITAJA")
@@ -119,8 +104,6 @@
      {:success-redirect ((:query-params request) "success-redirect")})))
 
 (defn- rules
-  "OPH users are allowed to call all endpoints without restrictions to organizer.
-  Other users have access only to organizer they have permissions for."
   [url-helper db]
   [{:pattern #".*/auth/cas/callback"
     :handler any-access}
@@ -161,10 +144,19 @@
    {:pattern #".*"
     :handler no-access}])
 
+(defn on-error
+  [request value]
+  (if value
+    value
+    {:status 403
+     :headers {}
+     :body "Forbidden"}))
+
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
+
   (defn with-authentication [handler]
     (-> handler
-        (wrap-access-rules {:rules (rules url-helper db)})
+        (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
         (wrap-authentication backend)
         (wrap-authorization backend)
         (wrap-session {:store (cookie-store {:key (:key session-config)})
