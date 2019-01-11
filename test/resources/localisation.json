@@ -222,5 +222,19 @@
     "key": "common.level.high",
     "locale": "fi",
     "value": "Ylintaso"
+  },
+  {
+    "accesscount": 0,
+    "id": 21025,
+    "category": "yki",
+    "accessed": 1544528116682,
+    "created": 1544528116682,
+    "createdBy": "1.2.246.562.24.86420489115",
+    "modified": 1544528116682,
+    "modifiedBy": "1.2.246.562.24.86420489115",
+    "force": false,
+    "key": "common.language.fin",
+    "locale": "fi",
+    "value": "suomi"
   }
 ]

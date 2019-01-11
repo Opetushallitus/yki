@@ -44,9 +44,9 @@
 (defn subject
   [url-helper template lang params]
   (let [subject (localisation/get-translation url-helper (str "email." (str/lower-case template) ".subject") lang)
-        level (localisation/get-translation url-helper (level-translation-key (:level_code params)) lang)]
-    ; TODO: localize language_code
-    (parser/render "{{subject}}: {{language_code}} {{level|lower}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject :level level))))
+        level (localisation/get-translation url-helper (level-translation-key (:level_code params)) lang)
+        language (localisation/get-translation url-helper (str "common.language." (:language_code params)) lang)]
+    (parser/render "{{subject}}: {{language}} {{level|lower}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject :level level :language language))))
 
 (defn render
   [url-helper template lang params]
