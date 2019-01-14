@@ -72,17 +72,17 @@
           handlers (create-handlers email-q (:port server))
           session (base/login-with-login-link (peridot/session handlers))
           create-response (-> session
-                              (peridot/request routing/registration-api-root
+                              (peridot/request (str routing/registration-api-root "/init")
                                                :body (j/write-value-as-string {:exam_session_id 1})
                                                :content-type "application/json"
                                                :request-method :post))
           id ((base/body-as-json (:response create-response)) "id")
           registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           update-response (-> session
-                              (peridot/request (str routing/registration-api-root "/" id "?lang=fi")
+                              (peridot/request (str routing/registration-api-root "/" id "/submit" "?lang=fi")
                                                :body (j/write-value-as-string form)
                                                :content-type "application/json"
-                                               :request-method :put))
+                                               :request-method :post))
           payment (base/select-one (str "SELECT * FROM payment WHERE registration_id = " id))
           exam-session (base/select-one "SELECT * FROM exam_date WHERE id = 1")
           payment-link (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
@@ -107,7 +107,7 @@
 
       (testing "second post with same data should return conflict with proper error message"
         (let [create-twice-response (-> session
-                                        (peridot/request routing/registration-api-root
+                                        (peridot/request (str routing/registration-api-root "/init")
                                                          :body (j/write-value-as-string {:exam_session_id 1})
                                                          :content-type "application/json"
                                                          :request-method :post))]
@@ -118,7 +118,7 @@
       (testing "when session is full should return conflict with proper error message"
         (fill-exam-session)
         (let [create-twice-response (-> session
-                                        (peridot/request routing/registration-api-root
+                                        (peridot/request (str routing/registration-api-root "/init")
                                                          :body (j/write-value-as-string {:exam_session_id 1})
                                                          :content-type "application/json"
                                                          :request-method :post))]
