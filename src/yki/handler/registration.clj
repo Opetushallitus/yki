@@ -16,7 +16,7 @@
    (context routing/registration-api-root []
      :coercion :spec
      :middleware [auth access-log]
-     (POST "/" request
+     (POST "/init" request
        :body [registration-init ::ys/registration-init]
        :return ::ys/id-response
        (audit/log-participant {:request request
@@ -26,7 +26,7 @@
                                         :new registration-init}})
        (registration/init-registration db (:session request) registration-init))
      (context "/:id" []
-       (PUT "/" request
+       (POST "/submit" request
          :body [registration ::ys/registration]
          :path-params [id :- ::ys/id]
          :query-params [lang :- ::ys/language-code]
