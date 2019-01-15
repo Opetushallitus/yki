@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS exam_session (
   published_at TIMESTAMP WITH TIME ZONE  DEFAULT NULL,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-  UNIQUE (organizer_id, language_code, level_code, exam_date_id)
+  UNIQUE (organizer_id, office_oid, language_code, level_code, exam_date_id)
 );
 --;;
 CREATE TABLE IF NOT EXISTS exam_session_location (

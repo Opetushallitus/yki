@@ -152,6 +152,9 @@
                (remove-organizer url-helper disabled organizer-oid))
     (if exam-session-id
       (let [{:keys [organizer_oid office_oid] :as exam-session} (exam-session-db/get-exam-session-by-id db exam-session-id)]
-        (sync-organizer db url-helper disabled organizer_oid office_oid)
-        (sync-exam-session url-helper disabled exam-session))
+        (if exam-session
+          (do
+            (sync-organizer db url-helper disabled organizer_oid office_oid)
+            (sync-exam-session url-helper disabled exam-session))
+          (log/warn "Exam session not found id:" exam-session-id)))
       (sync-organizer db url-helper disabled organizer-oid nil))))
