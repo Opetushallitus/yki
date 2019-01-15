@@ -44,17 +44,18 @@
           :body [exam-session ::ys/exam-session]
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if (exam-session-db/update-exam-session! db oid id exam-session (send-to-queue data-sync-q exam-session "UPDATE"))
-            (let [current (exam-session-db/get-exam-session-by-id db id)]
-              (audit-log/log {:request request
-                              :target-kv {:k audit-log/exam-session
-                                          :v id}
-                              :change {:type audit-log/update-op
-                                       :old current
-                                       :new exam-session}})
-              (response {:success true}))
-            (not-found {:success false
-                        :error "Exam session not found"})))
+          (let [current (exam-session-db/get-exam-session-by-id db id)]
+            (if (exam-session-db/update-exam-session! db oid id exam-session (send-to-queue data-sync-q exam-session "UPDATE"))
+              (do
+                (audit-log/log {:request request
+                                :target-kv {:k audit-log/exam-session
+                                            :v id}
+                                :change {:type audit-log/update-op
+                                         :old current
+                                         :new exam-session}})
+                (response {:success true}))
+              (not-found {:success false
+                          :error "Exam session not found"}))))
         (DELETE "/" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
