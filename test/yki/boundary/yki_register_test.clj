@@ -5,6 +5,7 @@
             [stub-http.core :refer :all]
             [jsonista.core :as j]
             [yki.embedded-db :as embedded-db]
+            [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.yki-register :as yki-register]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
@@ -55,11 +56,12 @@
        {:path "/jarjestaja" :query-params {:oid "1.2.3.4"}} {:status 202}}
       (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
             db (base/db)
+            es (exam-session-db/get-exam-session-by-id db exam-session-id)
             url-helper (base/create-url-helper (str "localhost:" port))
             delete-organizer-req  {:organizer-oid "1.2.3.4"
                                    :type "DELETE"
                                    :created (System/currentTimeMillis)}
-            delete-exam-session-req  {:exam-session-id exam-session-id
+            delete-exam-session-req  {:exam-session es
                                       :type "DELETE"
                                       :created (System/currentTimeMillis)}
             delete-organizer-res (yki-register/sync-exam-session-and-organizer db url-helper false delete-organizer-req)

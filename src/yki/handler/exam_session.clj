@@ -11,10 +11,10 @@
             [yki.spec :as ys]
             [integrant.core :as ig]))
 
-(defn- send-to-queue [data-sync-q type exam-session-id]
-  (pgq/put data-sync-q  {:exam-session-id exam-session-id
-                         :type type
-                         :created (System/currentTimeMillis)}))
+(defn- send-to-queue [data-sync-q exam-session type]
+  #(pgq/put data-sync-q  {:type type
+                          :exam-session exam-session
+                          :created (System/currentTimeMillis)}))
 
 (defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q]}]
   {:pre [(some? db) (some? data-sync-q)]}
@@ -27,28 +27,24 @@
       (POST "/" request
         :body [exam-session ::ys/exam-session]
         :return ::ys/id-response
-        (try
-          (if-let [exam-session-id (exam-session-db/create-exam-session! db
-                                                                         oid
-                                                                         exam-session
-                                                                         (partial send-to-queue data-sync-q))]
-            (do
-              (audit-log/log {:request request
-                              :target-kv {:k audit-log/exam-session
-                                          :v exam-session-id}
-                              :change {:type audit-log/create-op
-                                       :new exam-session}})
-              (response {:id exam-session-id})))
-          (catch Exception e
-            (error e "Creating exam session failed")
-            (throw e))))
+        (if-let [exam-session-id (exam-session-db/create-exam-session! db
+                                                                       oid
+                                                                       exam-session
+                                                                       (send-to-queue data-sync-q exam-session "CREATE"))]
+          (do
+            (audit-log/log {:request request
+                            :target-kv {:k audit-log/exam-session
+                                        :v exam-session-id}
+                            :change {:type audit-log/create-op
+                                     :new exam-session}})
+            (response {:id exam-session-id}))))
 
       (context "/:id" []
         (PUT "/" request
           :body [exam-session ::ys/exam-session]
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if (exam-session-db/update-exam-session! db oid id exam-session (partial send-to-queue data-sync-q))
+          (if (exam-session-db/update-exam-session! db oid id exam-session (send-to-queue data-sync-q exam-session "UPDATE"))
             (let [current (exam-session-db/get-exam-session-by-id db id)]
               (audit-log/log {:request request
                               :target-kv {:k audit-log/exam-session
@@ -62,15 +58,16 @@
         (DELETE "/" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if (exam-session-db/delete-exam-session! db id (partial send-to-queue data-sync-q))
-            (do
-              (audit-log/log {:request request
-                              :target-kv {:k audit-log/exam-session
-                                          :v id}
-                              :change {:type audit-log/delete-op}})
-              (response {:success true}))
-            (not-found {:success false
-                        :error "Exam session not found"})))
+          (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
+            (if (exam-session-db/delete-exam-session! db id (send-to-queue data-sync-q exam-session "DELETE"))
+              (do
+                (audit-log/log {:request request
+                                :target-kv {:k audit-log/exam-session
+                                            :v id}
+                                :change {:type audit-log/delete-op}})
+                (response {:success true}))
+              (not-found {:success false
+                          :error "Exam session not found"}))))
 
         (context routing/participant-uri []
           (GET "/" {session :session}

@@ -9,6 +9,7 @@
             [clj-time.format :as f]
             [clj-time.core :as t]
             [yki.handler.base-test :as base]
+            [yki.boundary.exam-session-db :as exam-session-db]
             [yki.embedded-db :as embedded-db]
             [yki.job.scheduled-tasks :as st]))
 
@@ -77,12 +78,14 @@
                     :content-type "application/json"
                     :body   "{}"}}
     (let [data-sync-q  (base/data-sync-q)
+          db (base/db)
           exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
-          _ (pgq/put data-sync-q  {:exam-session-id exam-session-id
+          es (exam-session-db/get-exam-session-by-id db exam-session-id)
+          _ (pgq/put data-sync-q  {:exam-session es
                                    :type "CREATE"
                                    :created (System/currentTimeMillis)})
           reader (ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
-                                                                               :db (base/db)
+                                                                               :db db
                                                                                :disabled false
                                                                                :retry-duration-in-days 1
                                                                                :data-sync-q  data-sync-q})]

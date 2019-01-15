@@ -75,7 +75,7 @@
     (log/info "Sending disabled. Logging delete" oid)
     (do-delete (str (url-helper :yki-register.organizer) "?oid=" oid))))
 
-(defn- remove-exam-session [url-helper disabled  exam-session]
+(defn- remove-exam-session [url-helper disabled exam-session]
   (if disabled
     (log/info "Sending disabled. Logging delete" exam-session)
     (do-delete (str (url-helper :yki-register.exam-session)
@@ -145,16 +145,13 @@
 
 (defn sync-exam-session-and-organizer
   "When exam session is synced to YKI register then also organizer data is synced."
-  [db url-helper disabled {:keys [type exam-session-id organizer-oid]}]
+  [db url-helper disabled {:keys [type exam-session organizer-oid]}]
   (case type
-    "DELETE" (if exam-session-id
-               (remove-exam-session url-helper disabled (exam-session-db/get-exam-session-by-id db exam-session-id))
+    "DELETE" (if exam-session
+               (remove-exam-session url-helper disabled exam-session)
                (remove-organizer url-helper disabled organizer-oid))
-    (if exam-session-id
-      (let [{:keys [organizer_oid office_oid] :as exam-session} (exam-session-db/get-exam-session-by-id db exam-session-id)]
-        (if exam-session
-          (do
-            (sync-organizer db url-helper disabled organizer_oid office_oid)
-            (sync-exam-session url-helper disabled exam-session))
-          (log/warn "Exam session not found id:" exam-session-id)))
+    (if exam-session
+      (let [{:keys [organizer_oid office_oid]} exam-session]
+        (sync-organizer db url-helper disabled organizer_oid office_oid)
+        (sync-exam-session url-helper disabled exam-session))
       (sync-organizer db url-helper disabled organizer-oid nil))))
