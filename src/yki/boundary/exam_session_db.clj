@@ -57,7 +57,7 @@
               exam-session-id (:id result)]
           (doseq [loc (:location exam-session)]
             (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))
-          (send-to-queue-fn "CREATE" exam-session-id)
+          (send-to-queue-fn)
           exam-session-id))))
   (init-participants-sync-status!
     [{:keys [spec]} exam-session-id]
@@ -79,7 +79,7 @@
           (let [updated (int->boolean (q/update-exam-session! tx
                                                               (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid :id id))))]
             (when updated
-              (send-to-queue-fn "UPDATE" id))
+              (send-to-queue-fn))
             updated)))))
   (delete-exam-session! [{:keys [spec]} id send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
@@ -87,7 +87,7 @@
        tx
        #(let [deleted (int->boolean (q/delete-exam-session! tx {:id id}))]
           (when deleted
-            (send-to-queue-fn "DELETE" id))
+            (send-to-queue-fn))
           deleted))))
   (get-exam-session-with-location [{:keys [spec]} id lang]
     (first (q/select-exam-session-with-location spec {:id id :lang lang})))
