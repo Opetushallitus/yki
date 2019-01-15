@@ -44,6 +44,8 @@
   (case (:type change)
     "update" (let [old  (.getAsJsonObject (.parse jsonParser (->json-string (:old change))))
                    new  (.getAsJsonObject (.parse jsonParser (->json-string (:new change))))]
+               (info "old" old)
+               (info "new" new)
                (Changes/updatedDto new old))
     "delete" (.build (Changes$Builder.))
     "cancel" (.build (Changes$Builder.))
