@@ -40,4 +40,4 @@
 
 (def exam-session-uri "/exam-session")
 
-(def participant-uri "/participant")
+(def registration-uri "/registration")

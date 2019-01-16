@@ -278,7 +278,8 @@ WHERE exam_session_id IN (SELECT exam_session_id FROM exam_session_location esl
 DELETE FROM exam_session
 WHERE id = (SELECT es.id FROM exam_session es
             INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-            WHERE es.id = :id AND ed.registration_start_date > current_timestamp);
+            WHERE es.id = :id AND ed.registration_start_date > current_timestamp
+            AND es.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL));
 
 -- name: insert-participant<!
 INSERT INTO participant(
@@ -576,13 +577,23 @@ WHERE es.id = :id
 AND r.state = 'COMPLETED';
 
 -- name: select-exam-session-participants
-SELECT r.form, r.state
+SELECT r.form, r.state, r.id as registration_id
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 WHERE es.id = :id
-AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-ORDER BY r.created ASC;
+AND es.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED');
 
+--name: update-registration-status-to-cancelled!
+UPDATE registration
+SET state = 'CANCELLED'
+WHERE id = :id
+AND exam_session_id IN (SELECT id
+                        FROM exam_session
+                        WHERE organizer_id =
+                          (SELECT id
+                            FROM organizer
+                            WHERE oid = :oid AND deleted_at IS NULL));
 
 -- name: insert-payment-config!
 INSERT INTO payment_config(
