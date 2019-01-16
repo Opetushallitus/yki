@@ -34,12 +34,13 @@
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
   (update-exam-session! [db oid id exam-session send-to-queue-fn])
-  (delete-exam-session! [db id send-to-queue-fn])
+  (delete-exam-session! [db id oid send-to-queue-fn])
   (init-participants-sync-status! [db exam-session-id])
   (set-participants-sync-to-success! [db exam-session-id])
+  (set-registration-status-to-cancelled! [db registration-id oid])
   (get-exam-session-by-id [db id])
   (get-exam-session-with-location [db id lang])
-  (get-exam-session-participants [db id])
+  (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
   (get-not-synced-exam-sessions [db])
   (get-exam-sessions [db oid from]
@@ -67,6 +68,10 @@
     [{:keys [spec]} exam-session-id]
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-sync-to-success! tx {:exam_session_id exam-session-id})))
+  (set-registration-status-to-cancelled!
+    [{:keys [spec]} registration-id oid]
+    (jdbc/with-db-transaction [tx spec]
+      (int->boolean (q/update-registration-status-to-cancelled! tx {:id registration-id :oid oid}))))
   (update-exam-session!
     [{:keys [spec]} oid id exam-session send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
@@ -81,11 +86,11 @@
             (when updated
               (send-to-queue-fn))
             updated)))))
-  (delete-exam-session! [{:keys [spec]} id send-to-queue-fn]
+  (delete-exam-session! [{:keys [spec]} id oid send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
        tx
-       #(let [deleted (int->boolean (q/delete-exam-session! tx {:id id}))]
+       #(let [deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
           (when deleted
             (send-to-queue-fn))
           deleted))))
@@ -95,8 +100,8 @@
     (first (q/select-exam-session-by-id spec {:id id})))
   (get-not-synced-exam-sessions [{:keys [spec]}]
     (q/select-not-synced-exam-sessions spec))
-  (get-exam-session-participants [{:keys [spec]} id]
-    (q/select-exam-session-participants spec {:id id}))
+  (get-exam-session-participants [{:keys [spec]} id oid]
+    (q/select-exam-session-participants spec {:id id :oid oid}))
   (get-completed-exam-session-participants [{:keys [spec]} id]
     (q/select-completed-exam-session-participants spec {:id id}))
   (get-exam-sessions [{:keys [spec]} oid from]

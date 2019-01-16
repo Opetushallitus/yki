@@ -60,7 +60,7 @@
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-            (if (exam-session-db/delete-exam-session! db id (send-to-queue data-sync-q exam-session "DELETE"))
+            (if (exam-session-db/delete-exam-session! db id oid (send-to-queue data-sync-q exam-session "DELETE"))
               (do
                 (audit-log/log {:request request
                                 :target-kv {:k audit-log/exam-session
@@ -70,9 +70,22 @@
               (not-found {:success false
                           :error "Exam session not found"}))))
 
-        (context routing/participant-uri []
+        (context routing/registration-uri []
           (GET "/" {session :session}
             :path-params [id :- ::ys/id]
             :return ::ys/participants-response
-            (response {:participants (exam-session-db/get-exam-session-participants db id)})))))))
+            (response {:participants (exam-session-db/get-exam-session-participants db id oid)}))
+          (context "/:id" []
+            (DELETE "/" request
+              :path-params [id :- ::ys/id]
+              :return ::ys/response
+              (if (exam-session-db/set-registration-status-to-cancelled! db id oid)
+                (do
+                  (audit-log/log {:request request
+                                  :target-kv {:k audit-log/registration
+                                              :v id}
+                                  :change {:type audit-log/delete-op}})
+                  (response {:success true}))
+                (not-found {:success false
+                            :error "Registration not found"})))))))))
 
