@@ -616,5 +616,5 @@ SELECT ed.exam_date, ed.registration_start_date, ed.registration_end_date,
   ) lang
 ) AS languages
 FROM exam_date ed
-WHERE ed.exam_date >= current_date
+WHERE ed.registration_end_date >= current_date
 ORDER BY ed.exam_date ASC;
