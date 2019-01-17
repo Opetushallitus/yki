@@ -566,7 +566,9 @@ SELECT r.form, r.state
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 WHERE es.id = :id
-AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED');
+AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+ORDER BY r.created ASC;
+
 
 -- name: insert-payment-config!
 INSERT INTO payment_config(

@@ -99,7 +99,7 @@
         (is (= (:id payment) id))
         (is (= (:subject email-request) "Maksulinkki: suomi perustaso - Omenia, 27.1.2018"))
         (is (= (:type payment-link) "PAYMENT"))
-        (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/ilmoittautuminen?action=redirect-to-paytrail&id=" id)))
+        (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/maksut/" id)))
         (is (= (:order_number payment) "YKI6000000001"))
         (is (= (:state submitted-registration) "SUBMITTED"))
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
