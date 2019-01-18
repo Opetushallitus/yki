@@ -38,7 +38,9 @@
     (do
       (MDC/put "user" (:external-id identity))
       true)
-    (error {:status 401 :body "Unauthorized"})))
+    (do
+      (warn "Participant not authenticated request uri:" (:uri request))
+      (error {:status 401 :body "Unauthorized"}))))
 
 (defn- virkailija-authenticated
   [db request]
