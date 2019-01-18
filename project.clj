@@ -37,7 +37,7 @@
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
   :cloverage {:ns-exclude-regex [#"dev" #"user" #"yki.main" #"yki.middleware.no-auth"]}
   :plugins [[duct/lein-duct "0.10.6"]
-            [lein-cljfmt "0.6.1"]
+            [lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.3"]
             [lein-bikeshed "0.5.1"]
             [lein-ancient "0.6.15"]
