@@ -10,14 +10,14 @@
             [ring.util.http-response :refer [ok internal-server-error found]]
             [integrant.core :as ig]))
 
-(defn- success-redirect [url-helper]
-  (found (url-helper :payment.success-redirect)))
+(defn- success-redirect [url-helper lang]
+  (found (url-helper :payment.success-redirect lang)))
 
-(defn- error-redirect [url-helper]
-  (found (url-helper :payment.error-redirect)))
+(defn- error-redirect [url-helper lang]
+  (found (url-helper :payment.error-redirect lang)))
 
-(defn- cancel-redirect [url-helper]
-  (found (url-helper :payment.cancel-redirect)))
+(defn- cancel-redirect [url-helper lang]
+  (found (url-helper :payment.cancel-redirect lang)))
 
 (defn- handle-exceptions [url-helper f]
   (try
@@ -46,29 +46,33 @@
          (info "Received payment success params" params)
          (handle-exceptions url-helper
                             #(if (paytrail-payment/valid-return-params? db params)
-                               (if (paytrail-payment/handle-payment-return db email-q url-helper params)
-                                 (do
-                                   (audit/log-participant {:request request
-                                                           :target-kv {:k audit/payment
-                                                                       :v (:ORDER_NUMBER params)}
-                                                           :change {:type audit/create-op
-                                                                    :new params}})
-                                   (success-redirect url-helper))
-                                 (error-redirect url-helper))
-                               (error-redirect url-helper)))))
+                               (let [payment (paytrail-payment/get-payment db params)
+                                     lang (or (:lang payment) "fi")]
+                                 (if (paytrail-payment/handle-payment-return db email-q url-helper params)
+                                   (do
+                                     (audit/log-participant {:request request
+                                                             :target-kv {:k audit/payment
+                                                                         :v (:ORDER_NUMBER params)}
+                                                             :change {:type audit/create-op
+                                                                      :new params}})
+                                     (success-redirect url-helper lang))
+                                   (error-redirect url-helper lang)))
+                               (error-redirect url-helper "fi")))))
      (GET "/cancel" request
        (let [params (:params request)]
          (info "Received payment cancel params" params)
          (handle-exceptions url-helper
                             #(if (paytrail-payment/valid-return-params? db params)
                                (do
-                                 (audit/log-participant {:request request
-                                                         :target-kv {:k audit/payment
-                                                                     :v (:ORDER_NUMBER params)}
-                                                         :change {:type audit/cancel-op
-                                                                  :new params}})
-                                 (cancel-redirect url-helper))
-                               (error-redirect url-helper)))))
+                                 (let [payment (paytrail-payment/get-payment db params)
+                                       lang (or (:lang payment) "fi")]
+                                   (audit/log-participant {:request request
+                                                           :target-kv {:k audit/payment
+                                                                       :v (:ORDER_NUMBER params)}
+                                                           :change {:type audit/cancel-op
+                                                                    :new params}})
+                                   (cancel-redirect url-helper lang)))
+                               (error-redirect url-helper "fi")))))
      (GET "/notify" {params :params}
        (info "Received payment notify params" params)
        (if (paytrail-payment/valid-return-params? db params)
