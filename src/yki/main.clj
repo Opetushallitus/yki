@@ -8,7 +8,9 @@
 
 (defn- read-external-config []
   (if (.exists (io/file "./oph-configuration/config.edn"))
-    (io/file "./oph-configuration/config.edn")))
+    (do
+      (System/setProperty "logback.configurationFile" "./oph-configuration/logback.xml")
+      (io/file "./oph-configuration/config.edn"))))
 
 (defn -main [& args]
   (let [keys (or (duct/parse-keys args) [:duct/daemon
