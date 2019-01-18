@@ -498,6 +498,20 @@ INNER JOIN registration re ON re.participant_id = par.id
 INNER JOIN payment pay ON re.id = pay.registration_id
 WHERE pay.order_number = :order_number;
 
+-- name: select-payment-by-order-number
+SELECT
+  state,
+  registration_id,
+  amount,
+  lang,
+  reference_number,
+  order_number,
+  external_payment_id,
+  payment_method,
+  payed_at
+FROM payment
+WHERE order_number = :order_number;
+
 -- name: select-next-order-number-suffix
 SELECT nextval('payment_order_number_seq');
 

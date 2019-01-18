@@ -63,3 +63,7 @@
       "CANCELLED" (handle-payment-cancelled db payment-params)
       (error "Unknown return status" STATUS))))
 
+(defn get-payment
+  [db {:keys [ORDER_NUMBER]}]
+  (registration-db/get-payment-by-order-number db (:order-number ORDER_NUMBER)))
+
