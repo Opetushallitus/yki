@@ -7,6 +7,7 @@
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/core.rrb-vector "0.0.13"]
+                 [org.clojure/java.jdbc "0.7.8"]
                  [clj-time "0.15.0"]
                  [duct/core "0.6.2"]
                  [duct/module.logging "0.3.1"]
@@ -41,6 +42,7 @@
             [jonase/eastwood "0.3.3"]
             [lein-bikeshed "0.5.1"]
             [lein-ancient "0.6.15"]
+            [cider/cider-nrepl "0.20.0"]
             [com.jakemccrary/lein-test-refresh "0.23.0"]
             [lein-cloverage "1.0.13"]
             [me.arrdem/lein-git-version "2.0.8"]
@@ -61,10 +63,9 @@
    :profiles/dev {}
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
-                  :dependencies   [[integrant/repl "0.2.0"]
+                  :dependencies   [[integrant/repl "0.3.1"]
                                    [eftest "0.5.4"]
                                    [cheshire "5.8.1"]
-                                   [cider/cider-nrepl "0.15.1-SNAPSHOT"]
                                    [peridot "0.5.1"]
                                    [se.haleby/stub-http "0.2.5"]
                                    [com.opentable.components/otj-pg-embedded "0.13.0"]
