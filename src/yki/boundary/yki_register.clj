@@ -136,12 +136,12 @@
         url (str (url-helper :yki-register.participants)
                  (create-url-params exam-session))
         request (str/join (System/lineSeparator) (create-participants-csv participants))]
-    (if disabled
-      (log/info "Sending disabled. Logging participants" participants)
-      (do
-        (exam-session-db/init-participants-sync-status! db exam-session-id)
-        (do-post url request "text/csv; charset=UTF-8")
-        (exam-session-db/set-participants-sync-to-success! db exam-session-id)))))
+    (do
+      (exam-session-db/init-participants-sync-status! db exam-session-id)
+      (if disabled
+        (log/info "Sending disabled. Logging participants" participants)
+        (do-post url request "text/csv; charset=UTF-8"))
+      (exam-session-db/set-participants-sync-to-success! db exam-session-id))))
 
 (defn sync-exam-session-and-organizer
   "When exam session is synced to YKI register then also organizer data is synced."

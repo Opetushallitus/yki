@@ -6,7 +6,6 @@
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.10.0"]
-                 [org.clojure/core.rrb-vector "0.0.13"]
                  [org.clojure/java.jdbc "0.7.8"]
                  [clj-time "0.15.1"]
                  [duct/core "0.6.2"]
@@ -64,6 +63,8 @@
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
                   :dependencies   [[integrant/repl "0.3.1"]
+                                   ;; needed by lein-test-refresh on jdk11
+                                   [org.clojure/core.rrb-vector "0.0.13"]
                                    [eftest "0.5.4"]
                                    [cheshire "5.8.1"]
                                    [peridot "0.5.1"]
