@@ -112,6 +112,8 @@
     :handler any-access}
    {:pattern #".*/auth/initsession"
     :handler any-access}
+   {:pattern #".*/auth/user"
+    :handler any-access}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
    {:pattern #".*/api/virkailija/organizer"
