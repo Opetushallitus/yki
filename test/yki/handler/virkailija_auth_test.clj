@@ -126,20 +126,20 @@
     (let [routes (create-routes port)
           session (peridot/session routes)
           response (-> session
-                       (peridot/request (str routing/auth-root routing/virkailija-auth-uri "?success-redirect=/yki/auth/cas/user"))
+                       (peridot/request (str routing/auth-root routing/virkailija-auth-uri "?success-redirect=/yki/auth/user"))
                        (peridot/request routing/virkailija-auth-callback
                                         :request-method :get
                                         :params {:ticket "ST-15126"})
                        (peridot/follow-redirect))
           response-body (j/read-value (slurp (:body (:response response)) :encoding "UTF-8"))
-          identity (get-in response-body ["session" "identity"])
-          organizations (identity "organizations")]
+          id (response-body  "identity")
+          organizations (id "organizations")]
       (testing "callback endpoint should set identity returned from cas client to session"
-        (is (= (identity "username") "test")))
+        (is (= (id "username") "test")))
       (testing "callback endpoint should set lang returned from onr to session"
-        (is (= (identity "lang") "sv")))
+        (is (= (id "lang") "sv")))
       (testing "callback endpoint should set person oid returned from permissions client to session"
-        (is (= (identity "oid") "1.2.3.4.5")))
+        (is (= (id "oid") "1.2.3.4.5")))
       (testing "callback endpoint should set only YKI permissions returned from permissions client to session"
         (is (= organizations
                [{"oid" "1.2.3.4" "permissions" [{"oikeus" "JARJESTAJA" "palvelu" "YKI"}]}]))))))

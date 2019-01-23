@@ -18,7 +18,7 @@
      (GET "/initsession" [lang :as request]
        (header-auth/login request onr-client url-helper))
      (GET "/user" {session :session}
-       (ok {:session session}))
+       (ok (update-in session [:identity] dissoc :ticket)))
      (GET "/login" [code lang]
        (code-auth/login db code lang url-helper))
      (context routing/virkailija-auth-uri []
@@ -27,6 +27,4 @@
        (GET "/callback" [ticket :as request]
          (cas-auth/login ticket request cas-client permissions-client onr-client url-helper db))
        (GET "/logout" {session :session}
-         (cas-auth/logout session url-helper))
-       (GET "/user" {session :session}
-         (ok {:session (update-in session [:identity] dissoc :ticket)}))))))
+         (cas-auth/logout session url-helper))))))

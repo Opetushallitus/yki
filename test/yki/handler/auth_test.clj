@@ -83,7 +83,7 @@
                                         :request-method :get)
                        (peridot/follow-redirect))
           response-body (base/body-as-json (:response response))
-          identity (get-in response-body ["session" "identity"])]
+          identity (response-body "identity")]
       (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
         (is (= identity user-1))))))
@@ -100,10 +100,10 @@
                                         :headers (json/read-value (slurp "test/resources/headers2.json" :encoding "ISO-8859-1")))
                        (peridot/follow-redirect))
           response-body (base/body-as-json (:response response))
-          identity (get-in response-body ["session" "identity"])]
+          id (response-body "identity")]
       (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
-        (is (= identity user-2))))))
+        (is (= id user-2))))))
 
 (deftest login-with-login-link-test
   (base/insert-login-link-prereqs)
@@ -116,7 +116,7 @@
                      (peridot/request (str routing/auth-root "/login?code=" base/code-ok))
                      (peridot/request (str routing/auth-root "/user")))
         response-body (base/body-as-json (:response response))
-        id (get-in response-body ["session" "identity"])]
+        id (response-body "identity")]
     (testing "after successfull login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
       (is (= (id "external-user-id") "test@user.com"))))
