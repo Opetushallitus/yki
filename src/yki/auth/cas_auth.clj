@@ -4,6 +4,7 @@
             [yki.handler.routing :as routing]
             [yki.boundary.cas :as cas]
             [yki.boundary.onr :as onr]
+            [yki.middleware.auth :as auth]
             [yki.boundary.cas-ticket-db :as cas-ticket-db]
             [clojure.tools.logging :refer [info error]]
             [yki.boundary.permissions :as permissions]
@@ -17,7 +18,7 @@
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn- yki-permission? [permission]
-  (= (:palvelu permission) "YKI")) ;use EPERUSTEET_YLOPS for testing
+  (= (:palvelu permission) "YKI"))
 
 (defn- yki-permissions [org]
   {:oid (:organisaatioOid org)
@@ -40,10 +41,12 @@
                                     ["fi" "sv"])
                               "fi")
             organizations (get-organizations-with-yki-permissions (:organisaatiot permissions))
+            oph-admin?    (auth/oph-admin? organizations)
             session       (:session request)
             redirect-uri  (if (:success-redirect session)
                             (str (:success-redirect session) "?lang=" lang)
-                            (url-helper :yki.default.cas.login-success.redirect lang))]
+                            (url-helper (if oph-admin? :yki.admin.cas.login-success.redirect
+                                            :yki.organizer.cas.login-success.redirect) lang))]
         (info "User" username "logged in")
         (if (empty? organizations)
           unauthorized
