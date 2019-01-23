@@ -60,8 +60,8 @@
   (get-in session [:identity :organizations]))
 
 (defn- allowed-organization-for-role?
-  [session oid role]
-  (if-let [organization (first (filter #(= (:oid %) oid) (get-organizations-from-session session)))]
+  [organizations oid role]
+  (if-let [organization (first (filter #(= (:oid %) oid) organizations))]
     (let [permissions (:permissions organization)
           allowed (some #(= (:oikeus %) role) permissions)]
       allowed)))
@@ -71,8 +71,8 @@
   has admin or organizer permission for it."
   [request]
   (if-let [oid (match-oid-in-uri request organizer-routes)]
-    (or (allowed-organization-for-role? (:session request) oid admin-role)
-        (allowed-organization-for-role? (:session request) oid organizer-role))
+    (or (allowed-organization-for-role? (get-organizations-from-session (:session request)) oid admin-role)
+        (allowed-organization-for-role? (get-organizations-from-session (:session request)) oid organizer-role))
     true))
 
 (defn- redirect-to-cas
@@ -83,13 +83,13 @@
    {:success-redirect ((:query-params request) "success-redirect")}))
 
 (defn oph-admin?
-  [session]
-  (allowed-organization-for-role? session oph-oid admin-role))
+  [organizations]
+  (allowed-organization-for-role? organizations oph-oid admin-role))
 
 (defn- oph-admin-access
   "Checks if user has YKI admin role for OPH organization"
   [request]
-  (oph-admin? (:session request)))
+  (oph-admin? (get-organizations-from-session (:session request))))
 
 (defn- redirect-to-shibboleth
   [request url-helper]

@@ -40,7 +40,7 @@
          (response {:success true})))
      (GET "/" {session :session}
        :return ::ys/organizers-response
-       (if (auth/oph-admin? session)
+       (if (auth/oph-admin? (auth/get-organizations-from-session session))
          (response {:organizers (organizer-db/get-organizers db)})
          (response {:organizers (organizer-db/get-organizers-by-oids db (get-oids session))})))
      (context "/:oid" [oid]
