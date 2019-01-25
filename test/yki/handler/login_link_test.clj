@@ -25,7 +25,7 @@
     (handler request)))
 
 (deftest login-link-create-test
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (with-routes!
     {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
                                                :body (slurp "test/resources/localisation.json")}}

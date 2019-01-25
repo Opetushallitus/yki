@@ -40,7 +40,7 @@
         (is (= (pgq/count email-q) 0))))))
 
 (deftest handle-started-registration-expired-test
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO registration(state, exam_session_id, participant_id, started_at) values
                                     ('STARTED'," base/select-exam-session "," base/select-participant ", (current_timestamp - interval '61 minutes'))"))
@@ -52,7 +52,7 @@
       (is (= (:state registration) "EXPIRED")))))
 
 (deftest handle-submitted-registration-expired-test
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (base/insert-payment)
   (jdbc/execute! @embedded-db/conn
                  "UPDATE payment SET created = (current_timestamp - interval '193 hours')")
@@ -63,7 +63,7 @@
       (is (= (:state registration) "EXPIRED")))))
 
 (deftest handle-exam-session-create-request-test
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (with-routes!
     {"/organisaatio-service/rest/organisaatio/v4/1.2.3.4" {:status 200
                                                            :content-type "application/json"
@@ -124,7 +124,7 @@
   (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 1))))
 
 (deftest handle-exam-session-participants-sync-test
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (yesterday) "'"))
   (with-routes!

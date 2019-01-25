@@ -21,6 +21,7 @@
            #ig/ref :yki.handler/auth
            #ig/ref :yki.handler/payment
            #ig/ref :yki.handler/login-link
+           #ig/ref :yki.handler/exam-session-public
            #ig/ref :yki.handler/localisation
            #ig/ref :yki.handler/registration
            #ig/ref :yki.handler/organizer]
@@ -80,6 +81,8 @@
                     :access-log #ig/ref :yki.middleware.access-log/with-logging
                     :db #ig/ref :duct.database/sql
                     :url-helper #ig/ref :yki.util/url-helper}
+
+ :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql}
 
  :yki.handler/status {:db #ig/ref :duct.database/sql}
 

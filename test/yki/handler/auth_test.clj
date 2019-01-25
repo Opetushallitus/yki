@@ -106,7 +106,7 @@
         (is (= id user-2))))))
 
 (deftest login-with-login-link-test
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (base/insert-login-link base/code-ok "2038-01-01")
   (base/insert-login-link code-expired (l/format-local-time (l/local-now) :date))
 

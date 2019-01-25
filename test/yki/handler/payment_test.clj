@@ -16,7 +16,7 @@
             [yki.handler.payment]))
 
 (defn insert-prereq-data [f]
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (base/insert-payment)
   (base/insert-login-link "4ce84260-3d04-445e-b914-38e93c1ef667" "2038-01-01")
   (f))
