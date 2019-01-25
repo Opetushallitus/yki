@@ -4,7 +4,7 @@
             [yki.handler.routing :as routing]
             [yki.middleware.access-log]
             [yki.spec :as ys]
-            [ring.util.http-response :refer [ok]]
+            [ring.util.http-response :refer [ok found]]
             [yki.auth.cas-auth :as cas-auth]
             [yki.auth.code-auth :as code-auth]
             [yki.auth.header-auth :as header-auth]))
@@ -15,6 +15,8 @@
    (context routing/auth-root []
      :no-doc true
      :middleware [auth access-log]
+     (GET "/" [examSessionId :as request]
+       (found (url-helper :exam-session.redirect examSessionId)))
      (GET "/initsession" [lang :as request]
        (header-auth/login request onr-client url-helper))
      (GET "/user" {session :session}
