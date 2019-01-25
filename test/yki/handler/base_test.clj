@@ -169,7 +169,7 @@
 
 (def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
 
-(defn insert-login-link-prereqs []
+(defn insert-base-data []
   (insert-organizer "'1.2.3.4'")
   (insert-payment-config "'1.2.3.4'")
   (insert-languages "'1.2.3.4'")

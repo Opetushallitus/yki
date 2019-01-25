@@ -11,7 +11,7 @@
 
 (deftest exam-session-participants-test
   (testing "get exam session participants endpoint should return participant registration form and state"
-    (base/insert-login-link-prereqs)
+    (base/insert-base-data)
     (base/insert-registrations "COMPLETED")
     (let [exam-session-id (base/get-exam-session-id)
           request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration"))
@@ -23,7 +23,7 @@
 
 (deftest exam-session-participant-delete-test
   (testing "delete exam session participant should set registration to state to CANCELLED"
-    (base/insert-login-link-prereqs)
+    (base/insert-base-data)
     (base/insert-registrations "SUBMITTED")
     (let [exam-session-id (base/get-exam-session-id)
           registration-id (:id (base/select-one "SELECT id from registration"))

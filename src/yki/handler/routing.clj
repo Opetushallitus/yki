@@ -30,6 +30,8 @@
 
 (def registration-api-root (str api-root "/registration"))
 
+(def exam-session-public-api-root (str api-root "/exam-session"))
+
 (def virkailija-api-root (str api-root "/virkailija"))
 
 (def organizer-api-root (str virkailija-api-root "/organizer"))

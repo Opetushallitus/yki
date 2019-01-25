@@ -59,7 +59,7 @@
            :email "test@test.com"})
 
 (deftest registration-create-and-update-test
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (base/insert-login-link base/code-ok "2038-01-01")
   (with-routes!
     (fn [server]

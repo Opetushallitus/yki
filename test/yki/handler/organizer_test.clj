@@ -63,7 +63,7 @@
       (is (= (:status response) 200)))))
 
 (deftest delete-organizer-test
-  (base/insert-login-link-prereqs)
+  (base/insert-base-data)
   (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4"))
         response (base/send-request-with-tx request)
         data-sync-q (base/data-sync-q)
