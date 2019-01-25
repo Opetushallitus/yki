@@ -39,6 +39,6 @@
                                                          :type "LOGIN"
                                                          :expires_at (c/date-from-now 1)
                                                          :expired_link_redirect (url-helper :link-expired.redirect)
-                                                         :success_redirect (url-helper :login-link.redirect exam-session-id)
+                                                         :success_redirect (url-helper :exam-session.redirect exam-session-id)
                                                          :registration_id nil) exam-session)
            (ok {:success true})))))))

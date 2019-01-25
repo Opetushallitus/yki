@@ -4,6 +4,7 @@
             [stub-http.core :refer :all]
             [clj-time.local :as l]
             [clj-time.format :as f]
+            [clojure.string :as s]
             [duct.database.sql :as sql]
             [yki.util.url-helper]
             [yki.handler.auth]
@@ -77,11 +78,11 @@
     (let [handler (create-routes port)
           session (peridot/session handler)
           response (-> session
-                       (peridot/request (str routing/auth-root "?success-redirect=/yki/auth/user"))
+                       (peridot/request (str routing/auth-root "?examSessionId=1"))
                        (peridot/request (str routing/auth-root routing/auth-init-session-uri)
                                         :headers (json/read-value (slurp "test/resources/headers.json"))
                                         :request-method :get)
-                       (peridot/follow-redirect))
+                       (peridot/request (str routing/auth-root "/user")))
           response-body (base/body-as-json (:response response))
           identity (response-body "identity")]
       (testing "after init session session should contain user data"
@@ -94,13 +95,17 @@
       (get-mock-routes (:port server)))
     (let [handler (create-routes port)
           session (peridot/session handler)
-          response (-> session
-                       (peridot/request (str routing/auth-root "?success-redirect=/yki/auth/user"))
-                       (peridot/request (str routing/auth-root routing/auth-init-session-uri)
-                                        :headers (json/read-value (slurp "test/resources/headers2.json" :encoding "ISO-8859-1")))
-                       (peridot/follow-redirect))
+          redirect-response (-> session
+                                (peridot/request (str routing/auth-root "?examSessionId=1"))
+                                (peridot/request (str routing/auth-root routing/auth-init-session-uri)
+                                                 :headers (json/read-value (slurp "test/resources/headers2.json" :encoding "ISO-8859-1"))))
+          response (-> redirect-response
+                       (peridot/request (str routing/auth-root "/user")))
           response-body (base/body-as-json (:response response))
           id (response-body "identity")]
+      (testing "after authentication should redirect to exam session page"
+        (is (s/includes? ((get-in redirect-response [:response :headers]) "Location")
+                         "ilmoittautuminen/tutkintotilaisuus/1")))
       (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
         (is (= id user-2))))))
