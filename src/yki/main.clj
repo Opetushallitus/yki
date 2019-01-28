@@ -6,7 +6,7 @@
 
 (duct/load-hierarchy)
 
-(defn- read-external-config []
+(defn- read-external-config! []
   (if (.exists (io/file "./oph-configuration/config.edn"))
     (do
       (System/setProperty "logback.configurationFile" "./oph-configuration/logback.xml")
@@ -16,7 +16,7 @@
   (let [keys (or (duct/parse-keys args) [:duct/daemon
                                          :duct.migrator/ragtime
                                          :duct.scheduler/simple])
-                                         profiles [:duct.profile/prod]]]
-    (-> (duct/read-config (read-external-config))
-        ; (duct/prep keys)
+        profiles [:duct.profile/prod]]
+    (->
+        (duct/merge-configs (duct/read-config (duct/resource "yki/config.edn")) (duct/read-config (read-external-config!)))
         (duct/exec-config profiles keys))))
