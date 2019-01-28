@@ -1,15 +1,17 @@
 {:duct.profile/base
  {:duct.core/project-ns  yki
-;  :duct.core/environment :production
 
  :duct.logger/timbre {:level     :error
                       :appenders {:println #ig/ref :duct.logger.timbre/println}}
 
  :duct.logger.timbre/println {}
  :duct.module.web/api {}
- :duct-migrations-auto-cfg/module {}
+
  :duct.module/sql {}
-;  :duct.migrator/ragtime {:resource-path "yki/migrations"}
+ :duct.migrator/ragtime  {:database   #ig/ref :duct.database/sql
+                          :logger     #ig/ref :duct/logger
+                          :strategy   :rebase
+                          :migrations #ig/ref :yki/migrations}
 
  :duct.server.http/jetty {:port 8080
                           :handler #ig/ref :yki/api-handler}
@@ -26,6 +28,8 @@
            #ig/ref :yki.handler/localisation
            #ig/ref :yki.handler/registration
            #ig/ref :yki.handler/organizer]
+
+ :yki/migrations {}
 
  :yki.util/url-helper {}
 
@@ -125,11 +129,10 @@
                          :access-log #ig/ref :yki.middleware.access-log/with-logging
                          :exam-session-handler #ig/ref :yki.handler/exam-session
                          :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                         :auth #ig/ref :yki.middleware.auth/with-authentication}
+                         :auth #ig/ref :yki.middleware.auth/with-authentication}}
 
-                         }
-        :duct.profile/dev   #duct/include "dev"
-        :duct.profile/local #duct/include "local"
-        :duct.profile/prod  {}
+  :duct.profile/dev   #duct/include "dev"
+  :duct.profile/local #duct/include "local"
+  :duct.profile/prod  {}
 }
 
