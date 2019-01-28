@@ -1,5 +1,4 @@
-{:duct.core/include ["yki/config"]
-  :duct.core/project-ns yki
+{ :duct.profile/base {
   :duct.database.sql/hikaricp {:adapter "postgresql"
                                :database-name "yki"
                                :server-name "{{host_postgresql_yki}}"
@@ -8,7 +7,6 @@
                                :password "{{host_postgresql_yki_password}}"
                                :connection-timeout {{host_postgresql_yki_max_wait}}
                                :maximum-pool-size {{host_postgresql_yki_max_active}}}
-  :duct.migrator/ragtime {:resource-path "yki/migrations"}
   :yki.util/url-helper {:virkailija-host     "{{host_virkailija}}"
                         :alb-host            "{{host_alb}}"
                         :tunnistus-host      "{{host_tunnistus}}"
@@ -53,3 +51,5 @@
                                      :secure true
                                      :domain "{{host_oppija}}"
                                      :path "/yki"}}}}
+  :duct.profile/prod  {}
+}

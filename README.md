@@ -32,8 +32,7 @@ psql -h localhost -U admin -d yki -c 'create database yki'
 Create local.edn with correct username and password.
 
 ```clojure
-{:duct.core/include ["dev"]
- :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
+{:yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                :cas-creds {:username "replace_with_secret"
                                            :password "replace_with_password"}}}
 ```

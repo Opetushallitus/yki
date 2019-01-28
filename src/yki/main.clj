@@ -12,11 +12,20 @@
       (System/setProperty "logback.configurationFile" "./oph-configuration/logback.xml")
       (io/file "./oph-configuration/config.edn"))))
 
+; (defn migrator-config [migrations]
+;   {:duct.migrator/ragtime {:migrations (vec migrations)
+;    :database ig/ref :duct.database/sql
+;    :logger ig/ref :duct/logger
+;    :strategy :rebase
+;   }})
+
 (defn -main [& args]
   (let [keys (or (duct/parse-keys args) [:duct/daemon
                                          :duct.migrator/ragtime
                                          :duct.scheduler/simple])
-        profiles [:duct.profile/prod]]
+        profiles [:duct.profile/prod]
+        base-config (duct/read-config (duct/resource "yki/config.edn"))
+        external-config (duct/read-config (read-external-config!))]
     (->
-        (duct/merge-configs (duct/read-config (duct/resource "yki/config.edn")) (duct/read-config (read-external-config!)))
-        (duct/exec-config profiles keys))))
+     (duct/merge-configs base-config external-config)
+     (duct/exec-config profiles keys))))
