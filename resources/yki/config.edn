@@ -13,7 +13,7 @@
  :duct.server.http/jetty {:port 8080
                           :handler #ig/ref :yki/api-handler}
 
- [:duct.core/handler :yki/api-handler]
+ [:duct.handler/root :yki/api-handler]
  {:router     #ig/ref :yki/api}
 
  :yki/api [#ig/ref :yki.handler/status
