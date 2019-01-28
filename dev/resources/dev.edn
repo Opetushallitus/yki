@@ -1,6 +1,6 @@
-{:duct.core/environment :development
- #duct/include ["yki/config"]
- :duct.core/project-ns yki
+{
+;  #duct/include ["yki/config"]
+;  :duct.core/project-ns yki
 
  :duct.database.sql/hikaricp {:adapter "postgresql"
                               :database-name "yki"
@@ -9,12 +9,17 @@
                               :username "admin"
                               :password "admin"}
 
- :yki.job.job-queue/email-q {:db-config {:db {:subprotocol "postgresql"
-                                              :subname "//127.0.0.1:5432/yki"
-                                              :user "admin"
-                                              :password "admin"}}}
+;  :yki.job.job-queue/email-q {:db-config {:db {:subprotocol "postgresql"
+;                                               :subname "//127.0.0.1:5432/yki"
+;                                               :user "admin"
+;                                               :password "admin"}}}
 
  :yki.middleware.access-log/with-logging {:env "dev"}
+
+ :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
+                                           :subname "//localhost:5432/yki"
+                                           :user "admin"
+                                           :password "admin"}}}
 
  :yki.util/url-helper {:virkailija-host        "virkailija.untuvaopintopolku.fi"
                        :oppija-host            "untuvaopintopolku.fi"
@@ -38,11 +43,6 @@
                             :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                              :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
                                              :amount "100.00"}}}
-
- :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
-                                           :subname "//localhost:5432/yki"
-                                           :user "admin"
-                                           :password "admin"}}}
 
  :yki.middleware.auth/with-authentication
  {:url-helper #ig/ref :yki.util/url-helper
