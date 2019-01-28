@@ -1,5 +1,5 @@
 {:duct.core/environment :development
- :duct.core/include ["yki/config"]
+ #duct/include ["yki/config"]
  :duct.core/project-ns yki
 
  :duct.database.sql/hikaricp {:adapter "postgresql"

@@ -15,7 +15,8 @@
 (defn -main [& args]
   (let [keys (or (duct/parse-keys args) [:duct/daemon
                                          :duct.migrator/ragtime
-                                         :duct.scheduler/simple])]
+                                         :duct.scheduler/simple])
+                                         profiles [:duct.profile/prod]]]
     (-> (duct/read-config (read-external-config))
-        (duct/prep keys)
-        (duct/exec keys))))
+        ; (duct/prep keys)
+        (duct/exec-config profiles keys))))
