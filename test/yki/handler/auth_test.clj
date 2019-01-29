@@ -78,7 +78,7 @@
     (let [handler (create-routes port)
           session (peridot/session handler)
           response (-> session
-                       (peridot/request (str routing/auth-root "?examSessionId=1"))
+                       (peridot/request (str routing/auth-root "?examSessionId=1&lang=fi"))
                        (peridot/request (str routing/auth-root routing/auth-init-session-uri)
                                         :headers (json/read-value (slurp "test/resources/headers.json"))
                                         :request-method :get)
@@ -91,9 +91,9 @@
 
       (testing "when user is already authenticated should redirect to exam session page"
         (let [redirect-response (-> response
-                                    (peridot/request (str routing/auth-root "?examSessionId=2")))]
+                                    (peridot/request (str routing/auth-root "?examSessionId=2&lang=fi")))]
           (is (s/includes? ((get-in redirect-response [:response :headers]) "Location")
-                           "ilmoittautuminen/tutkintotilaisuus/2")))))))
+                           "ilmoittautuminen/tutkintotilaisuus/2?lang=fi")))))))
 
 (deftest init-session-data-person-not-found-from-onr-test
   (with-routes!
@@ -111,7 +111,7 @@
           id (response-body "identity")]
       (testing "after authentication should redirect to exam session page"
         (is (s/includes? ((get-in redirect-response [:response :headers]) "Location")
-                         "ilmoittautuminen/tutkintotilaisuus/1")))
+                         "ilmoittautuminen/tutkintotilaisuus/1?lang=fi")))
       (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
         (is (= id user-2))))))

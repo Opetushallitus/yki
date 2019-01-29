@@ -100,7 +100,7 @@
     (assoc
      (see-other (url-helper url-key))
      :session
-     {:success-redirect (url-helper :exam-session.redirect ((:query-params request) "examSessionId"))})))
+     {:success-redirect (url-helper :exam-session.redirect ((:query-params request) "examSessionId") (or lang "fi"))})))
 
 (defn- rules
   "OPH users with admin role are allowed to call all endpoints without restrictions to organizer.
