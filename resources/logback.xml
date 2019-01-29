@@ -53,7 +53,7 @@
     </appender>
 
     <!-- Application log -->
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="APP" />
     </root>
 
