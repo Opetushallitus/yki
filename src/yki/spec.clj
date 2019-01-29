@@ -175,10 +175,10 @@
                                                ::params]))
 
 ;; registration
-(s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
 (s/def ::first_name ::non-blank-string)
 (s/def ::last_name ::non-blank-string)
+(s/def ::nick_name ::non-blank-string)
 (s/def ::gender (s/nilable ::gender-code))
 (s/def ::nationalities (s/coll-of (s/and ::non-blank-string #(= (count %) 3))))
 (s/def ::birth_date ::date)
@@ -203,6 +203,26 @@
                                        ::street_address
                                        ::phone_number
                                        ::email]))
+
+(s/def ::registration-init (s/keys :req-un [::exam_session_id]))
+
+(s/def ::exam_session ::exam-session)
+(s/def ::exam_payment ::amount)
+(s/def ::registration_id ::id)
+
+(s/def ::user (s/keys :opt-un [::first_name
+                               ::last_name
+                               ::nick_name
+                               ::ssn
+                               ::post_office
+                               ::zip
+                               ::street_address
+                               ::email]))
+
+(s/def ::registration-init-response (s/keys :req-un [::exam_session
+                                                     ::user
+                                                     ::exam_payment
+                                                     ::registration_id]))
 
 ;; exam session participant
 (s/def ::state                    ::non-blank-string)

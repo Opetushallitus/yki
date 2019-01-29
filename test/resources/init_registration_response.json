@@ -1,0 +1,24 @@
+{
+  "exam_session": {
+    "level_code": "PERUS",
+    "max_participants": 5,
+    "language_code": "fin",
+    "office_oid": "1.2.3.4.5",
+    "published_at": null,
+    "session_date": "2018-01-27",
+    "organizer_oid": "1.2.3.4",
+    "id": 1,
+    "location": [
+      {
+        "name": "Omenia",
+        "address": "Upseerinkatu 11, Espoo",
+        "other_location_info": "Other info",
+        "extra_information": null,
+        "lang": "fi"
+      }
+    ]
+  },
+  "exam_payment": 100.0,
+  "user": { "external-user-id": "test@user.com", "email": "test@user.com" },
+  "registration_id": 1
+}

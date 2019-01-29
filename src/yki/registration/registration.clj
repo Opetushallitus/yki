@@ -6,6 +6,7 @@
             [clj-time.format :as f]
             [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
+            [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
             [yki.util.common :as c]
@@ -54,16 +55,28 @@
        :identifications [{:idpEntityId "email" :identifier email}]
        :eiSuomalaistaHetua true))))
 
+(defn- create-init-response
+  [db session exam_session_id registration amount]
+  (let [exam_session (exam-session-db/get-exam-session-by-id db exam_session_id)
+        email (if (= (:auth-method session) "EMAIL") (:external-user-id (:identity session)))
+        user (assoc (:identity session) :email email)]
+    {:exam_session exam_session
+     :exam_payment amount
+     :user user
+     :registration_id (:id registration)}))
+
 (defn init-registration
-  [db session {:keys [exam_session_id]}]
+  [db session {:keys [exam_session_id]} amount]
   (let [participant-id (get-or-create-participant db (:identity session))
         exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
         exam-session-space-left? (registration-db/exam-session-space-left? db exam_session_id)
         participant-not-registered? (registration-db/participant-not-registered? db participant-id exam_session_id)]
     (if (and exam-session-registration-open? exam-session-space-left? participant-not-registered?)
-      (ok (registration-db/create-registration! db {:exam_session_id exam_session_id
-                                                    :participant_id participant-id
-                                                    :started_at (t/now)}))
+      (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
+                                                                      :participant_id participant-id
+                                                                      :started_at (t/now)})
+            response (create-init-response db session exam_session_id registration-id amount)]
+        (ok response))
       (conflict {:error {:full (not exam-session-space-left?)
                          :closed (not exam-session-registration-open?)
                          :registered (not participant-not-registered?)}}))))

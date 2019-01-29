@@ -18,13 +18,13 @@
      :middleware [auth access-log]
      (POST "/init" request
        :body [registration-init ::ys/registration-init]
-       :return ::ys/id-response
+       :return ::ys/registration-init-response
        (audit/log-participant {:request request
                                :target-kv {:k audit/registration-init
                                            :v (:exam_session_id registration-init)}
                                :change {:type audit/create-op
                                         :new registration-init}})
-       (registration/init-registration db (:session request) registration-init))
+       (registration/init-registration db (:session request) registration-init (payment-config :amount)))
      (context "/:id" []
        (POST "/submit" request
          :body [registration ::ys/registration]

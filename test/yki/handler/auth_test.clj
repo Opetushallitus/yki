@@ -48,24 +48,24 @@
       (is (= (get-in response [:response :status]) 303))
       (is (= ((get-in response [:response :headers]) "Location") "https:///shibboleth/ykiLoginFI")))))
 
-(def user-1 {"lastname" "Aakula"
-             "nickname" "Emma"
+(def user-1 {"last_name" "Aakula"
+             "nick_name" "Emma"
              "ssn" "090940-9224"
-             "post-office" ""
+             "post_office" ""
              "oid" "1.2.246.562.24.81121191558"
              "external-user-id" "1.2.246.562.24.81121191558"
-             "street-address" ""
-             "firstname" "Emma"
+             "street_address" ""
+             "first_name" "Emma"
              "zip" ""})
 
-(def user-2 {"lastname" "Parkkonen-Testi"
-             "nickname" nil
+(def user-2 {"last_name" "Parkkonen-Testi"
+             "nick_name" nil
              "ssn" "260553-959D"
-             "post-office" ""
+             "post_office" ""
              "oid" nil
              "external-user-id" "260553-959D"
-             "street-address" "Ateläniitynpolku 29 G"
-             "firstname" "Carl-Erik"
+             "street_address" "Ateläniitynpolku 29 G"
+             "first_name" "Carl-Erik"
              "zip" ""})
 
 (def code-expired "4ce84260-3d04-445e-b914-38e93c1ef668")
