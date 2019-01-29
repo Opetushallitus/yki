@@ -51,7 +51,7 @@
       (assoc
        basic-fields
        :syntymaaika birth_date
-       :identifications [{:idpEntityId "oppijaToken" :identifier email}]
+       :identifications [{:idpEntityId "email" :identifier email}]
        :eiSuomalaistaHetua true))))
 
 (defn init-registration
@@ -70,7 +70,7 @@
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
   (let [code          (str (UUID/randomUUID))
-        login-url     (str (url-helper :yki.login-link.url) "?code=" code)
+        login-url     (url-helper :yki.login-link.url code)
         email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
         link-type     (:type login-link)
         hashed        (sha256-hash code)]
