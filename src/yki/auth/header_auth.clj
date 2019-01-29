@@ -24,10 +24,10 @@
                 vakinainenkotimainenlahiosoitepostinumero
                 sn firstname nationalidentificationnumber]} (reduce-kv #(assoc %1 %2 (iso-8859-1->utf-8 %3)) {} headers)
         {:strs [etunimet sukunimi kutsumanimi oidHenkilo]}  (onr/get-person-by-ssn onr-client nationalidentificationnumber)
-        address {:post-office    vakinainenkotimainenlahiosoitepostitoimipaikkas
+        address {:post_office    vakinainenkotimainenlahiosoitepostitoimipaikkas
                  :zip            vakinainenkotimainenlahiosoitepostinumero
-                 :street-address vakinainenkotimainenlahiosoites}
-        redirect-url (or (:success-redirect session) (url-helper :yki.default.login-success.redirect {"lang" lang}))]
+                 :street_address vakinainenkotimainenlahiosoites}
+        redirect-url (or (:success-redirect session) (url-helper :yki.default.login-success.redirect lang))]
     (info "User" oidHenkilo "logged in")
     (if (and sn firstname nationalidentificationnumber)
       (assoc
@@ -35,13 +35,13 @@
        :session
        {:identity
         (merge
-         {:firstname
+         {:first_name
           (first
            (if etunimet
              (str/split etunimet #" ")
              (str/split firstname #" ")))
-          :lastname (or sukunimi sn)
-          :nickname kutsumanimi
+          :last_name (or sukunimi sn)
+          :nick_name kutsumanimi
           :ssn nationalidentificationnumber
           :oid oidHenkilo
           :external-user-id (or oidHenkilo nationalidentificationnumber)}

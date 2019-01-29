@@ -71,12 +71,13 @@
     (let [email-q (base/email-q)
           handlers (create-handlers email-q (:port server))
           session (base/login-with-login-link (peridot/session handlers))
-          create-response (-> session
-                              (peridot/request (str routing/registration-api-root "/init")
-                                               :body (j/write-value-as-string {:exam_session_id 1})
-                                               :content-type "application/json"
-                                               :request-method :post))
-          id ((base/body-as-json (:response create-response)) "id")
+          init-response (-> session
+                            (peridot/request (str routing/registration-api-root "/init")
+                                             :body (j/write-value-as-string {:exam_session_id 1})
+                                             :content-type "application/json"
+                                             :request-method :post))
+          init-response-body (base/body-as-json (:response init-response))
+          id (init-response-body "registration_id")
           registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           update-response (-> session
                               (peridot/request (str routing/registration-api-root "/" id "/submit" "?lang=fi")
@@ -89,12 +90,13 @@
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           email-request (pgq/take email-q)]
 
-      (testing "post endpoint should create registration with status STARTED"
-        (is (= (get-in create-response [:response :status]) 200))
+      (testing "post init endpoint should create registration with status STARTED"
+        (is (= (get-in init-response [:response :status]) 200))
+        (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))
         (is (= (:state registration) "STARTED"))
         (is (some? (:started_at registration))))
 
-      (testing "put endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
+      (testing "post submit endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
         (is (= (get-in update-response [:response :status]) 200))
         (is (= (:id payment) id))
         (is (= (:subject email-request) "Maksulinkki: suomi perustaso - Omenia, 27.1.2018"))
@@ -105,7 +107,7 @@
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))
 
-      (testing "second post with same data should return conflict with proper error message"
+      (testing "second post with same data should return conflict with proper error"
         (let [create-twice-response (-> session
                                         (peridot/request (str routing/registration-api-root "/init")
                                                          :body (j/write-value-as-string {:exam_session_id 1})
@@ -115,7 +117,7 @@
           (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
           (is (= (get-in create-twice-response [:response :status]) 409))))
 
-      (testing "when session is full should return conflict with proper error message"
+      (testing "when session is full should return conflict with proper error"
         (fill-exam-session)
         (let [create-twice-response (-> session
                                         (peridot/request (str routing/registration-api-root "/init")
