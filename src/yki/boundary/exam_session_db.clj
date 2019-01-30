@@ -72,9 +72,9 @@
   (update-registration-exam-session!
     [{:keys [spec]} to-exam-session-id registration-id oid]
     (jdbc/with-db-transaction [tx spec]
-      (q/update-registration-exam-session! tx {:exam_session_id to-exam-session-id
-                                               :registration_id registration-id
-                                               :oid oid})))
+      (int->boolean (q/update-registration-exam-session! tx {:exam_session_id to-exam-session-id
+                                                             :registration_id registration-id
+                                                             :oid oid}))))
   (set-registration-status-to-cancelled!
     [{:keys [spec]} registration-id oid]
     (jdbc/with-db-transaction [tx spec]
