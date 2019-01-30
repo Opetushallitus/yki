@@ -38,6 +38,7 @@
   (init-participants-sync-status! [db exam-session-id])
   (set-participants-sync-to-success! [db exam-session-id])
   (set-registration-status-to-cancelled! [db registration-id oid])
+  (update-registration-exam-session! [db to-exam-session-id registration-id oid])
   (get-exam-session-by-id [db id])
   (get-exam-session-with-location [db id lang])
   (get-exam-session-participants [db id oid])
@@ -68,6 +69,12 @@
     [{:keys [spec]} exam-session-id]
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-sync-to-success! tx {:exam_session_id exam-session-id})))
+  (update-registration-exam-session!
+    [{:keys [spec]} to-exam-session-id registration-id oid]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-registration-exam-session! tx {:exam_session_id to-exam-session-id
+                                               :registration_id registration-id
+                                               :oid oid})))
   (set-registration-status-to-cancelled!
     [{:keys [spec]} registration-id oid]
     (jdbc/with-db-transaction [tx spec]
@@ -81,8 +88,9 @@
           (q/delete-exam-session-location! tx {:id id})
           (doseq [location (:location exam-session)]
             (q/insert-exam-session-location! tx (assoc location :exam_session_id id)))
-          (let [updated (int->boolean (q/update-exam-session! tx
-                                                              (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid :id id))))]
+          (let [updated (int->boolean (q/update-exam-session!
+                                       tx
+                                       (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid :id id))))]
             (when updated
               (send-to-queue-fn))
             updated)))))

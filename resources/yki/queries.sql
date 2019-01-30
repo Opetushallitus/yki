@@ -406,14 +406,23 @@ INNER JOIN participant p ON p.id = re.participant_id
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 WHERE re.id = :id AND p.external_user_id = :external_user_id;
 
--- name: update-started-registrations-to-expired
+-- name: update-started-registrations-to-expired<!
 UPDATE registration
 SET state = 'EXPIRED',
     modified = current_timestamp
 WHERE state = 'STARTED' AND (started_at + interval '1 hour') < current_timestamp
 RETURNING id as updated;
 
--- name: update-submitted-registrations-to-expired
+-- name: update-registration-exam-session!
+UPDATE registration
+SET exam_session_id = :exam_session_id
+WHERE id = :registration_id
+AND EXISTS (SELECT id
+            FROM exam_session
+            WHERE id = :exam_session_id
+              AND organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL))
+
+-- name: update-submitted-registrations-to-expired<!
 UPDATE registration
 SET state = 'EXPIRED',
     modified = current_timestamp

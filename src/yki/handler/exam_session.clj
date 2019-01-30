@@ -75,16 +75,31 @@
             :path-params [id :- ::ys/id]
             :return ::ys/participants-response
             (response {:participants (exam-session-db/get-exam-session-participants db id oid)}))
-          (context "/:id" []
+          (context "/:registration-id" []
             (DELETE "/" request
-              :path-params [id :- ::ys/id]
+              :path-params [registration-id :- ::ys/id]
               :return ::ys/response
-              (if (exam-session-db/set-registration-status-to-cancelled! db id oid)
+              (if (exam-session-db/set-registration-status-to-cancelled! db registration-id oid)
                 (do
                   (audit-log/log {:request request
                                   :target-kv {:k audit-log/registration
-                                              :v id}
+                                              :v registration-id}
                                   :change {:type audit-log/delete-op}})
+                  (response {:success true}))
+                (not-found {:success false
+                            :error "Registration not found"})))
+            (POST "/relocate" request
+              :path-params [id :- ::ys/id registration-id :- ::ys/id]
+              :body [relocate-request ::ys/relocate-request]
+              :return ::ys/response
+              (if (exam-session-db/update-registration-exam-session! db (:to_exam_session_id relocate-request) registration-id oid)
+                (do
+                  (audit-log/log {:request request
+                                  :target-kv {:k audit-log/registration
+                                              :v registration-id}
+                                  :change {:type audit-log/update-op
+                                           :old {:exam_session_id id}
+                                           :new {:exam_session_id (:to_exam_session_id relocate-request)}}})
                   (response {:success true}))
                 (not-found {:success false
                             :error "Registration not found"})))))))))
