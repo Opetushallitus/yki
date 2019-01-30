@@ -238,13 +238,16 @@
 (s/def ::exam-session-id  (s/nilable ::id))
 (s/def ::organizer-oid    (s/nilable ::oid))
 
-(s/def ::data-sync-request  (s/keys :req [:sync/type
-                                          ::created]
-                                    :opt [::exam-session-id
-                                          ::organizer-oid]))
+(s/def ::data-sync-request (s/keys :req [:sync/type
+                                         ::created]
+                                   :opt [::exam-session-id
+                                         ::organizer-oid]))
 
 (def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
 
 (def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
 
 (s/def ::ssn (s/and string? #(re-matches ssn-regexp %)))
+
+(s/def ::to_exam_session_id ::id)
+(s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))

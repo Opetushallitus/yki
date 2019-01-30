@@ -32,7 +32,7 @@
   (base/insert-languages "'1.2.3.4'")
   (base/insert-exam-dates)
 
-  (testing "post exam session endpoint should return add valid exam session to database and send sync request to queue"
+  (testing "post exam session endpoint should add valid exam session to database and send sync request to queue"
     (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
                       (mock/content-type "application/json; charset=UTF-8"))
           response (base/send-request-with-tx request)

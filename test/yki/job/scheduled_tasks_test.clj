@@ -56,7 +56,7 @@
   (base/insert-payment)
   (jdbc/execute! @embedded-db/conn
                  "UPDATE payment SET created = (current_timestamp - interval '193 hours')")
-  (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (duct.database.sql/->Boundary @embedded-db/conn)})
+  (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (base/db)})
         _ (registration-state-handler)
         registration (base/select-one "SELECT * FROM registration")]
     (testing "when submitted registration has not been payed in 8 days then state is set to expired"

@@ -169,13 +169,8 @@
 
 (def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
 
-(defn insert-base-data []
-  (insert-organizer "'1.2.3.4'")
-  (insert-payment-config "'1.2.3.4'")
-  (insert-languages "'1.2.3.4'")
-  (insert-exam-dates)
-  (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+(defn insert-exam-session [exam-date-id]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
         language_code,
         level_code,
         office_oid,
@@ -184,7 +179,15 @@
         published_at)
           VALUES (
             (SELECT id FROM organizer where oid = '1.2.3.4'),
-            'fin', 'PERUS', '1.2.3.4.5', 1, 5, null)"))
+            'fin', 'PERUS', '1.2.3.4.5'," exam-date-id ", 5, null)")))
+
+(defn insert-base-data []
+  (insert-organizer "'1.2.3.4'")
+  (insert-payment-config "'1.2.3.4'")
+  (insert-languages "'1.2.3.4'")
+  (insert-exam-dates)
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
+  (insert-exam-session 1)
 
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
     address,
@@ -222,8 +225,11 @@
 (defn insert-cas-ticket []
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO cas_ticketstore (ticket) VALUES ('ST-15126') ON CONFLICT (ticket) DO NOTHING")))
 
+(defn select [query]
+  (jdbc/query @embedded-db/conn query))
+
 (defn select-one [query]
-  (first (jdbc/query @embedded-db/conn query)))
+  (first (select query)))
 
 (defn get-exam-session-id []
   (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))

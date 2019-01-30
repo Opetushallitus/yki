@@ -105,11 +105,11 @@
   (update-started-registrations-to-expired!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
-      (q/update-started-registrations-to-expired tx)))
+      (q/update-started-registrations-to-expired<! tx)))
   (update-submitted-registrations-to-expired!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
-      (q/update-submitted-registrations-to-expired tx)))
+      (q/update-submitted-registrations-to-expired<! tx)))
   (get-participant-email-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-participant-email-by-order-number spec {:order_number order-number})))
