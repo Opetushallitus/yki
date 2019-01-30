@@ -28,9 +28,14 @@
               relocate-request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id "/relocate")
                                                  (j/write-value-as-string {:to_exam_session_id 2}))
                                    (mock/content-type "application/json; charset=UTF-8"))
+              not-found-request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id "/relocate")
+                                                  (j/write-value-as-string {:to_exam_session_id 3}))
+                                    (mock/content-type "application/json; charset=UTF-8"))
               relocate-response (base/send-request-with-tx relocate-request)
+              not-found-response (base/send-request-with-tx not-found-request)
               new-exam-session-id (:exam_session_id (base/select-one (str "SELECT exam_session_id from registration where id=" registration-id)))]
           (is (= new-exam-session-id 2))
+          (is (= (:status not-found-response) 404))
           (is (= (:status relocate-response) 200)))))))
 
 (deftest exam-session-participant-delete-test

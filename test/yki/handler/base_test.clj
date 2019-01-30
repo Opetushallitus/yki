@@ -170,7 +170,7 @@
 (def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
 
 (defn insert-exam-session [exam-date-id]
-    (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
         language_code,
         level_code,
         office_oid,
