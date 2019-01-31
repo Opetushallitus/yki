@@ -54,6 +54,7 @@
              "post_office" ""
              "oid" "1.2.246.562.24.81121191558"
              "external-user-id" "1.2.246.562.24.81121191558"
+             "nationalities" ["246"],
              "street_address" ""
              "first_name" "Emma"
              "zip" ""})
@@ -64,6 +65,7 @@
              "post_office" ""
              "oid" nil
              "external-user-id" "260553-959D"
+             "nationalities" [],
              "street_address" "Ateläniitynpolku 29 G"
              "first_name" "Carl-Erik"
              "zip" ""})
