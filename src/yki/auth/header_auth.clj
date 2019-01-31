@@ -17,15 +17,13 @@
                    :body "Unauthorized"
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
-  ;  :nationality    (->> (-> person :kansalaisuus)
-  ;                       (mapv #(vector (get % :kansalaisuusKoodi "999"))))
 (defn login [{:keys [query-params headers session]} onr-client url-helper]
   (let [lang (or (:lang query-params) "fi")
         {:strs [vakinainenkotimainenlahiosoites
                 vakinainenkotimainenlahiosoitepostitoimipaikkas
                 vakinainenkotimainenlahiosoitepostinumero
                 sn firstname nationalidentificationnumber]} (reduce-kv #(assoc %1 %2 (iso-8859-1->utf-8 %3)) {} headers)
-        {:strs [etunimet sukunimi kutsumanimi oidHenkilo kansalaisuus] :as person} (onr/get-person-by-ssn onr-client nationalidentificationnumber)
+        {:strs [etunimet sukunimi kutsumanimi oidHenkilo kansalaisuus]} (onr/get-person-by-ssn onr-client nationalidentificationnumber)
         address {:post_office    vakinainenkotimainenlahiosoitepostitoimipaikkas
                  :zip            vakinainenkotimainenlahiosoitepostinumero
                  :street_address vakinainenkotimainenlahiosoites}
