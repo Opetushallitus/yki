@@ -6,6 +6,7 @@
             [yki.boundary.organizer-db :as organizer-db]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.organization :as organization]
+            [yki.boundary.codes :as codes]
             [clojure.tools.logging :as log]
             [jsonista.core :as json]))
 
@@ -110,15 +111,16 @@
       (log/info "Sending disabled. Logging request" request)
       (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string request)))))
 
-(defn create-partipant-csv [registration-form oid]
+(defn create-partipant-csv [url-helper registration-form oid]
   (let [{:keys [first_name last_name gender nationalities birth_date ssn certificate_lang
-                exam_lang post_office zip street_address phone_number email]} registration-form]
+                exam_lang post_office zip street_address phone_number email]} registration-form
+        nationality (codes/get-converted-country-code url-helper (first nationalities))]
     (str oid ";"
          (ssn-or-birthdate ssn birth_date) ";"
          first_name ";"
          last_name ";"
          (convert-gender gender ssn) ";"
-         (first nationalities) ";"
+         nationality ";"
          street_address ";"
          zip ";"
          post_office ";"
@@ -126,8 +128,8 @@
          exam_lang ";"
          certificate_lang)))
 
-(defn create-participants-csv [participants]
-  (map #(create-partipant-csv (:form %) (:person_oid %)) participants))
+(defn create-participants-csv [url-helper participants]
+  (map #(create-partipant-csv url-helper (:form %) (:person_oid %)) participants))
 
 (defn sync-exam-session-participants
   [db url-helper disabled exam-session-id]
@@ -135,7 +137,7 @@
         participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
         url (str (url-helper :yki-register.participants)
                  (create-url-params exam-session))
-        request (str/join (System/lineSeparator) (create-participants-csv participants))]
+        request (str/join (System/lineSeparator) (create-participants-csv url-helper participants))]
     (do
       (exam-session-db/init-participants-sync-status! db exam-session-id)
       (if disabled

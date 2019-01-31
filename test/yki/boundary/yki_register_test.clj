@@ -37,16 +37,19 @@
       (is (= exam-session-req assert-exam-session-req)))))
 
 (deftest create-participant-csv-line-test
-  (testing "should create valid csv line with birth date"
-    (let [result (yki-register/create-partipant-csv base/registration-form "5.4.3.2.1")
-          csv-line "5.4.3.2.1;010199-;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
-      (is (= result csv-line))))
+  (with-routes!
+    {"/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}}
+    (testing "should create valid csv line with birth date"
+      (let [result (yki-register/create-partipant-csv (base/create-url-helper (str "localhost:" port)) base/registration-form "5.4.3.2.1")
+            csv-line "5.4.3.2.1;010199-;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
+        (is (= result csv-line))))
 
-  (testing "should create valid csv line with ssn"
-    (let [registration-form-with-ssn (dissoc (assoc base/registration-form :ssn "010199-123A") :gender)
-          result (yki-register/create-partipant-csv registration-form-with-ssn  "5.4.3.2.1")
-          csv-line "5.4.3.2.1;010199-123A;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
-      (is (= result csv-line)))))
+    (testing "should create valid csv line with ssn"
+      (let [registration-form-with-ssn (dissoc (assoc base/registration-form :ssn "010199-123A") :gender)
+            result (yki-register/create-partipant-csv (base/create-url-helper (str "localhost:" port)) registration-form-with-ssn  "5.4.3.2.1")
+            csv-line "5.4.3.2.1;010199-123A;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
+        (is (= result csv-line))))))
 
 (deftest delete-exam-session-and-organizer-test
   (base/insert-base-data)
@@ -75,7 +78,9 @@
   (base/insert-registrations "COMPLETED")
   (testing "should send participants as csv"
     (with-routes!
-      {{:path "/osallistujat" :query-params {:tutkintokieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}}
+      {{:path "/osallistujat" :query-params {:tutkintokieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
+       "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                               :body (slurp "test/resources/maatjavaltiot2_246.json")}}
       (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
             db (base/db)
             url-helper (base/create-url-helper (str "localhost:" port))

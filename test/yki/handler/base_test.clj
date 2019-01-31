@@ -127,7 +127,7 @@
 (def registration-form {:first_name  "Aku"
                         :last_name  "Ankka"
                         :gender "1"
-                        :nationalities ["FIN"]
+                        :nationalities ["246"]
                         :birth_date "1999-01-01"
                         :certificate_lang "fi"
                         :exam_lang "fi"
@@ -140,7 +140,7 @@
 (def registration-form-2 {:first_name  "Iines"
                           :last_name  "Ankka"
                           :gender nil
-                          :nationalities ["FIN"]
+                          :nationalities ["246"]
                           :ssn "301079-122F"
                           :certificate_lang "fi"
                           :exam_lang "fi"
