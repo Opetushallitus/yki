@@ -1,0 +1,56 @@
+[
+  {
+    "koodiUri": "maatjavaltiot1_fin",
+    "resourceUri": "https://virkailija.untuvaopintopolku.fi/koodisto-service/rest/codeelement/maatjavaltiot1_fin",
+    "version": 1,
+    "versio": 1,
+    "koodisto": {
+      "koodistoUri": "maatjavaltiot1",
+      "organisaatioOid": "1.2.246.562.10.00000000001",
+      "koodistoVersios": [1]
+    },
+    "koodiArvo": "FIN",
+    "paivitysPvm": 1517831189886,
+    "voimassaAlkuPvm": "1990-01-01",
+    "voimassaLoppuPvm": null,
+    "tila": "HYVAKSYTTY",
+    "metadata": [
+      {
+        "nimi": "Suomi",
+        "kuvaus": "Suomi",
+        "lyhytNimi": "FI",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "FI"
+      },
+      {
+        "nimi": "Finland",
+        "kuvaus": "Finland",
+        "lyhytNimi": "FI",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "SV"
+      },
+      {
+        "nimi": "Finland",
+        "kuvaus": "Finland",
+        "lyhytNimi": "FI",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "EN"
+      }
+    ]
+  }
+]

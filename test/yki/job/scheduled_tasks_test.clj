@@ -29,7 +29,9 @@
 (deftest handle-email-request-test
   (with-routes!
     {"/ryhmasahkoposti-service/email/firewall" {:status 200 :content-type "application/json"
-                                                :body   (j/write-value-as-string {:id 1})}}
+                                                :body   (j/write-value-as-string {:id 1})}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}}
     (let [email-q (base/email-q)
           _ (pgq/put email-q email-req)
           reader (create-email-q-reader port 1)]
@@ -45,7 +47,7 @@
                                     "INSERT INTO registration(state, exam_session_id, participant_id, started_at) values
                                     ('STARTED'," base/select-exam-session "," base/select-participant ", (current_timestamp - interval '61 minutes'))"))
 
-  (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (duct.database.sql/->Boundary @embedded-db/conn)})
+  (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (base/db)})
         _ (registration-state-handler)
         registration (base/select-one "SELECT * FROM registration")]
     (testing "should set state of registration started over 1 hour ago to expired"
@@ -129,8 +131,10 @@
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (yesterday) "'"))
   (with-routes!
     {"/osallistujat" {:status 200
-                      :body "{}"}}
-    (let [handler (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db (duct.database.sql/->Boundary @embedded-db/conn)
+                      :body "{}"}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}}
+    (let [handler (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db (base/db)
                                                                                    :disabled false
                                                                                    :url-helper (base/create-url-helper (str "localhost:" port))})
           _ (handler)
@@ -141,4 +145,3 @@
       (testing "should send participants only once"
         (handler)
         (is (= (count (:recordings (first @(:routes server)))) 1))))))
-

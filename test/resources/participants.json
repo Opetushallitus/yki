@@ -11,7 +11,7 @@
         "certificate_lang": "fi",
         "last_name": "Ankka",
         "first_name": "Iines",
-        "nationalities": ["FIN"],
+        "nationalities": ["246"],
         "street_address": "Katu 4",
         "zip": "12346"
       },
@@ -29,7 +29,7 @@
         "birth_date": "1999-01-01",
         "last_name": "Ankka",
         "first_name": "Aku",
-        "nationalities": ["FIN"],
+        "nationalities": ["246"],
         "street_address": "Katu 3",
         "zip": "12345"
       },

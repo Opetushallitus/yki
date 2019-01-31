@@ -10,4 +10,4 @@
         response           (http-util/do-get url {})]
     (if (= 200 (:status response))
       (json/read-value (:body response))
-      (throw (Exception. (str "Could not get organzisation " oid))))))
+      (throw (RuntimeException. (str "Could not get organzisation " oid))))))
