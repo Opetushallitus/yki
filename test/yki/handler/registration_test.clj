@@ -6,6 +6,7 @@
             [yki.util.url-helper]
             [yki.middleware.auth]
             [yki.handler.base-test :as base]
+            [clojure.string :as s]
             [jsonista.core :as j]
             [compojure.core :as core]
             [muuntaja.middleware :as middleware]
@@ -100,6 +101,7 @@
         (is (= (get-in update-response [:response :status]) 200))
         (is (= (:id payment) id))
         (is (= (:subject email-request) "Maksulinkki: suomi perustaso - Omenia, 27.1.2018"))
+        (is (s/includes? (:body email-request) "100,00 €"))
         (is (= (:type payment-link) "PAYMENT"))
         (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/maksut/" id)))
         (is (= (:order_number payment) "YKI6000000001"))

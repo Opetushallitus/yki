@@ -203,8 +203,8 @@ ORDER BY ed.exam_date ASC;
 SELECT
   e.id,
   ed.exam_date AS session_date,
-  language_code,
-  level_code,
+  e.language_code,
+  e.level_code,
   e.max_participants,
   e.office_oid,
   e.published_at,
@@ -226,6 +226,18 @@ FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE e.id = :id;
+
+-- name: select-exam-session-by-registration-id
+SELECT
+  es.id,
+  language_code,
+  level_code,
+  max_participants,
+  office_oid,
+  published_at
+FROM exam_session es
+INNER JOIN registration re ON es.id = re.exam_session_id
+WHERE re.id = :registration_id;
 
 -- name: select-exam-session-with-location
 SELECT

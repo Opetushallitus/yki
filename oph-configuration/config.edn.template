@@ -31,14 +31,15 @@
                         :auth #ig/ref :yki.middleware.auth/with-authentication
                         :access-log #ig/ref :yki.middleware.access-log/with-logging
                         :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                         :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"
-                                         :amount "100.00"}}
+                                         :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"}}
 
  :yki.handler/registration {:db #ig/ref :duct.database/sql
                             :auth #ig/ref :yki.middleware.auth/with-authentication
                             :onr-client #ig/ref :yki.boundary.onr/onr-client
                             :access-log #ig/ref :yki.middleware.access-log/with-logging
-                            :payment-config {:amount "100.00"}}
+                            :payment-config {:amount {:PERUS "100.00"
+                                                      :KESKI "123.00"
+                                                      :YLIN "160.00"}}}
 
   :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                 :cas-creds {:username "{{yki_cas_username}}"

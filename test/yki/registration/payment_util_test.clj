@@ -20,7 +20,9 @@
 
 (def payment-config {:paytrail-host "https://paytrail.com"
                      :yki-payment-uri "http://localhost:8080/payment"
-                     :amount "100.00"
+                     :amount {:PERUS "100.00"
+                              :KESKI "123.00"
+                              :YLIN "160.00"}
                      :merchant_id 12345
                      :merchant_secret "SECRET_KEY"})
 
@@ -28,7 +30,7 @@
   (let [payment {:language-code "fi"
                  :order-number "1234"
                  :msg "msg_fi"}
-        form-data (payment/generate-form-data payment-config payment)]
+        form-data (payment/generate-form-data payment-config "100.00" payment)]
     (testing "should create payment form data"
       (is (= payment-form-data form-data)))))
 

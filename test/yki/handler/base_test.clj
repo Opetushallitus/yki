@@ -58,7 +58,9 @@
 
 (def payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                      :yki-payment-uri "http://localhost:8080/yki/payment"
-                     :amount "100.00"
+                     :amount {:PERUS "100.00"
+                              :KESKI "123.00"
+                              :YLIN "160.00"}
                      :msg {:fi "msg_fi"
                            :sv "msg_sv"}})
 

@@ -24,7 +24,10 @@
                                            :v (:exam_session_id registration-init)}
                                :change {:type audit/create-op
                                         :new registration-init}})
-       (registration/init-registration db (:session request) registration-init (payment-config :amount)))
+       (registration/init-registration db
+                                       (:session request)
+                                       registration-init
+                                       payment-config))
      (context "/:id" []
        (POST "/submit" request
          :body [registration ::ys/registration]
@@ -38,7 +41,7 @@
                                                                      (:session request)
                                                                      id
                                                                      registration
-                                                                     (bigdec (payment-config :amount))
+                                                                     payment-config
                                                                      onr-client)]
            (if oid
              (do

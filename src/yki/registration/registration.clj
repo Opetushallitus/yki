@@ -56,17 +56,17 @@
        :eiSuomalaistaHetua true))))
 
 (defn- create-init-response
-  [db session exam_session_id registration amount]
-  (let [exam_session (exam-session-db/get-exam-session-by-id db exam_session_id)
+  [db session exam_session_id registration payment-config]
+  (let [exam-session (exam-session-db/get-exam-session-by-id db exam_session_id)
         email (if (= (:auth-method session) "EMAIL") (:external-user-id (:identity session)))
         user (assoc (:identity session) :email email)]
-    {:exam_session exam_session
-     :exam_payment amount
+    {:exam_session exam-session
+     :exam_payment (get-in payment-config [:amount (keyword (:level_code exam-session))])
      :user user
      :registration_id (:id registration)}))
 
 (defn init-registration
-  [db session {:keys [exam_session_id]} amount]
+  [db session {:keys [exam_session_id]} payment-config]
   (let [participant-id (get-or-create-participant db (:identity session))
         exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
         exam-session-space-left? (registration-db/exam-session-space-left? db exam_session_id)
@@ -75,7 +75,7 @@
       (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
                                                                       :participant_id participant-id
                                                                       :started_at (t/now)})
-            response (create-init-response db session exam_session_id registration-id amount)]
+            response (create-init-response db session exam_session_id registration-id payment-config)]
         (ok response))
       (conflict {:error {:full (not exam-session-space-left?)
                          :closed (not exam-session-registration-open?)
@@ -97,7 +97,7 @@
               :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
 (defn submit-registration
-  [db url-helper email-q lang session id form amount onr-client]
+  [db url-helper email-q lang session id form payment-config onr-client]
   (let [identity        (:identity session)
         form-with-email (if (= (:auth-method session) "EMAIL") (assoc form :email (:external-user-id identity)) form)
         participant-id  (get-participant-id db identity)
@@ -111,7 +111,9 @@
                                         (extract-person-from-registration
                                          form-with-email
                                          (:ssn identity))))]
-        (let [payment                   {:registration_id id
+        (let [exam-session (exam-session-db/get-exam-session-by-registration-id db id)
+              amount                    (bigdec (get-in payment-config [:amount (keyword (:level_code exam-session))]))
+              payment                   {:registration_id id
                                          :lang lang
                                          :amount amount}
               update-registration       {:id id
