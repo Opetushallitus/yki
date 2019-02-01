@@ -40,6 +40,7 @@
   (set-registration-status-to-cancelled! [db registration-id oid])
   (update-registration-exam-session! [db to-exam-session-id registration-id oid])
   (get-exam-session-by-id [db id])
+  (get-exam-session-by-registration-id [db registration-id])
   (get-exam-session-with-location [db id lang])
   (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
@@ -106,6 +107,8 @@
     (first (q/select-exam-session-with-location spec {:id id :lang lang})))
   (get-exam-session-by-id [{:keys [spec]} id]
     (first (q/select-exam-session-by-id spec {:id id})))
+  (get-exam-session-by-registration-id [{:keys [spec]} registration-id]
+    (first (q/select-exam-session-by-registration-id spec {:registration_id registration-id})))
   (get-not-synced-exam-sessions [{:keys [spec]}]
     (q/select-not-synced-exam-sessions spec))
   (get-exam-session-participants [{:keys [spec]} id oid]
