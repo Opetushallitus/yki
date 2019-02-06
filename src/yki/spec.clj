@@ -15,7 +15,7 @@
 
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code  #{"fi" "sv" "en"})
-(s/def ::gender-code  #{"0" "1" "2" "9"})
+(s/def ::gender-code  #{"" "1" "2" })
 
 (defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
@@ -181,7 +181,7 @@
 (s/def ::nick_name ::non-blank-string)
 (s/def ::gender (s/nilable ::gender-code))
 (s/def ::nationalities (s/coll-of (s/and ::non-blank-string #(= (count %) 3))))
-(s/def ::birth_date ::date)
+(s/def ::birthdate ::date)
 (s/def ::post_office ::non-blank-string)
 (s/def ::zip ::non-blank-string)
 (s/def ::certificate_lang ::language-code)
@@ -194,7 +194,7 @@
                                        ::last_name
                                        ::gender
                                        ::nationalities
-                                       ::birth_date
+                                       ::birthdate
                                        ::ssn
                                        ::certificate_lang
                                        ::exam_lang
