@@ -43,3 +43,5 @@
 (def exam-session-uri "/exam-session")
 
 (def registration-uri "/registration")
+
+(def code-api-root (str api-root "/code"))
