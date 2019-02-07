@@ -52,5 +52,113 @@
         "kieli": "EN"
       }
     ]
+  },
+  {
+    "koodiUri": "maatjavaltiot2_158",
+    "resourceUri": "https://virkailija.untuvaopintopolku.fi/koodisto-service/rest/codeelement/maatjavaltiot2_158",
+    "version": 2,
+    "versio": 1,
+    "koodisto": {
+      "koodistoUri": "maatjavaltiot2",
+      "organisaatioOid": "1.2.246.562.10.00000000001",
+      "koodistoVersios": [1]
+    },
+    "koodiArvo": "158",
+    "paivitysPvm": 1517831164686,
+    "voimassaAlkuPvm": "1990-01-01",
+    "voimassaLoppuPvm": null,
+    "tila": "HYVAKSYTTY",
+    "metadata": [
+      {
+        "nimi": "Taiwan",
+        "kuvaus": "Taiwan",
+        "lyhytNimi": "TW",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "SV"
+      },
+      {
+        "nimi": "Taiwan, Province of China",
+        "kuvaus": "Taiwan, Province of China",
+        "lyhytNimi": "TW",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "EN"
+      },
+      {
+        "nimi": "Taiwan",
+        "kuvaus": "Taiwan",
+        "lyhytNimi": "TW",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "FI"
+      }
+    ]
+  },
+  {
+    "koodiUri": "maatjavaltiot2_064",
+    "resourceUri": "https://virkailija.untuvaopintopolku.fi/koodisto-service/rest/codeelement/maatjavaltiot2_064",
+    "version": 2,
+    "versio": 1,
+    "koodisto": {
+      "koodistoUri": "maatjavaltiot2",
+      "organisaatioOid": "1.2.246.562.10.00000000001",
+      "koodistoVersios": [1]
+    },
+    "koodiArvo": "064",
+    "paivitysPvm": 1517831164685,
+    "voimassaAlkuPvm": "1990-01-01",
+    "voimassaLoppuPvm": null,
+    "tila": "HYVAKSYTTY",
+    "metadata": [
+      {
+        "nimi": "Bhutan",
+        "kuvaus": "Bhutan",
+        "lyhytNimi": "BT",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "EN"
+      },
+      {
+        "nimi": "Bhutan",
+        "kuvaus": "Bhutan",
+        "lyhytNimi": "BT",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "SV"
+      },
+      {
+        "nimi": "Bhutan",
+        "kuvaus": "Bhutan",
+        "lyhytNimi": "BT",
+        "kayttoohje": null,
+        "kasite": null,
+        "sisaltaaMerkityksen": null,
+        "eiSisallaMerkitysta": null,
+        "huomioitavaKoodi": null,
+        "sisaltaaKoodiston": null,
+        "kieli": "FI"
+      }
+    ]
   }
 ]
