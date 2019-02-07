@@ -210,6 +210,8 @@
 (s/def ::exam_payment ::amount)
 (s/def ::registration_id ::id)
 
+(s/def :user/email (s/nilable ::email-type))
+
 (s/def ::user (s/keys :opt-un [::first_name
                                ::last_name
                                ::nick_name
@@ -217,7 +219,7 @@
                                ::post_office
                                ::zip
                                ::street_address
-                               ::email]))
+                               :user/email]))
 
 (s/def ::registration-init-response (s/keys :req-un [::exam_session
                                                      ::user
