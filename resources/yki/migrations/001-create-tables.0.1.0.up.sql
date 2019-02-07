@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS registration (
   form JSONB,
   form_version INTEGER,
   person_oid TEXT,
+  original_exam_session_id BIGINT REFERENCES exam_session (id),
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );

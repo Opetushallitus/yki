@@ -15,7 +15,7 @@
 
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code  #{"fi" "sv" "en"})
-(s/def ::gender-code  #{"" "1" "2" })
+(s/def ::gender-code  #{"" "1" "2"})
 
 (defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
