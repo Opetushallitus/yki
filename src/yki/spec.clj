@@ -178,7 +178,7 @@
 
 (s/def ::first_name ::non-blank-string)
 (s/def ::last_name ::non-blank-string)
-(s/def ::nick_name ::non-blank-string)
+(s/def ::nick_name (s/nilable ::non-blank-string))
 (s/def ::gender (s/nilable ::gender-code))
 (s/def ::nationalities (s/coll-of (s/and ::non-blank-string #(= (count %) 3))))
 (s/def ::birthdate ::date)
