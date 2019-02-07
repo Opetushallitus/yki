@@ -36,9 +36,9 @@
        {:identity
         (merge
          {:first_name
-           (if etunimet
-             etunimet
-             firstname)
+          (if etunimet
+            etunimet
+            firstname)
           :last_name (or sukunimi sn)
           :nick_name kutsumanimi
           :ssn nationalidentificationnumber
