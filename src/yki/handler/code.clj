@@ -7,7 +7,10 @@
             [integrant.core :as ig]))
 
 (defmethod ig/init-key :yki.handler/code [_ {:keys [url-helper]}]
-  (context routing/code-api-root []
+  (context (str routing/code-api-root "/:collection") [collection]
     :coercion :spec
-    (GET "/:code" [code]
-      (ok (codes/get-code url-helper code)))))
+    (GET "/" []
+      (ok (codes/get-codes url-helper collection)))
+    (context "/:code" [code]
+      (GET "/" []
+        (ok (codes/get-code url-helper collection code))))))

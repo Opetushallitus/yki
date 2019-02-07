@@ -14,30 +14,34 @@
       (:koodiArvo (some #(if (= (get-in % [:koodisto :koodistoUri]) "maatjavaltiot1") %) json))
       (throw (RuntimeException. (str "Could not get country code from url " url))))))
 
-(defn- get-code-from-koodisto
-  [url-helper code]
-  (println "get-code-from")
-  (let [url (url-helper :koodisto-service code)
+(defn- get-codes-from-koodisto
+  [url-helper collection]
+  (let [url (url-helper :koodisto-service collection)
         response (http-util/do-get url {})
         status   (:status response)
-        json     (j/read-value (:body response))]
+        json     (j/read-value (:body response) (j/object-mapper {:decode-key-fn true}))]
     (if (= (:status response) 200)
       json
-      (throw (RuntimeException. (str "Could not code from url " url))))))
+      (throw (RuntimeException. (str "Could not get codes from url " url))))))
 
 (defonce one-week (* 1000 60 60 24 7))
 
 (def get-country-code-memoized
   (memo/ttl get-country-code :ttl/threshold one-week))
 
-(def get-code-memoized
-  (memo/ttl get-code-from-koodisto :ttl/threshold one-week))
+(def get-codes-memoized
+  (memo/ttl get-codes-from-koodisto :ttl/threshold one-week))
 
 (defn get-converted-country-code [url-helper country-code]
   (let [url       (url-helper :koodisto-service.rinnasteinen (str "maatjavaltiot2_" country-code))
         response  (get-country-code-memoized url)]
     response))
 
-(defn get-code [url-helper code]
-  (get-code-memoized url-helper code))
+(defn get-codes [url-helper collection]
+  (get-codes-memoized url-helper collection))
+
+(defn get-code [url-helper collection code]
+  (let [codes (get-codes-memoized url-helper collection)
+        code-value (first (filter #(= (:koodiArvo %) code) codes))]
+    code-value))
 
