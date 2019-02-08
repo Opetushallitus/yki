@@ -10,8 +10,8 @@
             [ring.util.http-response :refer [ok internal-server-error found]]
             [integrant.core :as ig]))
 
-(defn- success-redirect [url-helper lang]
-  (found (url-helper :payment.success-redirect lang)))
+(defn- success-redirect [url-helper lang exam-session-id]
+  (found (url-helper :payment.success-redirect lang exam-session-id)))
 
 (defn- error-redirect [url-helper lang]
   (found (url-helper :payment.error-redirect lang)))
@@ -55,7 +55,7 @@
                                                                          :v (:ORDER_NUMBER params)}
                                                              :change {:type audit/create-op
                                                                       :new params}})
-                                     (success-redirect url-helper lang))
+                                     (success-redirect url-helper lang (:exam_session_id payment)))
                                    (error-redirect url-helper lang)))
                                (error-redirect url-helper "fi")))))
      (GET "/cancel" request
