@@ -73,7 +73,7 @@
       (testing "when payment is success should complete registration and redirect to success url"
         (is (= (base/select-one "SELECT state FROM registration") {:state "COMPLETED"}))
         (is (= (base/select-one "SELECT state FROM payment") {:state "PAID"}))
-        (is (s/includes? location "tila?status=payment-success&lang=fi")))
+        (is (s/includes? location "tila?status=payment-success&lang=fi&id=5")))
 
       (testing "confirmation email should be send"
         (is (some? (pgq/take email-q)))))))

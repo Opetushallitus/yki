@@ -539,16 +539,18 @@ WHERE pay.order_number = :order_number
 
 -- name: select-payment-by-order-number
 SELECT
-  state,
-  registration_id,
-  amount,
-  lang,
-  reference_number,
-  order_number,
-  external_payment_id,
-  payment_method,
-  payed_at
-FROM payment
+  p.state,
+  p.registration_id,
+  p.amount,
+  p.lang,
+  p.reference_number,
+  p.order_number,
+  p.external_payment_id,
+  p.payment_method,
+  p.payed_at,
+  re.exam_session_id
+FROM payment p
+INNER JOIN registration re ON re.id = p.registration_id
 WHERE order_number = :order_number;
 
 -- name: select-next-order-number-suffix
