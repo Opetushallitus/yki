@@ -5,6 +5,7 @@
             [peridot.core :as peridot]
             [duct.database.sql]
             [stub-http.core :refer :all]
+            [pgqueue.core :as pgq]
             [muuntaja.middleware :as middleware]
             [compojure.core :as core]
             [clojure.java.jdbc :as jdbc]
@@ -59,15 +60,23 @@
   "?ORDER_NUMBER=order1234&PAYMENT_ID=101687270712&AMOUNT=100.00&TIMESTAMP=1541585404&STATUS=CANCELLED&PAYMENT_METHOD=1&SETTLEMENT_REFERENCE_NUMBER=1232&RETURN_AUTHCODE=7874413040C8F6BF5D005B6BD3F22C14AB1C99B841C3FE7733E9D12D5D7F4175")
 
 (deftest handle-payment-success-test
-  (let [handler (create-handlers 8080)
-        session (base/login-with-login-link (peridot/session handler))
-        response (-> session
-                     (peridot/request (str routing/payment-root "/success" success-params)))
-        location (get-in response [:response :headers "Location"])]
-    (testing "when payment is success should complete registration and redirect to success url"
-      (is (= (base/select-one "SELECT state FROM registration") {:state "COMPLETED"}))
-      (is (= (base/select-one "SELECT state FROM payment") {:state "PAID"}))
-      (is (s/includes? location "tila?status=payment-success&lang=fi")))))
+  (with-routes!
+    {"/lokalisointi/cxf/rest/v1/localisation" {:status       200
+                                               :content-type "application/json"
+                                               :body         (slurp "test/resources/localisation.json")}}
+    (let [handler (create-handlers port)
+          session (base/login-with-login-link (peridot/session handler))
+          email-q (base/email-q)
+          response (-> session
+                       (peridot/request (str routing/payment-root "/success" success-params)))
+          location (get-in response [:response :headers "Location"])]
+      (testing "when payment is success should complete registration and redirect to success url"
+        (is (= (base/select-one "SELECT state FROM registration") {:state "COMPLETED"}))
+        (is (= (base/select-one "SELECT state FROM payment") {:state "PAID"}))
+        (is (s/includes? location "tila?status=payment-success&lang=fi")))
+
+      (testing "confirmation email should be send"
+        (is (some? (pgq/take email-q)))))))
 
 (deftest handle-payment-success-invalid-authcode-test
   (let [handler (create-handlers 8080)

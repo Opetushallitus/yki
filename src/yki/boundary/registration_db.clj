@@ -23,7 +23,7 @@
   (exam-session-space-left? [db exam-session-id])
   (exam-session-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
-  (get-participant-email-by-order-number [db order-number])
+  (get-participant-data-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
@@ -63,9 +63,6 @@
     (let [exists (first (q/select-participant-not-registered spec {:participant_id participant-id
                                                                    :exam_session_id exam-session-id}))]
       (:exists exists)))
-  (get-participant-email-by-order-number
-    [{:keys [spec]} order-number]
-    (first (q/select-participant-email-by-order-number spec {:order_number order-number})))
   (get-next-order-number-suffix!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
@@ -110,9 +107,9 @@
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (q/update-submitted-registrations-to-expired<! tx)))
-  (get-participant-email-by-order-number
+  (get-participant-data-by-order-number
     [{:keys [spec]} order-number]
-    (first (q/select-participant-email-by-order-number spec {:order_number order-number})))
+    (first (q/select-participant-data-by-order-number spec {:order_number order-number})))
   (get-registration
     [{:keys [spec]} registration-id external-user-id]
     (first (q/select-registration spec {:id registration-id :external_user_id external-user-id})))

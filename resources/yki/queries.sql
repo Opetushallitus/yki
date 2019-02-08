@@ -512,13 +512,21 @@ SELECT id, external_user_id, email
 FROM participant
 WHERE id = :id;
 
--- name: select-participant-email-by-order-number
+-- name: select-participant-data-by-order-number
 SELECT par.email,
-       pay.lang
+       pay.lang,
+       es.language_code,
+       es.level_code,
+       esl.name,
+       ed.exam_date
 FROM participant par
 INNER JOIN registration re ON re.participant_id = par.id
 INNER JOIN payment pay ON re.id = pay.registration_id
-WHERE pay.order_number = :order_number;
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+WHERE pay.order_number = :order_number
+  AND esl.lang = pay.lang;
 
 -- name: select-payment-by-order-number
 SELECT
