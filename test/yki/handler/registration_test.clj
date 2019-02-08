@@ -86,6 +86,11 @@
                                              :request-method :post))
           init-response-body (base/body-as-json (:response init-response))
           id (init-response-body "registration_id")
+          create-twice-response (-> session
+                                    (peridot/request (str routing/registration-api-root "/init")
+                                                     :body (j/write-value-as-string {:exam_session_id 1})
+                                                     :content-type "application/json"
+                                                     :request-method :post))
           registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           update-response (-> session
                               (peridot/request (str routing/registration-api-root "/" id "/submit" "?lang=fi")
@@ -103,6 +108,11 @@
         (is (= (:state registration) "STARTED"))
         (is (some? (:started_at registration))))
 
+      (testing "second post before submitting should return init data"
+        (let [create-twice-response-body (base/body-as-json (:response create-twice-response))]
+          (is (= (get-in create-twice-response [:response :status]) 200))
+          (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))))
+
       (testing "post submit endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
         (is (= (get-in update-response [:response :status]) 200))
         (is (= (:id payment) id))
@@ -115,15 +125,15 @@
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))
 
-      (testing "second post with same data should return init data"
+      (testing "second post to same session after submit should return conflict with proper error"
         (let [create-twice-response (-> session
                                         (peridot/request (str routing/registration-api-root "/init")
                                                          :body (j/write-value-as-string {:exam_session_id 1})
                                                          :content-type "application/json"
-                                                         :request-method :post))
-              create-twice-response-body (base/body-as-json (:response create-twice-response))]
-          (is (= (get-in create-twice-response [:response :status]) 200))
-          (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))))
+                                                         :request-method :post))]
+
+          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
+          (is (= (get-in create-twice-response [:response :status]) 409))))
 
       (testing "second post to another session should return conflict with proper error"
         (let [create-twice-response (-> session

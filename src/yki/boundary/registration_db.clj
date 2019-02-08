@@ -14,8 +14,8 @@
   (get-payment-by-order-number [db order-number])
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
-  (not-registered-to-another-exam-session? [db participant-id exam-session-id])
-  (registration-id-by-participant [db participant-id exam-session-id])
+  (not-registered-to-exam-session? [db participant-id exam-session-id])
+  (started-registration-id-by-participant [db participant-id exam-session-id])
   (create-payment-and-update-registration! [db payment registration after-fn])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
@@ -59,15 +59,15 @@
   (get-participant-by-external-id
     [{:keys [spec]} external-id]
     (first (q/select-participant-by-external-id spec {:external_user_id external-id})))
-  (not-registered-to-another-exam-session?
+  (not-registered-to-exam-session?
     [{:keys [spec]} participant-id exam-session-id]
-    (let [exists (first (q/select-not-registered-to-another-exam-session spec {:participant_id participant-id
-                                                                               :exam_session_id exam-session-id}))]
+    (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id participant-id
+                                                                       :exam_session_id exam-session-id}))]
       (:exists exists)))
-  (registration-id-by-participant
+  (started-registration-id-by-participant
     [{:keys [spec]} participant-id exam-session-id]
-    (:id (first (q/select-registration-id-by-participant spec {:participant_id participant-id
-                                                               :exam_session_id exam-session-id}))))
+    (:id (first (q/select-started-registration-id-by-participant spec {:participant_id participant-id
+                                                                       :exam_session_id exam-session-id}))))
   (get-next-order-number-suffix!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
