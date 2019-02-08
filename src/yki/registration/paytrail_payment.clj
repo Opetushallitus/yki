@@ -14,15 +14,15 @@
             [integrant.core :as ig]))
 
 (defn- handle-payment-success [db email-q url-helper payment-params]
-  (let [email (registration-db/get-participant-email-by-order-number db (:order-number payment-params))
-        lang (:lang email)
+  (let [participant-data (registration-db/get-participant-data-by-order-number db (:order-number payment-params))
+        lang (:lang participant-data)
         success (registration-db/complete-registration-and-payment! db payment-params)]
     (when success
       (pgq/put email-q
-               {:recipients [(:email email)],
+               {:recipients [(:email participant-data)],
                 :created (System/currentTimeMillis)
-                :subject (template-util/subject url-helper "payment_success" lang {})
-                :body (template-util/render url-helper "payment_success" lang {})}))
+                :subject (template-util/subject url-helper "payment_success" lang participant-data)
+                :body (template-util/render url-helper "payment_success" lang participant-data)}))
     success))
 
 (defn- handle-payment-cancelled [db payment-params]
