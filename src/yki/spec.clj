@@ -210,15 +210,21 @@
 (s/def ::exam_payment ::amount)
 (s/def ::registration_id ::id)
 
+(s/def :user/first_name (s/nilable string?))
+(s/def :user/last_name (s/nilable string?))
+(s/def :user/nick_name (s/nilable string?))
+(s/def :user/post_office (s/nilable string?))
+(s/def :user/zip (s/nilable string?))
+(s/def :user/street_address (s/nilable string?))
 (s/def :user/email (s/nilable ::email-type))
 
-(s/def ::user (s/keys :opt-un [::first_name
-                               ::last_name
-                               ::nick_name
-                               ::ssn
-                               ::post_office
-                               ::zip
-                               ::street_address
+(s/def ::user (s/keys :opt-un [:user/first_name
+                               :user/last_name
+                               :user/nick_name
+                               :user/ssn
+                               :user/post_office
+                               :user/zip
+                               :user/street_address
                                :user/email]))
 
 (s/def ::registration-init-response (s/keys :req-un [::exam_session
