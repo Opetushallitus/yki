@@ -56,30 +56,33 @@
        :eiSuomalaistaHetua true))))
 
 (defn- create-init-response
-  [db session exam_session_id registration payment-config]
+  [db session exam_session_id registration-id payment-config]
   (let [exam-session (exam-session-db/get-exam-session-by-id db exam_session_id)
         email (if (= (:auth-method session) "EMAIL") (:external-user-id (:identity session)))
         user (assoc (:identity session) :email email)]
     {:exam_session exam-session
      :exam_payment (get-in payment-config [:amount (keyword (:level_code exam-session))])
      :user user
-     :registration_id (:id registration)}))
+     :registration_id registration-id}))
 
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
   (let [participant-id (get-or-create-participant db (:identity session))
-        exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
-        exam-session-space-left? (registration-db/exam-session-space-left? db exam_session_id)
-        participant-not-registered? (registration-db/participant-not-registered? db participant-id exam_session_id)]
-    (if (and exam-session-registration-open? exam-session-space-left? participant-not-registered?)
-      (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
-                                                                      :participant_id participant-id
-                                                                      :started_at (t/now)})
-            response (create-init-response db session exam_session_id registration-id payment-config)]
-        (ok response))
-      (conflict {:error {:full (not exam-session-space-left?)
-                         :closed (not exam-session-registration-open?)
-                         :registered (not participant-not-registered?)}}))))
+        existing-registration-id (registration-db/registration-id-by-participant db participant-id exam_session_id)]
+    (if existing-registration-id
+      (ok (create-init-response db session exam_session_id existing-registration-id payment-config))
+      (let [exam-session-registration-open?         (registration-db/exam-session-registration-open? db exam_session_id)
+            exam-session-space-left?                (registration-db/exam-session-space-left? db exam_session_id)
+            not-registered-to-another-exam-session? (registration-db/not-registered-to-another-exam-session? db participant-id exam_session_id)]
+        (if (and exam-session-registration-open? exam-session-space-left? not-registered-to-another-exam-session?)
+          (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
+                                                                          :participant_id  participant-id
+                                                                          :started_at      (t/now)})
+                response        (create-init-response db session exam_session_id registration-id payment-config)]
+            (ok response))
+          (conflict {:error {:full       (not exam-session-space-left?)
+                             :closed     (not exam-session-registration-open?)
+                             :registered (not not-registered-to-another-exam-session?)}}))))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
   (let [code          (str (UUID/randomUUID))
