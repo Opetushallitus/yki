@@ -42,9 +42,9 @@
     (core/routes registration-handler auth-handler)))
 
 (defn- fill-exam-session []
-  (dotimes [_ 4]
+  (dotimes [_ 50]
     (jdbc/execute! @embedded-db/conn
-                   "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', 1, 1)")))
+                   "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', 2, 2)")))
 
 (def form {:first_name "Fuu"
            :last_name "Bar"
@@ -60,8 +60,15 @@
            :email "test@test.com"})
 
 (deftest registration-create-and-update-test
+
   (base/insert-base-data)
+  (base/insert-organizer "'1.2.3.5'")
+  (base/insert-payment-config "'1.2.3.5'")
+  (base/insert-languages "'1.2.3.5'")
+  (base/insert-exam-session 1 "'1.2.3.5'" 50)
+  (base/insert-exam-session-location "'1.2.3.5'")
   (base/insert-login-link base/code-ok "2038-01-01")
+
   (with-routes!
     (fn [server]
       (merge (base/cas-mock-routes (:port server))
@@ -90,7 +97,6 @@
           payment-link (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           email-request (pgq/take email-q)]
-
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
         (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))
@@ -109,10 +115,20 @@
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))
 
-      (testing "second post with same data should return conflict with proper error"
+      (testing "second post with same data should return init data"
         (let [create-twice-response (-> session
                                         (peridot/request (str routing/registration-api-root "/init")
                                                          :body (j/write-value-as-string {:exam_session_id 1})
+                                                         :content-type "application/json"
+                                                         :request-method :post))
+              create-twice-response-body (base/body-as-json (:response create-twice-response))]
+          (is (= (get-in create-twice-response [:response :status]) 200))
+          (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))))
+
+      (testing "second post to another session should return conflict with proper error"
+        (let [create-twice-response (-> session
+                                        (peridot/request (str routing/registration-api-root "/init")
+                                                         :body (j/write-value-as-string {:exam_session_id 2})
                                                          :content-type "application/json"
                                                          :request-method :post))]
 
@@ -121,10 +137,10 @@
 
       (testing "when session is full should return conflict with proper error"
         (fill-exam-session)
-        (let [create-twice-response (-> session
+        (let [session-full-response (-> session
                                         (peridot/request (str routing/registration-api-root "/init")
-                                                         :body (j/write-value-as-string {:exam_session_id 1})
+                                                         :body (j/write-value-as-string {:exam_session_id 2})
                                                          :content-type "application/json"
                                                          :request-method :post))]
-          (is (= (get-in create-twice-response [:response :status]) 409))
-          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "full"]) true)))))))
+          (is (= (get-in session-full-response [:response :status]) 409))
+          (is (= (get-in (base/body-as-json (:response session-full-response)) ["error" "full"]) true)))))))

@@ -19,11 +19,19 @@
   (let [handler (api (ig/init-key :yki.handler/exam-session-public {:db (base/db)}))]
     (handler request)))
 
-(deftest status-ok-test
+(deftest get-exam-sessions-test
   (base/insert-base-data)
   (let [request (mock/request :get routing/exam-session-public-api-root)
         response (send-request request)
         response-body (base/body-as-json response)]
+    (testing "get exam sessions endpoint should return 200"
+      (is (= (:status response) 200))
+      (is (= (count (response-body "exam_sessions")) 1))))
+
+  (let [request (mock/request :get (str routing/exam-session-public-api-root "/1"))
+        response (send-request request)
+        response-body (base/body-as-json response)]
     (testing "get status endpoint should return 200"
       (is (= (:status response) 200)))))
+
 

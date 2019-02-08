@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.handler.routing :as routing]
-            [ring.util.response :refer [response not-found]]
+            [ring.util.http-response :refer [ok]]
             [ring.util.request]
             [yki.spec :as ys]
             [integrant.core :as ig]))
@@ -14,5 +14,10 @@
     (GET "/" []
       :query-params [{from :- ::ys/date nil}]
       :return ::ys/exam-sessions-response
-      (response {:exam_sessions (exam-session-db/get-exam-sessions db nil from)}))))
+      (ok {:exam_sessions (exam-session-db/get-exam-sessions db nil from)}))
+    (context "/:id" []
+      (GET "/" []
+        :return ::ys/exam-session
+        :path-params [id :- ::ys/id]
+        (ok (exam-session-db/get-exam-session-by-id db id))))))
 

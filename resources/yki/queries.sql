@@ -401,15 +401,24 @@ SELECT NOT EXISTS (
 	HAVING (es.max_participants - COUNT(re.id)) <= 0
 ) as exists;
 
--- name: select-participant-not-registered
+-- name: select-not-registered-to-another-exam-session
 SELECT NOT EXISTS (
   SELECT es.id
   FROM exam_session es
   INNER JOIN registration re ON es.id = re.exam_session_id
   WHERE re.participant_id = :participant_id
     AND re.state != 'EXPIRED'
+    AND es.id != :exam_session_id
     AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
 ) as exists;
+
+-- name: select-registration-id-by-participant
+SELECT re.id
+FROM exam_session es
+INNER JOIN registration re ON es.id = re.exam_session_id
+WHERE re.participant_id = :participant_id
+  AND re.state != 'EXPIRED'
+  AND es.id = :exam_session_id;
 
 -- name: select-registration
 SELECT state, exam_session_id, participant_id, es.organizer_id

@@ -171,7 +171,8 @@
 
 (def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
 
-(defn insert-exam-session [exam-date-id]
+(defn insert-exam-session
+  [exam-date-id oid count]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
         language_code,
         level_code,
@@ -180,17 +181,9 @@
         max_participants,
         published_at)
           VALUES (
-            (SELECT id FROM organizer where oid = '1.2.3.4'),
-            'fin', 'PERUS', '1.2.3.4.5'," exam-date-id ", 5, null)")))
-
-(defn insert-base-data []
-  (insert-organizer "'1.2.3.4'")
-  (insert-payment-config "'1.2.3.4'")
-  (insert-languages "'1.2.3.4'")
-  (insert-exam-dates)
-  (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
-  (insert-exam-session 1)
-
+            (SELECT id FROM organizer where oid = " oid "),
+            'fin', 'PERUS', '1.2.3.4.5'," exam-date-id ", " count ", null)")))
+(defn insert-exam-session-location [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
     address,
     other_location_info,
@@ -201,9 +194,18 @@
         'Upseerinkatu 11, Espoo',
         'Other info',
         'fi',
-        (SELECT id FROM exam_session where max_participants = 5))"))
+        (SELECT id FROM exam_session where organizer_id =  (SELECT id FROM organizer where oid = " oid ") ))")))
 
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') ")))
+(defn insert-base-data []
+  (insert-organizer "'1.2.3.4'")
+  (insert-payment-config "'1.2.3.4'")
+  (insert-languages "'1.2.3.4'")
+  (insert-exam-dates)
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
+  (insert-exam-session 1 "'1.2.3.4'" 5)
+  (insert-exam-session-location "'1.2.3.4'")
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') "))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('anothertest@user.com', 'anothertest@user.com') ")))
 
 (defn insert-payment []
   (jdbc/execute! @embedded-db/conn (str

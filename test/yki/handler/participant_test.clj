@@ -22,7 +22,7 @@
       (is (= (:status response) 200))
       (is (= response-body (j/read-value (slurp "test/resources/participants.json"))))
 
-      (base/insert-exam-session 2)
+      (base/insert-exam-session 2 "'1.2.3.4'" 5)
       (testing "participant registration is changed to another exam session"
         (let [registration-id (:id (base/select-one "SELECT id from registration"))
               relocate-request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id "/relocate")
