@@ -422,7 +422,7 @@ WHERE re.id = :id AND p.external_user_id = :external_user_id;
 UPDATE registration
 SET state = 'EXPIRED',
     modified = current_timestamp
-WHERE state = 'STARTED' AND (started_at + interval '1 hour') < current_timestamp
+WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp
 RETURNING id as updated;
 
 -- name: update-registration-exam-session!

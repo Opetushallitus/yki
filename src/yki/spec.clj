@@ -181,7 +181,7 @@
 (s/def ::nick_name (s/nilable ::non-blank-string))
 (s/def ::gender (s/nilable ::gender-code))
 (s/def ::nationalities (s/coll-of (s/and ::non-blank-string #(= (count %) 3))))
-(s/def ::birthdate ::date)
+(s/def ::birthdate (s/nilable ::date))
 (s/def ::post_office ::non-blank-string)
 (s/def ::zip ::non-blank-string)
 (s/def ::certificate_lang ::language-code)
