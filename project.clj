@@ -34,7 +34,7 @@
                  [oph/clj-util "0.1.0" :exclusions [org.http4s/blaze-http_2.11]]
                  [fi.vm.sade/auditlogger "8.3.0-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
-  :cloverage {:ns-exclude-regex [#"dev" #"user" #"yki.main" #"yki.middleware.no-auth"]}
+  :cloverage {:ns-exclude-regex [#"dev" #"user" #"yki.main" #"yki.middleware.no-auth" #"yki.migrations"]}
   :plugins [[duct/lein-duct "0.11.2"]
             [lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.3"]
