@@ -4,6 +4,7 @@
             [pgqueue.core :as pgq]
             [clj-time.core :as t]
             [clj-time.format :as f]
+            [clojure.string :as str]
             [yki.util.template-util :as template-util]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.exam-session-db :as exam-session-db]
@@ -30,17 +31,16 @@
 
 (defn- extract-nationalities
   [nationalities]
-  (mapv (fn [[nat-code & _]] {:kansalaisuusKoodi nat-code}) nationalities))
+  (map (fn [n] {:kansalaisuusKoodi n}) nationalities))
 
 (defn- extract-person-from-registration
   [{:keys [email first_name last_name gender exam_lang nationalities birth_date]} ssn]
   (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
                                         :yhteystietoArvo   email}]
                       :etunimet       first_name
-                      :kutsumanimi    first_name
+                      :kutsumanimi    (first (str/split first_name #" "))
                       :sukunimi       last_name
-                      :sukupuoli      gender
-                      :aidinkieli     {:kieliKoodi exam_lang}
+                      :sukupuoli      (if (str/blank? gender) nil gender)
                       :asiointiKieli  {:kieliKoodi exam_lang}
                       :kansalaisuus   (extract-nationalities nationalities)
                       :henkiloTyyppi  "OPPIJA"}]
