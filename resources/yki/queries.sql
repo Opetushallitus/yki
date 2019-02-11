@@ -621,7 +621,7 @@ FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 WHERE es.id = :id
 AND es.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
-AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED');
+AND r.state IN ('COMPLETED', 'SUBMITTED');
 
 --name: update-registration-status-to-cancelled!
 UPDATE registration
