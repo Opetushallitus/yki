@@ -152,7 +152,7 @@ CREATE TABLE participant_sync_status (
   id BIGSERIAL PRIMARY KEY,
   exam_session_id BIGSERIAL REFERENCES exam_session(id),
   success_at TIMESTAMP WITH TIME ZONE,
-  failure_at TIMESTAMP WITH TIME ZONE,
+  failed_at TIMESTAMP WITH TIME ZONE,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;

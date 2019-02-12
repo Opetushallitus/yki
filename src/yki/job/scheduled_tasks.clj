@@ -59,18 +59,22 @@
        (log/error e "Registration state handler failed"))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/participants-sync-handler
-  [_ {:keys [db url-helper basic-auth disabled]}]
-  {:pre [(some? db) (some? url-helper) (some? basic-auth)]}
+  [_ {:keys [db url-helper basic-auth disabled retry-duration-in-days]}]
+  {:pre [(some? db) (some? url-helper) (some? basic-auth) (some? retry-duration-in-days)]}
   #(try
      (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
        (log/info "Check participants sync")
-       (let [exam-sessions (map :exam_session_id (exam-session-db/get-not-synced-exam-sessions db))]
+       (let [exam-sessions (exam-session-db/get-not-synced-exam-sessions db)]
+        (println exam-sessions)
          (log/info "Syncronizing participants of exam sessions" exam-sessions)
-         (doseq [exam-session-id exam-sessions]
+         (doseq [exam-session exam-sessions]
            (try
-             (yki-register/sync-exam-session-participants db url-helper basic-auth disabled exam-session-id)
+             (yki-register/sync-exam-session-participants db url-helper basic-auth disabled (:exam_session_id exam-session))
              (catch Exception e
-               (log/error e "Failed to syncronize participants of exam session" exam-session-id))))))
+               (do
+                 (log/error e "Failed to syncronize participants of exam session" exam-session)
+                 (exam-session-db/set-participants-sync-to-failed! db (:exam_session_id exam-session) (str retry-duration-in-days " days"))))))))
+
      (catch Exception e
        (log/error e "Participant sync handler failed"))))
 

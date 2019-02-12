@@ -127,6 +127,9 @@
 (defn yesterday []
   (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 1))))
 
+(defn two-weeks-ago []
+  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 14))))
+
 (deftest handle-exam-session-participants-sync-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
@@ -139,6 +142,7 @@
     (let [handler (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db (base/db)
                                                                                    :disabled false
                                                                                    :basic-auth {:user "user" :password "pass"}
+                                                                                   :retry-duration-in-days 14
                                                                                    :url-helper (base/create-url-helper (str "localhost:" port))})
           _ (handler)
           sync_status (base/select-one "SELECT * FROM participant_sync_status")]
@@ -148,3 +152,24 @@
       (testing "should send participants only once"
         (handler)
         (is (= (count (:recordings (first @(:routes server)))) 1))))))
+
+(deftest handle-exam-session-participants-failure-test
+  (base/insert-base-data)
+  (base/insert-registrations "COMPLETED")
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (two-weeks-ago) "'"))
+  (println  (base/select-one "SELECT * FROM exam_date"))
+  (with-routes!
+    {"/osallistujat" {:status 500
+                      :body "{}"}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}}
+    (let [handler (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db (base/db)
+                                                                                   :disabled false
+                                                                                   :basic-auth {:user "user" :password "pass"}
+                                                                                   :retry-duration-in-days 14
+                                                                                   :url-helper (base/create-url-helper (str "localhost:" port))})
+          _ (handler)
+          sync_status (base/select-one "SELECT * FROM participant_sync_status")]
+      (println sync_status)
+      (testing "should set failed at status when sync has been retried for given period"
+        (is (some? (:failed_at sync_status)))))))

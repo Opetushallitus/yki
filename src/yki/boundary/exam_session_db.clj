@@ -37,6 +37,7 @@
   (delete-exam-session! [db id oid send-to-queue-fn])
   (init-participants-sync-status! [db exam-session-id])
   (set-participants-sync-to-success! [db exam-session-id])
+  (set-participants-sync-to-failed! [db exam-session-id retry-duration])
   (set-registration-status-to-cancelled! [db registration-id oid])
   (update-registration-exam-session! [db to-exam-session-id registration-id oid])
   (get-exam-session-by-id [db id])
@@ -70,6 +71,10 @@
     [{:keys [spec]} exam-session-id]
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-sync-to-success! tx {:exam_session_id exam-session-id})))
+  (set-participants-sync-to-failed!
+    [{:keys [spec]} exam-session-id interval]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-participant-sync-to-failed! tx {:exam_session_id exam-session-id :interval interval})))
   (update-registration-exam-session!
     [{:keys [spec]} to-exam-session-id registration-id oid]
     (jdbc/with-db-transaction [tx spec]
