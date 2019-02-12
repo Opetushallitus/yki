@@ -1,6 +1,8 @@
 (ns yki.handler.exam-session
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.exam-session-db :as exam-session-db]
+            [yki.boundary.registration-db :as registration-db]
+            [yki.registration.paytrail-payment :as paytrail-payment]
             [yki.handler.routing :as routing]
             [yki.util.audit-log :as audit-log]
             [pgqueue.core :as pgq]
@@ -16,8 +18,8 @@
                           :exam-session exam-session
                           :created (System/currentTimeMillis)}))
 
-(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q]}]
-  {:pre [(some? db) (some? data-sync-q)]}
+(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q url-helper]}]
+  {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? url-helper)]}
   (fn [oid]
     (context "/" []
       (GET "/" []
@@ -102,5 +104,22 @@
                                            :new {:exam_session_id (:to_exam_session_id relocate-request)}}})
                   (response {:success true}))
                 (not-found {:success false
-                            :error "Registration not found"})))))))))
+                            :error "Registration not found"})))
+            (POST "/confirm-payment" request
+              :path-params [id :- ::ys/id registration-id :- ::ys/id]
+              :body [confirm-payment-request ::ys/confirm-payment-request]
+              :return ::ys/response
+              (let [payment (registration-db/get-payment-by-registration-id db registration-id oid)]
+                (if payment
+                  (do
+                    (paytrail-payment/handle-payment-success db email-q url-helper {:order-number (:order_number payment)})
+                    (audit-log/log {:request request
+                                    :target-kv {:k audit-log/registration
+                                                :v registration-id}
+                                    :change {:type audit-log/update-op
+                                             :old {:payment_state "UNPAID"}
+                                             :new {:payment_state (:state confirm-payment-request)}}})
+                    (response {:success true}))
+                  (not-found {:success false
+                              :error "Payment not found"}))))))))))
 

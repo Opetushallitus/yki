@@ -10,7 +10,7 @@
 
 (defprotocol Registration
   (get-next-order-number-suffix! [db])
-  (get-payment-by-registration-id [db registration-id])
+  (get-payment-by-registration-id [db registration-id oid])
   (get-payment-by-order-number [db order-number])
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
@@ -35,8 +35,8 @@
 
 (extend-protocol Registration
   duct.database.sql.Boundary
-  (get-payment-by-registration-id [{:keys [spec]} registration-id]
-    (first (q/select-payment-by-registration-id spec {:registration_id registration-id})))
+  (get-payment-by-registration-id [{:keys [spec]} registration-id oid]
+    (first (q/select-payment-by-registration-id spec {:registration_id registration-id :oid oid})))
   (get-payment-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-payment-by-order-number spec {:order_number order-number})))

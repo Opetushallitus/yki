@@ -48,7 +48,10 @@
                                                       :alb-host (str "http://" uri)
                                                       :scheme "http"})
         auth (base/auth url-helper)
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :data-sync-q  (base/data-sync-q)})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db
+                                                                     :url-helper url-helper
+                                                                     :email-q (base/email-q)
+                                                                     :data-sync-q (base/data-sync-q)})
         org-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
                                                                                  :access-log (base/access-log)
                                                                                  :data-sync-q  (base/data-sync-q)

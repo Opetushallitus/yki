@@ -499,16 +499,19 @@ INSERT INTO payment(
 
 -- name: select-payment-by-registration-id
 SELECT
-  state,
-  registration_id,
-  amount,
-  reference_number,
-  order_number,
-  external_payment_id,
-  payment_method,
-  payed_at
- FROM payment
- WHERE registration_id = :registration_id;
+  pa.state,
+  pa.registration_id,
+  pa.amount,
+  pa.reference_number,
+  pa.order_number,
+  pa.external_payment_id,
+  pa.payment_method,
+  pa.payed_at
+ FROM payment pa
+ INNER JOIN registration re ON re.id = pa.registration_id
+ INNER JOIN exam_session es ON es.id = re.exam_session_id
+ WHERE registration_id = :registration_id
+ AND es.organizer_id = (SELECT id FROM organizer o WHERE oid = COALESCE(:oid, o.oid) AND deleted_at IS NULL);
 
 -- name: select-participant-by-external-id
 SELECT id, external_user_id, email
