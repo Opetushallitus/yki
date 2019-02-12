@@ -24,6 +24,7 @@
 (defn create-email-q-reader
   [port retry-duration-in-days]
   (ig/init-key :yki.job.scheduled-tasks/email-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
+                                                            :basic-auth {:user "user" :password "pass"}
                                                             :retry-duration-in-days retry-duration-in-days
                                                             :email-q (base/email-q)}))
 (deftest handle-email-request-test
@@ -89,6 +90,7 @@
           reader (ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
                                                                                :db db
                                                                                :disabled false
+                                                                               :basic-auth {:user "user" :password "pass"}
                                                                                :retry-duration-in-days 1
                                                                                :data-sync-q  data-sync-q})]
       (testing "should read email request from queue and send email"
@@ -136,6 +138,7 @@
                                                                              :body (slurp "test/resources/maatjavaltiot2_246.json")}}
     (let [handler (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db (base/db)
                                                                                    :disabled false
+                                                                                   :basic-auth {:user "user" :password "pass"}
                                                                                    :url-helper (base/create-url-helper (str "localhost:" port))})
           _ (handler)
           sync_status (base/select-one "SELECT * FROM participant_sync_status")]

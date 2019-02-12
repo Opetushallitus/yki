@@ -24,5 +24,5 @@
   (do-request (assoc opts :url url :method :post)))
 
 (defn do-delete
-  [url]
-  (do-request {:url url :method :delete}))
+  [url opts]
+  (do-request (assoc opts :url url :method :delete)))

@@ -59,8 +59,8 @@
        (log/error e "Registration state handler failed"))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/participants-sync-handler
-  [_ {:keys [db url-helper disabled]}]
-  {:pre [(some? db) (some? url-helper)]}
+  [_ {:keys [db url-helper basic-auth disabled]}]
+  {:pre [(some? db) (some? url-helper) (some? basic-auth)]}
   #(try
      (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
        (log/info "Check participants sync")
@@ -68,7 +68,7 @@
          (log/info "Syncronizing participants of exam sessions" exam-sessions)
          (doseq [exam-session-id exam-sessions]
            (try
-             (yki-register/sync-exam-session-participants db url-helper disabled exam-session-id)
+             (yki-register/sync-exam-session-participants db url-helper basic-auth disabled exam-session-id)
              (catch Exception e
                (log/error e "Failed to syncronize participants of exam session" exam-session-id))))))
      (catch Exception e
@@ -83,10 +83,10 @@
                                (email/send-email url-helper email-req))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader
-  [_ {:keys [data-sync-q url-helper db retry-duration-in-days disabled]}]
-  {:pre [(some? url-helper) (some? data-sync-q) (some? db) (some? retry-duration-in-days)]}
+  [_ {:keys [data-sync-q url-helper db retry-duration-in-days disabled basic-auth]}]
+  {:pre [(some? url-helper) (some? data-sync-q) (some? db) (some? retry-duration-in-days) (some? basic-auth)]}
   #(take-with-error-handling data-sync-q retry-duration-in-days
                              (fn [data-sync-req]
                                (log/info "Received request to sync data to yki register" data-sync-req)
-                               (yki-register/sync-exam-session-and-organizer db url-helper disabled data-sync-req))))
+                               (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled data-sync-req))))
 

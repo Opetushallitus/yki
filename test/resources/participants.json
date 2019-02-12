@@ -26,7 +26,7 @@
         "gender": "1",
         "email": "aa@al.fi",
         "certificate_lang": "fi",
-        "birth_date": "1999-01-01",
+        "birthdate": "1999-01-01",
         "last_name": "Ankka",
         "first_name": "Aku",
         "nationalities": ["246"],

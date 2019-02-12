@@ -42,19 +42,22 @@
 
   :yki.job.scheduled-tasks/registration-state-handler {:db #ig/ref :duct.database/sql}
 
-  :yki.job.scheduled-tasks/participants-sync-handler {:db #ig/ref :duct.database/sql
-                                                      :disabled true
-                                                      :url-helper #ig/ref :yki.util/url-helper}
-
   :yki.job.scheduled-tasks/email-queue-reader {:email-q #ig/ref :yki.job.job-queue/email-q
                                                :url-helper #ig/ref :yki.util/url-helper
-                                               :retry-duration-in-days 30}
+                                               :retry-duration-in-days 14}
+
+  :yki.job.scheduled-tasks/participants-sync-handler {:db #ig/ref :duct.database/sql
+                                                      :disabled true
+                                                      :basic-auth {:user "user" :password "pass"}
+                                                      :url-helper #ig/ref :yki.util/url-helper
+                                                      :retry-duration-in-days 14}
 
   :yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
                                                    :db #ig/ref :duct.database/sql
                                                    :disabled true
+                                                   :basic-auth {:user "user" :password "pass"}
                                                    :url-helper #ig/ref :yki.util/url-helper
-                                                   :retry-duration-in-days 30}
+                                                   :retry-duration-in-days 14}
 
   :duct.scheduler/simple
   {:thread-pool-size 10
@@ -90,7 +93,7 @@
 
   :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql}
 
-   :yki.handler/code {:url-helper #ig/ref :yki.util/url-helper}
+  :yki.handler/code {:url-helper #ig/ref :yki.util/url-helper}
 
   :yki.handler/status {:db #ig/ref :duct.database/sql}
 

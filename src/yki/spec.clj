@@ -193,17 +193,16 @@
 (s/def ::registration (s/keys
                        :req-un [::first_name
                                 ::last_name
-                                ::gender
                                 ::nationalities
                                 ::certificate_lang
                                 ::exam_lang
+                                (or ::birthdate ::ssn)
                                 ::post_office
                                 ::zip
                                 ::street_address
                                 ::phone_number
                                 ::email]
-                       :opt-un [::birthdate
-                                ::ssn]))
+                       :opt-un [::gender]))
 
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
