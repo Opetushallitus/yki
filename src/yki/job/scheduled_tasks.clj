@@ -64,8 +64,8 @@
   #(try
      (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
        (log/info "Check participants sync")
-       (let [exam-sessions (exam-session-db/get-not-synced-exam-sessions db)]
-        (println exam-sessions)
+       (let [exam-sessions (exam-session-db/get-not-synced-exam-sessions db (str retry-duration-in-days " days"))]
+
          (log/info "Syncronizing participants of exam sessions" exam-sessions)
          (doseq [exam-session exam-sessions]
            (try
@@ -74,7 +74,6 @@
                (do
                  (log/error e "Failed to syncronize participants of exam session" exam-session)
                  (exam-session-db/set-participants-sync-to-failed! db (:exam_session_id exam-session) (str retry-duration-in-days " days"))))))))
-
      (catch Exception e
        (log/error e "Participant sync handler failed"))))
 

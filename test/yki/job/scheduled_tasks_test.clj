@@ -157,7 +157,6 @@
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (two-weeks-ago) "'"))
-  (println  (base/select-one "SELECT * FROM exam_date"))
   (with-routes!
     {"/osallistujat" {:status 500
                       :body "{}"}
@@ -170,6 +169,5 @@
                                                                                    :url-helper (base/create-url-helper (str "localhost:" port))})
           _ (handler)
           sync_status (base/select-one "SELECT * FROM participant_sync_status")]
-      (println sync_status)
       (testing "should set failed at status when sync has been retried for given period"
         (is (some? (:failed_at sync_status)))))))
