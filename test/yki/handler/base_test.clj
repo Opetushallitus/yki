@@ -130,7 +130,7 @@
                         :last_name  "Ankka"
                         :gender "1"
                         :nationalities ["246"]
-                        :birth_date "1999-01-01"
+                        :birthdate "1999-01-01"
                         :certificate_lang "fi"
                         :exam_lang "fi"
                         :post_office "Ankkalinna"

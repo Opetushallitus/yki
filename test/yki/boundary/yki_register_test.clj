@@ -67,8 +67,8 @@
             delete-exam-session-req  {:exam-session es
                                       :type "DELETE"
                                       :created (System/currentTimeMillis)}
-            delete-organizer-res (yki-register/sync-exam-session-and-organizer db url-helper false delete-organizer-req)
-            delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper false delete-exam-session-req)]
+            delete-organizer-res (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-organizer-req)
+            delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-exam-session-req)]
         "tests that exception is not thrown"))))
 
 (def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-122F;Iines;Ankka;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;010199-;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]))
@@ -76,7 +76,7 @@
 (deftest sync-exam-session-participants-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
-  (testing "should send participants as csv"
+  (testing "should send participants as csv and add basic auth header"
     (with-routes!
       {{:path "/osallistujat" :query-params {:tutkintokieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
        "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
@@ -84,7 +84,8 @@
       (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
             db (base/db)
             url-helper (base/create-url-helper (str "localhost:" port))
-            _ (yki-register/sync-exam-session-participants db url-helper false exam-session-id)
+            _ (yki-register/sync-exam-session-participants db url-helper {:user "user" :password "pass"} false exam-session-id)
             request (first (:recordings (first @(:routes server))))
             req-body (get-in request [:request :body "postData"])]
+        (is (= (get-in request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
         (is (= req-body csv))))))

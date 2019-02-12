@@ -34,7 +34,7 @@
   (map (fn [n] {:kansalaisuusKoodi n}) nationalities))
 
 (defn- extract-person-from-registration
-  [{:keys [email first_name last_name gender exam_lang nationalities birth_date]} ssn]
+  [{:keys [email first_name last_name gender exam_lang nationalities birthdate]} ssn]
   (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
                                         :yhteystietoArvo   email}]
                       :etunimet       first_name
@@ -51,7 +51,7 @@
        :eiSuomalaistaHetua false)
       (assoc
        basic-fields
-       :syntymaaika birth_date
+       :syntymaaika birthdate
        :identifications [{:idpEntityId "oppijaToken" :identifier email}]
        :eiSuomalaistaHetua true))))
 

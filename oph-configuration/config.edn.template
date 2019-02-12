@@ -11,7 +11,7 @@
                         :alb-host            "{{host_alb}}"
                         :tunnistus-host      "{{host_tunnistus}}"
                         :oppija-host         "{{host_oppija}}"
-                        :yki-register-host   "http://localhost:8080"
+                        :yki-register-host   "{{yki_register_host}}"
                         :yki-host-virkailija "{{host_ilb}}"}
 
   :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
@@ -21,16 +21,25 @@
                                          :user "{{host_postgresql_yki_user}}"
                                          :password "{{host_postgresql_yki_password}}"}}}
 
-  :yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                                                   :db #ig/ref :duct.database/sql
-                                                   :disabled {{yki_register_sync_disabled}}
-                                                   :url-helper #ig/ref :yki.util/url-helper
-                                                   :retry-duration-in-days 14}
+  :yki.job.scheduled-tasks/participants-sync-handler {:db #ig/ref :duct.database/sql
+                                                      :disabled {{yki_register_sync_disabled}}
+                                                      :basic-auth {:user "{{yki_register_user}}"
+                                                                   :password "{{yki_register_password}}"}
+                                                      :url-helper #ig/ref :yki.util/url-helper
+                                                      :retry-duration-in-days 14}
+
+:yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
+                                                 :db #ig/ref :duct.database/sql
+                                                 :disabled {{yki_register_sync_disabled}}
+                                                 :basic-auth {:user "{{yki_register_user}}"
+                                                              :password "{{yki_register_password}}"}
+                                                 :url-helper #ig/ref :yki.util/url-helper
+                                                 :retry-duration-in-days 14}
 
   :yki.handler/payment {:db #ig/ref :duct.database/sql
                         :auth #ig/ref :yki.middleware.auth/with-authentication
                         :access-log #ig/ref :yki.middleware.access-log/with-logging
-                        :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                        :payment-config {:paytrail-host "{{yki_paytrail_host}}"
                                          :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"}}
 
  :yki.handler/registration {:db #ig/ref :duct.database/sql
@@ -47,7 +56,7 @@
   :yki.middleware.auth/with-authentication
     {:url-helper #ig/ref :yki.util/url-helper
      :session-config {:key "{{yki_session_cookie_secret}}"
-                      :cookie-attrs {:max-age 28800
+                      :cookie-attrs {:max-age 3600
                                      :http-only false
                                      :secure true
                                      :domain "{{host_oppija}}"
