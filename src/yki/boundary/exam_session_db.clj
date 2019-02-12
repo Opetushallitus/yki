@@ -45,7 +45,7 @@
   (get-exam-session-with-location [db id lang])
   (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
-  (get-not-synced-exam-sessions [db])
+  (get-not-synced-exam-sessions [db retry-duration])
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and from arguments"))
 
@@ -114,8 +114,8 @@
     (first (q/select-exam-session-by-id spec {:id id})))
   (get-exam-session-by-registration-id [{:keys [spec]} registration-id]
     (first (q/select-exam-session-by-registration-id spec {:registration_id registration-id})))
-  (get-not-synced-exam-sessions [{:keys [spec]}]
-    (q/select-not-synced-exam-sessions spec))
+  (get-not-synced-exam-sessions [{:keys [spec]} retry-duration]
+    (q/select-not-synced-exam-sessions spec {:interval retry-duration}))
   (get-exam-session-participants [{:keys [spec]} id oid]
     (q/select-exam-session-participants spec {:id id :oid oid}))
   (get-completed-exam-session-participants [{:keys [spec]} id]
