@@ -107,7 +107,7 @@
                      (peridot/request (str routing/payment-root "/cancel" cancel-params)))
         location (get-in response [:response :headers "Location"])]
     (testing "when payment is cancelled should redirect to cancelled url"
-      (is (s/includes? location "maksut/tila?status=payment-cancelled&lang=fi")))))
+      (is (s/includes? location "maksut/tila?status=payment-cancel&lang=fi")))))
 
 (deftest handle-payment-notify-test
   (let [handler (create-handlers 8080)
