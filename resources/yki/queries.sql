@@ -594,22 +594,33 @@ INSERT INTO participant_sync_status(
 ON CONFLICT DO NOTHING;
 
 -- name: select-not-synced-exam-sessions
-SELECT es.id as exam_session_id
+SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
 WHERE ed.registration_end_date < current_date
-AND NOT EXISTS (
-  SELECT id
-  FROM participant_sync_status
-  WHERE exam_session_id = es.id
-  AND success_at IS NOT NULL
-);
+AND pss.success_at IS NULL
+AND pss.failed_at IS NULL;
 
 -- name: update-participant-sync-to-success!
 UPDATE participant_sync_status
 SET success_at = current_timestamp
 WHERE exam_session_id = :exam_session_id
 AND success_at IS NULL;
+
+-- name: update-participant-sync-to-failed!
+UPDATE participant_sync_status
+SET failed_at = current_timestamp
+WHERE exam_session_id = :exam_session_id
+AND success_at IS NULL
+AND failed_at IS NULL
+AND EXISTS (
+  SELECT es.id
+  FROM exam_session es
+  INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+  WHERE es.id = :exam_session_id
+  AND (ed.registration_end_date + :interval::interval) <= current_date
+);
 
 -- name: select-completed-exam-session-participants
 SELECT r.form, r.person_oid
