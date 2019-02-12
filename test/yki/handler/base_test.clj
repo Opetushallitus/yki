@@ -249,7 +249,10 @@
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
         url-helper (create-url-helper uri)
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db :data-sync-q  (data-sync-q)})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db
+                                                                     :url-helper url-helper
+                                                                     :email-q (email-q)
+                                                                     :data-sync-q  (data-sync-q)})
         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
         auth (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper url-helper
                                                                        :db db

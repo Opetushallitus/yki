@@ -13,7 +13,7 @@
             [clojure.tools.logging :refer [info error]]
             [integrant.core :as ig]))
 
-(defn- handle-payment-success [db email-q url-helper payment-params]
+(defn handle-payment-success [db email-q url-helper payment-params]
   (let [participant-data (registration-db/get-participant-data-by-order-number db (:order-number payment-params))
         lang (:lang participant-data)
         success (registration-db/complete-registration-and-payment! db payment-params)]
@@ -37,7 +37,7 @@
 (defn create-payment-form-data
   [db url-helper payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
-    (if-let [payment (registration-db/get-payment-by-registration-id db registration-id)]
+    (if-let [payment (registration-db/get-payment-by-registration-id db registration-id nil)]
       (let [amount (str (:amount payment))
             payment-data {:language-code lang
                           :order-number (:order_number payment)
