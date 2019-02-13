@@ -31,7 +31,7 @@
 (s/def ::oid          (s/and string? #(<= (count %) 256)))
 (s/def ::id           pos-int?)
 
-;; organization
+;; organizer
 (s/def ::agreement_start_date ::date)
 (s/def ::agreement_end_date   ::date)
 (s/def ::contact_name         (s/and string? #(<= (count %) 256)))
@@ -43,17 +43,22 @@
 (s/def ::contact_shared_email (s/nilable ::email-type))
 (s/def ::extra                (s/and (s/nilable string?) #(<= (count %) 1024)))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
-(s/def ::language (s/keys :req-un [::language_code]
-                          :opt-un [::level_code]))
-(s/def ::languages (s/or :null nil? :array (s/coll-of ::language)))
-(s/def ::organizer-type (s/keys :req-un [::oid
-                                         ::agreement_start_date
-                                         ::agreement_end_date
-                                         ::contact_name
-                                         ::contact_email
-                                         ::contact_phone_number]
-                                :opt-un [::languages
-                                         ::extra]))
+(s/def ::language             (s/keys :req-un [::language_code]
+                                      :opt-un [::level_code]))
+(s/def ::languages            (s/or :null nil? :array (s/coll-of ::language)))
+(s/def ::merchant_id          (s/nilable pos-int?))
+(s/def ::merchant_secret      (s/nilable (s/and string? #(<= (count %) 30))))
+(s/def ::merchant             (s/keys :req-un [::merchant_id ::merchant_secret]))
+(s/def ::organizer-type       (s/keys :req-un [::oid
+                                               ::agreement_start_date
+                                               ::agreement_end_date
+                                               ::contact_name
+                                               ::contact_email
+                                               ::contact_phone_number]
+                                      :opt-un [::languages
+                                               ::extra
+                                               ::merchant]))
+
 (s/def ::organizers (s/coll-of ::organizer-type))
 (s/def ::organizers-response (s/keys :req-un [::organizers]))
 (s/def ::response (s/keys :req-un [::success]

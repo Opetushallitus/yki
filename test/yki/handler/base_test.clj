@@ -31,6 +31,7 @@
                 :contact_name "fuu"
                 :contact_phone_number "123456"
                 :extra "shared@oph.fi"
+                :merchant {:merchant_id 123456 :merchant_secret "SECRET"}
                 :languages [{:language_code "fin" :level_code "PERUS"},
                             {:language_code "eng" :level_code "PERUS"}]})
 

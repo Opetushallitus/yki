@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS exam_session (
   exam_date_id BIGSERIAL NOT NULL REFERENCES exam_date(id),
   max_participants INTEGER NOT NULL,
   office_oid TEXT,
-  published_at TIMESTAMP WITH TIME ZONE  DEFAULT NULL,
+  published_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   UNIQUE (organizer_id, office_oid, language_code, level_code, exam_date_id)
