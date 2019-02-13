@@ -1,27 +1,31 @@
 -- name: select-organizers
 SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.extra,
-(
-  SELECT array_to_json(array_agg(lang))
-  FROM (
-    SELECT language_code, level_code
-    FROM exam_language
-    WHERE organizer_id = o.id
-  ) lang
-) AS languages
+  (
+    SELECT array_to_json(array_agg(lang))
+    FROM (
+      SELECT language_code, level_code
+      FROM exam_language
+      WHERE organizer_id = o.id
+    ) lang
+  ) AS languages,
+  json_build_object('merchant_id', pc.merchant_id)::jsonb || json_build_object('merchant_secret', pc.merchant_secret)::jsonb as merchant
 FROM organizer o
+LEFT JOIN payment_config pc ON pc.organizer_id = o.id
 WHERE deleted_at IS NULL;
 
 -- name: select-organizers-by-oids
 SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.extra,
-(
-  SELECT array_to_json(array_agg(lang))
-  FROM (
-    SELECT language_code, level_code
-    FROM exam_language
-    WHERE organizer_id = o.id
-  ) lang
-) AS languages
+  (
+    SELECT array_to_json(array_agg(lang))
+    FROM (
+      SELECT language_code, level_code
+      FROM exam_language
+      WHERE organizer_id = o.id
+    ) lang
+  ) AS languages,
+  json_build_object('merchant_id', pc.merchant_id)::jsonb || json_build_object('merchant_secret', pc.merchant_secret)::jsonb as merchant
 FROM organizer o
+LEFT JOIN payment_config pc ON pc.organizer_id = o.id
 WHERE deleted_at IS NULL
   AND o.oid IN (:oids);
 
@@ -684,7 +688,19 @@ WHERE p.order_number = :order_number;
 
 -- name: update-payment-config!
 UPDATE payment_config
-SET merchant_secret = :merchant_secret;
+SET merchant_id = :merchant_id,
+    merchant_secret = :merchant_secret
+WHERE organizer_id =
+  (SELECT id FROM organizer
+    WHERE oid = :oid
+    AND deleted_at IS NULL);
+
+-- name: delete-payment-config!
+DELETE from payment_config
+WHERE organizer_id =
+  (SELECT id FROM organizer
+    WHERE oid = :oid
+    AND deleted_at IS NULL);
 
 -- name: select-exam-dates
 SELECT ed.exam_date, ed.registration_start_date, ed.registration_end_date,

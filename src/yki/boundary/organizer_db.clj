@@ -33,6 +33,8 @@
     [{:keys [spec]} organizer]
     (jdbc/with-db-transaction [tx spec]
       (q/insert-organizer! tx (convert-dates organizer))
+      (when (some? (:merchant organizer))
+        (q/insert-payment-config! tx (assoc (:merchant organizer) :oid (:oid organizer))))
       (doseq [lang (:languages organizer)]
         (q/insert-organizer-language! tx (merge lang {:oid (:oid organizer)})))
       true))
@@ -45,6 +47,7 @@
     (jdbc/with-db-transaction [tx spec]
       (try
         (q/delete-organizer-languages! tx {:oid oid})
+        (q/delete-payment-config! tx {:oid oid})
         (let [deleted (q/delete-organizer! tx {:oid oid})
               oids (map :office_oid (q/select-exam-session-office-oids tx {:oid oid}))]
           (when (= deleted 1)
@@ -60,6 +63,8 @@
       (q/delete-organizer-languages! tx {:oid oid})
       (doseq [lang (:languages organizer)]
         (q/insert-organizer-language! tx (merge lang {:oid oid})))
+      (when (some? (:merchant organizer))
+        (q/update-payment-config! tx (assoc (:merchant organizer) :oid oid)))
       (q/update-organizer! tx (assoc (convert-dates organizer) :oid oid))))
   (get-payment-config [{:keys [spec]} organizer-id]
     (first (q/select-payment-config spec {:organizer_id organizer-id})))
