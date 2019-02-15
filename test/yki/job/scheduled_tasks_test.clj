@@ -27,7 +27,6 @@
                                                             :basic-auth {:user "user" :password "pass"}
                                                             :retry-duration-in-days retry-duration-in-days
                                                             :email-q (base/email-q)}))
-q
 
 (def date-formatter (f/formatter c/date-format))
 
