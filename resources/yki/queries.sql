@@ -119,13 +119,14 @@ INSERT INTO exam_session (
   published_at
 ) VALUES (
   (SELECT id FROM organizer
-    WHERE oid = :oid AND deleted_at IS NULL AND agreement_end_date >= :session_date AND agreement_start_date <= :session_date),
+    WHERE oid = :oid AND deleted_at IS NULL AND agreement_end_date >= :session_date AND agreement_start_date <= :session_date
+      AND current_timestamp BETWEEN agreement_start_date AND agreement_end_date),
   (SELECT language_code FROM exam_language el
-    WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+    WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL AND current_timestamp BETWEEN agreement_start_date AND agreement_end_date)
       AND el.language_code = :language_code
       AND el.level_code = :level_code),
   (SELECT level_code FROM exam_language el
-    WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+    WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL AND current_timestamp BETWEEN agreement_start_date AND agreement_end_date)
       AND el.language_code = :language_code
       AND el.level_code = :level_code),
   (SELECT id from exam_date WHERE exam_date = :session_date),
@@ -201,6 +202,7 @@ INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
   AND o.oid = COALESCE(:oid, o.oid)
+  AND current_timestamp BETWEEN o.agreement_start_date AND o.agreement_end_date
 ORDER BY ed.exam_date ASC;
 
 -- name: select-exam-session-by-id
