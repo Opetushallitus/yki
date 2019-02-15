@@ -1,6 +1,6 @@
 # yki
 
-Yleisten kielitutkintojen ilmoittaumisjärjestelmän backend.
+Registration system for National Certificates of Language Proficiency (YKI).
 
 ## Developing
 

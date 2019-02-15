@@ -593,46 +593,42 @@ INSERT INTO participant_sync_status(
   :exam_session_id
   WHERE NOT EXISTS (SELECT exam_session_id
                     FROM participant_sync_status
-                    WHERE exam_session_id = :exam_session_id
-                      AND success_at IS NULL)
+                    WHERE exam_session_id = :exam_session_id)
 ON CONFLICT DO NOTHING;
 
--- name: select-not-synced-exam-sessions
+-- Syncronization is done during registration period and
+-- failed sync attempts will be retried for given period
+-- after registration has ended.
+
+-- name: select-exam-sessions-to-be-synced
 SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
-WHERE (ed.registration_end_date + :interval::interval + interval '1 day') >= current_date
-AND ed.registration_end_date < current_date
-AND pss.success_at IS NULL
-AND pss.failed_at IS NULL;
+WHERE ((ed.registration_end_date + interval '1 day') >= current_date
+  OR ((ed.registration_end_date + :duration::interval) >= current_date
+      AND pss.failed_at IS NOT NULL
+      AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
+AND ed.registration_start_date <= current_date
+AND (SELECT COUNT(1)
+     FROM registration re
+     WHERE re.exam_session_id = es.id AND re.state = 'COMPLETED') > 0;
 
 -- name: update-participant-sync-to-success!
 UPDATE participant_sync_status
 SET success_at = current_timestamp
-WHERE exam_session_id = :exam_session_id
-AND success_at IS NULL;
+WHERE exam_session_id = :exam_session_id;
 
 -- name: update-participant-sync-to-failed!
 UPDATE participant_sync_status
 SET failed_at = current_timestamp
-WHERE exam_session_id = :exam_session_id
-AND success_at IS NULL
-AND failed_at IS NULL
-AND EXISTS (
-  SELECT es.id
-  FROM exam_session es
-  INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-  WHERE es.id = :exam_session_id
-  AND (ed.registration_end_date + :interval::interval) <= current_date
-);
+WHERE exam_session_id = :exam_session_id;
 
 -- name: select-completed-exam-session-participants
-SELECT r.form, r.person_oid
-FROM exam_session es
-INNER JOIN registration r ON es.id = r.exam_session_id
-WHERE es.id = :id
-AND r.state = 'COMPLETED';
+SELECT form, person_oid
+FROM registration
+WHERE exam_session_id = :id
+AND state = 'COMPLETED';
 
 -- name: select-exam-session-participants
 SELECT r.form, r.state, r.id as registration_id
