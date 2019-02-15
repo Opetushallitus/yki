@@ -26,6 +26,8 @@
      (context routing/virkailija-auth-uri []
        (POST "/" request
          (cas-auth/cas-logout db (slurp (:body request))))
+       (GET "/" {session :session}
+         (found (cas-auth/create-redirect-uri-from-session session url-helper)))
        (GET "/callback" [ticket :as request]
          (cas-auth/login ticket request cas-client permissions-client onr-client url-helper db))
        (GET "/logout" {session :session}

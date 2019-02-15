@@ -29,6 +29,14 @@
    #(not-empty (:permissions %))
    (map yki-permissions organizations)))
 
+(defn create-redirect-uri-from-session
+  [session url-helper]
+  (let [organizations (get-in session [:identity :organizations])
+        oph-admin?    (auth/oph-admin? organizations)
+        lang (get-in session [:identity :lang])]
+    (url-helper (if oph-admin? :yki.admin.cas.login-success.redirect
+                    :yki.organizer.cas.login-success.redirect) lang)))
+
 (defn login [ticket request cas-client permissions-client onr-client url-helper db]
   (try
     (if ticket
