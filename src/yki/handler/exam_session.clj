@@ -29,10 +29,11 @@
       (POST "/" request
         :body [exam-session ::ys/exam-session]
         :return ::ys/id-response
-        (if-let [exam-session-id (exam-session-db/create-exam-session! db
-                                                                       oid
-                                                                       exam-session
-                                                                       (send-to-queue data-sync-q exam-session "CREATE"))]
+        (if-let [exam-session-id (exam-session-db/create-exam-session! db oid exam-session
+                                                                       (send-to-queue
+                                                                        data-sync-q
+                                                                        (assoc exam-session :organizer_oid oid)
+                                                                        "CREATE"))]
           (do
             (audit-log/log {:request request
                             :target-kv {:k audit-log/exam-session
@@ -47,7 +48,10 @@
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [current (exam-session-db/get-exam-session-by-id db id)]
-            (if (exam-session-db/update-exam-session! db oid id exam-session (send-to-queue data-sync-q exam-session "UPDATE"))
+            (if (exam-session-db/update-exam-session! db oid id exam-session (send-to-queue
+                                                                              data-sync-q
+                                                                              (assoc exam-session :organizer_oid oid)
+                                                                              "UPDATE"))
               (do
                 (audit-log/log {:request request
                                 :target-kv {:k audit-log/exam-session
@@ -62,7 +66,10 @@
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-            (if (exam-session-db/delete-exam-session! db id oid (send-to-queue data-sync-q exam-session "DELETE"))
+            (if (exam-session-db/delete-exam-session! db id oid (send-to-queue
+                                                                 data-sync-q
+                                                                 (assoc exam-session :organizer_oid oid)
+                                                                 "DELETE"))
               (do
                 (audit-log/log {:request request
                                 :target-kv {:k audit-log/exam-session
