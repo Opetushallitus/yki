@@ -64,8 +64,7 @@
   #(try
      (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
        (log/info "Check participants sync")
-       (let [exam-sessions (exam-session-db/get-not-synced-exam-sessions db (str retry-duration-in-days " days"))]
-
+       (let [exam-sessions (exam-session-db/get-exam-sessions-to-be-synced db (str retry-duration-in-days " days"))]
          (log/info "Syncronizing participants of exam sessions" exam-sessions)
          (doseq [exam-session exam-sessions]
            (try

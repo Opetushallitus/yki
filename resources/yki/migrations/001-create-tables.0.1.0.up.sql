@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS exam_date_language (
   id BIGSERIAL PRIMARY KEY,
   exam_date_id BIGSERIAL REFERENCES exam_date(id) NOT NULL,
   language_code CHAR(3) REFERENCES language(code) NOT NULL,
-  created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
+  created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
+  UNIQUE (exam_date_id, language_code)
 );
 --;;
 CREATE TABLE IF NOT EXISTS exam_session (
