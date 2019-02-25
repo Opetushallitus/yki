@@ -87,7 +87,7 @@
     (testing "when return authcode is invalid should redirect to error url"
       (is (= (base/select-one "SELECT state FROM registration") {:state "SUBMITTED"}))
       (is (= (base/select-one "SELECT state FROM payment") {:state "UNPAID"}))
-      (is (s/includes? location "maksut/tila?status=payment-error&lang=fi")))))
+      (is (s/includes? location "maksu/tila?status=payment-error&lang=fi")))))
 
 (deftest handle-payment-success-registration-not-found-test
   (jdbc/execute! @embedded-db/conn "DELETE FROM payment")
@@ -107,7 +107,7 @@
                      (peridot/request (str routing/payment-root "/cancel" cancel-params)))
         location (get-in response [:response :headers "Location"])]
     (testing "when payment is cancelled should redirect to cancelled url"
-      (is (s/includes? location "maksut/tila?status=payment-cancel&lang=fi")))))
+      (is (s/includes? location "maksu/tila?status=payment-cancel&lang=fi")))))
 
 (deftest handle-payment-notify-test
   (let [handler (create-handlers 8080)
