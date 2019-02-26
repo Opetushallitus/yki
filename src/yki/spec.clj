@@ -12,6 +12,10 @@
 ;; common
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
+(def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
+(def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
+
+(s/def ::ssn (s/and string? #(re-matches ssn-regexp %)))
 
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code  #{"fi" "sv" "en"})
@@ -220,6 +224,7 @@
 (s/def :user/nick_name (s/nilable string?))
 (s/def :user/post_office (s/nilable string?))
 (s/def :user/zip (s/nilable string?))
+(s/def :user/ssn (s/nilable ::ssn))
 (s/def :user/street_address (s/nilable string?))
 (s/def :user/email (s/nilable ::email-type))
 
@@ -255,12 +260,6 @@
                                          ::created]
                                    :opt [::exam-session-id
                                          ::organizer-oid]))
-
-(def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
-
-(def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
-
-(s/def ::ssn (s/and string? #(re-matches ssn-regexp %)))
 
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
