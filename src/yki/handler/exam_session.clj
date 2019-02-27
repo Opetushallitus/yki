@@ -114,7 +114,6 @@
                             :error "Registration not found"})))
             (POST "/confirm-payment" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
-              :body [confirm-payment-request ::ys/confirm-payment-request]
               :return ::ys/response
               (let [payment (registration-db/get-payment-by-registration-id db registration-id oid)]
                 (if payment
@@ -125,7 +124,7 @@
                                                 :v registration-id}
                                     :change {:type audit-log/update-op
                                              :old {:payment_state "UNPAID"}
-                                             :new {:payment_state (:state confirm-payment-request)}}})
+                                             :new {:payment_state "PAID"}}})
                     (response {:success true}))
                   (not-found {:success false
                               :error "Payment not found"}))))))))))

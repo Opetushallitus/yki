@@ -263,5 +263,3 @@
 
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
-
-(s/def ::confirm-payment-request (s/keys :req-un [::state]))
