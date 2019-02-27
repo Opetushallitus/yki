@@ -1,7 +1,7 @@
 sudo: required
 language: clojure
 jdk:
-  - oraclejdk8
+  - openjdk11
 services:
   - docker
 install:
@@ -25,7 +25,7 @@ script:
   - mv target/yki-*-standalone.jar $DOCKER_BUILD_DIR/artifact/yki.jar
   - cp -vr oph-configuration $DOCKER_BUILD_DIR/config/
 
-  - export BASE_IMAGE="baseimage-fatjar:master"
+  - export BASE_IMAGE="baseimage-fatjar:jdk11"
   - ./ci-tools/common/pull-image.sh
   - ./ci-tools/build/build-fatjar.sh yki
 
