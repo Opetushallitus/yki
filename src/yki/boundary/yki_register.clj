@@ -52,6 +52,7 @@
 (defn- do-delete [url basic-auth]
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
         status (:status response)]
+    (log/info "DELETE request to url" url)
     (when (and (not= 200 status) (not= 202 status))
       (log/error "Failed to sync data, error response" response)
       (throw (Exception. (str "Could not sync deletion " url))))))
