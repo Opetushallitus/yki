@@ -287,10 +287,7 @@ WHERE id = :id;
 
 -- name: delete-exam-session-location!
 DELETE FROM exam_session_location
-WHERE exam_session_id IN (SELECT exam_session_id FROM exam_session_location esl
-                          INNER JOIN exam_session es ON es.id = esl.exam_session_id
-                          INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-                          WHERE exam_session_id = :id AND ed.registration_start_date > current_timestamp);
+WHERE exam_session_id = :id;
 
 -- name: delete-exam-session!
 DELETE FROM exam_session
