@@ -40,6 +40,7 @@
   ([url body-as-string basic-auth]
    (do-post url body-as-string basic-auth "application/json; charset=UTF-8"))
   ([url body-as-string basic-auth content-type]
+   (log/info "POST request" body-as-string "to url" url)
    (let [response (http-util/do-post url {:headers {"content-type" content-type}
                                           :basic-auth [(:user basic-auth) (:password basic-auth)]
                                           :body    body-as-string})
