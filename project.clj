@@ -23,7 +23,7 @@
                  [duct/database.sql.hikaricp "0.4.0"]
                  [buddy/buddy-auth "2.1.0"]
                  [webjure/jeesql "0.4.7"]
-                 [http-kit "2.3.0"]
+                 [http-kit "2.4.0-alpha3"]
                  [org.clojure/tools.logging "0.4.1"]
                  [org.clojure/core.memoize "0.7.1"]
                  [ring-logger "1.0.1"]
