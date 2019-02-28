@@ -52,7 +52,7 @@
 (s/def ::languages            (s/or :null nil? :array (s/coll-of ::language)))
 (s/def ::merchant_id          (s/nilable pos-int?))
 (s/def ::merchant_secret      (s/nilable (s/and string? #(<= (count %) 30))))
-(s/def ::merchant             (s/keys :req-un [::merchant_id ::merchant_secret]))
+(s/def ::merchant             (s/nilable (s/keys :req-un [::merchant_id ::merchant_secret])))
 (s/def ::organizer-type       (s/keys :req-un [::oid
                                                ::agreement_start_date
                                                ::agreement_end_date
