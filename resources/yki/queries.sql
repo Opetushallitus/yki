@@ -710,3 +710,29 @@ SELECT ed.exam_date, ed.registration_start_date, ed.registration_end_date,
 FROM exam_date ed
 WHERE ed.registration_end_date >= current_date
 ORDER BY ed.exam_date ASC;
+
+-- name: insert-exam-session-queue!
+INSERT INTO exam_session_queue (
+  email,
+  exam_session_id
+) VALUES (
+  :email,
+  (SELECT id
+    FROM exam_session
+    WHERE id = :exam_session_id
+    AND organizer_id =
+      (SELECT id
+        FROM organizer
+        WHERE oid = :oid AND deleted_at IS NULL)
+);
+
+-- name: select-to-be-notified-from-queue
+SELECT
+ esq.email,
+ esq.exam_session_id
+FROM exam_session_queue esq
+INNER JOIN exam_session es ON es.id = esq.exam_session_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id;
+WHERE (ed.registration_end_date  + time '23:50') AT TIME ZONE 'Europe/Helsinki' >= (current_timestamp AT TIME ZONE 'Europe/Helsinki');
+
+
