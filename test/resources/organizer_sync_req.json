@@ -10,11 +10,11 @@
   "wwwosoite": "http://www.amiedu.fi",
   "tutkintotarjonta": [
     {
-      "tutkintokieli": "eng",
+      "kieli": "eng",
       "taso": "KT"
     },
     {
-      "tutkintokieli": "spa",
+      "kieli": "spa",
       "taso": "PT"
     }
   ]

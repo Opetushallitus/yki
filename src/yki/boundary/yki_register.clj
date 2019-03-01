@@ -27,7 +27,7 @@
    :yhteyshenkilo contact_name
    :sposoite contact_email
    :wwwosoite (find-web-address yhteystiedot)
-   :tutkintotarjonta (map (fn [l] {:tutkintokieli (:language_code l)
+   :tutkintotarjonta (map (fn [l] {:kieli (:language_code l)
                                    :taso (convert-level (:level_code l))}) languages)})
 
 (defn create-sync-exam-session-req
