@@ -19,5 +19,11 @@
       (GET "/" []
         :return ::ys/exam-session
         :path-params [id :- ::ys/id]
-        (ok (exam-session-db/get-exam-session-by-id db id))))))
+        (ok (exam-session-db/get-exam-session-by-id db id)))
+      (POST "/queue" []
+        :path-params [id :- ::ys/id]
+        :body [request ::ys/to-queue-request]
+        :return ::ys/response
+        (exam-session-db/add-to-exam-session-queue! db (:email request) id)
+        (ok {:success true})))))
 

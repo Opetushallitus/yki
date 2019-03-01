@@ -720,10 +720,8 @@ INSERT INTO exam_session_queue (
   (SELECT id
     FROM exam_session
     WHERE id = :exam_session_id
-    AND organizer_id =
-      (SELECT id
-        FROM organizer
-        WHERE oid = :oid AND deleted_at IS NULL)
+    GROUP BY id
+    HAVING (SELECT COUNT(1) FROM exam_session_queue WHERE exam_session_id = :exam_session_id) <= 100)
 );
 
 -- name: select-to-be-notified-from-queue
@@ -734,5 +732,10 @@ FROM exam_session_queue esq
 INNER JOIN exam_session es ON es.id = esq.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id;
 WHERE (ed.registration_end_date  + time '23:50') AT TIME ZONE 'Europe/Helsinki' >= (current_timestamp AT TIME ZONE 'Europe/Helsinki');
+
+-- name: delete-exam-session-queue!
+DELETE FROM exam_session_queue
+WHERE email :email
+AND exam_session_id :exam_session_id;
 
 
