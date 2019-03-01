@@ -17,21 +17,22 @@
   ((first (filter #(some? (% "www")) contacts)) "www"))
 
 (defn create-sync-organizer-req
-  [{:keys [languages contact_name contact_email]} {:strs [oid nimi postiosoite yhteystiedot]}]
+  [{:keys [languages contact_name contact_phone_number contact_email]} {:strs [oid nimi postiosoite yhteystiedot]}]
   {:oid oid
    :nimi (or (nimi "fi") (nimi "sv") (nimi "en"))
    :katuosoite (postiosoite "osoite")
    :postinumero (last (str/split (postiosoite "postinumeroUri") #"_"))
+   :puhelin contact_phone_number
    :postitoimipaikka (postiosoite "postitoimipaikka")
    :yhteyshenkilo contact_name
    :sposoite contact_email
    :wwwosoite (find-web-address yhteystiedot)
-   :tutkintotarjonta (map (fn [l] {:tutkintokieli (:language_code l)
+   :tutkintotarjonta (map (fn [l] {:kieli (:language_code l)
                                    :taso (convert-level (:level_code l))}) languages)})
 
 (defn create-sync-exam-session-req
   [{:keys [language_code level_code session_date office_oid organizer_oid]}]
-  {:tutkintokieli language_code
+  {:kieli language_code
    :taso (convert-level level_code)
    :pvm session_date
    :jarjestaja (or office_oid organizer_oid)})
@@ -40,6 +41,7 @@
   ([url body-as-string basic-auth]
    (do-post url body-as-string basic-auth "application/json; charset=UTF-8"))
   ([url body-as-string basic-auth content-type]
+   (log/info "POST request" body-as-string "to url" url)
    (let [response (http-util/do-post url {:headers {"content-type" content-type}
                                           :basic-auth [(:user basic-auth) (:password basic-auth)]
                                           :body    body-as-string})
@@ -51,6 +53,7 @@
 (defn- do-delete [url basic-auth]
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
         status (:status response)]
+    (log/info "DELETE request to url" url)
     (when (and (not= 200 status) (not= 202 status))
       (log/error "Failed to sync data, error response" response)
       (throw (Exception. (str "Could not sync deletion " url))))))
@@ -67,7 +70,7 @@
 (defn- create-url-params
   [{:keys [language_code level_code session_date office_oid organizer_oid]}]
   (str
-   "?tutkintokieli=" language_code
+   "?kieli=" language_code
    "&taso=" (convert-level level_code)
    "&pvm=" session_date
    "&jarjestaja=" (or office_oid organizer_oid)))
