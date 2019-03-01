@@ -34,6 +34,7 @@
 (s/def ::email-type   (s/and string? #(re-matches email-regex %)))
 (s/def ::oid          (s/and string? #(<= (count %) 256)))
 (s/def ::id           pos-int?)
+(s/def ::email        ::email-type)
 
 ;; organizer
 (s/def ::agreement_start_date ::date)
@@ -123,12 +124,14 @@
 (s/def ::dates (s/coll-of ::exam-date-type))
 (s/def ::exam-date-response (s/keys :req-un [::dates]))
 
+;; exam session queue
+(s/def ::to-queue-request (s/keys :req-un [::email]))
+
 ;; localisation
 (s/def ::category (s/and string? #(<= (count %) 256)))
 (s/def ::key      (s/and string? #(<= (count %) 256)))
 
 ;; login link
-(s/def ::email                  ::email-type)
 (s/def ::exam_session_id        ::id)
 (s/def ::user_data              (s/and string? #(<= (count %) 2560)))
 
