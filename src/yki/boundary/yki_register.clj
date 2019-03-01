@@ -32,7 +32,7 @@
 
 (defn create-sync-exam-session-req
   [{:keys [language_code level_code session_date office_oid organizer_oid]}]
-  {:tutkintokieli language_code
+  {:kieli language_code
    :taso (convert-level level_code)
    :pvm session_date
    :jarjestaja (or office_oid organizer_oid)})
@@ -70,7 +70,7 @@
 (defn- create-url-params
   [{:keys [language_code level_code session_date office_oid organizer_oid]}]
   (str
-   "?tutkintokieli=" language_code
+   "?kieli=" language_code
    "&taso=" (convert-level level_code)
    "&pvm=" session_date
    "&jarjestaja=" (or office_oid organizer_oid)))
