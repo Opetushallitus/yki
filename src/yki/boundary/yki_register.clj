@@ -17,11 +17,12 @@
   ((first (filter #(some? (% "www")) contacts)) "www"))
 
 (defn create-sync-organizer-req
-  [{:keys [languages contact_name contact_email]} {:strs [oid nimi postiosoite yhteystiedot]}]
+  [{:keys [languages contact_name contact_phone_number contact_email]} {:strs [oid nimi postiosoite yhteystiedot]}]
   {:oid oid
    :nimi (or (nimi "fi") (nimi "sv") (nimi "en"))
    :katuosoite (postiosoite "osoite")
    :postinumero (last (str/split (postiosoite "postinumeroUri") #"_"))
+   :puhelin contact_phone_number
    :postitoimipaikka (postiosoite "postitoimipaikka")
    :yhteyshenkilo contact_name
    :sposoite contact_email
