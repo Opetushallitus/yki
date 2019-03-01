@@ -37,6 +37,11 @@
    :pvm session_date
    :jarjestaja (or office_oid organizer_oid)})
 
+(defn create-sync-exam-date-req
+  [{:keys [language_code session_date]}]
+  {:kieli language_code
+   :pvm session_date})
+
 (defn- do-post
   ([url body-as-string basic-auth]
    (do-post url body-as-string basic-auth "application/json; charset=UTF-8"))
@@ -110,10 +115,15 @@
 
 (defn- sync-exam-session
   [url-helper basic-auth disabled exam-session]
-  (let [request (create-sync-exam-session-req exam-session)]
+  (let [exam-session-req (create-sync-exam-session-req exam-session)
+        exam-date-req (create-sync-exam-date-req exam-session)]
     (if disabled
-      (log/info "Sending disabled. Logging request" request)
-      (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string request) basic-auth))))
+      (do
+        (log/info "Sending disabled. Logging exam session request" exam-session-req)
+        (log/info "Sending disabled. Logging exam date request" exam-date-req))
+      (do
+        (do-post (url-helper :yki-register.exam-date) (json/write-value-as-string exam-date-req) basic-auth)
+        (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string exam-session-req) basic-auth)))))
 
 (defn create-partipant-csv [url-helper registration-form oid]
   (let [{:keys [first_name last_name gender nationalities birthdate ssn certificate_lang
