@@ -30,7 +30,6 @@
 
 (deftest update-organizer-test
   (base/insert-organizer "'1.2.3.5'")
-  (base/insert-payment-config "'1.2.3.5'")
   (let [json-body (j/write-value-as-string (assoc base/organizer :merchant {:merchant_id 2 :merchant_secret "SECRET2"}))
         request (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.5") json-body)
                     (mock/content-type "application/json; charset=UTF-8"))
