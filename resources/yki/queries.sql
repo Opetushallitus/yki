@@ -389,8 +389,8 @@ SELECT EXISTS (
   FROM exam_session es
   INNER JOIN exam_date ed ON es.exam_date_id = ed.id
   WHERE es.id = :exam_session_id
-    AND ((ed.registration_start_date + time '08:00') AT TIME ZONE 'Europe/Helsinki') < current_timestamp AT TIME ZONE 'Europe/Helsinki'
-    AND ((ed.registration_end_date + time '23:59') AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki'
+    AND (ed.registration_start_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') < current_timestamp AT TIME ZONE 'Europe/Helsinki'
+    AND (ed.registration_end_date + time '23:59' AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki'
 ) as exists;
 
 -- name: select-exam-session-space-left
@@ -471,7 +471,7 @@ INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
-  AND (ed.registration_end_date  + time '23:59') AT TIME ZONE 'Europe/Helsinki' >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
+  AND (ed.registration_end_date  + time '23:59' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND re.state = 'STARTED'
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
@@ -724,14 +724,18 @@ INSERT INTO exam_session_queue (
     HAVING (SELECT COUNT(1) FROM exam_session_queue WHERE exam_session_id = :exam_session_id) <= 100)
 );
 
+-- send notification only once per day between 8-22
 -- name: select-to-be-notified-from-queue
 SELECT
- esq.email,
- esq.exam_session_id
+ esq.exam_session_id,
+ array_to_json(array_agg(esq.email)) as queue
 FROM exam_session_queue esq
 INNER JOIN exam_session es ON es.id = esq.exam_session_id
-INNER JOIN exam_date ed ON ed.id = es.exam_date_id;
-WHERE (ed.registration_end_date  + time '23:50') AT TIME ZONE 'Europe/Helsinki' >= (current_timestamp AT TIME ZONE 'Europe/Helsinki');
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+WHERE (last_notified_at IS NULL OR last_notified_at::date < current_date)
+  AND current_time AT TIME ZONE 'Europe/Helsinki' BETWEEN time '08:00' AND time '22:00'
+  AND (ed.registration_end_date  + time '23:50' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
+GROUP BY esq.exam_session_id;
 
 -- name: delete-exam-session-queue!
 DELETE FROM exam_session_queue
