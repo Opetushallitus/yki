@@ -13,8 +13,6 @@
             [yki.boundary.job-db :as job-db])
   (:import [java.util UUID]))
 
-(defonce worker-id (str (UUID/randomUUID)))
-
 (defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
                                           :task "REGISTRATION_STATE_HANDLER"
                                           :interval "599 SECONDS"})
@@ -22,6 +20,10 @@
 (defonce participants-sync-handler-conf {:worker-id (str (UUID/randomUUID))
                                          :task "PARTICIPANTS_SYNC_HANDLER"
                                          :interval "59 MINUTES"})
+
+(defonce exam-session-queue-handler-conf {:worker-id (str (UUID/randomUUID))
+                                          :task "PARTICIPANTS_SYNC_HANDLER"
+                                          :interval "59 MINUTES"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -91,4 +93,15 @@
                              (fn [data-sync-req]
                                (log/info "Received request to sync data to yki register" data-sync-req)
                                (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled data-sync-req))))
+
+(defmethod ig/init-key :yki.job.scheduled-tasks/exam-session-queue-handler
+  [_ {:keys [db]}]
+  {:pre [(some? db)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db exam-session-queue-handler-conf)
+       (log/debug "Exam session queue handler started")
+       (let [to-be-notified (exam-session-db/get-to-be-notified-from-queue db)]
+         (log/info "Exam sessions with queue and free space" to-be-notified)))
+     (catch Exception e
+       (log/error e "Exam session queue handler failed"))))
 

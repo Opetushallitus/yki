@@ -10,3 +10,6 @@ VALUES ('PARTICIPANTS_SYNC_HANDLER', '-infinity');
 INSERT INTO task_lock(task, last_executed)
 VALUES ('REGISTRATION_STATE_HANDLER', '-infinity');
 --;;
+INSERT INTO task_lock(task, last_executed)
+VALUES ('EXAM_SESSION_QUEUE_HANDLER', '-infinity');
+--;;
