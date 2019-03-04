@@ -65,8 +65,9 @@
       (doseq [lang (:languages organizer)]
         (q/insert-organizer-language! tx (merge lang {:oid oid})))
       (when (some? (:merchant organizer))
-        (log/info "updating payment config" (assoc (:merchant organizer) :oid oid))
-        (q/update-payment-config! tx (assoc (:merchant organizer) :oid oid)))
+        (do
+          (log/info "updating payment config" (assoc (:merchant organizer) :oid oid))
+          (q/update-payment-config! tx (assoc (:merchant organizer) :oid oid))))
       (q/update-organizer! tx (assoc (convert-dates organizer) :oid oid))))
   (get-payment-config [{:keys [spec]} organizer-id]
     (first (q/select-payment-config spec {:organizer_id organizer-id})))
