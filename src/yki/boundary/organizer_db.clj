@@ -60,11 +60,13 @@
   (update-organizer!
     [{:keys [spec]} oid organizer]
     (jdbc/with-db-transaction [tx spec]
+      (log/info "update-organizer!" organizer oid)
       (q/delete-organizer-languages! tx {:oid oid})
       (doseq [lang (:languages organizer)]
         (q/insert-organizer-language! tx (merge lang {:oid oid})))
+      (q/delete-payment-config! tx {:oid oid})
       (when (some? (:merchant organizer))
-        (q/update-payment-config! tx (assoc (:merchant organizer) :oid oid)))
+        (q/insert-payment-config! tx (assoc (:merchant organizer) :oid oid)))
       (q/update-organizer! tx (assoc (convert-dates organizer) :oid oid))))
   (get-payment-config [{:keys [spec]} organizer-id]
     (first (q/select-payment-config spec {:organizer_id organizer-id})))
