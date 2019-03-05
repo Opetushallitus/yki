@@ -48,8 +48,9 @@
   (get-exam-sessions-to-be-synced [db retry-duration])
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and from arguments")
-  (get-to-be-notified-from-queue [db])
-  (add-to-exam-session-queue! [db email exam-session-id])
+  (get-exam-sessions-with-queue [db])
+  (add-to-exam-session-queue! [db email lang exam-session-id])
+  (update-exam-session-queue-last-notified-at! [db email exam-session-id])
   (remove-from-exam-session-queue! [db email exam-session-id]))
 
 (extend-protocol ExamSessions
@@ -126,13 +127,21 @@
   (get-exam-sessions [{:keys [spec]} oid from]
     (q/select-exam-sessions spec {:oid oid
                                   :from (string->date from)}))
-  (get-to-be-notified-from-queue [{:keys [spec]}]
-    (q/select-to-be-notified-from-queue spec))
+  (get-exam-sessions-with-queue [{:keys [spec]}]
+    (q/select-exam-sessions-with-queue spec))
   (add-to-exam-session-queue!
+    [{:keys [spec]} email lang exam-session-id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/insert-exam-session-queue! tx {:exam_session_id exam-session-id
+                                        :lang lang
+                                        :email email})))
+  (update-exam-session-queue-last-notified-at!
     [{:keys [spec]} email exam-session-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/insert-exam-session-queue! tx {:exam_session_id exam-session-id :email email})))
+      (q/update-exam-session-queue-last-notified-at! tx {:exam_session_id exam-session-id
+                                                         :email email})))
   (remove-from-exam-session-queue!
     [{:keys [spec]} email exam-session-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/delete-exam-session-queue! tx {:exam_session_id exam-session-id :email email}))))
+      (q/delete-exam-session-queue! tx {:exam_session_id exam-session-id
+                                        :email email}))))

@@ -7,6 +7,7 @@
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.yki-register :as yki-register]
+            [yki.util.template-util :as template-util]
             [yki.job.job-queue]
             [clj-time.coerce :as c]
             [clj-time.core :as t]
@@ -95,19 +96,30 @@
                                (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled data-sync-req))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/exam-session-queue-handler
-  [_ {:keys [db]}]
-  {:pre [(some? db)]}
+  [_ {:keys [db email-q url-helper]}]
+  {:pre [(some? db) (some? email-q) (some? url-helper)]}
   #(try
      (when (job-db/try-to-acquire-lock! db exam-session-queue-handler-conf)
        (log/debug "Exam session queue handler started")
-       (let [to-be-notified (exam-session-db/get-to-be-notified-from-queue db)]
-         (log/info "Exam sessions with queue and free space" to-be-notified)
-         (doseq [queue to-be-notified]
+       (let [exam-sessions-with-queue (exam-session-db/get-exam-sessions-with-queue db)]
+         (log/info "Exam sessions with queue and free space" exam-sessions-with-queue)
+         (doseq [exam-session-with-queue exam-sessions-with-queue]
            (try
-             (doseq [email (:queue queue)]
-               (println email))
+             (doseq [item (:queue exam-session-with-queue)]
+               (let [lang (:lang item)
+                     email (:email item)
+                     exam-session-id (:exam_session_id exam-session-with-queue)
+                     exam-session-url (url-helper :exam-session.url exam-session-id lang)]
+                 (pgq/put email-q
+                          {:recipients [email]
+                           :created (System/currentTimeMillis)
+                           :subject (template-util/subject url-helper "queue_notification" lang exam-session-with-queue)
+                           :body (template-util/render url-helper "queue_notification"
+                                                       lang
+                                                       (assoc exam-session-with-queue :exam-session-url exam-session-url))})
+                 (exam-session-db/update-exam-session-queue-last-notified-at! db email exam-session-id)))
              (catch Exception e
-               (log/error e "Failed to send notifications for" queue))))))
+               (log/error e "Failed to send notifications for" exam-session-with-queue))))))
      (catch Exception e
        (log/error e "Exam session queue handler failed"))))
 

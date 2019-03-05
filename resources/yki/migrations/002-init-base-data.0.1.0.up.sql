@@ -74,6 +74,8 @@ INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date)
 --;;
 INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2019-08-31'), 'fin');
 --;;
+INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2019-08-31'), 'swe');
+--;;
 INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2019-10-05', '2019-08-19', '2019-08-30');
 --;;
 INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2019-10-05'), 'fin');
@@ -123,6 +125,8 @@ INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date)
 INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2020-05-23'), 'fin');
 --;;
 INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2020-08-29', '2020-06-01', '2020-06-12');
+--;;
+INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2020-08-29'), 'swe');
 --;;
 INSERT INTO exam_date_language(exam_date_id, language_code) VALUES ((SELECT id FROM exam_date WHERE exam_date = '2020-08-29'), 'fin');
 --;;

@@ -22,8 +22,9 @@
         (ok (exam-session-db/get-exam-session-by-id db id)))
       (POST "/queue" []
         :path-params [id :- ::ys/id]
+        :query-params [lang :- ::ys/language-code]
         :body [request ::ys/to-queue-request]
         :return ::ys/response
-        (exam-session-db/add-to-exam-session-queue! db (:email request) id)
+        (exam-session-db/add-to-exam-session-queue! db (:email request) lang id)
         (ok {:success true})))))
 
