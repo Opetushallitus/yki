@@ -39,7 +39,7 @@
 (deftest post-exam-session-queue-test
   (base/insert-base-data)
   (let [id (:id (base/select-one "SELECT id from exam_session"))
-        request (-> (mock/request :post (str routing/exam-session-public-api-root "/" id "/queue")
+        request (-> (mock/request :post (str routing/exam-session-public-api-root "/" id "/queue?lang=sv")
                                   (j/write-value-as-string {:email "test@test.com"}))
                     (mock/content-type "application/json; charset=UTF-8"))
         response (send-request request)

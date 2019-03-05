@@ -84,10 +84,23 @@
 
 (deftest handle-exam-session-queue-test
   (base/insert-base-data)
-  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, exam_session_id) VALUES ('test@test.com', 1)")
-  (println (base/select-one "SELECT * FROM exam_session"))
-  (let [handler (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-handler {:db (base/db)})
+  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")
+  (let [now (t/to-time-zone (t/now) (t/time-zone-for-id "Europe/Helsinki"))
+        at-nine-am (t/from-time-zone (t/today-at 9 00 00) (t/time-zone-for-id "Europe/Helsinki"))
+        at-eight-pm (t/from-time-zone (t/today-at 20 00 00) (t/time-zone-for-id "Europe/Helsinki"))
+        email-q (base/email-q)
+        handler (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-handler {:db (base/db)
+                                                                                  :url-helper (base/create-url-helper "")
+                                                                                  :email-q email-q})
         _ (handler)
+        email-request (pgq/take email-q)
         queue (base/select-one "SELECT * FROM exam_session_queue")]
-    (testing "should send notification"
-      (is (some? (:exam_session_id queue))))))
+    ; notifications are send only between 8 - 21 so execute assertions between 9 - 20
+    (when (t/within? at-nine-am at-eight-pm now)
+      (testing "should send notification"
+        (is (some? (:body email-request))))
+      (testing "should set last_notified_at timestamp"
+        (is (some? (:last_notified_at queue))))
+      (testing "should send notification only once a day"
+        (handler)
+        (is (nil? (pgq/take email-q)))))))

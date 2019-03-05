@@ -60,6 +60,7 @@
                                                    :retry-duration-in-days 14}
 
   :yki.job.scheduled-tasks/exam-session-queue-handler {:db #ig/ref :duct.database/sql
+                                                       :url-helper #ig/ref :yki.util/url-helper
                                                        :email-q #ig/ref :yki.job.job-queue/email-q}
 
   :duct.scheduler/simple
