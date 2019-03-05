@@ -81,3 +81,13 @@
           failed_at_after (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))]
       (testing "should update failed at timestamp"
         (is (t/after? failed_at_after failed_at_before))))))
+
+(deftest handle-exam-session-queue-test
+  (base/insert-base-data)
+  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, exam_session_id) VALUES ('test@test.com', 1)")
+  (println (base/select-one "SELECT * FROM exam_session"))
+  (let [handler (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-handler {:db (base/db)})
+        _ (handler)
+        queue (base/select-one "SELECT * FROM exam_session_queue")]
+    (testing "should send notification"
+      (is (some? (:exam_session_id queue))))))

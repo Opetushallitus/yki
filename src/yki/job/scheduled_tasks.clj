@@ -15,15 +15,15 @@
 
 (defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
                                           :task "REGISTRATION_STATE_HANDLER"
-                                          :interval "599 SECONDS"})
+                                          :interval "59 SECONDS"})
 
 (defonce participants-sync-handler-conf {:worker-id (str (UUID/randomUUID))
                                          :task "PARTICIPANTS_SYNC_HANDLER"
                                          :interval "59 MINUTES"})
 
 (defonce exam-session-queue-handler-conf {:worker-id (str (UUID/randomUUID))
-                                          :task "PARTICIPANTS_SYNC_HANDLER"
-                                          :interval "59 MINUTES"})
+                                          :task "EXAM_SESSION_QUEUE_HANDLER"
+                                          :interval "599 SECONDS"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -101,7 +101,13 @@
      (when (job-db/try-to-acquire-lock! db exam-session-queue-handler-conf)
        (log/debug "Exam session queue handler started")
        (let [to-be-notified (exam-session-db/get-to-be-notified-from-queue db)]
-         (log/info "Exam sessions with queue and free space" to-be-notified)))
+         (log/info "Exam sessions with queue and free space" to-be-notified)
+         (doseq [queue to-be-notified]
+           (try
+             (doseq [email (:queue queue)]
+               (println email))
+             (catch Exception e
+               (log/error e "Failed to send notifications for" queue))))))
      (catch Exception e
        (log/error e "Exam session queue handler failed"))))
 
