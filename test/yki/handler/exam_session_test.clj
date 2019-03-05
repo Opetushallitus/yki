@@ -23,8 +23,8 @@
         response (base/send-request-with-tx request)
         response-body (base/body-as-json response)]
     (testing "post exam session endpoint should return 400 status code for validation errors"
-      (is (= '({:count 0})
-             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session")))
+      (is (= {:count 0}
+             (base/select-one "SELECT COUNT(1) FROM exam_session")))
       (is (= (:status response) 400)))))
 
 (deftest exam-session-crud-test
@@ -39,10 +39,10 @@
           response-body (base/body-as-json response)
           data-sync-q (base/data-sync-q)
           sync-req (pgq/take data-sync-q)]
-      (is (= '({:count 1})
-             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session")))
-      (is (= '({:count 3})
-             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session_location")))
+      (is (= {:count 1}
+             (base/select-one "SELECT COUNT(1) FROM exam_session")))
+      (is (= {:count 3}
+             (base/select-one "SELECT COUNT(1) FROM exam_session_location")))
       (is (= (:status response) 200))
       (is (some? (:exam-session sync-req)))
       (is (= (:type sync-req) "CREATE"))))
@@ -62,8 +62,8 @@
           response (base/send-request-with-tx request)
           data-sync-q  (base/data-sync-q)
           sync-req (pgq/take data-sync-q)]
-      (is (= '({:max_participants 51})
-             (jdbc/query @embedded-db/conn "SELECT max_participants FROM exam_session where id = 1")))
+      (is (= {:max_participants 51}
+             (base/select-one "SELECT max_participants FROM exam_session where id = 1")))
       (is (= (:type sync-req) "UPDATE"))
       (is (= (:status response) 200))
       (is (some? (:exam-session sync-req)))))
@@ -74,10 +74,10 @@
           data-sync-q (base/data-sync-q)
           sync-req (pgq/take data-sync-q)]
       (is (= (:status response) 200))
-      (is (= '({:count 0})
-             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session")))
-      (is (= '({:count 0})
-             (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM exam_session_location")))
+      (is (= {:count 0}
+             (base/select-one "SELECT COUNT(1) FROM exam_session")))
+      (is (= {:count 0}
+             (base/select-one "SELECT COUNT(1) FROM exam_session_location")))
       (is (some? (:exam-session sync-req)))
       (is (= (:type sync-req) "DELETE")))))
 

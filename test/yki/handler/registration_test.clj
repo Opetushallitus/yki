@@ -68,7 +68,7 @@
   (base/insert-exam-session 1 "'1.2.3.5'" 50)
   (base/insert-exam-session-location "'1.2.3.5'")
   (base/insert-login-link base/code-ok "2038-01-01")
-
+  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")
   (with-routes!
     (fn [server]
       (merge (base/cas-mock-routes (:port server))
@@ -113,17 +113,22 @@
           (is (= (get-in create-twice-response [:response :status]) 200))
           (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))))
 
-      (testing "post submit endpoint should create payment, send email with payment link and set registration status to SUBMITTED"
+      (testing "post submit endpoint should create payment"
         (is (= (get-in update-response [:response :status]) 200))
-        (is (= (:id payment) id))
+        (is (= (:id payment) id)))
+      (testing "and send email with payment link"
         (is (= (:subject email-request) "Maksulinkki: suomi perustaso - Omenia, 27.1.2018"))
         (is (s/includes? (:body email-request) "100,00 €"))
         (is (= (:type payment-link) "PAYMENT"))
         (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/maksu/" id)))
-        (is (= (:order_number payment) "YKI6000000001"))
+        (is (= (:order_number payment) "YKI6000000001")))
+      (testing "and set registration status to SUBMITTED"
         (is (= (:state submitted-registration) "SUBMITTED"))
         (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))
+      (testing "and delete item from exam session queue"
+        (is (= {:count 0}
+               (base/select-one "SELECT COUNT(1) FROM exam_session_queue"))))
 
       (testing "second post to same session after submit should return conflict with proper error"
         (let [create-twice-response (-> session

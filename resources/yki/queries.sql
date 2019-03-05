@@ -691,7 +691,7 @@ WHERE organizer_id =
     AND deleted_at IS NULL);
 
 -- name: delete-payment-config!
-DELETE from payment_config
+DELETE FROM payment_config
 WHERE organizer_id =
   (SELECT id FROM organizer
     WHERE oid = :oid
@@ -746,8 +746,8 @@ GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date;
 
 -- name: delete-exam-session-queue!
 DELETE FROM exam_session_queue
-WHERE email :email
-AND exam_session_id :exam_session_id;
+WHERE email = :email
+AND exam_session_id = :exam_session_id;
 
 -- name: update-exam-session-queue-last-notified-at!
 UPDATE exam_session_queue

@@ -11,10 +11,10 @@
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
             [yki.util.common :as c]
-            [ring.util.http-response :refer [ok conflict not-found internal-server-error]]
+            [ring.util.http-response :refer [ok conflict]]
             [buddy.core.hash :as hash]
             [buddy.core.codecs :refer :all]
-            [clojure.tools.logging :refer [info error]])
+            [clojure.tools.logging :as log])
   (:import [java.util UUID]))
 
 (defn sha256-hash [code]
@@ -144,7 +144,12 @@
                                                                                                  update-registration
                                                                                                  create-and-send-link-fn)]
           (if success
-            {:oid oid}
+            (do
+              (try
+                (exam-session-db/remove-from-exam-session-queue! db email (:id exam-session))
+                (catch Exception e
+                  (log/error e "Failed to remove email" email "from exam session" (:id exam-session) "queue")))
+              {:oid oid})
             {:error {:create_payment true}}))
         {:error {:person_creation true}})
       {:error {:closed true}})))
