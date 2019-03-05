@@ -60,7 +60,6 @@
   (update-organizer!
     [{:keys [spec]} oid organizer]
     (jdbc/with-db-transaction [tx spec]
-      (log/info "update-organizer!" organizer oid)
       (q/delete-organizer-languages! tx {:oid oid})
       (doseq [lang (:languages organizer)]
         (q/insert-organizer-language! tx (merge lang {:oid oid})))

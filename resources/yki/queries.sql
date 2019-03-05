@@ -26,7 +26,7 @@ SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.co
   json_build_object('merchant_id', pc.merchant_id)::jsonb || json_build_object('merchant_secret', pc.merchant_secret)::jsonb as merchant
 FROM organizer o
 LEFT JOIN payment_config pc ON pc.organizer_id = o.id
-WHERE deleted_at IS NULL
+WHERE o.deleted_at IS NULL
   AND o.oid IN (:oids);
 
 -- name: select-organizer
@@ -70,7 +70,7 @@ SET
   contact_phone_number = :contact_phone_number,
   extra = :extra,
   modified = current_timestamp
-WHERE oid = :oid;
+WHERE oid = :oid AND deleted_at IS NULL;
 
 -- name: delete-organizer!
 UPDATE organizer

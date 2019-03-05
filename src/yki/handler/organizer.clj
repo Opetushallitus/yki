@@ -7,7 +7,7 @@
             [yki.spec :as ys]
             [pgqueue.core :as pgq]
             [yki.middleware.access-log]
-            [clojure.tools.logging :refer [info error]]
+            [clojure.tools.logging :as log]
             [ring.util.response :refer [response not-found header]]
             [ring.util.http-response :refer [ok bad-request]]
             [ring.util.request]
@@ -32,6 +32,7 @@
      (POST "/" request
        :body [organizer ::ys/organizer-type]
        :return ::ys/response
+       (log/info "creating organizer" organizer)
        (when (organizer-db/create-organizer! db organizer)
          (audit-log/log
           {:request request,
@@ -48,6 +49,7 @@
          :body [organizer ::ys/organizer-type]
          :return ::ys/response
          (let [old (first (organizer-db/get-organizers-by-oids db [oid]))]
+           (log/info "Updating organizer" old oid)
            (if (= (organizer-db/update-organizer! db oid organizer) 1)
              (do
                (audit-log/log {:request request
@@ -57,8 +59,10 @@
                                         :old old
                                         :new organizer}})
                (response {:success true}))
-             (not-found {:success false
-                         :error "Organizer not found"}))))
+             (do
+               (log/warn "Organizer not found" oid)
+               (not-found {:success false
+                           :error "Organizer not found"})))))
 
        (DELETE "/" request
          :return ::ys/response
@@ -69,8 +73,10 @@
                                          :v oid}
                              :change {:type audit-log/delete-op}})
              (response {:success true}))
-           (not-found {:success false
-                       :error "Organizer not found"})))
+           (do
+             (log/warn "Organizer not found" oid)
+             (not-found {:success false
+                         :error "Organizer not found"}))))
        (context routing/file-uri []
          (file-handler oid))
        (context routing/exam-session-uri []
