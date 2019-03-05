@@ -42,6 +42,6 @@
           response (base/send-request-with-tx request port)
           response-body (j/read-value (slurp (:body response) :encoding "UTF-8"))]
       (testing "post files endpoint should send file to file store and save returned id to database"
-        (is (= '({:count 1})
-               (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM attachment_metadata WHERE external_id = 'd45c5262'")))
+        (is (= {:count 1}
+               (base/select-one "SELECT COUNT(1) FROM attachment_metadata WHERE external_id = 'd45c5262'")))
         (is (= {"external_id" "d45c5262"} response-body))))))

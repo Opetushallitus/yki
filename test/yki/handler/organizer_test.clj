@@ -24,8 +24,8 @@
                     (mock/content-type "application/json; charset=UTF-8"))
         response (base/send-request-with-tx request)]
     (testing "post organizer endpoint should return 400 status code for validation errors"
-      (is (= '({:count 0})
-             (base/select "SELECT COUNT(1) FROM organizer")))
+      (is (= {:count 0}
+             (base/select-one "SELECT COUNT(1) FROM organizer")))
       (is (= (:status response) 400)))))
 
 (deftest update-organizer-test
@@ -35,12 +35,12 @@
                     (mock/content-type "application/json; charset=UTF-8"))
         response (base/send-request-with-tx request)]
     (testing "put organization endpoint should update organization based on oid in url params"
-      (is (= '({:count 2})
-             (base/select "SELECT COUNT(1) FROM exam_language where organizer_id = (SELECT id FROM organizer WHERE oid = '1.2.3.5' AND deleted_at IS NULL)")))
-      (is (= '({:contact_name "fuu"})
-             (base/select "SELECT contact_name FROM organizer where oid = '1.2.3.5'")))
-      (is (= '({:merchant_secret "SECRET2"})
-             (jdbc/query @embedded-db/conn "SELECT merchant_secret FROM payment_config where merchant_id = 2")))
+      (is (= {:count 2}
+             (base/select-one "SELECT COUNT(1) FROM exam_language where organizer_id = (SELECT id FROM organizer WHERE oid = '1.2.3.5' AND deleted_at IS NULL)")))
+      (is (= {:contact_name "fuu"}
+             (base/select-one "SELECT contact_name FROM organizer where oid = '1.2.3.5'")))
+      (is (= {:merchant_secret "SECRET2"}
+             (base/select-one "SELECT merchant_secret FROM payment_config where merchant_id = 2")))
       (is (= (:status response) 200)))))
 
 (deftest add-organizer-test
@@ -49,10 +49,10 @@
                     (mock/content-type "application/json; charset=UTF-8"))
         response (base/send-request-with-tx request)]
     (testing "post organizer endpoint should add organizer"
-      (is (= '({:count 1})
-             (base/select "SELECT COUNT(1) FROM organizer")))
-      (is (= '({:count 1})
-             (base/select "SELECT COUNT(1) FROM payment_config")))
+      (is (= {:count 1}
+             (base/select-one "SELECT COUNT(1) FROM organizer")))
+      (is (= {:count 1}
+             (base/select-one "SELECT COUNT(1) FROM payment_config")))
       (is (= (:status response) 200)))))
 
 (deftest get-organizers-test
@@ -75,12 +75,12 @@
         sync-req-2 (pgq/take data-sync-q)]
     (testing "delete organizer endpoint should mark organizer deleted in db and delete payment config"
       (is (= (:status response) 200))
-      (is (= '({:count 0})
-             (base/select "SELECT COUNT(1) FROM organizer where deleted_at IS NULL")))
-      (is (= '({:count 1})
-             (base/select "SELECT COUNT(1) FROM organizer where deleted_at IS NOT NULL")))
-      (is (= '({:count 0})
-             (base/select "SELECT COUNT (1) FROM payment_config"))))
+      (is (= {:count 0}
+             (base/select-one "SELECT COUNT(1) FROM organizer where deleted_at IS NULL")))
+      (is (= {:count 1}
+             (base/select-one "SELECT COUNT(1) FROM organizer where deleted_at IS NOT NULL")))
+      (is (= {:count 0}
+             (base/select-one "SELECT COUNT (1) FROM payment_config"))))
 
     (testing "delete organizer endpoint should send organizer and office ois to sync queue"
       (is (= (:type sync-req-1) "DELETE"))
