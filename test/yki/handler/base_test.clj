@@ -184,7 +184,9 @@
           VALUES (
             (SELECT id FROM organizer where oid = " oid "),
             'fin', 'PERUS', '1.2.3.4.5'," exam-date-id ", " count ", null)")))
-(defn insert-exam-session-location [oid]
+
+(defn insert-exam-session-location
+  [oid lang]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
     address,
     other_location_info,
@@ -194,7 +196,7 @@
         'Omenia',
         'Upseerinkatu 11, Espoo',
         'Other info',
-        'fi',
+        '" lang "',
         (SELECT id FROM exam_session where organizer_id =  (SELECT id FROM organizer where oid = " oid ") ))")))
 
 (defn insert-base-data []
@@ -204,7 +206,9 @@
   (insert-exam-dates)
   (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
   (insert-exam-session 1 "'1.2.3.4'" 5)
-  (insert-exam-session-location "'1.2.3.4'")
+  (insert-exam-session-location "'1.2.3.4'" "fi")
+  (insert-exam-session-location "'1.2.3.4'" "sv")
+  (insert-exam-session-location "'1.2.3.4'" "en")
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') "))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('anothertest@user.com', 'anothertest@user.com') ")))
 

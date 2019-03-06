@@ -1,18 +1,23 @@
 {% extends "yki/templates/base.html" %} {% block content %}
 <tr>
-    <td style="padding-left: 20px; padding-top: 20px;">
-      {% i18n email.examSession.queue.content.line1 %}
-    </td>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.examSession.queue.content.line1 %}
+  </td>
 </tr>
 <tr>
-    <td style="padding-left: 20px; padding-top: 20px;">
-      {{language_code}} {{level_code}}
-    </td>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {{ language_code }} {{ level_code }}
+  </td>
 </tr>
 <tr>
-    <td style="padding-left: 20px;">
-      {{exam_date|date-format-with-dots}}
-    </td>
+  <td style="padding-left: 20px;">
+    {{exam_date|date-format-with-dots}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {{ address }}
+  </td>
 </tr>
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
@@ -21,7 +26,9 @@
 </tr>
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    <a style="color: #0093C4;" href="{{exam-session-url}}" target="_blank">{% i18n common.registration %}</a>
+    <a style="color: #0093C4;" href="{{ exam - session - url }}" target="_blank"
+      >{% i18n common.registration %}</a
+    >
   </td>
 </tr>
 <tr>

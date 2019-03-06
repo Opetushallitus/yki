@@ -734,17 +734,19 @@ SELECT
  es.language_code,
  es.level_code,
  ed.exam_date,
+ esl.name,
+ esl.address,
  array_to_json(array_agg(json_build_object('email', esq.email)::jsonb ||
                          json_build_object('lang', esq.lang)::jsonb)) as queue
 FROM exam_session_queue esq
 INNER JOIN exam_session es ON es.id = esq.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id AND esl.lang = esq.lang
 WHERE current_timestamp AT TIME ZONE 'Europe/Helsinki' BETWEEN (current_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') AND (current_date + time '20:59' AT TIME ZONE 'Europe/Helsinki')
   AND ed.registration_start_date <= current_date
   AND at_midnight(ed.registration_end_date) >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND (last_notified_at IS NULL OR last_notified_at::date < current_date)
-GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date;
+GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date, esl.address, esl.name;
 
 -- name: delete-exam-session-queue!
 DELETE FROM exam_session_queue

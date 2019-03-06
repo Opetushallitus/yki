@@ -66,7 +66,9 @@
   (base/insert-payment-config "'1.2.3.5'")
   (base/insert-languages "'1.2.3.5'")
   (base/insert-exam-session 1 "'1.2.3.5'" 50)
-  (base/insert-exam-session-location "'1.2.3.5'")
+  (base/insert-exam-session-location "'1.2.3.5'" "fi")
+  (base/insert-exam-session-location "'1.2.3.5'" "sv")
+  (base/insert-exam-session-location "'1.2.3.5'" "en")
   (base/insert-login-link base/code-ok "2038-01-01")
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")
   (with-routes!

@@ -110,6 +110,7 @@
                      email (:email item)
                      exam-session-id (:exam_session_id exam-session-with-queue)
                      exam-session-url (url-helper :exam-session.url exam-session-id lang)]
+                 (log/info "Sending notification to email" email)
                  (pgq/put email-q
                           {:recipients [email]
                            :created (System/currentTimeMillis)

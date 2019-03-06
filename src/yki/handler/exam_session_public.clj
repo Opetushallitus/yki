@@ -5,6 +5,7 @@
             [ring.util.http-response :refer [ok]]
             [ring.util.request]
             [yki.spec :as ys]
+            [clojure.tools.logging :as log]
             [integrant.core :as ig]))
 
 (defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db]}]
@@ -25,6 +26,7 @@
         :query-params [lang :- ::ys/language-code]
         :body [request ::ys/to-queue-request]
         :return ::ys/response
+        (log/info "Adding email " (:email request) " to exam session " id " queue")
         (exam-session-db/add-to-exam-session-queue! db (:email request) lang id)
         (ok {:success true})))))
 
