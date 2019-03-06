@@ -1,3 +1,7 @@
+CREATE OR REPLACE FUNCTION at_midnight(date) returns TIMESTAMPTZ as $$
+  SELECT (date_trunc('day', $1 AT TIME ZONE 'Europe/Helsinki') + interval '1 day') AT TIME ZONE 'Europe/Helsinki';
+$$ language sql;
+--;;
 CREATE TABLE IF NOT EXISTS language (
   code CHAR(3) PRIMARY KEY,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp

@@ -293,7 +293,7 @@ WHERE exam_session_id = :id;
 DELETE FROM exam_session
 WHERE id = (SELECT es.id FROM exam_session es
             INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-            WHERE es.id = :id AND ed.registration_start_date > current_timestamp
+            WHERE es.id = :id AND ed.registration_start_date > current_date
             AND es.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL));
 
 -- name: insert-participant<!
@@ -389,8 +389,8 @@ SELECT EXISTS (
   FROM exam_session es
   INNER JOIN exam_date ed ON es.exam_date_id = ed.id
   WHERE es.id = :exam_session_id
-    AND (ed.registration_start_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') < current_timestamp AT TIME ZONE 'Europe/Helsinki'
-    AND (ed.registration_end_date + time '19:59' AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki'
+    AND (ed.registration_start_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki'
+    AND at_midnight(ed.registration_end_date) > current_timestamp AT TIME ZONE 'Europe/Helsinki'
 ) as exists;
 
 -- name: select-exam-session-space-left
@@ -471,7 +471,7 @@ INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
-  AND (ed.registration_end_date  + time '20:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
+  AND at_midnight(ed.registration_end_date) >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND re.state = 'STARTED'
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
@@ -635,7 +635,8 @@ FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 WHERE es.id = :id
 AND es.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
-AND r.state IN ('COMPLETED', 'SUBMITTED');
+AND r.state IN ('COMPLETED', 'SUBMITTED')
+ORDER BY r.created ASC;
 
 --name: update-registration-status-to-cancelled!
 UPDATE registration
@@ -723,7 +724,7 @@ INSERT INTO exam_session_queue (
     FROM exam_session
     WHERE id = :exam_session_id
     GROUP BY id
-    HAVING (SELECT COUNT(1) FROM exam_session_queue WHERE exam_session_id = :exam_session_id) <= 100)
+    HAVING (SELECT COUNT(1) FROM exam_session_queue WHERE exam_session_id = :exam_session_id) <= 50)
 );
 
 -- send notification only once per day between 8 - 21 until registration ends
@@ -740,8 +741,9 @@ INNER JOIN exam_session es ON es.id = esq.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE current_timestamp AT TIME ZONE 'Europe/Helsinki' BETWEEN (current_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') AND (current_date + time '20:59' AT TIME ZONE 'Europe/Helsinki')
+  AND ed.registration_start_date <= current_date
+  AND at_midnight(ed.registration_end_date) >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND (last_notified_at IS NULL OR last_notified_at::date < current_date)
-  AND (ed.registration_end_date  + time '19:50' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
 GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date;
 
 -- name: delete-exam-session-queue!
