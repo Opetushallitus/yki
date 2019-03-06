@@ -100,7 +100,7 @@
   {:pre [(some? db) (some? email-q) (some? url-helper)]}
   #(try
      (when (job-db/try-to-acquire-lock! db exam-session-queue-handler-conf)
-       (log/debug "Exam session queue handler started")
+       (log/info "Exam session queue handler started")
        (let [exam-sessions-with-queue (exam-session-db/get-exam-sessions-with-queue db)]
          (doseq [exam-session-with-queue exam-sessions-with-queue]
            (log/info "Exam session with queue and free space" exam-session-with-queue)
