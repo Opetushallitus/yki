@@ -141,7 +141,8 @@
                                                                (assoc registration-data
                                                                       :amount amount
                                                                       :language (template-util/get-language url-helper (:language_code registration-data) lang)
-                                                                      :level (template-util/get-level url-helper (:level_code registration-data) lang)))
+                                                                      :level (template-util/get-level url-helper (:level_code registration-data) lang)
+                                                                      :expiration-date (c/format-date-to-finnish-format expiration-date)))
               success                   (registration-db/create-payment-and-update-registration! db
                                                                                                  payment
                                                                                                  update-registration

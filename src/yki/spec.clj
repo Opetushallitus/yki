@@ -14,6 +14,7 @@
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
 (def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
+(def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,20}|0)){3,13}$")
 
 (s/def ::ssn (s/and string? #(re-matches ssn-regexp %)))
 
@@ -32,7 +33,7 @@
                         :json-schema/default "2018-01-01T00:00:00Z"}))
 (s/def ::time         (s/and string? #(re-matches time-regex %)))
 (s/def ::email-type   (s/and string? #(re-matches email-regex %)))
-(s/def ::oid          (s/and string? #(<= (count %) 256)))
+(s/def ::oid          (s/and string? #(re-matches oid-regex %)))
 (s/def ::id           pos-int?)
 (s/def ::email        ::email-type)
 

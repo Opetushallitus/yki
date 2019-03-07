@@ -53,7 +53,21 @@
     "force": false,
     "key": "email.payment.content.line1",
     "locale": "fi",
-    "value": "Tärkeää! Mikäli maksua ei ole maksettu eräpäivään mennessä, ilmoittautumisesi perutaan."
+    "value": "Tärkeää! Mikäli maksua ei ole maksettu"
+  },
+  {
+    "accesscount": 0,
+    "id": 21031,
+    "category": "yki",
+    "accessed": 1544528821441,
+    "created": 1544528821441,
+    "createdBy": "1.2.246.562.24.86420489115",
+    "modified": 1544528821441,
+    "modifiedBy": "1.2.246.562.24.86420489115",
+    "force": false,
+    "key": "email.payment.content.line1.end",
+    "locale": "fi",
+    "value": "mennessä, ilmoittautumisesi perutaan."
   },
   {
     "accesscount": 0,

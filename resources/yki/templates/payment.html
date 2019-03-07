@@ -1,7 +1,7 @@
 {% extends "yki/templates/base.html" %} {% block content %}
 <tr>
     <td style="padding-left: 20px; padding-top: 20px;">
-      {% i18n email.payment.content.line1 %}
+      {% i18n email.payment.content.line1 %} {{expiration-date}} {% i18n email.payment.content.line1.end %}
     </td>
 </tr>
 <tr>

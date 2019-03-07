@@ -19,5 +19,8 @@
 (defn date-from-now [days]
   (set-timezone (t/with-time-at-start-of-day (t/plus (t/now) (t/days (inc days))))))
 
+(defn format-date-to-finnish-format [date]
+  (f/unparse finnish-date-formatter date))
+
 (defn format-date-string-to-finnish-format [date-string]
   (f/unparse finnish-date-formatter (f/parse date-string)))
