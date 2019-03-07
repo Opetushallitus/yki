@@ -1,6 +1,7 @@
 (ns yki.registration.paytrail-payment
   (:require [clojure.spec.alpha :as s]
             [yki.spec :as ys]
+            [yki.util.common :as common]
             [clojure.string :as str]
             [clj-time.coerce :as c]
             [pgqueue.core :as pgq]
@@ -39,9 +40,10 @@
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
     (if-let [payment (registration-db/get-payment-by-registration-id db registration-id nil)]
       (let [amount (str (:amount payment))
+            exam-date (common/format-date-string-to-finnish-format (:exam_date registration))
             payment-data {:language-code lang
                           :order-number (:order_number payment)
-                          :msg (localisation/get-translation url-helper "common.paymentMessage" lang)}
+                          :msg (str (localisation/get-translation url-helper "common.paymentMessage" lang) " " exam-date)}
             organizer-specific-config (organizer-db/get-payment-config db (:organizer_id registration))
             form-data (payment-util/generate-form-data (merge organizer-specific-config payment-config) amount payment-data)]
         form-data)
