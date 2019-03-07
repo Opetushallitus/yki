@@ -138,7 +138,10 @@
                                                                email-q
                                                                lang
                                                                payment-link
-                                                               (assoc registration-data :amount amount))
+                                                               (assoc registration-data
+                                                                      :amount amount
+                                                                      :language (template-util/get-language url-helper (:language_code registration-data) lang)
+                                                                      :level (template-util/get-level url-helper (:level_code registration-data) lang)))
               success                   (registration-db/create-payment-and-update-registration! db
                                                                                                  payment
                                                                                                  update-registration

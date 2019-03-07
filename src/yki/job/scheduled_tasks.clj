@@ -102,25 +102,30 @@
      (when (job-db/try-to-acquire-lock! db exam-session-queue-handler-conf)
        (log/info "Exam session queue handler started")
        (let [exam-sessions-with-queue (exam-session-db/get-exam-sessions-with-queue db)]
-         (doseq [exam-session-with-queue exam-sessions-with-queue]
-           (log/info "Exam session with queue and free space" exam-session-with-queue)
+         (doseq [exam-session exam-sessions-with-queue]
+           (log/info "Exam session with queue and free space" exam-session)
            (try
-             (doseq [item (:queue exam-session-with-queue)]
+             (doseq [item (:queue exam-session)]
                (let [lang (:lang item)
                      email (:email item)
-                     exam-session-id (:exam_session_id exam-session-with-queue)
-                     exam-session-url (url-helper :exam-session.url exam-session-id lang)]
+                     exam-session-id (:exam_session_id exam-session)
+                     exam-session-url (url-helper :exam-session.url exam-session-id lang)
+                     language (template-util/get-language url-helper (:language_code exam-session) lang)
+                     level (template-util/get-level url-helper (:level_code exam-session) lang)]
                  (log/info "Sending notification to email" email)
                  (pgq/put email-q
                           {:recipients [email]
                            :created (System/currentTimeMillis)
-                           :subject (template-util/subject url-helper "queue_notification" lang exam-session-with-queue)
+                           :subject (template-util/subject url-helper "queue_notification" lang exam-session)
                            :body (template-util/render url-helper "queue_notification"
                                                        lang
-                                                       (assoc exam-session-with-queue :exam-session-url exam-session-url))})
+                                                       (assoc exam-session
+                                                              :exam-session-url exam-session-url
+                                                              :language language
+                                                              :level level))})
                  (exam-session-db/update-exam-session-queue-last-notified-at! db email exam-session-id)))
              (catch Exception e
-               (log/error e "Failed to send notifications for" exam-session-with-queue))))))
+               (log/error e "Failed to send notifications for" exam-session))))))
      (catch Exception e
        (log/error e "Exam session queue handler failed"))))
 
