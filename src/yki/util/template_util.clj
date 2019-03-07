@@ -41,11 +41,19 @@
 
 (selmer.util/set-missing-value-formatter! missing-value-fn)
 
+(defn get-level
+  [url-helper level-code lang]
+  (localisation/get-translation url-helper (level-translation-key level-code) lang))
+
+(defn get-language
+  [url-helper language-code lang]
+  (localisation/get-translation url-helper (str "common.language." language-code) lang))
+
 (defn subject
   [url-helper template lang params]
   (let [subject (localisation/get-translation url-helper (str "email." (str/lower-case template) ".subject") lang)
-        level (localisation/get-translation url-helper (level-translation-key (:level_code params)) lang)
-        language (localisation/get-translation url-helper (str "common.language." (:language_code params)) lang)]
+        level (get-level url-helper (:level_code params) lang)
+        language (get-language url-helper (:language_code params) lang)]
     (parser/render "{{subject}}: {{language}} {{level|lower}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject :level level :language language))))
 
 (defn render
