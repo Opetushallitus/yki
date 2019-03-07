@@ -1,6 +1,7 @@
 (ns yki.util.template-util
   (:require
    [yki.boundary.localisation :as localisation]
+   [yki.util.common :as common]
    [integrant.core :as ig]
    [selmer.parser :as parser]
    [selmer.filters :as filters]
@@ -12,8 +13,6 @@
 
 (defn- template-name [name]
   (str (str/lower-case name) ".html"))
-
-(def date-formatter (f/formatter "d.M.YYYY"))
 
 (def level-translation-key
   {"PERUS" "common.level.basic"
@@ -30,7 +29,7 @@
 
 (filters/add-filter! :date-format-with-dots
                      (fn [date-string]
-                       (f/unparse date-formatter (f/parse date-string))))
+                       (common/format-date-string-to-finnish-format date-string)))
 
 (filters/add-filter! :replace-dot-with-comma
                      #(str/replace % "." ","))

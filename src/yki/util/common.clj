@@ -1,7 +1,10 @@
 (ns yki.util.common
-  (:require [clj-time.core :as t]))
+  (:require [clj-time.core :as t]
+            [clj-time.format :as f]))
 
 (def date-format "YYYY-MM-dd")
+
+(def finnish-date-formatter (f/formatter "d.M.YYYY"))
 
 (def time-format "HH:mm")
 
@@ -15,3 +18,6 @@
 
 (defn date-from-now [days]
   (set-timezone (t/with-time-at-start-of-day (t/plus (t/now) (t/days (inc days))))))
+
+(defn format-date-string-to-finnish-format [date-string]
+  (f/unparse finnish-date-formatter (f/parse date-string)))
