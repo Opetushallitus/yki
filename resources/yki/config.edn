@@ -96,7 +96,8 @@
                      :db #ig/ref :duct.database/sql
                      :url-helper #ig/ref :yki.util/url-helper}
 
-  :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql}
+  :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
+                                    :payment-config {}}
 
   :yki.handler/code {:url-helper #ig/ref :yki.util/url-helper}
 

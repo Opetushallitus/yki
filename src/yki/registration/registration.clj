@@ -59,9 +59,9 @@
   [db session exam_session_id registration-id payment-config]
   (let [exam-session (exam-session-db/get-exam-session-by-id db exam_session_id)
         email (if (= (:auth-method session) "EMAIL") (:external-user-id (:identity session)))
-        user (assoc (:identity session) :email email)]
-    {:exam_session exam-session
-     :exam_payment (get-in payment-config [:amount (keyword (:level_code exam-session))])
+        user (assoc (:identity session) :email email)
+        exam_fee (get-in payment-config [:amount (keyword (:level_code exam-session))])]
+    {:exam_session (assoc exam-session :exam_fee exam_fee)
      :user user
      :registration_id registration-id}))
 

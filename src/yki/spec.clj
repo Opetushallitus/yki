@@ -11,13 +11,14 @@
 
 ;; common
 (def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
+(def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
 (def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
 (def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,20}|0)){3,13}$")
 
 (s/def ::ssn (s/and string? #(re-matches ssn-regexp %)))
-
+(s/def ::amount (s/and string? #(re-matches amount-regexp %)))
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code  #{"fi" "sv" "en"})
 (s/def ::gender-code  #{"" "1" "2"})
@@ -92,6 +93,7 @@
 (s/def ::max_participants           pos-int?)
 (s/def ::published_at               (s/nilable ::date))
 (s/def ::participants               int?)
+(s/def ::exam_fee ::amount)
 
 (s/def ::from                       ::date)
 
@@ -103,6 +105,7 @@
                                        ::location]
                               :opt-un [::id
                                        ::office_oid
+                                       ::exam_fee
                                        ::participants
                                        ::organizer_oid]))
 (s/def ::exam_sessions (s/coll-of ::exam-session))
@@ -146,11 +149,9 @@
 
 ;; payment
 (def pt-order-number-regex #"/^[0-9a-zA-Z()\[\]{}*+\-_,. ]{1,64}$/")
-(def pt-amount-regexp #"\d{0,3}.\d{2}")
 (def pt-locale-regexp #"^[a-z]{1,2}[_][A-Z]{1,2}$")
 
 (s/def ::timestamp date?)
-(s/def ::amount (s/and string? #(re-matches pt-amount-regexp %)))
 (s/def ::order-number (s/and ::non-blank-string #(< (count %) 33)))
 (s/def ::msg ::non-blank-string)
 (s/def ::payment-id (s/and ::non-blank-string #(< (count %) 26)))
@@ -164,7 +165,7 @@
 (s/def ::LOCALE (s/and string? #(re-matches pt-locale-regexp %)))
 (s/def ::URL_SUCCESS ::non-blank-string)
 (s/def ::URL_CANCEL ::non-blank-string)
-(s/def ::AMOUNT (s/and string? #(re-matches pt-amount-regexp %)))
+(s/def ::AMOUNT (s/and string? #(re-matches amount-regexp %)))
 (s/def ::ORDER_NUMBER ::order-number)
 (s/def ::MSG_SETTLEMENT_PAYER ::non-blank-string)
 (s/def ::MSG_UI_MERCHANT_PANEL ::non-blank-string)
@@ -220,7 +221,6 @@
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
 (s/def ::exam_session ::exam-session)
-(s/def ::exam_payment ::amount)
 (s/def ::registration_id ::id)
 
 (s/def :user/first_name (s/nilable string?))
@@ -243,7 +243,6 @@
 
 (s/def ::registration-init-response (s/keys :req-un [::exam_session
                                                      ::user
-                                                     ::exam_payment
                                                      ::registration_id]))
 
 ;; exam session participant

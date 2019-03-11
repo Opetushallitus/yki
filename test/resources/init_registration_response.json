@@ -16,9 +16,9 @@
         "extra_information": null,
         "lang": "fi"
       }
-    ]
+    ],
+    "exam_fee": "100.00"
   },
-  "exam_payment": 100.0,
   "user": { "external-user-id": "test@user.com", "email": "test@user.com" },
   "registration_id": 1
 }

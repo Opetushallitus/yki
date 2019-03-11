@@ -16,7 +16,7 @@
 
 (defn- get-codes-from-koodisto
   [url-helper collection]
-  (let [url (url-helper :koodisto-service collection)
+  (let [url (url-helper :koodisto-service collection 1)
         response (http-util/do-get url {})
         status   (:status response)
         json     (j/read-value (:body response) (j/object-mapper {:decode-key-fn true}))]
