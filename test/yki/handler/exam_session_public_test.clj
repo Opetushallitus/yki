@@ -18,7 +18,10 @@
 (use-fixtures :each embedded-db/with-transaction)
 
 (defn- send-request [request]
-  (let [handler (api (ig/init-key :yki.handler/exam-session-public {:db (base/db)}))]
+  (let [handler (api (ig/init-key :yki.handler/exam-session-public {:db (base/db)
+                                                                    :payment-config {:amount {:PERUS "100.00"
+                                                                                              :KESKI "123.00"
+                                                                                              :YLIN "160.00"}}}))]
     (handler request)))
 
 (deftest get-exam-sessions-test
@@ -34,7 +37,13 @@
         response (send-request request)
         response-body (base/body-as-json response)]
     (testing "get status endpoint should return 200"
-      (is (= (:status response) 200)))))
+      (is (= (response-body "exam_fee") "100.00"))
+      (is (= (:status response) 200))))
+
+  (let [request (mock/request :get (str routing/exam-session-public-api-root "/123"))
+        response (send-request request)]
+    (testing "get status endpoint should return 404"
+      (is (= (:status response) 404)))))
 
 (deftest post-exam-session-queue-test
   (base/insert-base-data)

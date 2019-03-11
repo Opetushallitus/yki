@@ -36,12 +36,16 @@
                                                  :url-helper #ig/ref :yki.util/url-helper
                                                  :retry-duration-in-days 14}
 
-  :yki.handler/payment {:db #ig/ref :duct.database/sql
-                        :auth #ig/ref :yki.middleware.auth/with-authentication
-                        :access-log #ig/ref :yki.middleware.access-log/with-logging
-                        :payment-config {:paytrail-host "{{yki_paytrail_host}}"
-                                         :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"}}
+:yki.handler/payment {:db #ig/ref :duct.database/sql
+                      :auth #ig/ref :yki.middleware.auth/with-authentication
+                      :access-log #ig/ref :yki.middleware.access-log/with-logging
+                      :payment-config {:paytrail-host "{{yki_paytrail_host}}"
+                                       :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"}}
 
+:yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
+                                  :payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"
+                                                            :KESKI "{{yki_exam_session_fee_intermediate}}"
+                                                            :YLIN "{{yki_exam_session_fee_advanced}}"}}}
  :yki.handler/registration {:db #ig/ref :duct.database/sql
                             :auth #ig/ref :yki.middleware.auth/with-authentication
                             :onr-client #ig/ref :yki.boundary.onr/onr-client
