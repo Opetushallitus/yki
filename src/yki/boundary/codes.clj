@@ -33,7 +33,7 @@
   (memo/ttl get-codes-from-koodisto :ttl/threshold one-week))
 
 (defn get-converted-country-code [url-helper country-code]
-  (let [url       (url-helper :koodisto-service.rinnasteinen (str "maatjavaltiot2_" country-code))
+  (let [url       (url-helper :koodisto-service.rinnasteinen (str "maatjavaltiot2_" country-code) 1)
         response  (get-country-code-memoized url)]
     response))
 
