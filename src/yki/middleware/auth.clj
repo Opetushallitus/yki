@@ -36,7 +36,7 @@
 (defn- participant-authenticated [request]
   (if-let [identity (-> request :session :identity)]
     (do
-      (MDC/put "user" (:external-id identity))
+      (MDC/put "user" (:external-user-id identity))
       true)
     (do
       (log/info "Participant not authenticated request uri:" (:uri request))
@@ -46,7 +46,7 @@
   [db request]
   (if-let [ticket (cas-ticket-db/get-ticket db (-> request :session :identity :ticket))]
     (do
-      (MDC/put "user" (:username identity))
+      (MDC/put "user" (-> request :session :identity :username))
       true)
     (error {:status 401 :body "Unauthorized"})))
 
