@@ -8,6 +8,10 @@
             [clojure.tools.logging :as log]
             [integrant.core :as ig]))
 
+(defn- get-exam-fee
+  [payment-config exam-session]
+  (get-in payment-config [:amount (keyword (:level_code exam-session))]))
+
 (defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db payment-config]}]
   {:pre [(some? db) (some? payment-config)]}
   (context routing/exam-session-public-api-root []
@@ -15,13 +19,15 @@
     (GET "/" []
       :query-params [{from :- ::ys/date nil}]
       :return ::ys/exam-sessions-response
-      (ok {:exam_sessions (exam-session-db/get-exam-sessions db nil from)}))
+      (let [exam-sessions (exam-session-db/get-exam-sessions db nil from)
+            with-fee (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
+        (ok {:exam_sessions with-fee})))
     (context "/:id" []
       (GET "/" []
         :return ::ys/exam-session
         :path-params [id :- ::ys/id]
         (if-let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-          (ok (assoc exam-session :exam_fee (get-in payment-config [:amount (keyword (:level_code exam-session))])))
+          (ok (assoc exam-session :exam_fee (get-exam-fee payment-config exam-session)))
           (not-found "Exam session not found")))
       (POST "/queue" []
         :path-params [id :- ::ys/id]

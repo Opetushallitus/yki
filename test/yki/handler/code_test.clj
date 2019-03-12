@@ -14,7 +14,7 @@
 
 (deftest get-codes-test
   (with-routes!
-    {"/koodisto-service/rest/json/maatjavaltiot2/koodi?onlyValidKoodis=true"
+    {"/koodisto-service/rest/json/maatjavaltiot2/koodi"
      {:status       200
       :content-type "application/json"
       :body         (slurp "test/resources/maatjavaltiot2_246.json")}}

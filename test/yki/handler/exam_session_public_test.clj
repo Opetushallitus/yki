@@ -28,10 +28,12 @@
   (base/insert-base-data)
   (let [request (mock/request :get routing/exam-session-public-api-root)
         response (send-request request)
-        response-body (base/body-as-json response)]
+        response-body (base/body-as-json response)
+        exam-sessions (response-body "exam_sessions")]
     (testing "get exam sessions endpoint should return 200"
       (is (= (:status response) 200))
-      (is (= (count (response-body "exam_sessions")) 1))))
+      (is (= (count exam-sessions) 1))
+      (is (= ((first exam-sessions) "exam_fee") "100.00"))))
 
   (let [request (mock/request :get (str routing/exam-session-public-api-root "/1"))
         response (send-request request)
