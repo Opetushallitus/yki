@@ -51,19 +51,23 @@
    (let [response (http-util/do-post url {:headers {"content-type" content-type}
                                           :basic-auth [(:user basic-auth) (:password basic-auth)]
                                           :body    body-as-string})
-         status (:status response)]
-     (if (some #(= status %) '(200 201 304))
+         status (str (:status response))]
+     (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
        (log/info "Syncing data success" response)
-       (do (log/error "Failed to sync data, error response" response)
-           (throw (Exception. (str "Could not sync request " body-as-string))))))))
+       (do
+         (log/error "Failed to sync data, error response" response)
+         (throw (Exception. (str "Could not sync request " body-as-string))))))))
 
 (defn- do-delete [url basic-auth]
+  (log/info "DELETE request to url" url)
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
-        status (:status response)]
-    (log/info "DELETE request to url" url)
-    (when (and (not= 200 status) (not= 202 status))
-      (log/error "Failed to sync data, error response" response)
-      (throw (Exception. (str "Could not sync deletion " url))))))
+        status (str (:status response))]
+
+    (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
+      (log/info "Deleting data success" response)
+      (do
+        (log/error "Failed to sync data, error response" response)
+        (throw (Exception. (str "Could not sync deletion " url)))))))
 
 (defn- sync-organizer
   [db url-helper basic-auth disabled organizer-oid office-oid]
