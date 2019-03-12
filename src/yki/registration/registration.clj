@@ -67,6 +67,7 @@
 
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
+  (log/info "START: Init exam session" exam_session_id "registration")
   (let [participant-id (get-or-create-participant db (:identity session))
         started-registration-id (registration-db/started-registration-id-by-participant db participant-id exam_session_id)]
     (if started-registration-id
@@ -79,10 +80,13 @@
                                                                           :participant_id  participant-id
                                                                           :started_at      (t/now)})
                 response        (create-init-response db session exam_session_id registration-id payment-config)]
+            (log/info "END: Init exam session" exam_session_id "registration success" response)
             (ok response))
-          (conflict {:error {:full       (not exam-session-space-left?)
-                             :closed     (not exam-session-registration-open?)
-                             :registered (not not-registered-to-exam-session?)}}))))))
+          (let [error {:error {:full       (not exam-session-space-left?)
+                               :closed     (not exam-session-registration-open?)
+                               :registered (not not-registered-to-exam-session?)}}]
+            (log/warn "END: Init exam session" exam_session_id "failed with error" error)
+            (conflict error)))))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
   (let [code          (str (UUID/randomUUID))
@@ -101,6 +105,7 @@
 
 (defn submit-registration
   [db url-helper email-q lang session id form payment-config onr-client]
+  (log/info "START: Submitting registration id" id "form" form)
   (let [identity        (:identity session)
         form-with-email (if (= (:auth-method session) "EMAIL") (assoc form :email (:external-user-id identity)) form)
         participant-id  (get-participant-id db identity)
@@ -149,6 +154,7 @@
                                                                                                  create-and-send-link-fn)]
           (if success
             (do
+              (log/info "END: Registration id" id "submitted successfully")
               (try
                 (exam-session-db/remove-from-exam-session-queue! db email (:id exam-session))
                 (catch Exception e

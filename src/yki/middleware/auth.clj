@@ -7,7 +7,7 @@
    [ring.middleware.session.cookie :refer [cookie-store]]
    [buddy.auth.accessrules :refer [wrap-access-rules success error]]
    [buddy.auth.backends.session :refer [session-backend]]
-   [clojure.tools.logging :refer [warn]]
+   [clojure.tools.logging :as log]
    [integrant.core :as ig]
    [clout.core :as clout]
    [ring.util.request :refer [request-url]]
@@ -30,7 +30,7 @@
   true)
 
 (defn- no-access [request]
-  (warn "No access to uri:" (:uri request))
+  (log/warn "No access to uri:" (:uri request))
   false)
 
 (defn- participant-authenticated [request]
@@ -39,8 +39,8 @@
       (MDC/put "user" (:external-id identity))
       true)
     (do
-      (warn "Participant not authenticated request uri:" (:uri request))
-      (error {:status 401 :body "Unauthorized"}))))
+      (log/info "Participant not authenticated request uri:" (:uri request))
+      (log/error {:status 401 :body "Unauthorized"}))))
 
 (defn- virkailija-authenticated
   [db request]

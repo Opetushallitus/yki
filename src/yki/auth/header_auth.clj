@@ -28,7 +28,7 @@
                  :zip            vakinainenkotimainenlahiosoitepostinumero
                  :street_address vakinainenkotimainenlahiosoites}
         redirect-url (or (:success-redirect session) (url-helper :yki.default.login-success.redirect lang))]
-    (info "User" oidHenkilo "logged in")
+    (info "User" (or oidHenkilo sukunimi) "logged in, redirecting to" redirect-url)
     (if (and sn firstname nationalidentificationnumber)
       (assoc
        (found redirect-url)
