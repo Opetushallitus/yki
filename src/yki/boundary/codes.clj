@@ -4,6 +4,10 @@
             [clojure.core.memoize :as memo]
             [jsonista.core :as j]))
 
+(def code-versions {:maatjavaltiot2 1
+                    :sukupuoli 1
+                    :posti 1})
+
 (defn- get-country-code
   "Converts codes from maatjavaltiot2 to maatjavaltiot1 (246 -> FIN)."
   [url]
@@ -16,7 +20,8 @@
 
 (defn- get-codes-from-koodisto
   [url-helper collection]
-  (let [url (url-helper :koodisto-service collection 1)
+  (let [version (or ((keyword collection) code-versions) 1)
+        url (url-helper :koodisto-service collection version)
         response (http-util/do-get url {})
         status   (:status response)
         json     (j/read-value (:body response) (j/object-mapper {:decode-key-fn true}))]
@@ -33,7 +38,7 @@
   (memo/ttl get-codes-from-koodisto :ttl/threshold one-week))
 
 (defn get-converted-country-code [url-helper country-code]
-  (let [url       (url-helper :koodisto-service.rinnasteinen (str "maatjavaltiot2_" country-code) 1)
+  (let [url       (url-helper :koodisto-service.rinnasteinen (str "maatjavaltiot2_" country-code) (:maatjavaltiot2 code-versions))
         response  (get-country-code-memoized url)]
     response))
 
