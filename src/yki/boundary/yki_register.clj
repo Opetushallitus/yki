@@ -52,9 +52,10 @@
                                           :basic-auth [(:user basic-auth) (:password basic-auth)]
                                           :body    body-as-string})
          status (:status response)]
-     (when (and (not= 200 status) (not= 201 status))
-       (log/error "Failed to sync data, error response" response)
-       (throw (Exception. (str "Could not sync request " body-as-string)))))))
+     (if (some #(= status %) '(200 201 304))
+       (log/info "Syncing data success" response)
+       (do (log/error "Failed to sync data, error response" response)
+           (throw (Exception. (str "Could not sync request " body-as-string))))))))
 
 (defn- do-delete [url basic-auth]
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
