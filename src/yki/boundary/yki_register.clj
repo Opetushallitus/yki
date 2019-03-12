@@ -14,7 +14,8 @@
   (case level "PERUS" "PT" "KESKI" "KT" "YLIN" "YT"))
 
 (defn- find-web-address [contacts]
-  ((first (filter #(some? (% "www")) contacts)) "www"))
+  (let [www-contact (first (filter #(some? (% "www")) contacts))]
+    (if www-contact (www-contact "www") "")))
 
 (defn create-sync-organizer-req
   [{:keys [languages contact_name contact_phone_number contact_email]} {:strs [oid nimi postiosoite yhteystiedot]}]
