@@ -48,10 +48,7 @@
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [current (exam-session-db/get-exam-session-by-id db id)]
-            (if (exam-session-db/update-exam-session! db oid id exam-session (send-to-queue
-                                                                              data-sync-q
-                                                                              (assoc exam-session :organizer_oid oid)
-                                                                              "UPDATE"))
+            (if (exam-session-db/update-exam-session! db oid id exam-session)
               (do
                 (audit-log/log {:request request
                                 :target-kv {:k audit-log/exam-session

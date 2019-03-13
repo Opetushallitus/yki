@@ -53,7 +53,7 @@
                                           :body    body-as-string})
          status (str (:status response))]
      (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
-       (log/info "Syncing data success" response)
+       (log/info "Syncing data success")
        (do
          (log/error "Failed to sync data, error response" response)
          (throw (Exception. (str "Could not sync request " body-as-string))))))))

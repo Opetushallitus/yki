@@ -55,18 +55,14 @@
       (is (= (:status response) 200))
       (is (= response-body base/exam-sessions-json))))
 
-  (testing "put exam session endpoint should update exam session based on id query parameter and send change to queue"
+  (testing "put exam session endpoint should update exam session based on id query parameter"
     (let [updated-exam-session (base/change-entry base/exam-session "max_participants" 51)
           request (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.4/exam-session/1") updated-exam-session)
                       (mock/content-type "application/json; charset=UTF-8"))
-          response (base/send-request-with-tx request)
-          data-sync-q  (base/data-sync-q)
-          sync-req (pgq/take data-sync-q)]
+          response (base/send-request-with-tx request)]
       (is (= {:max_participants 51}
              (base/select-one "SELECT max_participants FROM exam_session where id = 1")))
-      (is (= (:type sync-req) "UPDATE"))
-      (is (= (:status response) 200))
-      (is (some? (:exam-session sync-req)))))
+      (is (= (:status response) 200))))
 
   (testing "delete exam session endpoint should remove exam session and it's location"
     (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/1"))
