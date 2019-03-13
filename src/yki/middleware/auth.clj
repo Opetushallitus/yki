@@ -97,12 +97,14 @@
         url-key (if lang
                   (str "tunnistus.url." lang)
                   "tunnistus.url.fi")
-        redirect-after-auth (url-helper :exam-session.redirect ((:query-params request) "examSessionId") (or lang "fi"))]
+        session (:session request)
+        redirect-after-auth (url-helper :exam-session.redirect ((:query-params request) "examSessionId") (or lang "fi"))
+        new-session (assoc session :success-redirect redirect-after-auth)]
     (log/info "Setting redirect after auth url" redirect-after-auth "to session")
+    (log/info "redirect-to-shibboleth session" new-session)
     (assoc
      (see-other (url-helper url-key))
-     :session
-     {:success-redirect redirect-after-auth})))
+     :session new-session)))
 
 (defn- rules
   "OPH users with admin role are allowed to call all endpoints without restrictions to organizer.

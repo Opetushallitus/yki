@@ -1,7 +1,7 @@
 (ns yki.auth.header-auth
   (:require [ring.util.http-response :refer [found]]
             [yki.boundary.onr :as onr]
-            [clojure.tools.logging :refer [info]]
+            [clojure.tools.logging :as log]
             [clojure.string :as str])
   (:import [java.util UUID]))
 
@@ -18,6 +18,7 @@
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn login [{:keys [query-params headers session]} onr-client url-helper]
+  (log/info "Login session" session)
   (let [lang (or (:lang query-params) "fi")
         {:strs [vakinainenkotimainenlahiosoites
                 vakinainenkotimainenlahiosoitepostitoimipaikkas
@@ -28,7 +29,7 @@
                  :zip            vakinainenkotimainenlahiosoitepostinumero
                  :street_address vakinainenkotimainenlahiosoites}
         redirect-url (or (:success-redirect session) (url-helper :yki.default.login-success.redirect lang))]
-    (info "User" (or oidHenkilo sn) "logged in, redirecting to" redirect-url)
+    (log/info "User" (or oidHenkilo sn) "logged in, redirecting to" redirect-url)
     (if (and sn firstname nationalidentificationnumber)
       (assoc
        (found redirect-url)
