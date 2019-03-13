@@ -11,8 +11,7 @@
    [integrant.core :as ig]
    [clout.core :as clout]
    [ring.util.request :refer [request-url]]
-   [ring.util.http-response :refer [unauthorized forbidden found see-other]])
-  (:import [org.slf4j MDC]))
+   [ring.util.http-response :refer [unauthorized forbidden found see-other]]))
 
 (def backend (session-backend))
 
@@ -35,9 +34,7 @@
 
 (defn- participant-authenticated [request]
   (if-let [identity (-> request :session :identity)]
-    (do
-      (MDC/put "user" (:external-user-id identity))
-      true)
+    true
     (do
       (log/info "Participant not authenticated request uri:" (:uri request))
       (error {:status 401 :body "Unauthorized"}))))
@@ -45,9 +42,7 @@
 (defn- virkailija-authenticated
   [db request]
   (if-let [ticket (cas-ticket-db/get-ticket db (-> request :session :identity :ticket))]
-    (do
-      (MDC/put "user" (-> request :session :identity :username))
-      true)
+    true
     (error {:status 401 :body "Unauthorized"})))
 
 (defn- match-oid-in-uri
