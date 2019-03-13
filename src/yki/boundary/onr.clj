@@ -23,7 +23,7 @@
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
         (json/read-value body)
-        (log/error "ONR get-person-by-ssn error:" (str status " : " body)))))
+        (log/info "ONR get-person-by-ssn error:" (str status " : " body)))))
   (get-person-by-oid [_ oid]
     (let [url (url-helper :onr-service.person-by-oid oid)
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
