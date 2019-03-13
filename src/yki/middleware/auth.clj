@@ -40,7 +40,7 @@
       true)
     (do
       (log/info "Participant not authenticated request uri:" (:uri request))
-      (log/error {:status 401 :body "Unauthorized"}))))
+      (error {:status 401 :body "Unauthorized"}))))
 
 (defn- virkailija-authenticated
   [db request]
