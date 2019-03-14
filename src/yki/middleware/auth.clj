@@ -128,7 +128,7 @@
     :handler any-access
     :request-method :post}
    {:pattern #".*/auth.*"
-    :handler participant-authenticated
+    :handler no-access
     :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
    {:pattern #".*/api/registration.*"
     :handler participant-authenticated}

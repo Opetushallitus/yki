@@ -89,13 +89,7 @@
           identity (response-body "identity")]
       (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
-        (is (= identity user-1)))
-
-      (testing "when user is already authenticated should redirect to exam session page"
-        (let [redirect-response (-> response
-                                    (peridot/request (str routing/auth-root "?examSessionId=2&lang=fi")))]
-          (is (s/includes? ((get-in redirect-response [:response :headers]) "Location")
-                           "ilmoittautuminen/tutkintotilaisuus/2?lang=fi")))))))
+        (is (= identity user-1))))))
 
 (deftest init-session-data-person-not-found-from-onr-test
   (with-routes!

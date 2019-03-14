@@ -15,8 +15,6 @@
    (context routing/auth-root []
      :no-doc true
      :middleware [auth access-log]
-     (GET "/" [examSessionId lang]
-       (found (url-helper :exam-session.redirect examSessionId lang)))
      (GET "/initsession" [lang :as request]
        (header-auth/login request onr-client url-helper))
      (GET "/user" {session :session}
