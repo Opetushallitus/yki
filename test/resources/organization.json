@@ -104,12 +104,6 @@
   "yhteystiedot": [
     {
       "kieli": "kieli_fi#1",
-      "www": "http://www.amiedu.fi",
-      "yhteystietoOid": "1.2.246.562.5.17918887682",
-      "id": "2153075"
-    },
-    {
-      "kieli": "kieli_fi#1",
       "yhteystietoOid": "1.2.246.562.5.81939862066",
       "id": "2153077",
       "email": "asiakaspalvelu@amiedu.fi"

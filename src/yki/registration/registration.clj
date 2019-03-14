@@ -67,22 +67,26 @@
 
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
+  (log/info "START: Init exam session" exam_session_id "registration")
   (let [participant-id (get-or-create-participant db (:identity session))
         started-registration-id (registration-db/started-registration-id-by-participant db participant-id exam_session_id)]
     (if started-registration-id
       (ok (create-init-response db session exam_session_id started-registration-id payment-config))
-      (let [exam-session-registration-open?         (registration-db/exam-session-registration-open? db exam_session_id)
-            exam-session-space-left?                (registration-db/exam-session-space-left? db exam_session_id)
+      (let [exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
+            exam-session-space-left?        (registration-db/exam-session-space-left? db exam_session_id)
             not-registered-to-exam-session? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
         (if (and exam-session-registration-open? exam-session-space-left? not-registered-to-exam-session?)
           (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
                                                                           :participant_id  participant-id
                                                                           :started_at      (t/now)})
                 response        (create-init-response db session exam_session_id registration-id payment-config)]
+            (log/info "END: Init exam session" exam_session_id "registration success" response)
             (ok response))
-          (conflict {:error {:full       (not exam-session-space-left?)
-                             :closed     (not exam-session-registration-open?)
-                             :registered (not not-registered-to-exam-session?)}}))))))
+          (let [error {:error {:full       (not exam-session-space-left?)
+                               :closed     (not exam-session-registration-open?)
+                               :registered (not not-registered-to-exam-session?)}}]
+            (log/warn "END: Init exam session" exam_session_id "failed with error" error)
+            (conflict error)))))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
   (let [code          (str (UUID/randomUUID))
@@ -101,54 +105,57 @@
 
 (defn submit-registration
   [db url-helper email-q lang session id form payment-config onr-client]
+  (log/info "START: Submitting registration id" id "form" form)
   (let [identity        (:identity session)
         form-with-email (if (= (:auth-method session) "EMAIL") (assoc form :email (:external-user-id identity)) form)
         participant-id  (get-participant-id db identity)
-        email           (:email form)]
+        email           (:email form)
+        exam-session    (exam-session-db/get-exam-session-by-registration-id db id)
+        started?        (= (:state exam-session) "STARTED")]
     (when email
       (registration-db/update-participant-email! db email participant-id))
-    (if-let [registration-data (registration-db/get-registration-data db id participant-id lang)]
+    (if-let [registration-data (if started? (registration-db/get-registration-data db id participant-id lang))]
       (if-let [oid                 (or (:oid identity)
                                        (onr/get-or-create-person
                                         onr-client
                                         (extract-person-from-registration
                                          form-with-email
                                          (:ssn identity))))]
-        (let [exam-session (exam-session-db/get-exam-session-by-registration-id db id)
-              amount                    (bigdec (get-in payment-config [:amount (keyword (:level_code exam-session))]))
-              payment                   {:registration_id id
-                                         :lang lang
-                                         :amount amount}
-              update-registration       {:id id
-                                         :form form-with-email
-                                         :oid oid
-                                         :form_version 1
-                                         :participant_id participant-id}
-              registration-end-time     (c/next-start-of-day (f/parse (:registration_end_date registration-data)))
-              expiration-date           (t/min-date (c/date-from-now 8) registration-end-time)
-              payment-link              {:participant_id participant-id
-                                         :exam_session_id nil
-                                         :registration_id id
-                                         :expires_at expiration-date
-                                         :expired_link_redirect (url-helper :payment-link-expired.redirect lang)
-                                         :success_redirect (url-helper :payment-link.redirect id)
-                                         :type "PAYMENT"}
-              create-and-send-link-fn   #(create-and-send-link db
-                                                               url-helper
-                                                               email-q
-                                                               lang
-                                                               payment-link
-                                                               (assoc registration-data
-                                                                      :amount amount
-                                                                      :language (template-util/get-language url-helper (:language_code registration-data) lang)
-                                                                      :level (template-util/get-level url-helper (:level_code registration-data) lang)
-                                                                      :expiration-date (c/format-date-to-finnish-format expiration-date)))
-              success                   (registration-db/create-payment-and-update-registration! db
-                                                                                                 payment
-                                                                                                 update-registration
-                                                                                                 create-and-send-link-fn)]
+        (let [amount                  (bigdec (get-in payment-config [:amount (keyword (:level_code exam-session))]))
+              payment                 {:registration_id id
+                                       :lang            lang
+                                       :amount          amount}
+              update-registration     {:id             id
+                                       :form           form-with-email
+                                       :oid            oid
+                                       :form_version   1
+                                       :participant_id participant-id}
+              registration-end-time   (c/next-start-of-day (f/parse (:registration_end_date registration-data)))
+              expiration-date         (t/min-date (c/date-from-now 8) registration-end-time)
+              payment-link            {:participant_id        participant-id
+                                       :exam_session_id       nil
+                                       :registration_id       id
+                                       :expires_at            expiration-date
+                                       :expired_link_redirect (url-helper :payment-link-expired.redirect lang)
+                                       :success_redirect      (url-helper :payment-link.redirect id)
+                                       :type                  "PAYMENT"}
+              create-and-send-link-fn #(create-and-send-link db
+                                                             url-helper
+                                                             email-q
+                                                             lang
+                                                             payment-link
+                                                             (assoc registration-data
+                                                                    :amount amount
+                                                                    :language (template-util/get-language url-helper (:language_code registration-data) lang)
+                                                                    :level (template-util/get-level url-helper (:level_code registration-data) lang)
+                                                                    :expiration-date (c/format-date-to-finnish-format expiration-date)))
+              success                 (registration-db/create-payment-and-update-registration! db
+                                                                                               payment
+                                                                                               update-registration
+                                                                                               create-and-send-link-fn)]
           (if success
             (do
+              (log/info "END: Registration id" id "submitted successfully")
               (try
                 (exam-session-db/remove-from-exam-session-queue! db email (:id exam-session))
                 (catch Exception e
@@ -156,5 +163,5 @@
               {:oid oid})
             {:error {:create_payment true}}))
         {:error {:person_creation true}})
-      {:error {:closed true}})))
+      {:error (if started? {:closed true} {:expired true})})))
 

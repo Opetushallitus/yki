@@ -7,12 +7,11 @@
    [ring.middleware.session.cookie :refer [cookie-store]]
    [buddy.auth.accessrules :refer [wrap-access-rules success error]]
    [buddy.auth.backends.session :refer [session-backend]]
-   [clojure.tools.logging :refer [warn]]
+   [clojure.tools.logging :as log]
    [integrant.core :as ig]
    [clout.core :as clout]
    [ring.util.request :refer [request-url]]
-   [ring.util.http-response :refer [unauthorized forbidden found see-other]])
-  (:import [org.slf4j MDC]))
+   [ring.util.http-response :refer [unauthorized forbidden found see-other]]))
 
 (def backend (session-backend))
 
@@ -30,24 +29,20 @@
   true)
 
 (defn- no-access [request]
-  (warn "No access to uri:" (:uri request))
+  (log/warn "No access to uri:" (:uri request))
   false)
 
 (defn- participant-authenticated [request]
   (if-let [identity (-> request :session :identity)]
+    true
     (do
-      (MDC/put "user" (:external-id identity))
-      true)
-    (do
-      (warn "Participant not authenticated request uri:" (:uri request))
+      (log/info "Participant not authenticated request uri:" (:uri request))
       (error {:status 401 :body "Unauthorized"}))))
 
 (defn- virkailija-authenticated
   [db request]
   (if-let [ticket (cas-ticket-db/get-ticket db (-> request :session :identity :ticket))]
-    (do
-      (MDC/put "user" (:username identity))
-      true)
+    true
     (error {:status 401 :body "Unauthorized"})))
 
 (defn- match-oid-in-uri
@@ -96,11 +91,15 @@
   (let [lang ((:query-params request) "lang")
         url-key (if lang
                   (str "tunnistus.url." lang)
-                  "tunnistus.url.fi")]
+                  "tunnistus.url.fi")
+        session (:session request)
+        redirect-after-auth (url-helper :exam-session.redirect ((:query-params request) "examSessionId") (or lang "fi"))
+        new-session (assoc session :success-redirect redirect-after-auth)]
+    (log/info "Setting redirect after auth url" redirect-after-auth "to session")
+    (log/info "redirect-to-shibboleth session" new-session)
     (assoc
      (see-other (url-helper url-key))
-     :session
-     {:success-redirect (url-helper :exam-session.redirect ((:query-params request) "examSessionId") (or lang "fi"))})))
+     :session new-session)))
 
 (defn- rules
   "OPH users with admin role are allowed to call all endpoints without restrictions to organizer.

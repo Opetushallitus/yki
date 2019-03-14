@@ -236,11 +236,12 @@ WHERE e.id = :id;
 -- name: select-exam-session-by-registration-id
 SELECT
   es.id,
-  language_code,
-  level_code,
-  max_participants,
-  office_oid,
-  published_at
+  es.language_code,
+  es.level_code,
+  es.max_participants,
+  es.office_oid,
+  es.published_at,
+  re.state
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
 WHERE re.id = :registration_id;
@@ -440,7 +441,9 @@ RETURNING id as updated;
 -- name: update-registration-exam-session!
 UPDATE registration
 SET exam_session_id = :exam_session_id
-WHERE id = :registration_id
+WHERE id = (SELECT re.id
+            FROM registration re
+            WHERE re.id = :registration_id)
 AND EXISTS (SELECT id
             FROM exam_session
             WHERE id = :exam_session_id

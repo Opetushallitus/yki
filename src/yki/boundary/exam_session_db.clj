@@ -33,7 +33,7 @@
 
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
-  (update-exam-session! [db oid id exam-session send-to-queue-fn])
+  (update-exam-session! [db oid id exam-session])
   (delete-exam-session! [db id oid send-to-queue-fn])
   (init-participants-sync-status! [db exam-session-id])
   (set-participants-sync-to-success! [db exam-session-id])
@@ -90,7 +90,7 @@
     (jdbc/with-db-transaction [tx spec]
       (int->boolean (q/update-registration-status-to-cancelled! tx {:id registration-id :oid oid}))))
   (update-exam-session!
-    [{:keys [spec]} oid id exam-session send-to-queue-fn]
+    [{:keys [spec]} oid id exam-session]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
        tx
@@ -101,8 +101,6 @@
           (let [updated (int->boolean (q/update-exam-session!
                                        tx
                                        (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid :id id))))]
-            (when updated
-              (send-to-queue-fn))
             updated)))))
   (delete-exam-session! [{:keys [spec]} id oid send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]

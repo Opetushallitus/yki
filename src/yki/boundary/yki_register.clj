@@ -14,7 +14,8 @@
   (case level "PERUS" "PT" "KESKI" "KT" "YLIN" "YT"))
 
 (defn- find-web-address [contacts]
-  ((first (filter #(some? (% "www")) contacts)) "www"))
+  (let [www-contact (first (filter #(some? (% "www")) contacts))]
+    (if www-contact (www-contact "www") "")))
 
 (defn create-sync-organizer-req
   [{:keys [languages contact_name contact_phone_number contact_email]} {:strs [oid nimi postiosoite yhteystiedot]}]
@@ -50,18 +51,23 @@
    (let [response (http-util/do-post url {:headers {"content-type" content-type}
                                           :basic-auth [(:user basic-auth) (:password basic-auth)]
                                           :body    body-as-string})
-         status (:status response)]
-     (when (and (not= 200 status) (not= 201 status))
-       (log/error "Failed to sync data, error response" response)
-       (throw (Exception. (str "Could not sync request " body-as-string)))))))
+         status (str (:status response))]
+     (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
+       (log/info "Syncing data success")
+       (do
+         (log/error "Failed to sync data, error response" response)
+         (throw (Exception. (str "Could not sync request " body-as-string))))))))
 
 (defn- do-delete [url basic-auth]
+  (log/info "DELETE request to url" url)
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
-        status (:status response)]
-    (log/info "DELETE request to url" url)
-    (when (and (not= 200 status) (not= 202 status))
-      (log/error "Failed to sync data, error response" response)
-      (throw (Exception. (str "Could not sync deletion " url))))))
+        status (str (:status response))]
+
+    (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
+      (log/info "Deleting data success" response)
+      (do
+        (log/error "Failed to sync data, error response" response)
+        (throw (Exception. (str "Could not sync deletion " url)))))))
 
 (defn- sync-organizer
   [db url-helper basic-auth disabled organizer-oid office-oid]
