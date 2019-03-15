@@ -188,13 +188,17 @@
 (defn insert-exam-session-location
   [oid lang]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
-    address,
+    street_address,
+    post_office,
+    zip,
     other_location_info,
     lang,
     exam_session_id)
       VALUES (
         'Omenia',
-        'Upseerinkatu 11, Espoo',
+        'Upseerinkatu 11',
+        '00240',
+        'Espoo',
         'Other info',
         '" lang "',
         (SELECT id FROM exam_session where organizer_id =  (SELECT id FROM organizer where oid = " oid ") ))")))

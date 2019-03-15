@@ -73,14 +73,15 @@
 
 ;; exam-session-location
 (s/def ::name                 (s/and string? #(<= (count %) 256)))
-(s/def ::address              (s/and string? #(<= (count %) 256)))
 (s/def ::other_location_info  (s/and string? #(<= (count %) 1024)))
 (s/def ::lang                 ::language-code)
 (s/def ::extra_information    (s/and (s/nilable string?) #(<= (count %) 1024)))
 (s/def ::exam_session_id      pos-int?)
 
 (s/def ::exam-session-location (s/keys :req-un [::name
-                                                ::address
+                                                ::post_office
+                                                ::zip
+                                                ::street_address
                                                 ::other_location_info
                                                 ::extra_information
                                                 ::lang]))
