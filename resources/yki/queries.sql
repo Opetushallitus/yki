@@ -138,14 +138,18 @@ INSERT INTO exam_session (
 -- name: insert-exam-session-location!
 INSERT INTO exam_session_location(
   name,
-  address,
+  street_address,
+  post_office,
+  zip,
   other_location_info,
   extra_information,
   lang,
   exam_session_id
 ) VALUES (
   :name,
-  :address,
+  :street_address,
+  :post_office,
+  :zip,
   :other_location_info,
   :extra_information,
   :lang,
@@ -189,7 +193,9 @@ SELECT
   FROM (
     SELECT
       name,
-      address,
+      street_address,
+      post_office,
+      zip,
       other_location_info,
       extra_information,
       lang
@@ -220,7 +226,9 @@ SELECT
   FROM (
     SELECT
       name,
-      address,
+      street_address,
+      post_office,
+      zip,
       other_location_info,
       extra_information,
       lang
@@ -252,7 +260,9 @@ SELECT
   es.level_code,
   ed.exam_date,
   ed.registration_end_date,
-  esl.address,
+  esl.street_address,
+  esl.post_office,
+  esl.zip,
   esl.name
 FROM exam_session es
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
@@ -468,7 +478,9 @@ SELECT re.state,
        es.level_code,
        ed.exam_date,
        ed.registration_end_date,
-       esl.address,
+       esl.street_address,
+       esl.post_office,
+       esl.zip,
        esl.name
 FROM registration re
 INNER JOIN exam_session es ON es.id = re.exam_session_id
@@ -739,7 +751,9 @@ SELECT
  es.level_code,
  ed.exam_date,
  esl.name,
- esl.address,
+ esl.street_address,
+ esl.post_office,
+ esl.zip,
  array_to_json(array_agg(json_build_object('email', esq.email)::jsonb ||
                          json_build_object('lang', esq.lang)::jsonb)) as queue
 FROM exam_session_queue esq
@@ -750,7 +764,7 @@ WHERE current_timestamp AT TIME ZONE 'Europe/Helsinki' BETWEEN (current_date + t
   AND ed.registration_start_date <= current_date
   AND at_midnight(ed.registration_end_date) >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND (last_notified_at IS NULL OR last_notified_at::date < current_date)
-GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date, esl.address, esl.name;
+GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date, esl.street_address, esl.post_office, esl.zip, esl.name;
 
 -- name: delete-exam-session-queue!
 DELETE FROM exam_session_queue
