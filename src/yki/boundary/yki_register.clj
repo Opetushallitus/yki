@@ -62,8 +62,7 @@
   (log/info "DELETE request to url" url)
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
         status (str (:status response))]
-
-    (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
+    (if (or (str/starts-with? status "2") (str/starts-with? status "3") (= status "404"))
       (log/info "Deleting data success" response)
       (do
         (log/error "Failed to sync data, error response" response)
