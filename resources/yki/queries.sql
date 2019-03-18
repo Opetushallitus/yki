@@ -305,7 +305,7 @@ DELETE FROM exam_session
 WHERE id = (SELECT es.id FROM exam_session es
             INNER JOIN exam_date ed ON ed.id = es.exam_date_id
             WHERE es.id = :id AND ed.registration_start_date > current_date
-            AND es.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL));
+            AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
 -- name: insert-participant<!
 INSERT INTO participant(
@@ -457,7 +457,7 @@ WHERE id = (SELECT re.id
 AND EXISTS (SELECT id
             FROM exam_session
             WHERE id = :exam_session_id
-              AND organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL))
+              AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid))
 
 -- name: update-submitted-registrations-to-expired<!
 UPDATE registration
@@ -530,7 +530,7 @@ SELECT
  INNER JOIN registration re ON re.id = pa.registration_id
  INNER JOIN exam_session es ON es.id = re.exam_session_id
  WHERE registration_id = :registration_id
- AND es.organizer_id IN (SELECT id FROM organizer o WHERE oid = COALESCE(:oid, o.oid) AND deleted_at IS NULL);
+ AND es.organizer_id IN (SELECT id FROM organizer o WHERE oid = COALESCE(:oid, o.oid));
 
 -- name: select-participant-by-external-id
 SELECT id, external_user_id, email
@@ -650,7 +650,7 @@ SELECT r.form, r.state, r.id as registration_id
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 WHERE es.id = :id
-AND es.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
+AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
 AND r.state IN ('COMPLETED', 'SUBMITTED')
 ORDER BY r.created ASC;
 
@@ -660,10 +660,10 @@ SET state = 'CANCELLED'
 WHERE id = :id
 AND exam_session_id IN (SELECT id
                         FROM exam_session
-                        WHERE organizer_id =
+                        WHERE organizer_id IN
                           (SELECT id
                             FROM organizer
-                            WHERE oid = :oid AND deleted_at IS NULL));
+                            WHERE oid = :oid));
 
 -- name: insert-payment-config!
 INSERT INTO payment_config(
