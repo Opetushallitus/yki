@@ -73,16 +73,16 @@
         data-sync-q (base/data-sync-q)
         sync-req-1 (pgq/take data-sync-q)
         sync-req-2 (pgq/take data-sync-q)]
-    (testing "delete organizer endpoint should mark organizer deleted in db and delete payment config"
+    (testing "delete organizer endpoint should mark organizer deleted in db and not delete payment config"
       (is (= (:status response) 200))
       (is (= {:count 0}
              (base/select-one "SELECT COUNT(1) FROM organizer where deleted_at IS NULL")))
       (is (= {:count 1}
              (base/select-one "SELECT COUNT(1) FROM organizer where deleted_at IS NOT NULL")))
-      (is (= {:count 0}
-             (base/select-one "SELECT COUNT (1) FROM payment_config"))))
+      (is (= {:count 1}
+             (base/select-one "SELECT COUNT(1) FROM payment_config"))))
 
-    (testing "delete organizer endpoint should send organizer and office ois to sync queue"
+    (testing "delete organizer endpoint should send organizer and office oids to sync queue"
       (is (= (:type sync-req-1) "DELETE"))
       (is (= (:organizer-oid sync-req-1) "1.2.3.4"))
       (is (= (:type sync-req-2) "DELETE"))

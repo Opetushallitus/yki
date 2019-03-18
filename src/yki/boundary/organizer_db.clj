@@ -46,8 +46,6 @@
     [{:keys [spec]} oid send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
       (try
-        (q/delete-organizer-languages! tx {:oid oid})
-        (q/delete-payment-config! tx {:oid oid})
         (let [deleted (q/delete-organizer! tx {:oid oid})
               oids (map :office_oid (q/select-exam-session-office-oids tx {:oid oid}))]
           (when (= deleted 1)
