@@ -249,7 +249,10 @@
 ;; exam session participant
 (s/def ::state                    ::non-blank-string)
 (s/def ::form                     ::registration)
+(s/def ::original_exam_session_id (s/nilable ::id))
 (s/def ::exam-session-participant (s/keys :req-un [::form
+                                                   ::registration_id
+                                                   ::original_exam_session_id
                                                    ::state]))
 (s/def :exam-session/participants (s/coll-of ::exam-session-participant))
 (s/def ::participants-response    (s/keys :req-un [:exam-session/participants]))

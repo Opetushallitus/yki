@@ -16,7 +16,8 @@
         "zip": "12346"
       },
       "registration_id": 1,
-      "state": "COMPLETED"
+      "state": "COMPLETED",
+      "original_exam_session_id": null
     },
     {
       "form": {
@@ -34,7 +35,8 @@
         "zip": "12345"
       },
       "registration_id": 2,
-      "state": "COMPLETED"
+      "state": "COMPLETED",
+      "original_exam_session_id": null
     }
   ]
 }

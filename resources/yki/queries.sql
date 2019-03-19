@@ -450,7 +450,10 @@ RETURNING id as updated;
 
 -- name: update-registration-exam-session!
 UPDATE registration
-SET exam_session_id = :exam_session_id
+SET exam_session_id = :exam_session_id,
+    original_exam_session_id = (SELECT exam_session_id
+                                FROM registration
+                                WHERE id = :registration_id)
 WHERE id = (SELECT re.id
             FROM registration re
             WHERE re.id = :registration_id)
@@ -646,7 +649,7 @@ WHERE exam_session_id = :id
 AND state = 'COMPLETED';
 
 -- name: select-exam-session-participants
-SELECT r.form, r.state, r.id as registration_id
+SELECT r.form, r.state, r.id as registration_id, r.original_exam_session_id
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 WHERE es.id = :id
