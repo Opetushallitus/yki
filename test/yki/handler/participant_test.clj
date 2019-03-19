@@ -33,7 +33,10 @@
                                     (mock/content-type "application/json; charset=UTF-8"))
               relocate-response (base/send-request-with-tx relocate-request)
               not-found-response (base/send-request-with-tx not-found-request)
-              new-exam-session-id (:exam_session_id (base/select-one (str "SELECT exam_session_id from registration where id=" registration-id)))]
+              registration (base/select-one (str "SELECT * from registration where id=" registration-id))
+              old-exam-session-id (:original_exam_session_id registration)
+              new-exam-session-id (:exam_session_id registration)]
+          (is (= old-exam-session-id 1))
           (is (= new-exam-session-id 2))
           (is (= (:status not-found-response) 404))
           (is (= (:status relocate-response) 200)))))))
