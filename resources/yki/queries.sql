@@ -653,9 +653,15 @@ WHERE exam_session_id = :id
 AND state = 'COMPLETED';
 
 -- name: select-exam-session-participants
-SELECT r.form, r.state, r.id as registration_id, r.original_exam_session_id
+SELECT
+  r.form,
+  r.state,
+  r.id as registration_id,
+  r.original_exam_session_id,
+  pa.order_number
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
+LEFT JOIN payment pa ON pa.registration_id = r.id
 WHERE es.id = :id
 AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
 AND r.state IN ('COMPLETED', 'SUBMITTED')
