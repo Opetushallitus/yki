@@ -377,7 +377,7 @@ INSERT INTO registration(
                     FROM exam_session es
                     INNER JOIN registration re ON es.id = re.exam_session_id
                     WHERE re.participant_id = :participant_id
-                      AND re.state != 'EXPIRED'
+                      AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
                       AND es.exam_date_id =
                         (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
 
@@ -410,7 +410,7 @@ SELECT NOT EXISTS (
 	FROM exam_session es
 	LEFT JOIN registration re ON es.id = re.exam_session_id
 	WHERE re.exam_session_id = :exam_session_id
-	  AND re.state != 'EXPIRED'
+	  AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
 	GROUP BY es.max_participants
 	HAVING (es.max_participants - COUNT(re.id)) <= 0
 ) as exists;
@@ -421,7 +421,7 @@ SELECT NOT EXISTS (
   FROM exam_session es
   INNER JOIN registration re ON es.id = re.exam_session_id
   WHERE re.participant_id = :participant_id
-    AND re.state != 'EXPIRED'
+    AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
     AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
 ) as exists;
 
@@ -460,6 +460,10 @@ WHERE id = (SELECT re.id
 AND EXISTS (SELECT id
             FROM exam_session
             WHERE id = :exam_session_id
+              AND max_participants > (SELECT COUNT(1)
+                                      FROM registration
+              	                      WHERE exam_session_id = :exam_session_id
+	                                    AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid))
 
 -- name: update-submitted-registrations-to-expired<!
