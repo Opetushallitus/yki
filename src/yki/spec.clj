@@ -250,7 +250,7 @@
 (s/def ::state                    ::non-blank-string)
 (s/def ::form                     ::registration)
 (s/def ::original_exam_session_id (s/nilable ::id))
-(s/def :participant/order_number (s/nilable ::order_number))
+(s/def :participant/order_number (s/nilable ::order-number))
 (s/def ::exam-session-participant (s/keys :req-un [::form
                                                    ::registration_id
                                                    :participant/order_number
