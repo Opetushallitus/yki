@@ -250,8 +250,10 @@
 (s/def ::state                    ::non-blank-string)
 (s/def ::form                     ::registration)
 (s/def ::original_exam_session_id (s/nilable ::id))
+(s/def :participant/order_number (s/nilable ::order-number))
 (s/def ::exam-session-participant (s/keys :req-un [::form
                                                    ::registration_id
+                                                   :participant/order_number
                                                    ::original_exam_session_id
                                                    ::state]))
 (s/def :exam-session/participants (s/coll-of ::exam-session-participant))
