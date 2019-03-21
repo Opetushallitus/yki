@@ -198,6 +198,7 @@
 (s/def ::nationalities (s/coll-of (s/and ::non-blank-string #(= (count %) 3))))
 (s/def ::birthdate (s/nilable ::date))
 (s/def ::post_office ::non-blank-string)
+(s/def ::nationality_desc ::non-blank-string)
 (s/def ::zip ::non-blank-string)
 (s/def ::certificate_lang ::language-code)
 (s/def ::exam_lang ::language-code)
@@ -217,7 +218,8 @@
                                 ::street_address
                                 ::phone_number
                                 ::email]
-                       :opt-un [::gender]))
+                       :opt-un [::gender
+                                ::nationality_desc]))
 
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
