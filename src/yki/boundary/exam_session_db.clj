@@ -141,5 +141,5 @@
   (remove-from-exam-session-queue!
     [{:keys [spec]} email exam-session-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/delete-exam-session-queue! tx {:exam_session_id exam-session-id
+      (q/delete-from-exam-session-queue! tx {:exam_session_id exam-session-id
                                         :email email}))))
