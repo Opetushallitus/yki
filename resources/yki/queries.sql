@@ -782,10 +782,14 @@ WHERE current_timestamp AT TIME ZONE 'Europe/Helsinki' BETWEEN (current_date + t
   AND (last_notified_at IS NULL OR last_notified_at::date < current_date)
 GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date, esl.street_address, esl.post_office, esl.zip, esl.name;
 
--- name: delete-exam-session-queue!
+-- name: delete-from-exam-session-queue!
 DELETE FROM exam_session_queue
 WHERE email = :email
-AND exam_session_id = :exam_session_id;
+AND exam_session_id IN (SELECT id
+                        FROM exam_session
+                        WHERE exam_date_id = (SELECT exam_date_id
+                                              FROM exam_session
+                                              WHERE id = :exam_session_id));
 
 -- name: update-exam-session-queue-last-notified-at!
 UPDATE exam_session_queue
