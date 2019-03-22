@@ -41,8 +41,8 @@
           (is (= (:status not-found-response) 404))
           (is (= (:status relocate-response) 200)))))))
 
-(deftest exam-session-participant-delete-test
-  (testing "delete exam session participant should set registration to state to CANCELLED"
+(deftest exam-session-participant-delete-not-paid-test
+  (testing "delete exam session participant should set registration state to CANCELLED when registration is not paid"
     (base/insert-base-data)
     (base/insert-registrations "SUBMITTED")
     (let [exam-session-id (base/get-exam-session-id)
@@ -52,6 +52,18 @@
           registration-state (:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
       (is (= (:status response) 200))
       (is (= registration-state "CANCELLED")))))
+
+(deftest exam-session-participant-delete-paid-test
+  (testing "delete exam session participant should set registration state to PAID_AND_CANCELLED when registration is paid"
+    (base/insert-base-data)
+    (base/insert-registrations "COMPLETED")
+    (let [exam-session-id (base/get-exam-session-id)
+          registration-id (:id (base/select-one "SELECT id from registration"))
+          request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id))
+          response (base/send-request-with-tx request)
+          registration-state (:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
+      (is (= (:status response) 200))
+      (is (= registration-state "PAID_AND_CANCELLED")))))
 
 (deftest confirm-payment-test
   (testing "confirm payment should set payment status to PAID and registration state to COMPLETED"

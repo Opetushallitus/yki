@@ -672,7 +672,10 @@ ORDER BY r.created ASC;
 
 --name: update-registration-status-to-cancelled!
 UPDATE registration
-SET state = 'CANCELLED'
+SET state =
+  CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state
+       ELSE 'PAID_AND_CANCELLED'::registration_state
+  END
 WHERE id = :id
 AND exam_session_id IN (SELECT id
                         FROM exam_session
