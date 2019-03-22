@@ -220,9 +220,12 @@ SELECT
   e.max_participants,
   e.office_oid,
   e.published_at,
+(SELECT COUNT(1)
+    FROM registration re
+    WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+) AS participants,
   o.oid as organizer_oid,
-(
-  SELECT array_to_json(array_agg(loc))
+(SELECT array_to_json(array_agg(loc))
   FROM (
     SELECT
       name,
