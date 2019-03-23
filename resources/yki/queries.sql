@@ -202,13 +202,16 @@ SELECT
     FROM exam_session_location
     WHERE exam_session_id = e.id
   ) loc
- ) as location
+ ) as location,
+(
+  ((ed.registration_start_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki')
+    AND (at_midnight(ed.registration_end_date) > current_timestamp AT TIME ZONE 'Europe/Helsinki')
+) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
   AND o.oid = COALESCE(:oid, o.oid)
-  AND current_timestamp BETWEEN o.agreement_start_date AND o.agreement_end_date
 ORDER BY ed.exam_date ASC;
 
 -- name: select-exam-session-by-id
@@ -238,7 +241,11 @@ SELECT
     FROM exam_session_location
     WHERE exam_session_id = e.id
   ) loc
-) AS location
+) AS location,
+(
+  ((ed.registration_start_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki')
+    AND (at_midnight(ed.registration_end_date) > current_timestamp AT TIME ZONE 'Europe/Helsinki')
+) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id

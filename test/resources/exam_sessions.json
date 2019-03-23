@@ -40,7 +40,8 @@
       "registration_start_date": "2039-01-01",
       "organizer_oid": "1.2.3.4",
       "language_code": "fin",
-      "level_code": "PERUS"
+      "level_code": "PERUS",
+      "open": false
     }
   ]
 }
