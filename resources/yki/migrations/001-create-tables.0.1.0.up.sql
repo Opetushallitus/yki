@@ -167,6 +167,7 @@ CREATE TABLE payment_config (
   id BIGSERIAL PRIMARY KEY,
   organizer_id BIGSERIAL REFERENCES organizer(id),
   merchant_id INT,
-  merchant_secret TEXT
+  merchant_secret TEXT,
+  test_mode BOOLEAN DEFAULT FALSE
 );
 --;;
