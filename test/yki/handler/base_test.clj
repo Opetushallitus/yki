@@ -35,11 +35,14 @@
                 :languages [{:language_code "fin" :level_code "PERUS"},
                             {:language_code "eng" :level_code "PERUS"}]})
 
+(defn- read-json-from-file [path]
+  (j/read-value (slurp path)))
+
 (def organizers-json
-  (j/read-value (slurp "test/resources/organizers.json")))
+  (read-json-from-file "test/resources/organizers.json"))
 
 (def exam-sessions-json
-  (j/read-value (slurp "test/resources/exam_sessions.json")))
+  (read-json-from-file "test/resources/exam_sessions.json"))
 
 (def logout-request
   (slurp "test/resources/logoutRequest.xml"))
@@ -51,7 +54,7 @@
   (slurp "test/resources/organization.json"))
 
 (def payment-formdata-json
-  (j/read-value (slurp "test/resources/payment_formdata.json")))
+  (read-json-from-file "test/resources/payment_formdata.json"))
 
 (defn change-entry
   [json-string key value]

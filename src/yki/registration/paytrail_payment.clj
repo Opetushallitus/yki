@@ -39,12 +39,13 @@
   [db url-helper payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
     (if-let [payment (registration-db/get-payment-by-registration-id db registration-id nil)]
-      (let [amount (str (:amount payment))
-            exam-date (common/format-date-string-to-finnish-format (:exam_date registration))
+      (let [exam-date (common/format-date-string-to-finnish-format (:exam_date registration))
             payment-data {:language-code lang
                           :order-number (:order_number payment)
                           :msg (str (localisation/get-translation url-helper "common.paymentMessage" lang) " " exam-date)}
             organizer-specific-config (organizer-db/get-payment-config db (:organizer_id registration))
+            test-mode (:test_mode organizer-specific-config)
+            amount (if test-mode "1.00" (str (:amount payment)))
             form-data (payment-util/generate-form-data (merge organizer-specific-config payment-config) amount payment-data)]
         form-data)
       (error "Payment not found for registration-id" registration-id))

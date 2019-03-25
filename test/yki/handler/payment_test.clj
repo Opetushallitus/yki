@@ -51,7 +51,14 @@
           response-body (base/body-as-json (:response response))]
       (testing "payment form data endpoint should return payment url and formdata"
         (is (= (get-in response [:response :status]) 200))
-        (is (= base/payment-formdata-json response-body))))))
+        (is (= base/payment-formdata-json response-body)))
+
+      (let [_ (jdbc/execute! @embedded-db/conn "UPDATE payment_config SET test_mode = TRUE")
+            test-mode-response (-> session
+                                   (peridot/request (str routing/payment-root "/formdata?registration-id=" registration-id)))
+            test-mode-response-body (base/body-as-json (:response test-mode-response))]
+        (testing "should set payment to 1 euro when test mode is enabled"
+          (is (= (get-in test-mode-response-body ["params" "AMOUNT"]) "1.00")))))))
 
 (def success-params
   "?ORDER_NUMBER=order1234&PAYMENT_ID=101687270712&AMOUNT=100.00&TIMESTAMP=1541585404&STATUS=PAID&PAYMENT_METHOD=1&SETTLEMENT_REFERENCE_NUMBER=1232&RETURN_AUTHCODE=312BF5EA52575FCEAECEE3A18153CB9C759E6CBFE2622670EC9902964C2C4EC5")
