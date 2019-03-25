@@ -708,7 +708,8 @@ INSERT INTO payment_config(
 SELECT
   organizer_id,
   merchant_id,
-  merchant_secret
+  merchant_secret,
+  test_mode
 FROM payment_config
 WHERE organizer_id = :organizer_id;
 
@@ -716,7 +717,8 @@ WHERE organizer_id = :organizer_id;
 SELECT
   pc.organizer_id,
   pc.merchant_id,
-  pc.merchant_secret
+  pc.merchant_secret,
+  pc.test_mode
 FROM payment_config pc
 INNER JOIN organizer o ON pc.organizer_id = o.id
 INNER JOIN exam_session es ON o.id = es.organizer_id
