@@ -218,6 +218,8 @@ ORDER BY ed.exam_date ASC;
 SELECT
   e.id,
   ed.exam_date AS session_date,
+  ed.registration_start_date,
+  ed.registration_end_date,
   e.language_code,
   e.level_code,
   e.max_participants,
