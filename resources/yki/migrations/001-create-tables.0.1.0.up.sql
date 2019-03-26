@@ -114,6 +114,9 @@ CREATE TABLE IF NOT EXISTS registration (
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 --;;
+CREATE INDEX IF NOT EXISTS registration_exam_session_id
+ON registration(exam_session_id);
+--;;
 CREATE TYPE login_link_type AS ENUM ('LOGIN', 'REGISTRATION', 'PAYMENT');
 --;;
 CREATE TABLE IF NOT EXISTS login_link (
