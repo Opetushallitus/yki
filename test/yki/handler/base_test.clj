@@ -200,8 +200,8 @@
       VALUES (
         'Omenia',
         'Upseerinkatu 11',
-        '00240',
         'Espoo',
+        '00240',
         'Other info',
         '" lang "',
         (SELECT id FROM exam_session where organizer_id =  (SELECT id FROM organizer where oid = " oid ") ))")))
