@@ -43,6 +43,9 @@
   {:kieli language_code
    :pvm session_date})
 
+(defn- remove-basic-auth [response]
+  (update-in response [:opts] dissoc :basic-auth))
+
 (defn- do-post
   ([url body-as-string basic-auth]
    (do-post url body-as-string basic-auth "application/json; charset=UTF-8"))
@@ -53,9 +56,9 @@
                                           :body    body-as-string})
          status (str (:status response))]
      (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
-       (log/info "Syncing data success")
+       (log/info "Syncing data success" (remove-basic-auth response))
        (do
-         (log/error "Failed to sync data, error response" response)
+         (log/error "Failed to sync data, error response" (remove-basic-auth response))
          (throw (Exception. (str "Could not sync request " body-as-string))))))))
 
 (defn- do-delete [url basic-auth]
@@ -63,9 +66,9 @@
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
         status (str (:status response))]
     (if (or (str/starts-with? status "2") (str/starts-with? status "3") (= status "404"))
-      (log/info "Deleting data success" response)
+      (log/info "Deleting data success" (remove-basic-auth response))
       (do
-        (log/error "Failed to sync data, error response" response)
+        (log/error "Failed to sync data, error response" (remove-basic-auth response))
         (throw (Exception. (str "Could not sync deletion " url)))))))
 
 (defn- sync-organizer
