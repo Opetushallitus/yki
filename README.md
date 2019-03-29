@@ -119,6 +119,11 @@ lein kibit
 lein bikeshed
 ```
 
+### Release
+```sh
+lein release :major, :minor or :patch
+```
+
 ## Legal
 
 Copyright (c) 2013-2019 Finnish National Agency for Education - Opetushallitus
