@@ -123,7 +123,7 @@
         (is (s/includes? (:body email-request) "100,00 €"))
         (is (s/includes? (:body email-request) "00240"))
         (is (= (:type payment-link) "PAYMENT"))
-        (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/maksu/" id)))
+        (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/maksu/ilmoittautuminen/" id)))
         (is (= (:order_number payment) "YKI6000000001")))
       (testing "and set registration status to SUBMITTED"
         (is (= (:state submitted-registration) "SUBMITTED"))
