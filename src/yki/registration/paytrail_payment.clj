@@ -17,13 +17,14 @@
 (defn handle-payment-success [db email-q url-helper payment-params]
   (let [participant-data (registration-db/get-participant-data-by-order-number db (:order-number payment-params))
         lang (:lang participant-data)
+        language (template-util/get-language url-helper (:language_code participant-data) lang)
         success (registration-db/complete-registration-and-payment! db payment-params)]
     (when success
       (pgq/put email-q
                {:recipients [(:email participant-data)],
                 :created (System/currentTimeMillis)
                 :subject (template-util/subject url-helper "payment_success" lang participant-data)
-                :body (template-util/render url-helper "payment_success" lang participant-data)}))
+                :body (template-util/render url-helper "payment_success" lang (assoc participant-data :language language))}))
     success))
 
 (defn- handle-payment-cancelled [db payment-params]
