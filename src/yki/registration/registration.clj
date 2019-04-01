@@ -80,7 +80,7 @@
                                                                           :participant_id  participant-id
                                                                           :started_at      (t/now)})
                 response        (create-init-response db session exam_session_id registration-id payment-config)]
-            (log/info "END: Init exam session" exam_session_id "registration success" response)
+            (log/info "END: Init exam session" exam_session_id "registration success")
             (ok response))
           (let [error {:error {:full       (not exam-session-space-left?)
                                :closed     (not exam-session-registration-open?)
