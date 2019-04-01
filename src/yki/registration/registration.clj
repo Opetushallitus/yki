@@ -105,7 +105,7 @@
 
 (defn submit-registration
   [db url-helper email-q lang session id form payment-config onr-client]
-  (log/info "START: Submitting registration id" id "form" form)
+  (log/info "START: Submitting registration id" id)
   (let [identity        (:identity session)
         form-with-email (if (= (:auth-method session) "EMAIL") (assoc form :email (:external-user-id identity)) form)
         participant-id  (get-participant-id db identity)
