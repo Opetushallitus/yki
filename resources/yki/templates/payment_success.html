@@ -2,8 +2,18 @@
 {% block content %}
 <tr>
     <td style="padding-left: 20px; padding-top: 20px;">
-      {% i18n email.payment_success.content.line1 %}
+      {% i18n email.payment_success.content.line1 %}:
     </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {{language}} {{level|lower}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {{exam_date|date-format-with-dots}}
+  </td>
 </tr>
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
