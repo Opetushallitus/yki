@@ -119,7 +119,7 @@
     (case gender
       "1" "M"
       "2" "N"
-      "")))
+      "E")))
 
 (defn- sync-exam-session
   [url-helper basic-auth disabled exam-session]
