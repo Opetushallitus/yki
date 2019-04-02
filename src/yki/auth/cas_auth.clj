@@ -81,7 +81,7 @@
     (if (.isEmpty ticket)
       (error "Could not parse ticket from CAS request")
       (cas-ticket-db/delete-ticket! db (.get ticket)))
-    (assoc (ok) :session nil)))
+    (ok)))
 
 (defn logout
   [session url-helper]
