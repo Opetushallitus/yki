@@ -1,6 +1,7 @@
 (ns yki.handler.auth
   (:require [compojure.api.sweet :refer :all]
             [integrant.core :as ig]
+            [clojure.tools.logging :as log]
             [yki.handler.routing :as routing]
             [yki.middleware.access-log]
             [yki.spec :as ys]
@@ -23,6 +24,7 @@
        (code-auth/login db code lang url-helper))
      (context routing/virkailija-auth-uri []
        (POST "/callback" request
+         (log/info "callback request" request)
          (cas-auth/cas-logout db (slurp (:body request))))
        (GET "/" {session :session}
          (found (cas-auth/create-redirect-uri-from-session session url-helper)))
