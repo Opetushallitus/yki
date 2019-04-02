@@ -3,6 +3,9 @@
             [clojure.string :as string]
             [clojure.tools.logging :refer [info]]))
 
+(defn- remove-ssn [url]
+  (string/replace url #"hetu.*?(?=&|\?|$)" "hetu=***********"))
+
 (defn do-request
   [{:keys [url method] :as opts}]
 
@@ -12,7 +15,7 @@
         response    @(http/request opts)
         time        (- (System/currentTimeMillis) start)
         status      (:status response 500)
-        _           (info "Request" method-name url "returned" status "in" time "ms")]
+        _           (info "Request" method-name (remove-ssn url) "returned" status "in" time "ms")]
     response))
 
 (defn do-get

@@ -50,15 +50,15 @@
   ([url body-as-string basic-auth]
    (do-post url body-as-string basic-auth "application/json; charset=UTF-8"))
   ([url body-as-string basic-auth content-type]
-   (log/info "POST request" body-as-string "to url" url)
+   (log/info "POST to url" url)
    (let [response (http-util/do-post url {:headers {"content-type" content-type}
                                           :basic-auth [(:user basic-auth) (:password basic-auth)]
                                           :body    body-as-string})
          status (str (:status response))]
      (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
-       (log/info "Syncing data success" (remove-basic-auth response))
+       (log/info "Syncing data success")
        (do
-         (log/error "Failed to sync data, error response" (remove-basic-auth response))
+         (log/error "Failed to sync data, error response")
          (throw (Exception. (str "Could not sync request " body-as-string))))))))
 
 (defn- do-delete [url basic-auth]
@@ -163,7 +163,7 @@
     (do
       (exam-session-db/init-participants-sync-status! db exam-session-id)
       (if disabled
-        (log/info "Sending disabled. Logging participants" participants)
+        (log/info "Sending disabled. Logging request" request)
         (do-post url request basic-auth "text/csv; charset=UTF-8"))
       (exam-session-db/set-participants-sync-to-success! db exam-session-id))))
 

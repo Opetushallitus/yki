@@ -92,11 +92,6 @@ INSERT INTO exam_language (
   (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
 );
 
--- name: select-organizer-languages
-SELECT el.language_code
-FROM exam_language el
-WHERE el.organizer_id = oid;
-
 -- name: insert-attachment-metadata!
 INSERT INTO attachment_metadata (
   external_id,
