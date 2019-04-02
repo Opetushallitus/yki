@@ -266,7 +266,7 @@
                        (peridot/request routing/virkailija-auth-callback
                                         :request-method :get
                                         :params {:ticket "ST-15126"})
-                       (peridot/request routing/virkailija-auth-cas-logout
+                       (peridot/request routing/virkailija-auth-callback
                                         :request-method :post
                                         :content-type "application/xml"
                                         :body base/logout-request))]
