@@ -163,7 +163,7 @@
     (do
       (exam-session-db/init-participants-sync-status! db exam-session-id)
       (if disabled
-        (log/info "Sending disabled. Logging participants" participants)
+        (log/info "Sending disabled. Logging request" request)
         (do-post url request basic-auth "text/csv; charset=UTF-8"))
       (exam-session-db/set-participants-sync-to-success! db exam-session-id))))
 
