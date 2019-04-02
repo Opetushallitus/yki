@@ -9,6 +9,7 @@
             [jsonista.core :as j]
             [compojure.core :refer :all]
             [muuntaja.middleware :as middleware]
+            [ring.mock.request :as mock]
             [clojure.java.jdbc :as jdbc]
             [peridot.core :as peridot]
             [stub-http.core :refer :all]
@@ -256,20 +257,3 @@
     (testing "should return 401 for unauthenticated user"
       (is (= (get-in response [:response :status]) 401)))))
 
-; (deftest handle-cas-logout-test
-;   (with-routes!
-;     (fn [server]
-;       (get-mock-routes (:port server) "user_with_organizer_role"))
-;     (let [handler (create-routes port)
-;           session (peridot/session (routes handler))
-;           response (-> session
-;                        (peridot/request routing/virkailija-auth-callback
-;                                         :request-method :get
-;                                         :params {:ticket "ST-15126"})
-;                        (peridot/request routing/virkailija-auth-callback
-;                                         :request-method :post
-;                                         :content-type "application/xml"
-;                                         :body base/logout-request))]
-;       (testing "cas logout endpoint removes ticket from db"
-;         (is (= (first (jdbc/query @embedded-db/conn "SELECT COUNT(1) FROM cas_ticketstore")) {:count 0}))
-;         (is (= (get-in response [:response :status]) 200))))))
