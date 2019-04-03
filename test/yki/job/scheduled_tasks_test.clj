@@ -4,6 +4,7 @@
             [integrant.core :as ig]
             [jsonista.core :as j]
             [pgqueue.core :as pgq]
+            [clojure.string :as s]
             [clojure.java.jdbc :as jdbc]
             [yki.util.common :as c]
             [clj-time.format :as f]
@@ -197,7 +198,7 @@
     (if (t/within? at-eight-am at-nine-pm now)
       (do
         (testing "should send notification"
-          (is (some? (:body email-request))))
+          (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 Espoo")))
         (testing "should set last_notified_at timestamp"
           (is (some? (:last_notified_at queue))))
         (testing "should send notification only once a day"
