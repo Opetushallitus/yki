@@ -199,8 +199,8 @@ SELECT
   ) loc
  ) as location,
 (
-  ((ed.registration_start_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki')
-    AND (at_midnight(ed.registration_end_date) > current_timestamp AT TIME ZONE 'Europe/Helsinki')
+  ((ed.registration_start_date + time '10:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki')
+    AND ((ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki')
 ) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
@@ -240,8 +240,8 @@ SELECT
   ) loc
 ) AS location,
 (
-  ((ed.registration_start_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki')
-    AND (at_midnight(ed.registration_end_date) > current_timestamp AT TIME ZONE 'Europe/Helsinki')
+  ((ed.registration_start_date + time '10:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki')
+    AND ((ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki')
 ) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
@@ -407,8 +407,8 @@ SELECT EXISTS (
   FROM exam_session es
   INNER JOIN exam_date ed ON es.exam_date_id = ed.id
   WHERE es.id = :exam_session_id
-    AND (ed.registration_start_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki'
-    AND at_midnight(ed.registration_end_date) > current_timestamp AT TIME ZONE 'Europe/Helsinki'
+    AND (ed.registration_start_date + time '10:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki'
+    AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki'
 ) as exists;
 
 -- name: select-exam-session-space-left
@@ -501,7 +501,7 @@ INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
-  AND at_midnight(ed.registration_end_date) >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
+  AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND re.state = 'STARTED'
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
@@ -790,7 +790,7 @@ INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id AND esl.lang = esq.lang
 WHERE current_timestamp AT TIME ZONE 'Europe/Helsinki' BETWEEN (current_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') AND (current_date + time '20:59' AT TIME ZONE 'Europe/Helsinki')
   AND ed.registration_start_date <= current_date
-  AND at_midnight(ed.registration_end_date) >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
+  AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND (last_notified_at IS NULL OR last_notified_at::date < current_date)
 GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date, esl.street_address, esl.post_office, esl.zip, esl.name;
 
