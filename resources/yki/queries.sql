@@ -562,6 +562,9 @@ SELECT par.email,
        es.language_code,
        es.level_code,
        esl.name,
+       esl.street_address,
+       esl.zip,
+       esl.post_office,
        ed.exam_date
 FROM participant par
 INNER JOIN registration re ON re.participant_id = par.id

@@ -76,14 +76,16 @@
           email-q (base/email-q)
           response (-> session
                        (peridot/request (str routing/payment-root "/success" success-params)))
-          location (get-in response [:response :headers "Location"])]
+          location (get-in response [:response :headers "Location"])
+          email-req (pgq/take email-q)]
       (testing "when payment is success should complete registration and redirect to success url"
         (is (= (base/select-one "SELECT state FROM registration") {:state "COMPLETED"}))
         (is (= (base/select-one "SELECT state FROM payment") {:state "PAID"}))
         (is (s/includes? location "tila?status=payment-success&lang=fi&id=5")))
 
       (testing "confirmation email should be send"
-        (is (some? (pgq/take email-q)))))))
+        (is (some? email-req))
+        (is (s/includes? (:body email-req) "Omenia, Upseerinkatu 11, 00240 Espoo"))))))
 
 (deftest handle-payment-success-invalid-authcode-test
   (let [handler (create-handlers 8080)
