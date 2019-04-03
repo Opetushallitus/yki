@@ -137,7 +137,7 @@
                                        :registration_id       id
                                        :expires_at            expiration-date
                                        :expired_link_redirect (url-helper :payment-link-expired.redirect lang)
-                                       :success_redirect      (url-helper :payment-link.redirect id)
+                                       :success_redirect      (url-helper :payment-link.redirect id lang)
                                        :type                  "PAYMENT"}
               create-and-send-link-fn #(create-and-send-link db
                                                              url-helper

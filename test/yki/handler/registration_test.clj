@@ -123,7 +123,7 @@
         (is (s/includes? (:body email-request) "100,00 €"))
         (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 Espoo"))
         (is (= (:type payment-link) "PAYMENT"))
-        (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/maksu/ilmoittautuminen/" id)))
+        (is (= (:success_redirect payment-link) (str "http://yki.localhost:" port "/yki/maksu/ilmoittautuminen/" id "?lang=fi")))
         (is (= (:order_number payment) "YKI6000000001")))
       (testing "and set registration status to SUBMITTED"
         (is (= (:state submitted-registration) "SUBMITTED"))
