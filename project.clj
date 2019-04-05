@@ -1,4 +1,4 @@
-(defproject yki "1.0.0-SNAPSHOT"
+(defproject yki "1.0.0"
   :description "YKI backend"
   :repositories [["oph-releases" "https://artifactory.opintopolku.fi/artifactory/oph-sade-release-local"]
                  ["oph-snapshots" "https://artifactory.opintopolku.fi/artifactory/oph-sade-snapshot-local"]
