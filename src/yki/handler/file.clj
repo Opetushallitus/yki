@@ -31,16 +31,13 @@
               (throw e))
             (finally
               (io/delete-file tempfile true)))))
-
-      (context "/:id" []
+      (context "/:external-id" []
         (GET "/" request
-          :path-params [id :- ::ys/external_id]
+          :path-params [external-id :- ::ys/external_id]
           :return ::ys/response
-          (if-let [file-response (files/get-file key)]
-          (header (ok (:body file-response))
-            "Content-Disposition"
-            (:content-disposition file-response))
-          (not-found))
-        )
-      )))
+          (if-let [file-response (files/get-file file-store external-id)]
+            (header (ok (:body file-response))
+                    "Content-Disposition"
+                    (:content-disposition file-response))
+            (not-found)))))))
 

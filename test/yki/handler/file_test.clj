@@ -45,3 +45,18 @@
         (is (= {:count 1}
                (base/select-one "SELECT COUNT(1) FROM attachment_metadata WHERE external_id = 'd45c5262'")))
         (is (= {"external_id" "d45c5262"} response-body))))))
+
+; (deftest get-file-test
+;   ; (base/insert-organizer "'1.2.3.5'")
+;   (let [filecontent {:tempfile (create-temp-file "test/resources/test.pdf")
+;                      :content-type "application/pdf"
+;                      :filename "test.pdf"}]
+;     (with-routes!
+;       {"/liiteri/api/files/1" {:status 200
+;                                :headers ["Content-Disposition" "attachment; filename=\"test.pdf\""]
+;                                :body   (slurp (create-temp-file "test/resources/test.pdf"))}}
+;       (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.5/file/1"))
+;             response (base/send-request-with-tx request port)]
+;         (println response)
+;         (testing "post files endpoint should send file to file store and save returned id to database"
+;           (is (= 1 1)))))))
