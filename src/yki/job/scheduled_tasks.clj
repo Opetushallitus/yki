@@ -20,7 +20,7 @@
 
 (defonce participants-sync-handler-conf {:worker-id (str (UUID/randomUUID))
                                          :task "PARTICIPANTS_SYNC_HANDLER"
-                                         :interval "59 MINUTES"})
+                                         :interval "479 MINUTES"})
 
 (defonce exam-session-queue-handler-conf {:worker-id (str (UUID/randomUUID))
                                           :task "EXAM_SESSION_QUEUE_HANDLER"
