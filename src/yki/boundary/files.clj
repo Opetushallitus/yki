@@ -15,7 +15,14 @@
                                                     :content  tempfile
                                                     :filename (Normalizer/normalize filename Normalizer$Form/NFD)}]})]
       (when (= (:status resp) 200)
-        (json/read-value (:body resp))))))
+        (json/read-value (:body resp)))))
+  (get-file [key]
+    (let [url  (url-helper :liiteri.file key)
+          resp (http-util/do-get url)]
+      (when (= (:status resp) 200)
+        {:body                (:body resp)
+         :content-disposition (-> resp :headers :content-disposition)})))
+  )
 
 (defmethod ig/init-key :yki.boundary.files/liiteri-file-store [_ {:keys [url-helper]}]
   (->LiiteriFileStore url-helper))
