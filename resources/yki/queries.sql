@@ -8,6 +8,15 @@ SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.co
       WHERE organizer_id = o.id
     ) lang
   ) AS languages,
+    (
+    SELECT array_to_json(array_agg(attachment))
+    FROM (
+      SELECT external_id, created
+      FROM attachment_metadata
+      WHERE organizer_id = o.id
+      ORDER BY created DESC
+    ) attachment
+  ) AS attachments,
   json_build_object('merchant_id', pc.merchant_id)::jsonb || json_build_object('merchant_secret', pc.merchant_secret)::jsonb as merchant
 FROM organizer o
 LEFT JOIN payment_config pc ON pc.organizer_id = o.id
@@ -23,6 +32,15 @@ SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.co
       WHERE organizer_id = o.id
     ) lang
   ) AS languages,
+  (
+    SELECT array_to_json(array_agg(attachment))
+    FROM (
+      SELECT external_id, created
+      FROM attachment_metadata
+      WHERE organizer_id = o.id
+      ORDER BY created DESC
+    ) attachment
+  ) AS attachments,
   json_build_object('merchant_id', pc.merchant_id)::jsonb || json_build_object('merchant_secret', pc.merchant_secret)::jsonb as merchant
 FROM organizer o
 LEFT JOIN payment_config pc ON pc.organizer_id = o.id
