@@ -46,3 +46,12 @@
                (base/select-one "SELECT COUNT(1) FROM attachment_metadata WHERE external_id = 'd45c5262'")))
         (is (= {"external_id" "d45c5262"} response-body))))))
 
+(deftest get-file-test
+  (base/insert-organizer "'1.2.3.4'")
+  (base/insert-organizer "'1.2.3.5'")
+  (base/insert-attachment-metadata "'1.2.3.5'")
+  (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/file/a0d5dfc2"))
+        response (base/send-request-with-tx request "")]
+    (println response)
+    (testing "get file should return 404 when attachment has different organizer"
+      (is (= (:status response) 404)))))

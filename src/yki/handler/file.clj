@@ -34,9 +34,11 @@
       (context "/:external-id" []
         (GET "/" request
           :path-params [external-id :- ::ys/external_id]
-          (if-let [file-response (files/get-file file-store external-id)]
-            (header (ok (:body file-response))
-                    "Content-Disposition"
-                    (:content-disposition file-response))
+          (if-let [metadata (organizer-db/get-attachment-metadata db external-id oid)]
+            (if-let [file-response (files/get-file file-store external-id)]
+              (header (ok (:body file-response))
+                      "Content-Disposition"
+                      (:content-disposition file-response))
+              (not-found))
             (not-found)))))))
 

@@ -121,6 +121,14 @@ INSERT INTO attachment_metadata (
   :type
 );
 
+-- name: select-attachment-metadata
+SELECT
+  external_id,
+  type
+FROM attachment_metadata
+WHERE external_id = :external_id
+  AND organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL);
+
 -- name: insert-exam-session<!
 INSERT INTO exam_session (
   organizer_id,

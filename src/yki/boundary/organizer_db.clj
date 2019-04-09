@@ -25,6 +25,7 @@
   (update-payment-config! [db payment-config])
   (get-organizers [db])
   (get-organizers-by-oids [db oids])
+  (get-attachment-metadata [db external-id oid])
   (create-attachment-metadata! [db oid attachment-type external-id]))
 
 (extend-protocol Organizers
@@ -76,5 +77,7 @@
   (get-organizers [{:keys [spec]}]
     (q/select-organizers spec))
   (get-organizers-by-oids [{:keys [spec]} oids]
-    (q/select-organizers-by-oids spec {:oids oids})))
+    (q/select-organizers-by-oids spec {:oids oids}))
+  (get-attachment-metadata [{:keys [spec]} external-id oid]
+    (q/select-attachment-metadata spec {:external_id external-id :oid oid})))
 
