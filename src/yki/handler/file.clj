@@ -4,10 +4,10 @@
             [yki.boundary.files :as files]
             [yki.spec :as ys]
             [clojure.java.io :as io]
-            [ring.util.response :refer [response]]
             [clojure.tools.logging :refer [info error]]
-            [ring.util.http-response :refer [bad-request]]
+            [ring.util.http-response :refer [ok bad-request not-found]]
             [ring.util.request]
+            [ring.util.response :refer [header]]
             [clojure.spec.alpha :as s]
             [ring.middleware.multipart-params :as mp]
             [integrant.core :as ig]))
@@ -24,11 +24,21 @@
           (try
             (if-let [resp (files/upload-file file-store tempfile filename)]
               (if (organizer-db/create-attachment-metadata! db oid "agreement" (resp "key"))
-                (response {:external_id (resp "key")}))
+                (ok {:external_id (resp "key")}))
               (bad-request {:error "Failed to upload file"}))
             (catch Exception e
               (error e "Failed to upload file")
               (throw e))
             (finally
-              (io/delete-file tempfile true))))))))
+              (io/delete-file tempfile true)))))
+      (context "/:external-id" []
+        (GET "/" request
+          :path-params [external-id :- ::ys/external_id]
+          (if-let [metadata (organizer-db/get-attachment-metadata db external-id oid)]
+            (if-let [file-response (files/get-file file-store external-id)]
+              (header (ok (:body file-response))
+                      "Content-Disposition"
+                      (:content-disposition file-response))
+              (not-found))
+            (not-found)))))))
 

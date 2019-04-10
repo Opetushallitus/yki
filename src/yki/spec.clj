@@ -41,6 +41,7 @@
 ;; organizer
 (s/def ::agreement_start_date ::date)
 (s/def ::agreement_end_date   ::date)
+(s/def ::created              ::date)
 (s/def ::contact_name         (s/and string? #(<= (count %) 256)))
 (s/def ::language_code        ::exam-language-code)
 (s/def ::level_code           (s/and string? #(<= (count %) 16)))
@@ -50,9 +51,14 @@
 (s/def ::contact_shared_email (s/nilable ::email-type))
 (s/def ::extra                (s/and (s/nilable string?) #(<= (count %) 1024)))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
+(s/def ::external_id          (s/and string? #(<= (count %) 64)))
+(s/def ::external-id-type     (s/keys :req-un [::external_id]))
 (s/def ::language             (s/keys :req-un [::language_code]
                                       :opt-un [::level_code]))
+(s/def ::attachment           (s/keys :req-un [::external_id
+                                               ::created]))
 (s/def ::languages            (s/or :null nil? :array (s/coll-of ::language)))
+(s/def ::attachments          (s/or :null nil? :array (s/coll-of ::attachment)))
 (s/def ::merchant_id          (s/nilable pos-int?))
 (s/def ::merchant_secret      (s/nilable (s/and string? #(<= (count %) 30))))
 (s/def ::merchant             (s/nilable (s/keys :req-un [::merchant_id ::merchant_secret])))
@@ -113,9 +119,6 @@
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::from-param (s/keys :opt-un [::from]))
-
-(s/def ::external_id (s/and string? #(<= (count %) 64)))
-(s/def ::external-id-type (s/keys :req-un [::external_id]))
 
 (s/def ::id-response (s/keys :req-un [::id]))
 
@@ -264,12 +267,12 @@
 
 ;; YKI register sync
 (s/def :sync/type         #{"CREATE" "UPDATE" "DELETE"})
-(s/def ::created          number?)
+(s/def :sync/created      number?)
 (s/def ::exam-session-id  (s/nilable ::id))
 (s/def ::organizer-oid    (s/nilable ::oid))
 
 (s/def ::data-sync-request (s/keys :req [:sync/type
-                                         ::created]
+                                         :sync/created]
                                    :opt [::exam-session-id
                                          ::organizer-oid]))
 
