@@ -24,7 +24,6 @@
        (code-auth/login db code lang url-helper))
      (context routing/virkailija-auth-uri []
        (POST "/callback" request
-         (log/info "callback request" request)
          (cas-auth/cas-logout db (get-in request [:params :logoutRequest])))
        (GET "/" {session :session}
          (found (cas-auth/create-redirect-uri-from-session session url-helper)))

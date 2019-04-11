@@ -18,7 +18,6 @@
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn login [{:keys [query-params headers session]} onr-client url-helper]
-  (log/info "Login session" session)
   (let [lang (or (:lang query-params) "fi")
         {:strs [vakinainenkotimainenlahiosoites
                 vakinainenkotimainenlahiosoitepostitoimipaikkas
