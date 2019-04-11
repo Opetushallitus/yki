@@ -7,8 +7,8 @@
             [yki.util.audit-log :as audit-log]
             [pgqueue.core :as pgq]
             [ring.util.response :refer [response not-found]]
-            [clojure.tools.logging :refer [info error]]
-            [ring.util.http-response :refer [bad-request]]
+            [clojure.tools.logging :as log]
+            [ring.util.http-response :refer [bad-request conflict]]
             [ring.util.request]
             [yki.spec :as ys]
             [integrant.core :as ig]))
@@ -48,19 +48,24 @@
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [current (exam-session-db/get-exam-session-by-id db id)
-                current-count (:participants current)
+                participants (:participants current)
                 max-participants (:max_participants exam-session)]
-            (if (exam-session-db/update-exam-session! db oid id exam-session)
+            (if (<= participants max-participants)
+              (if (exam-session-db/update-exam-session! db oid id exam-session)
+                (do
+                  (audit-log/log {:request request
+                                  :target-kv {:k audit-log/exam-session
+                                              :v id}
+                                  :change {:type audit-log/update-op
+                                           :old current
+                                           :new exam-session}})
+                  (response {:success true}))
+                (not-found {:success false
+                            :error "Exam session not found"}))
               (do
-                (audit-log/log {:request request
-                                :target-kv {:k audit-log/exam-session
-                                            :v id}
-                                :change {:type audit-log/update-op
-                                         :old current
-                                         :new exam-session}})
-                (response {:success true}))
-              (not-found {:success false
-                          :error "Exam session not found"}))))
+                (log/error "Max participants"  max-participants "less than current participants" participants)
+                (conflict {:error "Max participants less than current participants"})))))
+
         (DELETE "/" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
