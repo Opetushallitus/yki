@@ -77,16 +77,15 @@
       (is (some? (:exam-session sync-req)))
       (is (= (:type sync-req) "DELETE")))))
 
-; (deftest exam-session-update-max-participants-fail-test
-;   (base/insert-base-data)
-;   (base/insert-registrations "COMPLETED")
-;   (println (base/select "SELECT * FROM organizer"))
-;   (let [updated-exam-session (base/change-entry base/exam-session "max_participants" 1)
-;         request              (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.4/exam-session/1") updated-exam-session)
-;                                  (mock/content-type "application/json; charset=UTF-8"))
-;         response             (base/send-request-with-tx request)]
-;     (testing "should not allow setting max participants lower than current participants"
-;       (is (= (:status response) 500))
-;       (is (= {:max_participants 5}
-;              (base/select-one "SELECT max_participants FROM exam_session where id = 1"))))))
+(deftest exam-session-update-max-participants-fail-test
+  (base/insert-base-data)
+  (base/insert-registrations "COMPLETED")
+  (let [updated-exam-session (base/change-entry base/exam-session "max_participants" 1)
+        request              (-> (mock/request :put (str routing/organizer-api-root "/1.2.3.4/exam-session/1") updated-exam-session)
+                                 (mock/content-type "application/json; charset=UTF-8"))
+        response             (base/send-request-with-tx request)]
+    (testing "should not allow setting max participants lower than current participants"
+      (is (= (:status response) 409))
+      (is (= {:max_participants 5}
+             (base/select-one "SELECT max_participants FROM exam_session where id = 1"))))))
 
