@@ -94,7 +94,7 @@
                                                      :content-type "application/json"
                                                      :request-method :post))
           registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
-          update-response (-> session
+          submit-response (-> session
                               (peridot/request (str routing/registration-api-root "/" id "/submit" "?lang=fi")
                                                :body (j/write-value-as-string form)
                                                :content-type "application/json"
@@ -116,7 +116,7 @@
           (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))))
 
       (testing "post submit endpoint should create payment"
-        (is (= (get-in update-response [:response :status]) 200))
+        (is (= (get-in submit-response [:response :status]) 200))
         (is (= (:id payment) id)))
       (testing "and send email with payment link"
         (is (= (:subject email-request) "Maksulinkki: suomi perustaso - Omenia, 27.1.2018"))
