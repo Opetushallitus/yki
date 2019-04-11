@@ -443,6 +443,7 @@ SELECT NOT EXISTS (
 	FROM exam_session es
 	LEFT JOIN registration re ON es.id = re.exam_session_id
 	WHERE re.exam_session_id = :exam_session_id
+    AND re.id != COALESCE(:registration_id, 0)
 	  AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
 	GROUP BY es.max_participants
 	HAVING (es.max_participants - COUNT(re.id)) <= 0

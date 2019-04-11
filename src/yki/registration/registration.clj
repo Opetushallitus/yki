@@ -73,7 +73,7 @@
     (if started-registration-id
       (ok (create-init-response db session exam_session_id started-registration-id payment-config))
       (let [exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
-            exam-session-space-left?        (registration-db/exam-session-space-left? db exam_session_id)
+            exam-session-space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
             not-registered-to-exam-session? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
         (if (and exam-session-registration-open? exam-session-space-left? not-registered-to-exam-session?)
           (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
@@ -107,7 +107,7 @@
   [db url-helper email-q lang session id form payment-config onr-client]
   (log/info "START: Submitting registration id" id)
   (let [exam-session             (exam-session-db/get-exam-session-by-registration-id db id)
-        exam-session-space-left? (registration-db/exam-session-space-left? db (:id exam-session))]
+        exam-session-space-left? (registration-db/exam-session-space-left? db (:id exam-session) id)]
     (if exam-session-space-left?
       (let [identity                 (:identity session)
             form-with-email          (if (= (:auth-method session) "EMAIL") (assoc form :email (:external-user-id identity)) form)

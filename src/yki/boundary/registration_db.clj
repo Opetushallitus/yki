@@ -21,7 +21,7 @@
   (get-registration-data [db registration-id participant-id lang])
   (get-payment-config-by-order-number [db order-number])
   (complete-registration-and-payment! [db payment-params])
-  (exam-session-space-left? [db exam-session-id])
+  (exam-session-space-left? [db exam-session-id registration-id])
   (exam-session-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
   (get-participant-data-by-order-number [db order-number])
@@ -73,8 +73,9 @@
     (jdbc/with-db-transaction [tx spec]
       (:nextval (first (q/select-next-order-number-suffix tx)))))
   (exam-session-space-left?
-    [{:keys [spec]} id]
-    (let [exists (first (q/select-exam-session-space-left spec {:exam_session_id id}))]
+    [{:keys [spec]} exam-session-id registration-id]
+    (let [exists (first (q/select-exam-session-space-left spec {:exam_session_id exam-session-id
+                                                                :registration_id registration-id}))]
       (:exists exists)))
   (exam-session-registration-open?
     [{:keys [spec]} id]
