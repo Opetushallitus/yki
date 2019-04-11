@@ -47,7 +47,9 @@
           :body [exam-session ::ys/exam-session]
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (let [current (exam-session-db/get-exam-session-by-id db id)]
+          (let [current (exam-session-db/get-exam-session-by-id db id)
+                current-count (:participants current)
+                max-participants (:max_participants exam-session)]
             (if (exam-session-db/update-exam-session! db oid id exam-session)
               (do
                 (audit-log/log {:request request
