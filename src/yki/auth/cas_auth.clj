@@ -76,7 +76,7 @@
 
 (defn cas-logout
   [db logout-request]
-  (info "cas-initiated logout" logout-request)
+  (info "cas-initiated logout")
   (let [ticket (CasLogout/parseTicketFromLogoutRequest logout-request)]
     (if (.isEmpty ticket)
       (error "Could not parse ticket from CAS request")
