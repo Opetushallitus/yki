@@ -1,5 +1,5 @@
 (ns yki.util.audit-log
-  (:require [clojure.tools.logging :refer [info]]
+  (:require [clojure.tools.logging :as log]
             [jsonista.core :as json])
   (:import [java.net InetAddress]
            [org.ietf.jgss Oid]
@@ -26,7 +26,7 @@
 (defonce ^fi.vm.sade.auditlog.Logger logger-proxy
   (reify fi.vm.sade.auditlog.Logger
     (log [this msg]
-      (info msg))))
+      (log/info msg))))
 
 (defn ^fi.vm.sade.auditlog.Operation op [operation]
   (reify fi.vm.sade.auditlog.Operation
@@ -56,28 +56,34 @@
 
 (defn log
   [{:keys [request target-kv change]}]
-  (let [inet-address    (InetAddress/getLocalHost)
-        session         (:session request)
-        oid             (get-in session [:identity :oid])
-        user-agent      ((:headers request) "user-agent")
-        user            (User. (oid-or-nil oid) inet-address (:yki-session-id session) user-agent)
-        op              (op (:type change))
-        target          (-> (Target$Builder.)
-                            (.setField (:k target-kv) (str (:v target-kv)))
-                            (.build))
-        changes         (create-changes change)]
-    (.log virkailija-logger user op target changes)))
+  (try
+    (let [inet-address    (InetAddress/getLocalHost)
+          session         (:session request)
+          oid             (get-in session [:identity :oid])
+          user-agent      ((:headers request) "user-agent")
+          user            (User. (oid-or-nil oid) inet-address (:yki-session-id session) user-agent)
+          op              (op (:type change))
+          target          (-> (Target$Builder.)
+                              (.setField (:k target-kv) (str (:v target-kv)))
+                              (.build))
+          changes         (create-changes change)]
+      (.log virkailija-logger user op target changes))
+    (catch Exception e
+      (log/error e "Virkailija audit logging failed for data:" change))))
 
 (defn log-participant
   [{:keys [request target-kv change oid]}]
-  (let [inet-address    (InetAddress/getLocalHost)
-        session         (:session request)
-        oid             (or oid (get-in session [:identity :oid]))
-        user-agent      ((:headers request) "user-agent")
-        user            (User. (oid-or-nil oid) inet-address (:yki-session-id session) user-agent)
-        op              (op (:type change))
-        target          (-> (Target$Builder.)
-                            (.setField (:k target-kv) (str (:v target-kv)))
-                            (.build))
-        changes         (create-changes change)]
-    (.log oppija-logger user op target changes)))
+  (try
+    (let [inet-address    (InetAddress/getLocalHost)
+          session         (:session request)
+          oid             (or oid (get-in session [:identity :oid]))
+          user-agent      ((:headers request) "user-agent")
+          user            (User. (oid-or-nil oid) inet-address (:yki-session-id session) user-agent)
+          op              (op (:type change))
+          target          (-> (Target$Builder.)
+                              (.setField (:k target-kv) (str (:v target-kv)))
+                              (.build))
+          changes         (create-changes change)]
+      (.log oppija-logger user op target changes))
+    (catch Exception e
+      (log/error e "Participant audit logging failed for data:" change))))
