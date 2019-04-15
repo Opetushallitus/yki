@@ -51,7 +51,7 @@
             form-data (payment-util/generate-form-data (merge organizer-specific-config payment-config) amount payment-data)]
         form-data)
       (error "Payment not found for registration-id" registration-id))
-    (error "Registration not found" registration-id)))
+    (error "Registration with state submitted not found" registration-id)))
 
 (defn valid-return-params? [db params]
   (let [{:keys [merchant_secret]} (registration-db/get-payment-config-by-order-number db (:ORDER_NUMBER params))]
