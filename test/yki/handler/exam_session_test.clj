@@ -89,3 +89,11 @@
       (is (= {:max_participants 5}
              (base/select-one "SELECT max_participants FROM exam_session where id = 1"))))))
 
+(deftest exam-session-delete-fail-test
+  (base/insert-base-data)
+  (base/insert-registrations "COMPLETED")
+  (let [request             (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/1"))
+        response             (base/send-request-with-tx request)]
+    (testing "should not allow deleting exam session with participants"
+      (is (= (:status response) 409)))))
+

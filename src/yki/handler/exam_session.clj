@@ -69,19 +69,22 @@
         (DELETE "/" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-            (if (exam-session-db/delete-exam-session! db id oid (send-to-queue
-                                                                 data-sync-q
-                                                                 (assoc exam-session :organizer_oid oid)
-                                                                 "DELETE"))
-              (do
-                (audit-log/log {:request request
-                                :target-kv {:k audit-log/exam-session
-                                            :v id}
-                                :change {:type audit-log/delete-op}})
-                (response {:success true}))
-              (not-found {:success false
-                          :error "Exam session not found"}))))
+          (let [exam-session (exam-session-db/get-exam-session-by-id db id)
+                participants (:participants exam-session)]
+            (if (= participants 0)
+              (if (exam-session-db/delete-exam-session! db id oid (send-to-queue
+                                                                   data-sync-q
+                                                                   (assoc exam-session :organizer_oid oid)
+                                                                   "DELETE"))
+                (do
+                  (audit-log/log {:request request
+                                  :target-kv {:k audit-log/exam-session
+                                              :v id}
+                                  :change {:type audit-log/delete-op}})
+                  (response {:success true}))
+                (not-found {:success false
+                            :error "Exam session not found"}))
+              (conflict {:error "Cannot delete exam session with participants"}))))
 
         (context routing/registration-uri []
           (GET "/" {session :session}
