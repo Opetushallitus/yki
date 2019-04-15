@@ -207,7 +207,7 @@ SELECT
   e.published_at,
   ((SELECT COUNT(1)
     FROM exam_session_queue
-    WHERE exam_session_id = e.id) > 50) as queue_full,
+    WHERE exam_session_id = e.id) >= 50) as queue_full,
  (SELECT COUNT(1)
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
@@ -800,7 +800,7 @@ INSERT INTO exam_session_queue (
     FROM exam_session
     WHERE id = :exam_session_id
     GROUP BY id
-    HAVING (SELECT COUNT(1) FROM exam_session_queue WHERE exam_session_id = :exam_session_id) <= 50)
+    HAVING (SELECT COUNT(1) FROM exam_session_queue WHERE exam_session_id = :exam_session_id) < 50)
 );
 
 -- send notification only once per day between 8 - 21 until registration ends
