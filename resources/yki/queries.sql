@@ -819,6 +819,9 @@ WHERE current_timestamp AT TIME ZONE 'Europe/Helsinki' BETWEEN (current_date + t
   AND ed.registration_start_date <= current_date
   AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND (last_notified_at IS NULL OR last_notified_at::date < current_date)
+  AND es.max_participants > (SELECT COUNT(1)
+                            FROM registration re
+                            WHERE re.exam_session_id = es.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
 GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date, esl.street_address, esl.post_office, esl.zip, esl.name;
 
 -- name: delete-from-exam-session-queue!
