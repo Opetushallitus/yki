@@ -1,6 +1,6 @@
 (ns yki.handler.payment
   (:require [compojure.api.sweet :refer :all]
-            [clojure.tools.logging :refer [info error]]
+            [clojure.tools.logging :as log]
             [yki.handler.routing :as routing]
             [yki.boundary.registration-db :as registration-db]
             [yki.util.audit-log :as audit]
@@ -23,7 +23,7 @@
   (try
     (f)
     (catch Exception e
-      (error e "Payment handling failed")
+      (log/error e "Payment handling failed")
       (error-redirect url-helper))))
 
 (defmethod ig/init-key :yki.handler/payment [_ {:keys [db auth access-log payment-config url-helper email-q]}]
@@ -39,11 +39,14 @@
        (let [external-user-id (get-in session [:identity :external-user-id])
              formdata (paytrail-payment/create-payment-form-data db url-helper payment-config registration-id external-user-id lang)]
          (if formdata
-           (ok formdata)
+           (do
+             (log/info "Return payment formdata" formdata)
+             (ok formdata))
+
            (internal-server-error {:error "Payment form data creation failed"}))))
      (GET "/success" request
        (let [params (:params request)]
-         (info "Received payment success params" params)
+         (log/info "Received payment success params" params)
          (handle-exceptions url-helper
                             #(if (paytrail-payment/valid-return-params? db params)
                                (let [payment (paytrail-payment/get-payment db params)
@@ -60,7 +63,7 @@
                                (error-redirect url-helper "fi")))))
      (GET "/cancel" request
        (let [params (:params request)]
-         (info "Received payment cancel params" params)
+         (log/info "Received payment cancel params" params)
          (handle-exceptions url-helper
                             #(if (paytrail-payment/valid-return-params? db params)
                                (do
@@ -74,7 +77,7 @@
                                    (cancel-redirect url-helper lang)))
                                (error-redirect url-helper "fi")))))
      (GET "/notify" {params :params}
-       (info "Received payment notify params" params)
+       (log/info "Received payment notify params" params)
        (if (paytrail-payment/valid-return-params? db params)
          (if (paytrail-payment/handle-payment-return db email-q url-helper params)
            (ok "OK")

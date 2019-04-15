@@ -49,6 +49,7 @@
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and from arguments")
   (get-exam-sessions-with-queue [db])
+  (get-email-added-to-queue? [db email exam-session-id])
   (add-to-exam-session-queue! [db email lang exam-session-id])
   (update-exam-session-queue-last-notified-at! [db email exam-session-id])
   (remove-from-exam-session-queue! [db email exam-session-id]))
@@ -125,6 +126,10 @@
   (get-exam-sessions [{:keys [spec]} oid from]
     (q/select-exam-sessions spec {:oid oid
                                   :from (string->date from)}))
+
+  (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
+    (q/select-email-added-to-queue spec {:email :email
+                                         :exam_session_id exam-session-id}))
   (get-exam-sessions-with-queue [{:keys [spec]}]
     (q/select-exam-sessions-with-queue spec))
   (add-to-exam-session-queue!

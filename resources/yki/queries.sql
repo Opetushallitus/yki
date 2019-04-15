@@ -205,6 +205,9 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
+  ((SELECT COUNT(1)
+    FROM exam_session_queue
+    WHERE exam_session_id = e.id) > 50) as queue_full,
  (SELECT COUNT(1)
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
@@ -838,5 +841,11 @@ AND exam_session_id IN (SELECT id
 -- name: update-exam-session-queue-last-notified-at!
 UPDATE exam_session_queue
 SET last_notified_at = current_timestamp
+WHERE exam_session_id = :exam_session_id
+  AND email = :email;
+
+--name: select-email-added-to-queue
+SELECT email
+FROM exam_session_queue
 WHERE exam_session_id = :exam_session_id
   AND email = :email;

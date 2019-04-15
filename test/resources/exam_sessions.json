@@ -41,7 +41,8 @@
       "organizer_oid": "1.2.3.4",
       "language_code": "fin",
       "level_code": "PERUS",
-      "open": false
+      "open": false,
+      "queue_full": false
     }
   ]
 }
