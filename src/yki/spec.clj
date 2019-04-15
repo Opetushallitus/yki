@@ -100,8 +100,9 @@
 (s/def ::max_participants           pos-int?)
 (s/def ::published_at               (s/nilable ::date))
 (s/def ::participants               int?)
-(s/def ::exam_fee ::amount)
-(s/def ::open              boolean?)
+(s/def ::exam_fee                   ::amount)
+(s/def ::open                       boolean?)
+(s/def ::queue_full                 boolean?)
 (s/def ::from                       ::date)
 
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -114,6 +115,7 @@
                                        ::office_oid
                                        ::exam_fee
                                        ::open
+                                       ::queue_full
                                        ::participants
                                        ::organizer_oid]))
 (s/def ::exam_sessions (s/coll-of ::exam-session))
