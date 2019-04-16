@@ -128,8 +128,9 @@
                                   :from (string->date from)}))
 
   (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
-    (q/select-email-added-to-queue spec {:email :email
-                                         :exam_session_id exam-session-id}))
+    (int->boolean (:count (first (q/select-email-added-to-queue spec {:email email
+                                                                      :exam_session_id exam-session-id})))))
+
   (get-exam-sessions-with-queue [{:keys [spec]}]
     (q/select-exam-sessions-with-queue spec))
   (add-to-exam-session-queue!

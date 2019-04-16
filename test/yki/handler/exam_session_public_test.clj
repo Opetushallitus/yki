@@ -54,11 +54,17 @@
         request (-> (mock/request :post (str routing/exam-session-public-api-root "/" id "/queue?lang=sv")
                                   (j/write-value-as-string {:email "test@test.com"}))
                     (mock/content-type "application/json; charset=UTF-8"))
+        twice-request (-> (mock/request :post (str routing/exam-session-public-api-root "/" id "/queue?lang=sv")
+                                        (j/write-value-as-string {:email "test@test.com"}))
+                          (mock/content-type "application/json; charset=UTF-8"))
         response (send-request request)
+        twice-response (send-request twice-request)
         response-body (base/body-as-json response)
         exam-session-queue (base/select "SELECT * from exam_session_queue")]
     (testing "post exam session queue endpoint should add email to queue"
       (is (= (:status response) 200))
-      (is (= (count exam-session-queue) 1)))))
+      (is (= (count exam-session-queue) 1)))
+    (testing "post with same email should return conflict"
+      (is (= (:status twice-response) 409)))))
 
 
