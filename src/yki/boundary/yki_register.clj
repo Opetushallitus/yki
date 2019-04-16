@@ -58,7 +58,7 @@
      (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
        (log/info "Syncing data success")
        (do
-         (log/error "Failed to sync data, error response")
+         (log/error "Failed to sync data, error response" (remove-basic-auth response))
          (throw (Exception. (str "Could not sync request " body-as-string))))))))
 
 (defn- do-delete [url basic-auth]
