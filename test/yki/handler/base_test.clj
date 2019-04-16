@@ -133,7 +133,7 @@
 (def registration-form {:first_name  "Aku"
                         :last_name  "Ankka"
                         :gender "1"
-                        :nationalities ["246"]
+                        :nationalities ["180"]
                         :birthdate "1999-01-01"
                         :certificate_lang "fi"
                         :exam_lang "fi"

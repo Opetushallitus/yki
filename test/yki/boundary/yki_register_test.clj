@@ -39,14 +39,16 @@
 (deftest create-participant-csv-line-test
   (with-routes!
     {"/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
-                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}}
+                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                             :body (slurp "test/resources/maatjavaltiot2_180.json")}}
     (testing "should create valid csv line with birth date"
       (let [result (yki-register/create-partipant-csv (base/create-url-helper (str "localhost:" port)) base/registration-form "5.4.3.2.1")
-            csv-line "5.4.3.2.1;010199-;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
+            csv-line "5.4.3.2.1;010199-;Aku;Ankka;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
         (is (= result csv-line))))
 
     (testing "should create valid csv line with ssn"
-      (let [registration-form-with-ssn (dissoc (assoc base/registration-form :ssn "010199-123A") :gender)
+      (let [registration-form-with-ssn (dissoc (assoc base/registration-form :ssn "010199-123A" :nationalities ["246"]) :gender)
             result (yki-register/create-partipant-csv (base/create-url-helper (str "localhost:" port)) registration-form-with-ssn  "5.4.3.2.1")
             csv-line "5.4.3.2.1;010199-123A;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
         (is (= result csv-line))))))
@@ -71,7 +73,7 @@
             delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-exam-session-req)]
         "tests that exception is not thrown"))))
 
-(def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-122F;Iines;Ankka;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;010199-;Aku;Ankka;M;FIN;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]))
+(def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-122F;Iines;Ankka;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;010199-;Aku;Ankka;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]))
 
 (deftest sync-exam-session-participants-test
   (base/insert-base-data)
@@ -80,7 +82,9 @@
     (with-routes!
       {{:path "/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
        "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
-                                                                               :body (slurp "test/resources/maatjavaltiot2_246.json")}}
+                                                                               :body (slurp "test/resources/maatjavaltiot2_246.json")}
+       "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                               :body (slurp "test/resources/maatjavaltiot2_180.json")}}
       (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
             db (base/db)
             url-helper (base/create-url-helper (str "localhost:" port))

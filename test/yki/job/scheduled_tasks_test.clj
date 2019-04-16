@@ -34,7 +34,9 @@
     {"/ryhmasahkoposti-service/email/firewall" {:status 200 :content-type "application/json"
                                                 :body   (j/write-value-as-string {:id 1})}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
-                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}}
+                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                             :body (slurp "test/resources/maatjavaltiot2_180.json")}}
     (let [email-q (base/email-q)
           _ (pgq/put email-q email-req)
           reader (create-email-q-reader port 1)]
@@ -143,7 +145,9 @@
     {"/osallistujat" {:status 200
                       :body "{}"}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
-                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}}
+                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                             :body (slurp "test/resources/maatjavaltiot2_180.json")}}
     (let [handler (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db (base/db)
                                                                                    :disabled false
                                                                                    :basic-auth {:user "user" :password "pass"}
@@ -169,7 +173,9 @@
     {"/osallistujat" {:status 500
                       :body "{}"}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
-                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}}
+                                                                             :body (slurp "test/resources/maatjavaltiot2_246.json")}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                             :body (slurp "test/resources/maatjavaltiot2_180.json")}}
     (let [handler (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db (base/db)
                                                                                    :disabled false
                                                                                    :basic-auth {:user "user" :password "pass"}
