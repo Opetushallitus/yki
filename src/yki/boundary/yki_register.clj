@@ -59,7 +59,7 @@
        (log/info "Syncing data success")
        (do
          (log/error "Failed to sync data, error response" (remove-basic-auth response))
-         (throw (Exception. (str "Could not sync request " body-as-string))))))))
+         (throw (Exception. (str "Could not sync request to url " url))))))))
 
 (defn- do-delete [url basic-auth]
   (log/info "DELETE request to url" url)
