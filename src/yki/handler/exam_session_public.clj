@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.handler.routing :as routing]
-            [ring.util.http-response :refer [ok not-found]]
+            [ring.util.http-response :refer [ok not-found conflict]]
             [ring.util.request]
             [yki.spec :as ys]
             [clojure.tools.logging :as log]
@@ -35,6 +35,9 @@
         :body [request ::ys/to-queue-request]
         :return ::ys/response
         (log/info "Adding email " (:email request) " to exam session " id " queue")
-        (exam-session-db/add-to-exam-session-queue! db (:email request) lang id)
-        (ok {:success true})))))
+        (if (exam-session-db/get-email-added-to-queue? db (:email request) id)
+          (conflict {:exists true})
+          (do
+            (exam-session-db/add-to-exam-session-queue! db (:email request) lang id)
+            (ok {:success true})))))))
 

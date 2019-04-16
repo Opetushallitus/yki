@@ -249,6 +249,9 @@ SELECT
   e.max_participants,
   e.office_oid,
   e.published_at,
+((SELECT COUNT(1)
+  FROM exam_session_queue
+  WHERE exam_session_id = e.id) >= 50) as queue_full,
 (SELECT COUNT(1)
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
@@ -845,7 +848,7 @@ WHERE exam_session_id = :exam_session_id
   AND email = :email;
 
 --name: select-email-added-to-queue
-SELECT email
+SELECT COUNT(1)
 FROM exam_session_queue
 WHERE exam_session_id = :exam_session_id
   AND email = :email;
