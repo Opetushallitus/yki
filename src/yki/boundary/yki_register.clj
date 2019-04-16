@@ -142,7 +142,7 @@
          first_name ";"
          last_name ";"
          (convert-gender gender ssn) ";"
-         nationality ";"
+         (if (= nationality "ZAR") "xxx" nationality) ";"
          street_address ";"
          zip ";"
          post_office ";"
