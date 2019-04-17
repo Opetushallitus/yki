@@ -205,6 +205,9 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
+  (SELECT COUNT(1)
+    FROM exam_session_queue
+    WHERE exam_session_id = e.id) as queue,
   ((SELECT COUNT(1)
     FROM exam_session_queue
     WHERE exam_session_id = e.id) >= 50) as queue_full,
@@ -249,6 +252,9 @@ SELECT
   e.max_participants,
   e.office_oid,
   e.published_at,
+(SELECT COUNT(1)
+  FROM exam_session_queue
+  WHERE exam_session_id = e.id) as queue,
 ((SELECT COUNT(1)
   FROM exam_session_queue
   WHERE exam_session_id = e.id) >= 50) as queue_full,
@@ -851,4 +857,4 @@ WHERE exam_session_id = :exam_session_id
 SELECT COUNT(1)
 FROM exam_session_queue
 WHERE exam_session_id = :exam_session_id
-  AND email = :email;
+  AND LOWER(email) = LOWER(:email);

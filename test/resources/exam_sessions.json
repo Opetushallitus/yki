@@ -42,7 +42,8 @@
       "language_code": "fin",
       "level_code": "PERUS",
       "open": false,
-      "queue_full": false
+      "queue_full": false,
+      "queue": 0
     }
   ]
 }

@@ -55,7 +55,7 @@
                                   (j/write-value-as-string {:email "test@test.com"}))
                     (mock/content-type "application/json; charset=UTF-8"))
         twice-request (-> (mock/request :post (str routing/exam-session-public-api-root "/" id "/queue?lang=sv")
-                                        (j/write-value-as-string {:email "test@test.com"}))
+                                        (j/write-value-as-string {:email "Test@test.com"}))
                           (mock/content-type "application/json; charset=UTF-8"))
         response (send-request request)
         twice-response (send-request twice-request)
