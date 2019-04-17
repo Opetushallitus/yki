@@ -10,6 +10,9 @@
             [clojure.tools.logging :as log]
             [jsonista.core :as json]))
 
+(defn- nationality-not-supported? [nationality]
+  (some #(= nationality %) ["ZAR" "YYY"]))
+
 (defn- convert-level [level]
   (case level "PERUS" "PT" "KESKI" "KT" "YLIN" "YT"))
 
@@ -142,7 +145,7 @@
          first_name ";"
          last_name ";"
          (convert-gender gender ssn) ";"
-         (if (= nationality "ZAR") "xxx" nationality) ";"
+         (if (nationality-not-supported? nationality) "xxx" nationality) ";"
          street_address ";"
          zip ";"
          post_office ";"
