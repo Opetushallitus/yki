@@ -103,6 +103,7 @@
 (s/def ::exam_fee                   ::amount)
 (s/def ::open                       boolean?)
 (s/def ::queue_full                 boolean?)
+(s/def ::queue                      int?)
 (s/def ::from                       ::date)
 
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -115,6 +116,7 @@
                                        ::office_oid
                                        ::exam_fee
                                        ::open
+                                       ::queue
                                        ::queue_full
                                        ::participants
                                        ::organizer_oid]))
