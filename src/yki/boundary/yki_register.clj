@@ -11,7 +11,7 @@
             [jsonista.core :as json]))
 
 (defn- nationality-not-supported? [nationality]
-  (some #(= nationality %) ["ZAR" "YYY"]))
+  (some #(= nationality %) ["ZAR" "YYY" "XKK"]))
 
 (defn- convert-level [level]
   (case level "PERUS" "PT" "KESKI" "KT" "YLIN" "YT"))
