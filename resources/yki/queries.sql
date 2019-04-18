@@ -514,6 +514,7 @@ AND EXISTS (SELECT id
 	                                    AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid))
 
+-- submitted registration expires 8 days from payment creation at midnight
 -- name: update-submitted-registrations-to-expired<!
 UPDATE registration
 SET state = 'EXPIRED',
@@ -522,7 +523,7 @@ WHERE state = 'SUBMITTED'
   AND id IN (SELECT registration_id
             FROM payment
             WHERE state = 'UNPAID'
-            AND (created + interval '8 days') < current_timestamp)
+            AND (date_trunc('day', created) + interval '9 day') AT TIME ZONE 'Europe/Helsinki' < (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
 RETURNING id as updated;
 
 -- name: select-registration-data

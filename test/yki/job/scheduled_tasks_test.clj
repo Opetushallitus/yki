@@ -62,7 +62,7 @@
   (base/insert-base-data)
   (base/insert-payment)
   (jdbc/execute! @embedded-db/conn
-                 "UPDATE payment SET created = (current_timestamp - interval '193 hours')")
+                 "UPDATE payment SET created = (current_timestamp - interval '9 days')")
   (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (base/db)})
         _ (registration-state-handler)
         registration (base/select-one "SELECT * FROM registration")]
