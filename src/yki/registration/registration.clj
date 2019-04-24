@@ -110,7 +110,9 @@
         exam-session-space-left? (registration-db/exam-session-space-left? db (:id exam-session) id)]
     (if exam-session-space-left?
       (let [identity                 (:identity session)
-            form-with-email          (if (= (:auth-method session) "EMAIL") (assoc form :email (:external-user-id identity)) form)
+            form-with-email          (if (= (:auth-method session) "EMAIL")
+                                       (assoc form :email (:external-user-id identity))
+                                       (assoc form :ssn (:ssn identity)))
             participant-id           (get-participant-id db identity)
             email                    (:email form)
             started?                 (= (:state exam-session) "STARTED")]
