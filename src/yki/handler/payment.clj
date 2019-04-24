@@ -40,9 +40,8 @@
              formdata (paytrail-payment/create-payment-form-data db url-helper payment-config registration-id external-user-id lang)]
          (if formdata
            (do
-             (log/info "Return payment formdata" formdata)
+             (log/info "Get payment form data success")
              (ok formdata))
-
            (internal-server-error {:error "Payment form data creation failed"}))))
      (GET "/success" request
        (let [params (:params request)]

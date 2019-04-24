@@ -29,7 +29,7 @@
   true)
 
 (defn- no-access [request]
-  (log/warn "No access to uri:" (:uri request))
+  (log/info "No access to uri:" (:uri request))
   false)
 
 (defn- participant-authenticated [request]
