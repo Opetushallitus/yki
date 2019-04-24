@@ -60,7 +60,6 @@
            :email "test@test.com"})
 
 (deftest registration-create-and-update-test
-
   (base/insert-base-data)
   (base/insert-organizer "'1.2.3.5'")
   (base/insert-payment-config "'1.2.3.5'")
