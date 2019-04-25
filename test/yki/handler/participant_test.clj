@@ -13,7 +13,7 @@
   (testing "get exam session participants endpoint should return participant registration form and state"
     (base/insert-base-data)
     (base/insert-registrations "COMPLETED")
-
+    (base/insert-unpaid-expired-registration)
     (let [exam-session-id (base/get-exam-session-id)
           request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration"))
           response (base/send-request-with-tx request)
