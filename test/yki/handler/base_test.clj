@@ -236,6 +236,14 @@
                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
                                     ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')")))
 
+(defn insert-unpaid-expired-registration []
+  (jdbc/execute! @embedded-db/conn (str
+                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
+                                    ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
+  (jdbc/execute! @embedded-db/conn (str
+                                    "INSERT INTO payment(state, registration_id, amount, lang, order_number) values
+                        ('UNPAID', (SELECT id FROM registration where person_oid = '5.4.3.2.3'), 100.00, 'fi', 'order1234')")))
+
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)

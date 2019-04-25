@@ -716,7 +716,10 @@ INNER JOIN registration r ON es.id = r.exam_session_id
 LEFT JOIN payment pa ON pa.registration_id = r.id
 WHERE es.id = :id
 AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
-AND r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
+AND (r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
+    OR (r.state = 'EXPIRED' AND EXISTS (SELECT id
+                                        FROM payment
+                                        WHERE registration_id = r.id)))
 ORDER BY r.created ASC;
 
 --name: update-registration-status-to-cancelled!
