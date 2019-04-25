@@ -17,10 +17,10 @@
     (let [exam-session-id (base/get-exam-session-id)
           request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration"))
           response (base/send-request-with-tx request)
-          response-body (base/body-as-json response)]
+          without-created (map #(dissoc % "created") ((base/body-as-json response) "participants"))]
       (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
       (is (= (:status response) 200))
-      (is (= response-body (j/read-value (slurp "test/resources/participants.json"))))
+      (is (= {"participants" without-created} (j/read-value (slurp "test/resources/participants.json"))))
 
       (base/insert-exam-session 2 "'1.2.3.4'" 5)
       (testing "participant registration is changed to another exam session"

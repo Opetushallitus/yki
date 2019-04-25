@@ -710,7 +710,8 @@ SELECT
   r.state,
   r.id as registration_id,
   r.original_exam_session_id,
-  pa.order_number
+  pa.order_number,
+  pa.created
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 LEFT JOIN payment pa ON pa.registration_id = r.id
