@@ -105,6 +105,8 @@
     :handler any-access}
    {:pattern #".*/auth/login.*"
     :handler any-access}
+   {:pattern #".*/auth/logout"
+    :handler any-access}
    {:pattern #".*/auth/initsession"
     :handler any-access}
    {:pattern #".*/auth/user"

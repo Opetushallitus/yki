@@ -24,6 +24,8 @@
 
 (def login-link-api-root (str api-root "/login-link"))
 
+(def logout-link (str auth-root "/logout"))
+
 (def payment-root (str app-root "/payment"))
 
 (def registration-api-root (str api-root "/registration"))

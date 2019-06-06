@@ -1,5 +1,5 @@
 (ns yki.auth.header-auth
-  (:require [ring.util.http-response :refer [found]]
+  (:require [ring.util.http-response :refer [found ok see-other]]
             [yki.boundary.onr :as onr]
             [clojure.tools.logging :as log]
             [clojure.string :as str])
@@ -49,3 +49,8 @@
         :auth-method "SUOMIFI"
         :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))
+
+    (defn logout [url-helper lang]
+      (let [redirect-url (url-helper :tunnistus.logout (url-helper :yki.default.logout.redirect "fi"))]
+        (-> (see-other redirect-url)
+            (assoc :session nil))))
