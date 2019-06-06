@@ -30,3 +30,7 @@
     (catch Exception e
       (error e "Login link handling failed")
       (throw e))))
+
+(defn logout [url-helper lang]
+  (-> (found (url-helper :yki.default.logout.redirect lang))
+      (assoc :session nil)))

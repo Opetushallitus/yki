@@ -22,6 +22,10 @@
        (ok (update-in session [:identity] dissoc :ticket)))
      (GET "/login" [code lang]
        (code-auth/login db code lang url-helper))
+      (GET "/logout" {session :session} 
+        (if (= "SUOMIFI" (:auth-method session))
+          (header-auth/logout url-helper (or (get-in session [:identity :lang]) "fi"))
+          (code-auth/logout url-helper (or (get-in session [:identity :lang]) "fi"))))
      (context routing/virkailija-auth-uri []
        (POST "/callback" request
          (cas-auth/cas-logout db (get-in request [:params :logoutRequest])))

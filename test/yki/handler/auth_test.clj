@@ -112,7 +112,7 @@
         (is (= (get-in response [:response :status]) 200))
         (is (= id user-2))))))
 
-(deftest login-with-login-link-test
+(deftest login-and-logout-with-login-link-test
   (base/insert-base-data)
   (base/insert-login-link base/code-ok "2038-01-01")
   (base/insert-login-link code-expired (l/format-local-time (l/local-now) :date))
@@ -123,10 +123,17 @@
                      (peridot/request (str routing/auth-root "/login?code=" base/code-ok))
                      (peridot/request (str routing/auth-root "/user")))
         response-body (base/body-as-json (:response response))
-        id (response-body "identity")]
+        id (response-body "identity")
+        logout-response (-> session 
+                            (peridot/request (str routing/auth-root "/logout"))
+                            (peridot/request (str routing/auth-root "/user")))
+        logout-response-body (base/body-as-json (:response logout-response))]
     (testing "after successfull login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
-      (is (= (id "external-user-id") "test@user.com"))))
+      (is (= (id "external-user-id") "test@user.com")))
+    (testing "after logout session should not contain user data"
+      (is (= (get-in logout-response [:response :status]) 200))
+      (is (= (logout-response-body "identity") nil))))
 
   (let [handler (create-routes "")
         session (peridot/session handler)
