@@ -124,7 +124,7 @@
                      (peridot/request (str routing/auth-root "/user")))
         response-body (base/body-as-json (:response response))
         id (response-body "identity")
-        logout-response (-> session 
+        logout-response (-> response
                             (peridot/request (str routing/auth-root "/logout"))
                             (peridot/request (str routing/auth-root "/user")))
         logout-response-body (base/body-as-json (:response logout-response))]
