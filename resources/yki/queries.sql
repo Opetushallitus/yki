@@ -352,6 +352,11 @@ WHERE id = (SELECT es.id FROM exam_session es
             WHERE es.id = :id AND ed.registration_start_date > current_date
             AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
+-- name: select-email-registrations-within-year
+SELECT * FROM registration
+  WHERE registration_method = 'EMAIL'
+  AND created + INTERVAL '365 days' > current_timestamp;
+
 -- name: insert-participant<!
 INSERT INTO participant(
   external_user_id,

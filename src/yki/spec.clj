@@ -140,6 +140,13 @@
 ;; exam session queue
 (s/def ::to-queue-request (s/keys :req-un [::email]))
 
+;; unindividualized
+(s/def ::unindividualized-person-type (s/keys :req-un [::first_name
+                                                       ::last_name
+                                                       ::email]))
+(s/def ::unindividualized (s/coll-of ::unindividualized-person-type))
+(s/def ::unindividualized-response (s/keys :req-un [::unindividualized]))
+
 ;; localisation
 (s/def ::category (s/and string? #(<= (count %) 256)))
 (s/def ::key      (s/and string? #(<= (count %) 256)))

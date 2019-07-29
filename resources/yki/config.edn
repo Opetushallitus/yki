@@ -28,7 +28,8 @@
             #ig/ref :yki.handler/exam-session-public
             #ig/ref :yki.handler/localisation
             #ig/ref :yki.handler/registration
-            #ig/ref :yki.handler/organizer]
+            #ig/ref :yki.handler/organizer
+            #ig/ref :yki.handler/unindividualized]
 
   :yki/migrations {}
 
@@ -102,6 +103,10 @@
   :yki.handler/code {:url-helper #ig/ref :yki.util/url-helper}
 
   :yki.handler/status {:db #ig/ref :duct.database/sql}
+
+  :yki.handler/unindividualized {:db #ig/ref :duct.database/sql
+                                 :auth #ig/ref :yki.middleware.auth/with-authentication
+                                 :onr-client #ig/ref :yki.boundary.onr/onr-client}
 
   :yki.handler/exam-date {:db #ig/ref :duct.database/sql}
 

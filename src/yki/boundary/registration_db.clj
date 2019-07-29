@@ -26,6 +26,7 @@
   (update-participant-email! [db email participant-id])
   (get-participant-data-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
+  (get-email-registrations [db])
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
   (update-submitted-registrations-to-expired! [db]))
@@ -119,6 +120,9 @@
   (get-registration
     [{:keys [spec]} registration-id external-user-id]
     (first (q/select-registration spec {:id registration-id :external_user_id external-user-id})))
+  (get-email-registrations
+    [{:keys [spec]}]
+    (q/select-email-registrations-within-year spec))
   (get-registration-data
     [{:keys [spec]} registration-id participant-id lang]
     (first (q/select-registration-data spec {:id registration-id :participant_id participant-id :lang lang})))

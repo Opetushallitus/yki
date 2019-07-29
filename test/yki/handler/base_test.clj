@@ -224,22 +224,22 @@
 
 (defn insert-payment []
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', " select-exam-session ", " select-participant ")"))
+                                    "INSERT INTO registration(state, exam_session_id, participant_id, registration_method) values ('SUBMITTED', " select-exam-session ", " select-participant ", 'SUOMIFI'" ")"))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
 
 (defn insert-registrations [state]
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-    ('5.4.3.2.2', '" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
+                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, registration_method, form) values
+    ('5.4.3.2.2', '" state "', " select-exam-session ", " select-participant ", 'SUOMIFI'" ",'" (j/write-value-as-string registration-form-2) "')"))
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                    ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')")))
+                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, registration_method, form) values
+                                    ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ", 'EMAIL'" ",'" (j/write-value-as-string registration-form) "')")))
 
 (defn insert-unpaid-expired-registration []
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                    ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
+                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, registration_method, form) values
+                                    ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ", 'SUOMIFI'" ",'" (j/write-value-as-string registration-form-2) "')"))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values
                         ('UNPAID', (SELECT id FROM registration where person_oid = '5.4.3.2.3'), 100.00, 'fi', 'order1234')")))
@@ -293,8 +293,9 @@
                                                                                        :access-log (access-log)
                                                                                        :url-helper url-helper
                                                                                        :exam-session-handler exam-session-handler
-                                                                                       :file-handler file-handler}))]
-    (routes organizer-handler auth-handler)))
+                                                                                       :file-handler file-handler}))
+        unindividualized-handler (middleware/wrap-format (ig/init-key :yki.handler/unindividualized {:db db :auth auth}))]
+    (routes organizer-handler auth-handler unindividualized-handler)))
 
 (defn send-request-with-tx
   ([request]

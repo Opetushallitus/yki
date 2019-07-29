@@ -24,7 +24,7 @@
 
 (def login-link-api-root (str api-root "/login-link"))
 
-(def logout-link (str auth-root "/logout"))
+(def logout-link (str api-root "/logout"))
 
 (def payment-root (str app-root "/payment"))
 
@@ -33,6 +33,8 @@
 (def exam-session-public-api-root (str api-root "/exam-session"))
 
 (def virkailija-api-root (str api-root "/virkailija"))
+
+(def unindividualized-uri (str virkailija-api-root "/unindividualized"))
 
 (def organizer-api-root (str virkailija-api-root "/organizer"))
 

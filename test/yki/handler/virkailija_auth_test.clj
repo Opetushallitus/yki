@@ -60,8 +60,9 @@
                                                                                  :exam-session-handler exam-session-handler
                                                                                  :auth auth
                                                                                  :file-handler {}}))
+        unindividualized-handler (middleware/wrap-format (ig/init-key :yki.handler/unindividualized {:db db :auth auth}))
         auth-handler (base/auth-handler auth url-helper)]
-    (routes org-handler auth-handler)))
+    (routes org-handler auth-handler unindividualized-handler)))
 
 (defn- login [port]
   (let [routes (create-routes port)
@@ -109,7 +110,9 @@
                                               :request-method :get))
         exam-session-delete (-> session
                                 (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/" exam-session-id)
-                                                 :request-method :delete))]
+                                                 :request-method :delete))
+        unindividualized-get (-> session (peridot/request routing/unindividualized-uri
+                                                          :request-method :get))]
     {:org {:post organizer-post
            :put organizer-put
            :delete organizer-delete
@@ -117,7 +120,8 @@
      :exam {:post exam-session-post
             :put exam-session-put
             :delete exam-session-delete
-            :get exam-session-get}}))
+            :get exam-session-get}
+     :unindividualized {:get unindividualized-get}}))
 
 (defn- assert-status-code
   [response code]
@@ -185,6 +189,7 @@
     (let [responses (fire-requests port)
           org-responses (:org responses)
           exam-responses (:exam responses)
+          unindividualized-responses (:unindividualized responses)
           organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "post organizer should not be allowed"
         (is (= (-> org-responses :post :response :status) 403)))
@@ -202,7 +207,9 @@
       (testing "get exam-session should be allowed"
         (is (= (-> exam-responses :get :response :status) 200)))
       (testing "delete exam-session should be allowed"
-        (is (= (-> exam-responses :get :response :status) 200))))))
+        (is (= (-> exam-responses :get :response :status) 200)))
+      (testing "unindividualized get should not be allowed"
+        (assert-status-code (:get unindividualized-responses) 403)))))
 
 (deftest user-with-admin-permissions-authorization-test
   (base/insert-organizer "'1.2.3.5'")
@@ -214,6 +221,7 @@
     (let [responses (fire-requests port)
           org-responses (:org responses)
           exam-responses (:exam responses)
+          unindividualized-responses (:unindividualized responses)
           organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "should allow all operations on organizer"
         (assert-status-code (:get org-responses) 200)
@@ -224,7 +232,8 @@
         (assert-status-code (:get exam-responses) 200)
         (assert-status-code (:put exam-responses) 200)
         (assert-status-code (:delete exam-responses) 200)
-        (assert-status-code (:post exam-responses) 200)))))
+        (assert-status-code (:post exam-responses) 200)
+        (assert-status-code (:get unindividualized-responses) 200)))))
 
 (deftest user-without-permissions-authorization-test
   (with-routes!
@@ -233,6 +242,7 @@
     (let [responses       (fire-requests port)
           exam-responses  (:exam responses)
           org-responses   (:org responses)
+          unindividualized-responses (:unindividualized responses)
           organizers      ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "should not allow any endpoints"
         (assert-status-code (:get org-responses) 200)
@@ -243,7 +253,8 @@
         (assert-status-code (:get exam-responses) 403)
         (assert-status-code (:put exam-responses) 403)
         (assert-status-code (:delete exam-responses) 403)
-        (assert-status-code (:post exam-responses) 403)))))
+        (assert-status-code (:post exam-responses) 403)
+        (assert-status-code (:get unindividualized-responses) 403)))))
 
 (deftest unauthenticated-user-test
   (let [routes (create-routes 8080)

@@ -8,7 +8,8 @@
 (defprotocol Onr
   (get-or-create-person [this person])
   (get-person-by-ssn [this ssn])
-  (get-person-by-oid [this oid]))
+  (get-person-by-oid [this oid])
+  (get-master-oids [this oids]))
 
 (defrecord OnrClient [url-helper cas-client]
   Onr
@@ -29,7 +30,13 @@
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
         (json/read-value body)
-        (log/error "ONR get-person-by-oid error:" status)))))
+        (log/error "ONR get-person-by-oid error:" status))))
+  (get-master-oids [_ oids]
+    (let [url (url-helper :onr-service.get-master-oids)
+          {:keys [status body]} (cas/cas-authenticated-post cas-client url oids)]
+          (if (= 200 status)
+            (json/read-value body)
+            (log/error "ONR get-master-oids error: " status)))))
 
 (defmethod ig/init-key :yki.boundary.onr/onr-client [_ {:keys [url-helper cas-client]}]
   (->OnrClient url-helper (cas-client "/oppijanumerorekisteri-service")))

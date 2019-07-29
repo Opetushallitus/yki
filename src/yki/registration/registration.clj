@@ -78,7 +78,8 @@
         (if (and exam-session-registration-open? exam-session-space-left? not-registered-to-exam-session?)
           (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
                                                                           :participant_id  participant-id
-                                                                          :started_at      (t/now)})
+                                                                          :started_at      (t/now)
+                                                                          :registration_method (get-in session [:identity :auth-method])})
                 response        (create-init-response db session exam_session_id registration-id payment-config)]
             (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
             (ok response))
