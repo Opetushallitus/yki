@@ -7,15 +7,16 @@
             [yki.handler.routing :as routing]
             [integrant.core :as ig]))
 
-(def select-values (comp vals select-keys))
-
 (defmethod ig/init-key :yki.handler/unindividualized [_ {:keys [db auth onr-client]}]
   (api
     (context routing/unindividualized-uri []
       :middleware [auth]
       (GET "/" []
         (let [registrations (registration-db/get-email-registrations db)
-              ; master-oids-response (onr/get-master-oids onr-client registrations)
-              ]
-          (println (map (select-keys [:person_oid]) registrations))
-          (ok {:unindividualized registrations}))))))
+              reg-oids (map :person_oid registrations)]
+          (if (> (count reg-oids) 0)
+            (let [master-henkilot (onr/get-master-oids onr-client reg-oids)]
+                ;  master-henkilot-parsed (map #(select-keys % ["oidHenkilo" "yksiloity" "etunimet" "sukunimi"]) master-henkilot)]
+              (println master-henkilot)
+              (ok {:unindividualized master-henkilot}))
+            (ok {:unindividualized '()})))))))
