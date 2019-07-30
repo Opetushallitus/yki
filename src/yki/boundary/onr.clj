@@ -34,6 +34,7 @@
   (get-master-oids [_ oids]
     (let [url (url-helper :onr-service.get-master-oids)
           {:keys [status body]} (cas/cas-authenticated-post cas-client url oids)]
+          (log/info "ONR get-master-oids called, status: " status)
           (if (= 200 status)
             (json/read-value body)
             (log/error "ONR get-master-oids error: " status)))))
