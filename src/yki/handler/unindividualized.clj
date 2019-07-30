@@ -3,6 +3,7 @@
             [yki.boundary.registration-db :as registration-db]
             [ring.util.http-response :refer [ok]]
             [yki.boundary.onr :as onr]
+            [clojure.tools.logging :as log]
             [yki.spec :as ys]
             [yki.handler.routing :as routing]
             [integrant.core :as ig]))
