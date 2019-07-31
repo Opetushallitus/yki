@@ -353,9 +353,16 @@ WHERE id = (SELECT es.id FROM exam_session es
             AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
 -- name: select-email-registrations-within-year
-SELECT * FROM registration
-  WHERE registration_method = 'EMAIL'
-  AND created + INTERVAL '365 days' > current_timestamp;
+SELECT DISTINCT re.exam_session_id, re.person_oid, re.form, re.registration_method, 
+       es.language_code, es.level_code,
+       ed.exam_date,
+       esl.name as exam_session_location_name
+FROM registration re
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+INNER JOIN exam_session_location esl ON es.id = es.id
+WHERE re.registration_method = 'EMAIL'
+AND re.created + INTERVAL '365 days' > current_timestamp;
 
 -- name: insert-participant<!
 INSERT INTO participant(

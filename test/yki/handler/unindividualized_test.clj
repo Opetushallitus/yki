@@ -55,17 +55,20 @@
              {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
                                                         :body (slurp "test/resources/localisation.json")}}
              {"/oppijanumerorekisteri-service/henkilo/masterHenkilosByOidList" {:status 200 :content-type "application/json"
-                                                                                  :body   (j/write-value-as-string {:additionalProp1 {:oidHenkilo "1.2.4.5.6" :yksiloity false}})}}))
+                                                                                  :body   (j/write-value-as-string {(keyword "5.4.3.2.1") {:oidHenkilo "1.2.4.5.6" :yksiloity false}, 
+                                                                                                                    (keyword "1.3.4.5.6") {:oidHenkilo "1.3.4.5.6" :yksiloity true},
+                                                                                                                    (keyword "1.2.4.5.8") {:oidHenkilo "1.2.4.5.8" :yksiloity false},
+                                                                                                                    (keyword "1.2.4.5.7") {:oidHenkilo "1.2.4.5.7" :yksiloity false}})}}))
       (let [handlers (create-handlers (:port server))
             session  (peridot/session handlers)]
-        (testing "should have one registration with email type" 
+        (testing "should have three unindividualized" 
           (let [response (-> session 
                              (peridot/request routing/virkailija-auth-callback
                                 :request-method :get
                                 :params {:ticket "ST-15126"})
                              (peridot/request routing/unindividualized-uri :request-method :get))]
             (is (= (get (-> response :response :headers) "Content-Type") "application/json; charset=utf-8"))
-            (is (= 1 (count (first (vals (base/body-as-json (:response response))))))) 
+            (is (= 3 (count (first (vals (base/body-as-json (:response response)))))))
             (is (= (-> response :response :status) 200))))
         (jdbc/execute! @embedded-db/conn "UPDATE registration SET created = '2018-06-26T14:26:48.632Z' WHERE person_oid = '5.4.3.2.1'")
         (testing "should have zero registration because the singular registration from over year ago"
