@@ -360,7 +360,7 @@ SELECT DISTINCT re.exam_session_id, re.person_oid, re.form, re.registration_meth
 FROM registration re
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-INNER JOIN exam_session_location esl ON es.id = es.id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.registration_method = 'EMAIL'
 AND re.created + INTERVAL '365 days' > current_timestamp;
 
