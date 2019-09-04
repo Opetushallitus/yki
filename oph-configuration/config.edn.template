@@ -3,8 +3,8 @@
                                :database-name "yki"
                                :server-name "{{host_postgresql_yki}}"
                                :port-number "{{host_postgresql_yki_port}}"
-                               :username "{{host_postgresql_yki_user}}"
-                               :password "{{host_postgresql_yki_password}}"
+                               :username "{{postgres_app_user}}"
+                               :password "{{host_postgresql_yki_app_password}}"
                                :connection-timeout {{host_postgresql_yki_max_wait}}
                                :maximum-pool-size {{host_postgresql_yki_max_active}}}
   :yki.util/url-helper {:virkailija-host     "{{host_virkailija}}"
@@ -18,8 +18,8 @@
 
   :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
                                          :subname "//{{host_postgresql_yki}}:{{host_postgresql_yki_port}}/yki"
-                                         :user "{{host_postgresql_yki_user}}"
-                                         :password "{{host_postgresql_yki_password}}"}}}
+                                         :user "{{postgres_app_user}}"
+                                         :password "{{host_postgresql_yki_app_password}}"}}}
 
   :yki.job.scheduled-tasks/participants-sync-handler {:db #ig/ref :duct.database/sql
                                                       :disabled {{yki_register_sync_disabled}}
