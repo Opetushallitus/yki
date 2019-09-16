@@ -10,8 +10,10 @@
             [clojure.tools.logging :as log]
             [jsonista.core :as json]))
 
-(defn- nationality-not-supported? [nationality]
-  (some #(= nationality %) ["ZAR" "YYY" "XKK"]))
+; HOTFIX change: if nationality null or empty, its labeled as missing and thus marked as "xxx".
+; Find out why Solki and yki nationality codes differ sometimes, to avoid using a blacklist like this
+(defn- nationality-not-supported-or-missing? [nationality]
+  (some #(= nationality %) ["ZAR" "YYY" "XKK" "" nil]))
 
 (defn- convert-level [level]
   (case level "PERUS" "PT" "KESKI" "KT" "YLIN" "YT"))
@@ -145,12 +147,14 @@
                      last_name
                      first_name
                      (convert-gender gender ssn)
-                     (if (nationality-not-supported? nationality) "xxx" nationality)
+                     (if (nationality-not-supported-or-missing? nationality) "xxx" nationality)
                      street_address
                      zip
                      post_office
                      email
-                     exam_lang
+                    ;  HOTFIX: put this below conversion to fix SOLKI wrongly synced data. Remove below line after 
+                    ;  "EN" is no longer valid option in exam language in frontend
+                     (if (= exam_lang "en") "fi" exam_lang)
                      certificate_lang]]
     (apply str (interpose ";" csv-entries))))
 
