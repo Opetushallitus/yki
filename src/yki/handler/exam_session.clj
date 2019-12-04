@@ -1,5 +1,5 @@
 (ns yki.handler.exam-session
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.registration-db :as registration-db]
             [yki.registration.paytrail-payment :as paytrail-payment]

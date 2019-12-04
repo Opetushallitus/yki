@@ -1,5 +1,5 @@
 (ns yki.handler.registration
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context POST]]
             [yki.handler.routing :as routing]
             [yki.registration.registration :as registration]
             [yki.util.audit-log :as audit]

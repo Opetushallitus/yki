@@ -1,5 +1,5 @@
 (ns yki.auth.cas-auth
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api routes]]
             [integrant.core :as ig]
             [yki.handler.routing :as routing]
             [yki.boundary.cas :as cas]

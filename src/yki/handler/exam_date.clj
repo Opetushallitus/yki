@@ -1,5 +1,5 @@
 (ns yki.handler.exam-date
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [context GET]]
             [yki.boundary.exam-date-db :as exam-date-db]
             [ring.util.http-response :refer [ok]]
             [yki.spec :as ys]

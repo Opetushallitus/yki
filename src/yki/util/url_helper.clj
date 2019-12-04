@@ -4,9 +4,8 @@
 
 (defonce ^fi.vm.sade.properties.OphProperties url-properties (atom nil))
 
-(defmethod ig/init-key :yki.util/url-helper [_ {:keys [virkailija-host oppija-host yki-register-host tunnistus-host yki-host-virkailija alb-host scheme] :or
-                                                {virkailija-host "" tunnistus-host "" oppija-host "" yki-register-host ""
-                                                 yki-host-virkailija "" alb-host "" scheme "https"}}]
+(defmethod ig/init-key :yki.util/url-helper [_ {:keys [virkailija-host oppija-host yki-register-host tunnistus-host yki-host-virkailija alb-host scheme] 
+                                                :or   {virkailija-host "" tunnistus-host "" oppija-host "" yki-register-host "" yki-host-virkailija "" alb-host "" scheme "https"}}]
   (reset! url-properties
           (doto (OphProperties. (into-array String ["/yki/yki-oph.properties"]))
             (.addDefault "scheme" scheme)

@@ -1,5 +1,5 @@
 (ns yki.handler.auth
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context GET POST]]
             [integrant.core :as ig]
             [clojure.tools.logging :as log]
             [yki.handler.routing :as routing]
@@ -22,7 +22,7 @@
        (ok (update-in session [:identity] dissoc :ticket)))
      (GET "/login" [code lang]
        (code-auth/login db code lang url-helper))
-      (GET "/logout" {session :session} 
+      (GET "/logout" {session :session}
         (if (= "SUOMIFI" (:auth-method session))
           (header-auth/logout url-helper (or (get-in session [:identity :lang]) "fi"))
           (code-auth/logout url-helper (or (get-in session [:identity :lang]) "fi"))))

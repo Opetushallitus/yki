@@ -1,5 +1,5 @@
 (ns yki.handler.login-link
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context POST]]
             [yki.handler.routing :as routing]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.exam-session-db :as exam-session-db]
@@ -12,7 +12,7 @@
             [yki.job.job-queue]
             [ring.util.http-response :refer [ok]]
             [buddy.core.hash :as hash]
-            [buddy.core.codecs :refer :all]
+            [buddy.core.codecs :refer [bytes->hex]]
             [integrant.core :as ig])
   (:import [java.util UUID]))
 

@@ -1,5 +1,5 @@
 (ns yki.handler.code
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context GET]]
             [yki.boundary.codes :as codes]
             [ring.util.http-response :refer [ok]]
             [yki.spec :as ys]
