@@ -37,11 +37,11 @@
 
 (defn valid-return-params? [merchant_secret query-params]
   (if-let [return-authcode (:RETURN_AUTHCODE query-params)]
-    (let [plaintext (-> (->> response-keys
+    (let [plaintext (str (->> response-keys
                              (map #(% query-params))
                              (remove nil?)
                              (str/join "|"))
-                        (str "|" merchant_secret))
+                        "|" merchant_secret)
           calculated-authcode (-> plaintext DigestUtils/sha256Hex str/upper-case)]
       (= return-authcode calculated-authcode))
     (log/error "Tried to authenticate message, but the map contained no :RETURN_AUTHCODE key. Data:" query-params)))

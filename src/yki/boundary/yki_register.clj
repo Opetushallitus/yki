@@ -142,7 +142,7 @@
   (let [{:keys [first_name last_name gender nationalities birthdate ssn certificate_lang
                 exam_lang post_office zip street_address phone_number email]} registration-form
         nationality (codes/get-converted-country-code url-helper (first nationalities))
-        csv-entries [oid 
+        csv-entries [oid
                      (ssn-or-birthdate ssn birthdate)
                      last_name
                      first_name
@@ -152,11 +152,11 @@
                      zip
                      post_office
                      email
-                    ;  HOTFIX: put this below conversion to fix SOLKI wrongly synced data. Remove below line after 
+                    ;  HOTFIX: put this below conversion to fix SOLKI wrongly synced data. Remove below line after
                     ;  "EN" is no longer valid option in exam language in frontend
                      (if (= exam_lang "en") "fi" exam_lang)
                      certificate_lang]]
-    (apply str (interpose ";" csv-entries))))
+    (clojure.string/join ";" csv-entries)))
 
 (defn create-participants-csv [url-helper participants]
   (map #(create-partipant-csv url-helper (:form %) (:person_oid %)) participants))

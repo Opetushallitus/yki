@@ -59,6 +59,7 @@
   :jvm-opts ["-Duser.timezone=UTC"]
   :resource-paths ["resources" "target/resources"]
   :prep-tasks     ["javac" "compile" ["run" ":duct/compiler"]]
+  :global-vars {*warn-on-reflection* true}
   :profiles
   {:dev  [:project/dev :profiles/dev]
    :test {:jvm-opts ["-Dlogback.configurationFile=test/resources/logback-test.xml"]}

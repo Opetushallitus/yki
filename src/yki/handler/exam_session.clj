@@ -71,7 +71,7 @@
           :return ::ys/response
           (let [exam-session (exam-session-db/get-exam-session-by-id db id)
                 participants (:participants exam-session)]
-            (if (= participants 0)
+            (if (zero? participants)
               (if (exam-session-db/delete-exam-session! db id oid (send-to-queue
                                                                    data-sync-q
                                                                    (assoc exam-session :organizer_oid oid)

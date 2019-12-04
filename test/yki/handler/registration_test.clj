@@ -103,16 +103,17 @@
           payment-link (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           email-request (pgq/take email-q)]
+
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
-        (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))
+        (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))
         (is (= (:state registration) "STARTED"))
         (is (some? (:started_at registration))))
 
       (testing "second post before submitting should return init data"
         (let [create-twice-response-body (base/body-as-json (:response create-twice-response))]
           (is (= (get-in create-twice-response [:response :status]) 200))
-          (is (= (init-response-body (j/read-value (slurp "test/resources/init_registration_response.json")))))))
+          (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))))
 
       (testing "post submit endpoint should create payment"
         (is (= (get-in submit-response [:response :status]) 200))
@@ -126,7 +127,7 @@
         (is (= (:order_number payment) "YKI6000000001")))
       (testing "and set registration status to SUBMITTED"
         (is (= (:state submitted-registration) "SUBMITTED"))
-        (is (= (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
+        (is (= true (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))
       (testing "and delete item from exam session queue"
         (is (= {:count 0}
