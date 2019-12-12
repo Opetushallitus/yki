@@ -1,5 +1,5 @@
 (ns yki.handler.exam-session-public
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [context GET POST]]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.handler.routing :as routing]
             [ring.util.http-response :refer [ok not-found conflict]]

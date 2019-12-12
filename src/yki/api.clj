@@ -1,5 +1,5 @@
 (ns yki.api
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api routes]]
             [integrant.core :as ig]))
 
 (defmethod ig/init-key :yki/api [_ handlers]

@@ -1,16 +1,47 @@
-/target
+# various IDE temp directories etc.
+target/
+classes/
+checkouts/
+out/
+bin/
+
+# Clojure metafiles
+.lein-env
+.lein-failures
+.lein-repl-history
+.nrepl-port
+.nrepl-history
+
+# Leiningen project definition - this is Boot project which autogenerates project.clj so it should not be commited
+project.clj
+
+# JetBrains IDE metadata
+*.iml
+.idea/
+
+# Language Server Protocol (LSP) logfiles
+lsp/
+
+# Visual Studio Code metadata
+.vscode
+
+# Allow all and any scratch files to exist in project root
+scratch.*
+
+# macOS meta files
+.DS_Store
+
+# default configuration, do not commit or use actual credentials!
+local.edn
+
+# OPH specific rules
 /logs
-/classes
-/checkouts
 pom.xml
 pom.xml.asc
 *.jar
 *.class
-/.lein-*
-/.nrepl-port
 /.dir-locals.el
 /profiles.clj
-.vscode
 /dev/resources/local.edn
 /dev/src/local.clj
 /db/dev.sqlite

@@ -50,7 +50,6 @@
         :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))
 
-    (defn logout [url-helper lang]
-      (let [redirect-url (url-helper :tunnistus.logout (url-helper :yki.default.logout.redirect "fi"))]
-        (-> (see-other redirect-url)
-            (assoc :session nil))))
+(defn logout [url-helper lang]
+  (let [redirect-url (url-helper :tunnistus.logout (url-helper :yki.default.logout.redirect "fi"))]
+    (assoc (see-other redirect-url) :session nil)))

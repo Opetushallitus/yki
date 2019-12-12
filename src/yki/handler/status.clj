@@ -1,5 +1,5 @@
 (ns yki.handler.status
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context GET]]
             [yki.boundary.status-db :as status-db]
             [yki.handler.routing :as routing]
             [clojure.tools.reader.edn :as edn]

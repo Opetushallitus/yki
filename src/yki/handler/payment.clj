@@ -1,5 +1,5 @@
 (ns yki.handler.payment
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context GET]]
             [clojure.tools.logging :as log]
             [yki.handler.routing :as routing]
             [yki.boundary.registration-db :as registration-db]

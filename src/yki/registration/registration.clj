@@ -13,7 +13,7 @@
             [yki.util.common :as c]
             [ring.util.http-response :refer [ok conflict]]
             [buddy.core.hash :as hash]
-            [buddy.core.codecs :refer :all]
+            [buddy.core.codecs :refer [bytes->hex]]
             [clojure.tools.logging :as log])
   (:import [java.util UUID]))
 

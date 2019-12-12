@@ -1,5 +1,5 @@
 (ns yki.handler.organizer
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
             [yki.boundary.organizer-db :as organizer-db]
             [yki.handler.routing :as routing]
             [yki.middleware.auth :as auth]

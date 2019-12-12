@@ -1,5 +1,5 @@
 (ns yki.handler.exam-session
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.registration-db :as registration-db]
             [yki.registration.paytrail-payment :as paytrail-payment]
@@ -71,7 +71,7 @@
           :return ::ys/response
           (let [exam-session (exam-session-db/get-exam-session-by-id db id)
                 participants (:participants exam-session)]
-            (if (= participants 0)
+            (if (zero? participants)
               (if (exam-session-db/delete-exam-session! db id oid (send-to-queue
                                                                    data-sync-q
                                                                    (assoc exam-session :organizer_oid oid)

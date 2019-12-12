@@ -1,5 +1,5 @@
 (ns yki.handler.file
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [context GET POST]]
             [yki.boundary.organizer-db :as organizer-db]
             [yki.boundary.files :as files]
             [yki.spec :as ys]

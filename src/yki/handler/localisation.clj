@@ -1,5 +1,5 @@
 (ns yki.handler.localisation
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.sweet :refer [context GET]]
             [yki.handler.routing :as routing]
             [yki.boundary.localisation :as localisation]
             [ring.util.response :refer [response]]
