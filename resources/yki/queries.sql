@@ -863,3 +863,6 @@ SELECT COUNT(1)
 FROM exam_session_queue
 WHERE exam_session_id = :exam_session_id
   AND LOWER(email) = LOWER(:email);
+
+--name: do-the-needful
+SELECT 1;
