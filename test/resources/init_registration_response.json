@@ -1,6 +1,12 @@
 {
   "exam_session": {
     "level_code": "PERUS",
+    "participants": 1,
+    "queue": 1,
+    "registration_end_date": "2039-12-01",
+    "queue_full": false,
+    "registration_start_date": "2017-12-01",
+    "open": true,
     "max_participants": 5,
     "language_code": "fin",
     "office_oid": "1.2.3.4.5",
@@ -10,15 +16,38 @@
     "id": 1,
     "location": [
       {
-        "name": "Omenia",
-        "address": "Upseerinkatu 11, Espoo",
-        "other_location_info": "Other info",
+        "lang": "fi",
         "extra_information": null,
-        "lang": "fi"
+        "post_office":"Espoo",
+        "name": "Omenia",
+        "other_location_info": "Other info",
+        "street_address": "Upseerinkatu 11",
+        "zip": "00240"
+      },
+      {
+        "lang": "sv",
+        "extra_information": null,
+        "post_office": "Espoo",
+        "name": "Omenia",
+        "other_location_info": "Other info",
+        "street_address": "Upseerinkatu 11",
+        "zip": "00240"
+      },
+      {
+        "lang": "en",
+        "extra_information": null,
+        "post_office": "Espoo",
+        "name": "Omenia",
+        "other_location_info": "Other info",
+        "street_address": "Upseerinkatu 11",
+        "zip": "00240"
       }
     ],
     "exam_fee": "100.00"
   },
-  "user": { "external-user-id": "test@user.com", "email": "test@user.com" },
+  "user": {
+    "external-user-id": "test@user.com",
+    "email": "test@user.com"
+  },
   "registration_id": 1
 }
