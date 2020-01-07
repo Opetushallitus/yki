@@ -13,4 +13,9 @@
   duct.database.sql.Boundary
   (upsert-post-admission [{:keys [spec]} post-admission exam-session-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/upsert-post-admission! tx))))
+      (println "tx" tx)
+      (println "spec" spec)
+      (println "post-admission" post-admission)
+      (q/upsert-post-admission! 
+       spec 
+       (into {:exam_session_id exam-session-id} (select-keys post-admission [:start_date :end_date :quota]))))))

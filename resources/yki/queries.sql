@@ -871,8 +871,8 @@ WHERE exam_session_id = :exam_session_id
 --also make this into upsert and not insert
 INSERT INTO post_admission (exam_session_id, start_date, end_date, quota)
 VALUES (
-  SELECT id FROM exam_session WHERE id = :id,
-  :start_time,
-  :end_time,
+  :exam_session_id,
+  :start_date,
+  :end_date,
   :quota
 );

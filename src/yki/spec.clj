@@ -284,3 +284,10 @@
 
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
+
+(s/def ::quota pos-int?)
+(s/def ::start_date (s/nilable string?))
+(s/def ::end_date (s/nilable string?))
+(s/def ::post-admission-request (s/keys :req-un [::quota
+                                                 ::start_date
+                                                 ::end_date]))
