@@ -864,5 +864,15 @@ FROM exam_session_queue
 WHERE exam_session_id = :exam_session_id
   AND LOWER(email) = LOWER(:email);
 
---name: do-the-needful
-SELECT 1;
+--name: upsert-post-admission!
+--needs further validation on DB level: Check that no duplicate postadmissions for examsession.
+--also check that the logged in user is the organizer for the examsession (not db level)
+--also check that the start and endtimes sync with examsession
+--also make this into upsert and not insert
+INSERT INTO post_admission (exam_session_id, start_date, end_date, quota)
+VALUES (
+  SELECT id FROM exam_session WHERE id = :id,
+  :start_time,
+  :end_time,
+  :quota
+);

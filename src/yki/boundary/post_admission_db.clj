@@ -7,10 +7,10 @@
 (require-sql ["yki/queries.sql" :as q])
 
 (defprotocol PostAdmission
-  (do-the-needful [db]))
+  (upsert-post-admission [db post-admission exam-session-id]))
 
 (extend-protocol PostAdmission
   duct.database.sql.Boundary
-  (do-the-needful [{:keys [spec]}]
+  (upsert-post-admission [{:keys [spec]} post-admission exam-session-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/do-the-needful tx))))
+      (q/upsert-post-admission! tx))))
