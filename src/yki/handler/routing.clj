@@ -46,4 +46,3 @@
 
 (def code-api-root (str api-root "/code"))
 
-(def post-admission-api-root (str api-root "/post-admission"))

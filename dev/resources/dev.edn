@@ -57,9 +57,5 @@
                          :url-helper #ig/ref :yki.util/url-helper
                          :file-handler #ig/ref :yki.handler/file
                          :access-log #ig/ref :yki.middleware.access-log/with-logging
-                         :auth #ig/ref :yki.middleware.auth/with-authentication}
-
-
- :yki.handler/post-admission {:db #ig/ref :duct.database/sql
-                              :auth #ig/ref :yki.middleware.auth/with-authentication}}
+                         :auth #ig/ref :yki.middleware.auth/with-authentication}}
 
