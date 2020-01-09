@@ -3,9 +3,8 @@ CREATE TABLE IF NOT EXISTS post_admission (
   exam_session_id BIGINT UNIQUE NOT NULL REFERENCES exam_session(id),
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
-  quota INTEGER NOT NULL,
-  published_at TIMESTAMP NOT NULL,
-  modified_at TIMESTAMP NULL
+  quota INTEGER NOT NULL CHECK (quota > 0),
+  modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
 CREATE UNIQUE INDEX post_admission_id
