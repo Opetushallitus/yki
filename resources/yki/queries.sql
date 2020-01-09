@@ -865,14 +865,13 @@ WHERE exam_session_id = :exam_session_id
   AND LOWER(email) = LOWER(:email);
 
 --name: upsert-post-admission!
---needs further validation on DB level: Check that no duplicate postadmissions for examsession.
 --also check that the logged in user is the organizer for the examsession (not db level)
---also check that the start and endtimes sync with examsession
---also make this into upsert and not insert
+--also check that the start and endtimes sync with examsession <= not doable as DB constraint, must be in code
 INSERT INTO post_admission (exam_session_id, start_date, end_date, quota)
-VALUES (
-  :exam_session_id,
-  :start_date,
-  :end_date,
-  :quota
-);
+VALUES (:exam_session_id, :start_date, :end_date, :quota)
+    ON CONFLICT (exam_session_id) DO 
+UPDATE
+   SET start_date = :start_date, 
+       end_date = :end_date,
+       quota = :quota
+ WHERE post_admission.exam_session_id = :exam_session_id
