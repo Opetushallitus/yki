@@ -66,12 +66,11 @@
      :registration_id registration-id}))
 
 (defn registration-abstract-flow
-  [registration-open-fn space-left-fn not-registered-fn create-registration-fn]
+  [space-left-fn not-registered-fn create-registration-fn]
   (fn [db exam_session_id participant-id session payment-config]
-    (let [registration-open? (registration-open-fn db exam_session_id)
-          space-left?        (space-left-fn db exam_session_id nil)
+    (let [space-left?        (space-left-fn db exam_session_id nil)
           not-registered?    (not-registered-fn db participant-id exam_session_id)]
-      (if (and registration-open? space-left? not-registered?)
+      (if (and space-left? not-registered?)
         (let [registration-id (create-registration-fn db {:exam_session_id exam_session_id
                                                           :participant_id  participant-id
                                                           :started_at      (t/now)})
@@ -79,19 +78,16 @@
           (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
           (ok response))
         (let [error {:error {:full       (not space-left?)
-                             :closed     (not registration-open?)
                              :registered (not not-registered?)}}]
           (log/warn "END: Init exam session" exam_session_id "failed with error" error)
           (conflict error))))))
 
 (def exam-session-registration-flow (registration-abstract-flow
-                                     registration-db/exam-session-registration-open?
                                      registration-db/exam-session-space-left?
                                      registration-db/not-registered-to-exam-session?
                                      registration-db/create-registration!))
 
 (def exam-session-post-registration-flow (registration-abstract-flow
-                                          nil #_registration-db/exam-session-post-registration-open?
                                           nil #_registration-db/exam-session-post-space-left?
                                           nil #_registration-db/not-post-registered-to-exam-session?
                                           nil #_registration-db/create-post-registration!))
@@ -108,7 +104,15 @@
     (log/warn "started-registration-id" started-registration-id)
     (if started-registration-id
       (ok (create-init-response db session exam_session_id started-registration-id payment-config))
-      (register-participant-to-exam-session db exam_session_id participant-id session payment-config))))
+      (cond
+        (registration-db/exam-session-registration-open? db exam_session_id)
+        (register-participant-to-exam-session db exam_session_id participant-id session payment-config)
+        
+        ;(registration-db/exam-session-post-registration-open? db exam_session_id)
+        ;(post-register-participant-to-exam-session db exam_session_id participant-id session payment-config)
+        
+        :else  ; no registration open
+        (conflict {:error {:closed true}})))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
   (let [code          (str (UUID/randomUUID))
