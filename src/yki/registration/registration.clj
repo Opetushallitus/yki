@@ -65,28 +65,50 @@
      :user user
      :registration_id registration-id}))
 
+(defn registration-abstract-flow
+  [registration-open-fn space-left-fn not-registered-fn create-registration-fn]
+  (fn [db exam_session_id participant-id session payment-config]
+    (let [registration-open? (registration-open-fn db exam_session_id)
+          space-left?        (space-left-fn db exam_session_id nil)
+          not-registered?    (not-registered-fn db participant-id exam_session_id)]
+      (if (and registration-open? space-left? not-registered?)
+        (let [registration-id (create-registration-fn db {:exam_session_id exam_session_id
+                                                          :participant_id  participant-id
+                                                          :started_at      (t/now)})
+              response        (create-init-response db session exam_session_id registration-id payment-config)]
+          (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
+          (ok response))
+        (let [error {:error {:full       (not space-left?)
+                             :closed     (not registration-open?)
+                             :registered (not not-registered?)}}]
+          (log/warn "END: Init exam session" exam_session_id "failed with error" error)
+          (conflict error))))))
+
+(def exam-session-registration-flow (registration-abstract-flow
+                                     registration-db/exam-session-registration-open?
+                                     registration-db/exam-session-space-left?
+                                     registration-db/not-registered-to-exam-session?
+                                     registration-db/create-registration!))
+
+(def exam-session-post-registration-flow (registration-abstract-flow
+                                          nil #_registration-db/exam-session-post-registration-open?
+                                          nil #_registration-db/exam-session-post-space-left?
+                                          nil #_registration-db/not-post-registered-to-exam-session?
+                                          nil #_registration-db/create-post-registration!))
+
+(defn register-participant-to-exam-session
+  [db exam_session_id participant-id session payment-config]
+  (exam-session-registration-flow db exam_session_id participant-id session payment-config))
+
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
   (let [participant-id (get-or-create-participant db (:identity session))
         started-registration-id (registration-db/started-registration-id-by-participant db participant-id exam_session_id)]
+    (log/warn "started-registration-id" started-registration-id)
     (if started-registration-id
       (ok (create-init-response db session exam_session_id started-registration-id payment-config))
-      (let [exam-session-registration-open? (registration-db/exam-session-registration-open? db exam_session_id)
-            exam-session-space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
-            not-registered-to-exam-session? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
-        (if (and exam-session-registration-open? exam-session-space-left? not-registered-to-exam-session?)
-          (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
-                                                                          :participant_id  participant-id
-                                                                          :started_at      (t/now)})
-                response        (create-init-response db session exam_session_id registration-id payment-config)]
-            (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
-            (ok response))
-          (let [error {:error {:full       (not exam-session-space-left?)
-                               :closed     (not exam-session-registration-open?)
-                               :registered (not not-registered-to-exam-session?)}}]
-            (log/warn "END: Init exam session" exam_session_id "failed with error" error)
-            (conflict error)))))))
+      (register-participant-to-exam-session db exam_session_id participant-id session payment-config))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
   (let [code          (str (UUID/randomUUID))

@@ -874,4 +874,4 @@ UPDATE
    SET start_date = :start_date, 
        end_date = :end_date,
        quota = :quota
- WHERE post_admission.exam_session_id = :exam_session_id
+ WHERE post_admission.exam_session_id = :exam_session_id;
