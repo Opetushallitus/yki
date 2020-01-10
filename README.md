@@ -131,6 +131,18 @@ lein release :major, :minor or :patch
 
 ## Architecture
 
+### Job Queues
+
+YKI uses database backed job queues to prevent certain tasks from running more than once. The queues themselves are implemented using [pgqueue](https://github.com/layerware/pgqueue) and it is recommended to familiarize yourself with how this library works to understand the rest of the job queue code.
+
+#### `email-q`
+
+_Email requests_ added to this queue will be handled by the `email-queue-reader` scheduled task.
+
+#### `data-sync-q`
+
+_Data synchronization requests_ added to this queue will be handled by the `data-sync-queue-reader` scheduled task.
+
 ### Scheduled Tasks
 
 YKI uses asynchronous scheduled tasks to keep data up-to-date and for maintenance tasks. Job queue system is used by some tasks to prevent running the same task twice to avoid data duplication issues.
