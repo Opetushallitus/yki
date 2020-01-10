@@ -124,6 +124,37 @@ lein bikeshed
 lein release :major, :minor or :patch
 ```
 
+## Glossary
+
+| *Term* | *Description* |
+| SOLKI | TBD |
+
+## Architecture
+
+### Scheduled Tasks
+
+YKI uses asynchronous scheduled tasks to keep data up-to-date and for maintenance tasks. Job queue system is used by some tasks to prevent running the same task twice to avoid data duplication issues.
+
+#### `registration-state-handler`
+
+Handles general state of single registration state, effectively marking incomplete registrations to expired and other similar state changes which are time bound, such as not having paid the exam fee on time.
+
+#### `participants-sync-handler`
+
+Synchronizes (TODO: to SOLKI?) completed exam session registration participant data.
+
+#### `email-queue-reader`
+
+Handles sending emails from email queues to recipients. Emails to be sent and queue handling are managed by the `exam-session-queue-handler` task.
+
+#### `data-sync-queue-reader`
+
+Handles exam session and organizer data synchronization (TODO: to SOLKI?), including deletion.
+
+#### `exam-session-queue-handler`
+
+Manages logic for selecting the correct email template to be sent to people in various email queues. Uses database-backed job queue to prevent sending same email multiple times.
+
 ## Legal
 
 Copyright (c) 2013-2020 Finnish National Agency for Education - Opetushallitus
