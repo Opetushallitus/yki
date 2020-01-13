@@ -126,7 +126,7 @@ lein release :major, :minor or :patch
 
 ## Legal
 
-Copyright (c) 2013-2019 Finnish National Agency for Education - Opetushallitus
+Copyright (c) 2013-2020 Finnish National Agency for Education - Opetushallitus
 
 This program is free software:  Licensed under the EUPL, Version 1.2 or - as
 soon as they will be approved by the European Commission - subsequent versions
