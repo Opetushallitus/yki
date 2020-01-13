@@ -286,7 +286,7 @@ INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE e.id = :id;
 
--- name: select-exam-session-by-registration-id
+-- name: select-exam-session-registration-by-registration-id
 SELECT
   es.id,
   es.language_code,
