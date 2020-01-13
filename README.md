@@ -128,6 +128,7 @@ lein release :major, :minor or :patch
 
 | *Term* | *Description* |
 | SOLKI | TBD |
+| ONR | TBD |
 
 ## Architecture
 
