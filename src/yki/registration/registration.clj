@@ -94,6 +94,7 @@
 
 (defn register-participant-to-exam-session
   [db exam_session_id participant-id session payment-config]
+  (log/info "SELECT: participant" participant-id "exam session" exam_session_id "registration")
   (exam-session-registration-flow db exam_session_id participant-id session payment-config))
 
 (defn init-registration
