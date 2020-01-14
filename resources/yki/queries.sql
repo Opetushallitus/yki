@@ -514,16 +514,25 @@ AND EXISTS (SELECT id
 	                                    AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid))
 
--- submitted registration expires 8 days from payment creation at midnight
+-- Expiration rules are explained inline. See below.
 -- name: update-submitted-registrations-to-expired<!
 UPDATE registration
-SET state = 'EXPIRED',
-    modified = current_timestamp
-WHERE state = 'SUBMITTED'
-  AND id IN (SELECT registration_id
-            FROM payment
-            WHERE state = 'UNPAID'
-            AND (date_trunc('day', created) + interval '9 day') AT TIME ZONE 'Europe/Helsinki' < (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
+   SET state = 'EXPIRED',
+       modified = current_timestamp
+ WHERE state = 'SUBMITTED'
+   AND id IN (SELECT r.id
+                FROM registration r
+                JOIN payment p ON p.registration_id = r.id
+           LEFT JOIN post_admission_participant pap ON pap.registration_id = r.id
+           LEFT JOIN post_admission pa ON pa.id = pap.post_admission_id
+                      -- payment hasn't been completed for exam session without post-admission period in 8 days
+               WHERE (p.state = 'UNPAID'
+           		        AND pap.registration_id IS NULL 
+           		        AND time_passed_since(p.created, '9 days'::interval))
+           		        -- payment hasn't been completed for post-admission period of exam session in 3 days
+                  OR (p.state = 'UNPAID' 
+           		        AND pap.registration_id IS NOT NULL 
+                      AND time_passed_since(p.created, '4 days'::interval)))
 RETURNING id as updated;
 
 -- name: select-registration-data

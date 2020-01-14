@@ -15,3 +15,8 @@ CREATE TABLE IF NOT EXISTS post_admission_participant (
     post_admission_id BIGINT NOT NULL REFERENCES post_admission(id),
     PRIMARY KEY (registration_id, post_admission_id)
 );
+
+/* Tests if given timestamp is in the past by at least the amount specified by the given interval. */
+CREATE OR REPLACE FUNCTION time_passed_since(ts timestamp with time zone, intr interval) returns BOOLEAN as $$
+  SELECT (date_trunc('day', ts) + intr) AT TIME ZONE 'Europe/Helsinki' < (current_timestamp AT TIME ZONE 'Europe/Helsinki');
+$$ LANGUAGE SQL;

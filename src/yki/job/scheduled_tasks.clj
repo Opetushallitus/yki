@@ -53,10 +53,10 @@
   #(try
      (when (job-db/try-to-acquire-lock! db registration-state-handler-conf)
        (log/debug "Check started registrations expiry")
-       (let [updated (registration-db/update-started-registrations-to-expired! db)]  ; mikä on "started registration"? Miten tilakaaviot kulkevat?
+       (let [updated (registration-db/update-started-registrations-to-expired! db)]
          (when updated (log/info "Started registrations set to expired" updated)))
        (log/debug "Check submitted registrations expiry")
-       (let [updated (registration-db/update-submitted-registrations-to-expired! db)] ; mikä on "submitted registration"? sama kuin yllä siis, mutta eri sana
+       (let [updated (registration-db/update-submitted-registrations-to-expired! db)]
          (when updated (log/info "Submitted registrations set to expired" updated))))
      (catch Exception e
        (log/error e "Registration state handler failed"))))
