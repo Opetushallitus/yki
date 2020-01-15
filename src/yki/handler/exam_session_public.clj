@@ -1,9 +1,8 @@
 (ns yki.handler.exam-session-public
   (:require [compojure.api.sweet :refer [context GET POST]]
             [yki.boundary.exam-session-db :as exam-session-db]
-            [yki.boundary.post-admission-db :as post-admission-db]
             [yki.handler.routing :as routing]
-            [ring.util.http-response :refer [ok not-found conflict internal-server-error]]
+            [ring.util.http-response :refer [ok not-found conflict]]
             [ring.util.request]
             [yki.spec :as ys]
             [clojure.tools.logging :as log]
@@ -40,12 +39,5 @@
           (conflict {:exists true})
           (do
             (exam-session-db/add-to-exam-session-queue! db (:email request) lang id)
-            (ok {:success true}))))
-      (POST "/post-admission" []
-        :path-params [id :- ::ys/exam_session_id]
-        :body [post-admission ::ys/post-admission-request]
-        ;:return ::ys/id-response
-        (if (post-admission-db/upsert-post-admission db post-admission id)
-          (ok {:success true})
-          (internal-server-error))))))
+            (ok {:success true})))))))
 

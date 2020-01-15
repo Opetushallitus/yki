@@ -2,13 +2,14 @@
   (:require [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.registration-db :as registration-db]
+            [yki.boundary.post-admission-db :as post-admission-db]
             [yki.registration.paytrail-payment :as paytrail-payment]
             [yki.handler.routing :as routing]
             [yki.util.audit-log :as audit-log]
             [pgqueue.core :as pgq]
             [ring.util.response :refer [response not-found]]
             [clojure.tools.logging :as log]
-            [ring.util.http-response :refer [bad-request conflict]]
+            [ring.util.http-response :refer [conflict internal-server-error ok]]
             [ring.util.request]
             [yki.spec :as ys]
             [integrant.core :as ig]))
@@ -85,6 +86,17 @@
                 (not-found {:success false
                             :error "Exam session not found"}))
               (conflict {:error "Cannot delete exam session with participants"}))))
+
+        ;(PUT "/post-admission/activate" [])
+        ;(PUT "/post-admission/deactivate" [])
+        
+        (POST "/post-admission" []
+          :path-params [id :- ::ys/exam_session_id]
+          :body [post-admission ::ys/post-admission-request]
+          ;:return ::ys/id-response
+          (if (post-admission-db/upsert-post-admission db post-admission id)
+            (ok {:success true})
+            (internal-server-error)))
 
         (context routing/registration-uri []
           (GET "/" {session :session}
