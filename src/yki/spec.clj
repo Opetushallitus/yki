@@ -15,7 +15,7 @@
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
 (def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
-(def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,20}|0)){3,13}$")
+(def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,30}|0)){3,13}$")
 
 (s/def ::ssn (s/and string? #(re-matches ssn-regexp %)))
 (s/def ::amount (s/and string? #(re-matches amount-regexp %)))
