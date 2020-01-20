@@ -171,6 +171,12 @@
 (defn insert-attachment-metadata [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO attachment_metadata (external_id, organizer_id) values ('a0d5dfc2', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
+(defn post-admission [exam-session-id]
+  (let [stuff (slurp "test/resources/post_admission.json")]
+    (println "stuff: " stuff)
+    (println "esID: " exam-session-id)
+    stuff))
+
 (defn insert-exam-dates []
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-01-01', '2039-03-01')"))
 

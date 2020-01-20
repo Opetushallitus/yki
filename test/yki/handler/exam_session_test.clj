@@ -74,7 +74,22 @@
       (is (= {:count 0}
              (base/select-one "SELECT COUNT(1) FROM exam_session_location")))
       (is (some? (:exam-session sync-req)))
-      (is (= (:type sync-req) "DELETE")))))
+      (is (= (:type sync-req) "DELETE"))))
+
+    ; TODO: test sync participants
+    (testing "create exam session post admission endpoint adds post admission to exam session"
+      (let [create-es-request         (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
+                                          (mock/content-type "application/json; charset=UTF-8"))
+            response                  (base/send-request-with-tx create-es-request)
+            response-body             (base/body-as-json response)
+            asd                       (println "response body: " response-body)
+            exam-session-id           (get response-body "id")
+            create-pa-to-es-request   (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/2/post-admission") (base/post-admission exam-session-id))
+                                          (mock/content-type "application/json; charset=UTF-8"))
+            pa-response               (base/send-request-with-tx create-pa-to-es-request)
+            print-pa-respo            (println "pa-resp: " pa-response)]
+                (is (= {:count 1}
+                  (base/select-one (str "SELECT COUNT(1) FROM post_admission WHERE exam_session_id = " exam-session-id)))))))
 
 (deftest exam-session-update-max-participants-fail-test
   (base/insert-base-data)

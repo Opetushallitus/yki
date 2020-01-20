@@ -276,6 +276,7 @@
 (s/def :sync/created      number?)
 (s/def ::exam-session-id  (s/nilable ::id))
 (s/def ::organizer-oid    (s/nilable ::oid))
+(s/def ::activate boolean?)
 
 (s/def ::data-sync-request (s/keys :req [:sync/type
                                          :sync/created]
@@ -290,4 +291,5 @@
 (s/def ::end_date ::date)
 (s/def ::post-admission-request (s/keys :req-un [::quota
                                                  ::start_date
-                                                 ::end_date]))
+                                                 ::end_date]
+                                        :opt [::activate]))

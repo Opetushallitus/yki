@@ -3,7 +3,8 @@
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
             [clojure.java.jdbc :as jdbc]
-            [duct.database.sql]))
+            [duct.database.sql]
+            [clojure.tools.logging :as log]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -16,6 +17,9 @@
 (extend-protocol PostAdmission
   duct.database.sql.Boundary
   (upsert-post-admission [{:keys [spec]} post-admission exam-session-id]
+    (log/debug "post-admission " post-admission "exam-session-id " exam-session-id)
+    (log/info "upsert post admission to exam session " exam-session-id)
+    (println "adasfagökalLHJHAGKJAHKG")
     (jdbc/with-db-transaction [tx spec]
       (q/upsert-post-admission! 
        spec 
