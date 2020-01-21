@@ -89,18 +89,16 @@
 
         ;(PUT "/post-admission/activate" [])
         ;(PUT "/post-admission/deactivate" [])
-        
+
         (POST "/post-admission" []
           :path-params [id :- ::ys/exam_session_id]
           :body [post-admission ::ys/post-admission-request]
           :return ::ys/response
-          (println "KASDJASHFASF")
-          (log/info "INFO: ")
-          (ok {:success true}))
-          ; (if (post-admission-db/upsert-post-admission db post-admission id)
-          ;   (ok {:success true})
-          ;   (not-found {:success false
-          ;     :error "post admission not found"})))
+          (ok {:success true})
+           (if (post-admission-db/upsert-post-admission db post-admission id)
+             (ok {:success true})
+             (not-found {:success false
+               :error "post admission not found"})))
 
         (context routing/registration-uri []
           (GET "/" {session :session}
