@@ -63,38 +63,6 @@
      :user user
      :registration_id registration-id}))
 
-(defn init-registration-abstract-flow
-  [space-left-fn not-registered-fn create-registration-fn]
-  (fn [db exam_session_id participant-id session payment-config]
-    (let [space-left?        (space-left-fn db exam_session_id nil)
-          not-registered?    (not-registered-fn db participant-id exam_session_id)]
-      (if (and space-left? not-registered?)
-        (let [registration-id (create-registration-fn db {:exam_session_id exam_session_id
-                                                          :participant_id  participant-id
-                                                          :started_at      (t/now)})
-              response        (create-init-response db session exam_session_id registration-id payment-config)]
-          (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
-          (ok response))
-        (let [error {:error {:full       (not space-left?)
-                             :registered (not not-registered?)}}]
-          (log/warn "END: Init exam session" exam_session_id "failed with error" error)
-          (conflict error))))))
-
-(def exam-session-registration-flow (init-registration-abstract-flow
-                                     registration-db/exam-session-space-left?
-                                     registration-db/not-registered-to-exam-session?
-                                     registration-db/create-registration!))
-
-(def exam-session-post-registration-flow (init-registration-abstract-flow
-                                          nil #_registration-db/exam-session-post-space-left?
-                                          nil #_registration-db/not-post-registered-to-exam-session?
-                                          nil #_registration-db/create-post-registration!))
-
-(defn register-participant-to-exam-session
-  [db exam_session_id participant-id session payment-config]
-  (log/info "SELECT: participant" participant-id "exam session" exam_session_id "registration")
-  (exam-session-registration-flow db exam_session_id participant-id session payment-config))
-
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
@@ -105,11 +73,21 @@
       (ok (create-init-response db session exam_session_id started-registration-id payment-config))
       (cond
         (registration-db/exam-session-registration-open? db exam_session_id)
-        (register-participant-to-exam-session db exam_session_id participant-id session payment-config)
-        
-        ;(registration-db/exam-session-post-registration-open? db exam_session_id)
-        ;(post-register-participant-to-exam-session db exam_session_id participant-id session payment-config)
-        
+        (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
+              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
+          (if (and space-left? not-registered?)
+            ; TODO figure out if ADMISSION or POST_ADMISSION
+            (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
+                                                                            :participant_id  participant-id
+                                                                            :started_at      (t/now)})
+                  response        (create-init-response db session exam_session_id registration-id payment-config)]
+              (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
+              (ok response))
+            (let [error {:error {:full       (not space-left?)
+                                 :registered (not not-registered?)}}]
+              (log/warn "END: Init exam session" exam_session_id "failed with error" error)
+              (conflict error))))
+
         :else  ; no registration open
         (conflict {:error {:closed true}})))))
 

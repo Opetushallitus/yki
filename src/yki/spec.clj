@@ -127,12 +127,14 @@
 (s/def ::id-response (s/keys :req-un [::id]))
 
 ;; exam date
-(s/def ::exam_date   ::date)
+(s/def ::exam_date                 ::date)
 (s/def ::registration_start_date   ::date)
-(s/def ::registration_end_date   ::date)
+(s/def ::registration_end_date     ::date)
+(s/def ::post_admission_end_date   (s/nilable ::date))
 (s/def ::exam-date-type (s/keys :req-un [::exam_date
                                          ::registration_start_date
                                          ::registration_end_date
+                                         ::post_admission_end_date
                                          ::languages]))
 (s/def ::dates (s/coll-of ::exam-date-type))
 (s/def ::exam-date-response (s/keys :req-un [::dates]))
@@ -285,11 +287,3 @@
 
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
-
-(s/def ::quota pos-int?)
-(s/def ::start_date ::date)
-(s/def ::end_date ::date)
-(s/def ::post-admission-request (s/keys :req-un [::quota
-                                                 ::start_date
-                                                 ::end_date]
-                                        :opt [::activate]))

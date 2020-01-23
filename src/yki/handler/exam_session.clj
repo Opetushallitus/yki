@@ -2,7 +2,6 @@
   (:require [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.registration-db :as registration-db]
-            [yki.boundary.post-admission-db :as post-admission-db]
             [yki.registration.paytrail-payment :as paytrail-payment]
             [yki.handler.routing :as routing]
             [yki.util.audit-log :as audit-log]
@@ -86,19 +85,6 @@
                 (not-found {:success false
                             :error "Exam session not found"}))
               (conflict {:error "Cannot delete exam session with participants"}))))
-
-        ;(PUT "/post-admission/activate" [])
-        ;(PUT "/post-admission/deactivate" [])
-
-        (POST "/post-admission" []
-          :path-params [id :- ::ys/exam_session_id]
-          :body [post-admission ::ys/post-admission-request]
-          :return ::ys/response
-          (ok {:success true})
-           (if (post-admission-db/upsert-post-admission db post-admission id)
-             (ok {:success true})
-             (not-found {:success false
-               :error "post admission not found"})))
 
         (context routing/registration-uri []
           (GET "/" {session :session}
