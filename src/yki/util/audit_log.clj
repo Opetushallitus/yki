@@ -1,6 +1,7 @@
 (ns yki.util.audit-log
   (:require [clojure.tools.logging :as log]
-            [jsonista.core :as json])
+            [jsonista.core :as json]
+            [yki.util.log-util :as log-util])
   (:import [java.net InetAddress]
            [org.ietf.jgss Oid]
            [com.google.gson JsonParser]
@@ -69,7 +70,7 @@
           changes         (create-changes change)]
       (.log virkailija-logger user op target changes))
     (catch Exception e
-      (log/error e "Virkailija audit logging failed for data:" change))))
+      (log-util/error e "Virkailija audit logging failed for data:" change))))
 
 (defn log-participant
   [{:keys [request target-kv change oid]}]
@@ -86,4 +87,4 @@
           changes         (create-changes change)]
       (.log oppija-logger user op target changes))
     (catch Exception e
-      (log/error e "Participant audit logging failed for data:" change))))
+      (log-util/error e "Participant audit logging failed for data:" change))))
