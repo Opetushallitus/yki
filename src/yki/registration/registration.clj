@@ -63,6 +63,20 @@
      :user user
      :registration_id registration-id}))
 
+(defn- error-response [space-left? not-registered? exam_session_id]
+  (let [error {:error {:full       (not space-left?)
+                       :registered (not not-registered?)}}]
+    (log/warn "END: Init exam session" exam_session_id "failed with error" error)
+    (conflict error)))
+
+(defn- create-registration [db exam_session_id participant-id session payment-config]
+  (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
+                                                                  :participant_id  participant-id
+                                                                  :started_at      (t/now)})
+        response        (create-init-response db session exam_session_id registration-id payment-config)]
+    (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
+    (ok response)))
+
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
@@ -72,21 +86,23 @@
     (if started-registration-id
       (ok (create-init-response db session exam_session_id started-registration-id payment-config))
       (cond
+        ; admission open
         (registration-db/exam-session-registration-open? db exam_session_id)
         (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
               not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
           (if (and space-left? not-registered?)
             ; TODO figure out if ADMISSION or POST_ADMISSION
-            (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
-                                                                            :participant_id  participant-id
-                                                                            :started_at      (t/now)})
-                  response        (create-init-response db session exam_session_id registration-id payment-config)]
-              (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
-              (ok response))
-            (let [error {:error {:full       (not space-left?)
-                                 :registered (not not-registered?)}}]
-              (log/warn "END: Init exam session" exam_session_id "failed with error" error)
-              (conflict error))))
+            (create-registration db exam_session_id participant-id session payment-config)
+            (error-response space-left? not-registered? exam_session_id)))
+
+        ;post-admission open
+        (registration-db/exam-session-post-registration-open? db exam_session_id)
+        (let [quota-left?        (registration-db/exam-session-quota-left? db exam_session_id nil)
+              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
+          (if (and quota-left? not-registered?)
+            ; TODO figure out if ADMISSION or POST_ADMISSION
+            (create-registration db exam_session_id participant-id session payment-config)
+            (error-response quota-left? not-registered? exam_session_id)))
 
         :else  ; no registration open
         (conflict {:error {:closed true}})))))

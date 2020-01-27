@@ -440,14 +440,7 @@ WHERE
   AND participant_id = :participant_id;
 
 -- name: select-exam-session-registration-open
-SELECT EXISTS (
-  SELECT es.id
-  FROM exam_session es
-  INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-  WHERE es.id = :exam_session_id
-    AND (ed.registration_start_date + time '10:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki'
-    AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki'
-) as exists;
+SELECT exam_session_registration_open(:exam_session_id) as exists;
 
 -- name: select-exam-session-space-left
 SELECT NOT EXISTS (
