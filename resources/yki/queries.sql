@@ -203,6 +203,10 @@ SELECT
   e.max_participants,
   ed.registration_start_date,
   ed.registration_end_date,
+  e.post_admission_start_date,
+  e.post_admission_quota,
+  e.post_admission_active,
+  ed.post_admission_end_date,
   e.office_oid,
   e.published_at,
   (SELECT COUNT(1)
@@ -230,10 +234,7 @@ SELECT
     WHERE exam_session_id = e.id
   ) loc
  ) as location,
-(
-  ((ed.registration_start_date + time '10:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki')
-    AND ((ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki')
-) as open
+  within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -277,10 +278,7 @@ SELECT
     WHERE exam_session_id = e.id
   ) loc
 ) AS location,
-(
-  ((ed.registration_start_date + time '10:00' AT TIME ZONE 'Europe/Helsinki') <= current_timestamp AT TIME ZONE 'Europe/Helsinki')
-    AND ((ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') > current_timestamp AT TIME ZONE 'Europe/Helsinki')
-) as open
+  within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -442,6 +440,9 @@ WHERE
 -- name: select-exam-session-registration-open
 SELECT exam_session_registration_open(:exam_session_id) as exists;
 
+-- name: select-exam-session-post-registration-open
+SELECT exam_session_post_registration_open(:exam_session_id) as exists;
+
 -- name: select-exam-session-space-left
 SELECT NOT EXISTS (
 	SELECT es.max_participants
@@ -450,8 +451,22 @@ SELECT NOT EXISTS (
 	WHERE re.exam_session_id = :exam_session_id
     AND re.id != COALESCE(:registration_id, 0)
 	  AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+      AND re.kind = 'ADMISSION'
 	GROUP BY es.max_participants
 	HAVING (es.max_participants - COUNT(re.id)) <= 0
+) as exists;
+
+-- name: select-exam-session-quota-left
+SELECT NOT EXISTS (
+    SELECT es.post_admission_quota
+      FROM exam_session es
+ LEFT JOIN registration re ON es.id = re.exam_session_id
+     WHERE re.exam_session_id = :exam_session_id
+       AND re.id != COALESCE(:registration_id, 0)
+       AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+       AND re.kind IS 'POST_ADMISSION'
+  GROUP BY es.post_admission_quota
+    HAVING (es.post_admission_quota - COUNT(re.id)) <= 0
 ) as exists;
 
 -- name: select-not-registered-to-exam-session
