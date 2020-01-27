@@ -105,6 +105,10 @@
 (s/def ::queue_full                 boolean?)
 (s/def ::queue                      int?)
 (s/def ::from                       ::date)
+; post admission extensions for exam-session
+(s/def ::post_admission_quota      (s/nilable pos-int?))
+(s/def ::post_admission_start_date (s/nilable ::date))
+(s/def ::post_admission_active     boolean?)
 
 (s/def ::exam-session (s/keys :req-un [::session_date
                                        ::language_code
@@ -119,7 +123,10 @@
                                        ::queue
                                        ::queue_full
                                        ::participants
-                                       ::organizer_oid]))
+                                       ::organizer_oid
+                                       ::post_admission_quota
+                                       ::post_admission_start_date
+                                       ::post_admission_active]))
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::from-param (s/keys :opt-un [::from]))

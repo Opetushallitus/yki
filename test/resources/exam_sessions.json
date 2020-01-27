@@ -5,6 +5,10 @@
       "registration_end_date": "2039-03-01",
       "office_oid": null,
       "id": 1,
+      "post_admission_quota": null,
+      "post_admission_active": false,
+      "post_admission_start_date": null,
+      "post_admission_end_date": null,
       "location": [
         {
           "lang": "fi",
