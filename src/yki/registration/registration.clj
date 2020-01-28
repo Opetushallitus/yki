@@ -193,8 +193,8 @@
       (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
       ((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
 
-      ;(registration-db/exam-session-post-space-left? db (:id exam-session) registration-id)
-      ;((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
+      (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id)
+      ((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
 
       :else  ; registration is already full, cannot add new
       {:error {:full true}})))
