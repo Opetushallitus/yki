@@ -409,12 +409,14 @@ INSERT INTO registration(
   state,
   exam_session_id,
   participant_id,
-  started_at
+  started_at,
+  kind
 ) SELECT
   'STARTED',
   :exam_session_id,
   :participant_id,
-  :started_at
+  :started_at,
+  select_registration_phase(:exam_session_id)
   -- only one registration per participant on same exam date
   WHERE NOT EXISTS (SELECT es.id
                     FROM exam_session es
