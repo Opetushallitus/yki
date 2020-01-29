@@ -79,3 +79,8 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql;
+
+-- utility function for listing unpaid payments, makes more sense to see where this is used
+CREATE OR REPLACE FUNCTION ts_older_than(ts timestamptz, since interval) RETURNS boolean AS $$
+    SELECT (date_trunc('day', ts) + since) AT TIME ZONE 'Europe/Helsinki' < (current_timestamp AT TIME ZONE 'Europe/Helsinki');
+$$ LANGUAGE sql;

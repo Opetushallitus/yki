@@ -527,13 +527,14 @@ AND EXISTS (SELECT id
 -- submitted registration expires 8 days from payment creation at midnight
 -- name: update-submitted-registrations-to-expired<!
 UPDATE registration
-SET state = 'EXPIRED',
+   SET state = 'EXPIRED',
     modified = current_timestamp
-WHERE state = 'SUBMITTED'
-  AND id IN (SELECT registration_id
-            FROM payment
-            WHERE state = 'UNPAID'
-            AND (date_trunc('day', created) + interval '9 day') AT TIME ZONE 'Europe/Helsinki' < (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
+ WHERE state = 'SUBMITTED'
+   AND id IN (SELECT r.id FROM payment p
+               INNER JOIN registration r ON r.id = p.registration_id
+               WHERE p.state = 'UNPAID'
+                 AND ((r.kind = 'ADMISSION' AND ts_older_than(p.created, interval '9 days'))
+                      OR (r.kind = 'POST_ADMISSION' AND ts_older_than(p.created, interval '2 days'))))
 RETURNING id as updated;
 
 -- name: select-registration-data
