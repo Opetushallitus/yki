@@ -416,7 +416,7 @@ INSERT INTO registration(
   :exam_session_id,
   :participant_id,
   :started_at,
-  select_registration_phase(:exam_session_id)
+  select_registration_phase(:exam_session_id)::registration_kind
   -- only one registration per participant on same exam date
   WHERE NOT EXISTS (SELECT es.id
                     FROM exam_session es
