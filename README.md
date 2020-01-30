@@ -1,4 +1,4 @@
-# YKI - Yleinen Kielitutkinto · https://travis-ci.org/Opetushallitus/yki.svg?branch=master
+# YKI - Yleinen Kielitutkinto · [![Build Status](https://travis-ci.org/Opetushallitus/yki.svg?branch=master)](https://travis-ci.org/Opetushallitus/yki)
 
 Registration system for National Certificates of Language Proficiency (YKI).
 
