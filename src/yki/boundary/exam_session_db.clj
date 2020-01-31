@@ -1,5 +1,6 @@
 (ns yki.boundary.exam-session-db
   (:require [jeesql.core :refer [require-sql]]
+            [clj-time.core :as t]
             [clj-time.coerce :as c]
             [clj-time.local :as l]
             [clj-time.format :as f]
@@ -52,7 +53,9 @@
   (get-email-added-to-queue? [db email exam-session-id])
   (add-to-exam-session-queue! [db email lang exam-session-id])
   (update-exam-session-queue-last-notified-at! [db email exam-session-id])
-  (remove-from-exam-session-queue! [db email exam-session-id]))
+  (remove-from-exam-session-queue! [db email exam-session-id])
+  (update-post-admission-details! [db id post-admission])
+  (set-post-admission-active [db activation]))
 
 (extend-protocol ExamSessions
   duct.database.sql.Boundary
@@ -148,4 +151,19 @@
     [{:keys [spec]} email exam-session-id]
     (jdbc/with-db-transaction [tx spec]
       (q/delete-from-exam-session-queue! tx {:exam_session_id exam-session-id
-                                             :email email}))))
+                                             :email email})))
+
+  (update-post-admission-details!
+    [{:keys [spec]} id post-admission]
+    (jdbc/with-db-transaction [tx spec]
+      (let [current-post-admission (q/fetch-post-admission-details {:exam_session_id id})]
+        (if (and (false? (:post_admission_active post-admission))
+                 (> (:post_admission_quota post-admission) 0))
+            (q/update-post-admission-details! (merge {:exam_session_id id}
+                                                    post-admission)))
+            false
+          )))
+  (set-post-admission-active
+   [{:keys [spec]} id activation]
+   (jdbc/with-db-transaction [tx spec]
+                             (q/activate-post-admission activation))))

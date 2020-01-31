@@ -131,6 +131,10 @@
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::from-param (s/keys :opt-un [::from]))
 
+(s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_start_date ::post_admission_active]))
+
+(s/def ::post-admission-activation (s/keys :req-un [::post_admission_active]))
+
 (s/def ::id-response (s/keys :req-un [::id]))
 
 ;; exam date

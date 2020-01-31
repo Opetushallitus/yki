@@ -874,3 +874,20 @@ SELECT COUNT(1)
 FROM exam_session_queue
 WHERE exam_session_id = :exam_session_id
   AND LOWER(email) = LOWER(:email);
+
+--name: fetch-post-admission-details
+SELECT post_admission_start_date, post_admission_active, post_admission_quota
+  FROM exam_session
+ WHERE id = :exam_session_id;
+
+--name: activate-post-admission
+UPDATE exam_session
+   SET post_admission_active = :post_admission_active
+ WHERE id = :exam_session_id;
+
+--name: update-post-admission-details!
+UPDATE exam_session
+   SET post_admission_start_date = :post_admission_date,
+       post_admission_quota = :post_admission_quota
+ WHERE post_admission_active = FALSE
+   AND post_admission_quota > 0
