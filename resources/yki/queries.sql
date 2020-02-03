@@ -887,7 +887,8 @@ UPDATE exam_session
 
 --name: update-post-admission-details!
 UPDATE exam_session
-   SET post_admission_start_date = :post_admission_date,
+   SET post_admission_start_date = :post_admission_start_date,
        post_admission_quota = :post_admission_quota
  WHERE post_admission_active = FALSE
-   AND post_admission_quota > 0
+   AND :post_admission_quota > 0
+   AND id = :exam_session_id
