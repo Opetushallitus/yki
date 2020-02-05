@@ -1,5 +1,6 @@
 (ns yki.boundary.exam-session-db
   (:require [jeesql.core :refer [require-sql]]
+            [clj-time.core :as t]
             [clj-time.coerce :as c]
             [clj-time.local :as l]
             [clj-time.format :as f]
@@ -41,7 +42,7 @@
   (set-registration-status-to-cancelled! [db registration-id oid])
   (update-registration-exam-session! [db to-exam-session-id registration-id oid])
   (get-exam-session-by-id [db id])
-  (get-exam-session-by-registration-id [db registration-id])
+  (get-exam-session-registration-by-registration-id [db registration-id])
   (get-exam-session-with-location [db id lang])
   (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
@@ -52,7 +53,9 @@
   (get-email-added-to-queue? [db email exam-session-id])
   (add-to-exam-session-queue! [db email lang exam-session-id])
   (update-exam-session-queue-last-notified-at! [db email exam-session-id])
-  (remove-from-exam-session-queue! [db email exam-session-id]))
+  (remove-from-exam-session-queue! [db email exam-session-id])
+  (update-post-admission-details! [db id post-admission])
+  (set-post-admission-active [db activation]))
 
 (extend-protocol ExamSessions
   duct.database.sql.Boundary
@@ -115,8 +118,8 @@
     (first (q/select-exam-session-with-location spec {:id id :lang lang})))
   (get-exam-session-by-id [{:keys [spec]} id]
     (first (q/select-exam-session-by-id spec {:id id})))
-  (get-exam-session-by-registration-id [{:keys [spec]} registration-id]
-    (first (q/select-exam-session-by-registration-id spec {:registration_id registration-id})))
+  (get-exam-session-registration-by-registration-id [{:keys [spec]} registration-id]
+    (first (q/select-exam-session-registration-by-registration-id spec {:registration_id registration-id})))
   (get-exam-sessions-to-be-synced [{:keys [spec]} retry-duration]
     (q/select-exam-sessions-to-be-synced spec {:duration retry-duration}))
   (get-exam-session-participants [{:keys [spec]} id oid]
@@ -148,4 +151,19 @@
     [{:keys [spec]} email exam-session-id]
     (jdbc/with-db-transaction [tx spec]
       (q/delete-from-exam-session-queue! tx {:exam_session_id exam-session-id
-                                             :email email}))))
+                                             :email email})))
+
+  (update-post-admission-details!
+    [{:keys [spec]} id post-admission]
+    (jdbc/with-db-transaction [tx spec]
+      (let [current-post-admission (q/fetch-post-admission-details tx {:exam_session_id id})]
+        (if (and (false? (:post_admission_active post-admission))
+                 (> (:post_admission_quota post-admission) 0))
+          {:success (q/update-post-admission-details! tx {:exam_session_id id
+                                                          :post_admission_start_date (string->date (:post_admission_start_date post-admission))
+                                                          :post_admission_quota (:post_admission_quota post-admission)})}
+          ))))
+  (set-post-admission-active
+   [{:keys [spec]} activation]
+   (jdbc/with-db-transaction [tx spec]
+                             (q/activate-post-admission activation))))

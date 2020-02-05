@@ -8,7 +8,7 @@
             [pgqueue.core :as pgq]
             [ring.util.response :refer [response not-found]]
             [clojure.tools.logging :as log]
-            [ring.util.http-response :refer [bad-request conflict]]
+            [ring.util.http-response :refer [conflict internal-server-error ok]]
             [ring.util.request]
             [yki.spec :as ys]
             [integrant.core :as ig]))
@@ -85,6 +85,18 @@
                 (not-found {:success false
                             :error "Exam session not found"}))
               (conflict {:error "Cannot delete exam session with participants"}))))
+
+        (POST routing/post-admission-uri request
+          :path-params [id :- ::ys/id]
+          :body [post-admission ::ys/post-admission-update]
+          :return ::ys/response
+            (exam-session-db/update-post-admission-details! db id post-admission))
+
+        (POST (str routing/post-admission-uri "/activation") request
+              :path-params [id :- ::ys/id]
+              :body [activation ::ys/post-admission-activation]
+              :return ::ys/response
+             (exam-session-db/set-post-admission-active db (into {:exam_session_id id} activation)))
 
         (context routing/registration-uri []
           (GET "/" {session :session}

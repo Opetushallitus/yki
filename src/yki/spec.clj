@@ -108,6 +108,10 @@
 (s/def ::queue_full                 boolean?)
 (s/def ::queue                      int?)
 (s/def ::from                       ::date)
+; post admission extensions for exam-session
+(s/def ::post_admission_quota      (s/nilable pos-int?))
+(s/def ::post_admission_start_date (s/nilable ::date))
+(s/def ::post_admission_active     boolean?)
 
 (s/def ::exam-session (s/keys :req-un [::session_date
                                        ::language_code
@@ -122,20 +126,29 @@
                                        ::queue
                                        ::queue_full
                                        ::participants
-                                       ::organizer_oid]))
+                                       ::organizer_oid
+                                       ::post_admission_quota
+                                       ::post_admission_start_date
+                                       ::post_admission_active]))
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::from-param (s/keys :opt-un [::from]))
 
+(s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_quota ::post_admission_active]))
+
+(s/def ::post-admission-activation (s/keys :req-un [::post_admission_active]))
+
 (s/def ::id-response (s/keys :req-un [::id]))
 
 ;; exam date
-(s/def ::exam_date   ::date)
+(s/def ::exam_date                 ::date)
 (s/def ::registration_start_date   ::date)
-(s/def ::registration_end_date   ::date)
+(s/def ::registration_end_date     ::date)
+(s/def ::post_admission_end_date   (s/nilable ::date))
 (s/def ::exam-date-type (s/keys :req-un [::exam_date
                                          ::registration_start_date
                                          ::registration_end_date
+                                         ::post_admission_end_date
                                          ::languages]))
 (s/def ::dates (s/coll-of ::exam-date-type))
 (s/def ::exam-date-response (s/keys :req-un [::dates]))
@@ -280,6 +293,7 @@
 (s/def :sync/created      number?)
 (s/def ::exam-session-id  (s/nilable ::id))
 (s/def ::organizer-oid    (s/nilable ::oid))
+(s/def ::activate boolean?)
 
 (s/def ::data-sync-request (s/keys :req [:sync/type
                                          :sync/created]

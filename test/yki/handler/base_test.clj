@@ -56,6 +56,9 @@
 (def payment-formdata-json
   (read-json-from-file "test/resources/payment_formdata.json"))
 
+(def post-admission
+  (slurp "test/resources/post_admission.json"))
+
 (defn change-entry
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
@@ -301,4 +304,5 @@
   ([request]
    (send-request-with-tx request 8080))
   ([request port]
+   (clojure.pprint/pprint request)
    ((create-routes port) request)))

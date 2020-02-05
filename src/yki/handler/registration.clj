@@ -3,11 +3,9 @@
             [yki.handler.routing :as routing]
             [yki.registration.registration :as registration]
             [yki.util.audit-log :as audit]
-            [ring.util.http-response :refer [ok conflict not-found internal-server-error]]
+            [ring.util.http-response :refer [ok internal-server-error]]
             [yki.spec :as ys]
-            [clj-time.core :as t]
             [clojure.tools.logging :as log]
-            [ring.util.http-response :refer [ok]]
             [integrant.core :as ig]))
 
 (defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config url-helper email-q onr-client]}]

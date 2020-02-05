@@ -63,7 +63,7 @@
              (base/select-one "SELECT max_participants FROM exam_session where id = 1")))
       (is (= (:status response) 200))))
 
-  (testing "delete exam session endpoint should remove exam session and it's location"
+   (testing "delete exam session endpoint should remove exam session and it's location"
     (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/1"))
           response (base/send-request-with-tx request)
           data-sync-q (base/data-sync-q)
@@ -74,7 +74,19 @@
       (is (= {:count 0}
              (base/select-one "SELECT COUNT(1) FROM exam_session_location")))
       (is (some? (:exam-session sync-req)))
-      (is (= (:type sync-req) "DELETE")))))
+      (is (= (:type sync-req) "DELETE"))))
+
+    (testing "create exam session post admission endpoint adds post admission to exam session"
+      (let [create-es-request         (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
+                                          (mock/content-type "application/json; charset=UTF-8"))
+            response                  (base/send-request-with-tx create-es-request)
+            response-body             (base/body-as-json response)
+            exam-session-id           (get response-body "id")
+            create-pa-to-es-request   (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/post-admission") base/post-admission)
+                                          (mock/content-type "application/json; charset=UTF-8"))
+            pa-response               (base/send-request-with-tx create-pa-to-es-request)]
+                (is (= {:post_admission_start_date "2039-03-02" :post_admission_quota 50 :post_admission_active false}
+                       (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id)))))))
 
 (deftest exam-session-update-max-participants-fail-test
   (base/insert-base-data)
