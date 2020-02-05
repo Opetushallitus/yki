@@ -114,7 +114,6 @@
         (let [create-twice-response-body (base/body-as-json (:response create-twice-response))]
           (is (= (get-in create-twice-response [:response :status]) 200))
           (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))))
-      (println "submit response: " submit-response)
       (testing "post submit endpoint should create payment"
         (is (= (get-in submit-response [:response :status]) 200))
         (is (= (:id payment) id)))

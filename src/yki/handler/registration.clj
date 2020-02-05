@@ -34,7 +34,6 @@
          :path-params [id :- ::ys/id]
          :query-params [lang :- ::ys/language-code]
          :return ::ys/response
-         (println "registration: "registration)
          (let [{:keys [oid error]} (registration/submit-registration db
                                                                      url-helper
                                                                      email-q
