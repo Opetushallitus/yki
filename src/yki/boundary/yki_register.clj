@@ -105,7 +105,7 @@
                     (create-url-params exam-session)) basic-auth)))
 
 (defn- ssn-or-birthdate [ssn birthdate]
-  (or ssn
+  (or (when-not (str/blank? ssn) ssn)
       (let [[year month day] (str/split birthdate #"-")]
         (str
          day

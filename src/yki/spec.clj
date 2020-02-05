@@ -17,7 +17,10 @@
 (def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
 (def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,30}|0)){3,13}$")
 
-(s/def ::ssn (s/and string? #(re-matches ssn-regexp %)))
+(defn- empty-or-match [value regexp]
+  (or (str/blank? value) (re-matches regexp value)))
+
+(s/def ::ssn (s/and string? #(empty-or-match % ssn-regexp)))
 (s/def ::amount (s/and string? #(re-matches amount-regexp %)))
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code  #{"fi" "sv" "en"})
@@ -214,20 +217,21 @@
 (s/def ::street_address ::non-blank-string)
 (s/def ::phone_number ::non-blank-string)
 
+
 (s/def ::registration (s/keys
-                       :req-un [::first_name
-                                ::last_name
-                                ::nationalities
-                                ::certificate_lang
-                                ::exam_lang
-                                (or ::birthdate ::ssn)
-                                ::post_office
-                                ::zip
-                                ::street_address
-                                ::phone_number
-                                ::email]
-                       :opt-un [::gender
-                                ::nationality_desc]))
+  :req-un [::first_name
+            ::last_name
+            ::nationalities
+            ::certificate_lang
+            ::exam_lang
+            (or ::birthdate ::ssn)
+            ::post_office
+            ::zip
+            ::street_address
+            ::phone_number
+            ::email]
+  :opt-un [::gender
+            ::nationality_desc]))
 
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
