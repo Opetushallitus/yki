@@ -135,7 +135,7 @@
                         :gender "1"
                         :nationalities ["180"]
                         :birthdate "1999-01-01"
-                        :ssn ""
+                        :ssn "201190-083N"
                         :certificate_lang "fi"
                         :exam_lang "fi"
                         :post_office "Ankkalinna"

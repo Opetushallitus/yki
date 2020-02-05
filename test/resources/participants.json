@@ -29,6 +29,7 @@
         "email": "aa@al.fi",
         "certificate_lang": "fi",
         "birthdate": "1999-01-01",
+        "ssn": "201190-083N",
         "last_name": "Ankka",
         "first_name": "Aku",
         "nationalities": ["180"],
