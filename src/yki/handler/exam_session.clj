@@ -90,7 +90,10 @@
           :path-params [id :- ::ys/id]
           :body [post-admission ::ys/post-admission-update]
           :return ::ys/response
-            (exam-session-db/update-post-admission-details! db id post-admission))
+            (if (exam-session-db/update-post-admission-details! db id post-admission)
+                (response {:success true})
+                (not-found {:success false
+                  :error "Exam session not found"})))
 
         (POST (str routing/post-admission-uri "/activation") request
               :path-params [id :- ::ys/id]
