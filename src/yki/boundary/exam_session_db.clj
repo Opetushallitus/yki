@@ -156,13 +156,13 @@
   (update-post-admission-details!
     [{:keys [spec]} id post-admission]
     (jdbc/with-db-transaction [tx spec]
-      (let [current-post-admission (q/fetch-post-admission-details tx {:exam_session_id id})]
-        (if (and (false? (:post_admission_active post-admission))
-                 (> (:post_admission_quota post-admission) 0))
-          {:success (q/update-post-admission-details! tx {:exam_session_id id
-                                                          :post_admission_start_date (string->date (:post_admission_start_date post-admission))
-                                                          :post_admission_quota (:post_admission_quota post-admission)})}
-          ))))
+      (let [current-post-admission (first (q/fetch-post-admission-details tx {:exam_session_id id}))]
+        (when (and (false? (:post_admission_active current-post-admission))
+                   (> (:post_admission_quota post-admission) 0))
+              (q/update-post-admission-details! tx {:exam_session_id id
+                                                    :post_admission_start_date (string->date (:post_admission_start_date post-admission))
+                                                    :post_admission_quota (:post_admission_quota post-admission)}))
+          )))
   (set-post-admission-active
    [{:keys [spec]} activation]
    (jdbc/with-db-transaction [tx spec]
