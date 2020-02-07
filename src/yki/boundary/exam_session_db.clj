@@ -166,4 +166,4 @@
   (set-post-admission-active
    [{:keys [spec]} activation]
    (jdbc/with-db-transaction [tx spec]
-                             (q/activate-post-admission activation))))
+                             (q/activate-post-admission tx activation))))
