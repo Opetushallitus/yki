@@ -880,7 +880,7 @@ SELECT post_admission_start_date, post_admission_active, post_admission_quota
   FROM exam_session
  WHERE id = :exam_session_id;
 
---name: activate-post-admission
+--name: activate-post-admission!
 UPDATE exam_session
    SET post_admission_active = :post_admission_active
  WHERE id = :exam_session_id;

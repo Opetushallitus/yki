@@ -55,7 +55,7 @@
   (update-exam-session-queue-last-notified-at! [db email exam-session-id])
   (remove-from-exam-session-queue! [db email exam-session-id])
   (update-post-admission-details! [db id post-admission])
-  (set-post-admission-active [db activation]))
+  (set-post-admission-active! [db activation]))
 
 (extend-protocol ExamSessions
   duct.database.sql.Boundary
@@ -163,7 +163,7 @@
                                                     :post_admission_start_date (string->date (:post_admission_start_date post-admission))
                                                     :post_admission_quota (:post_admission_quota post-admission)}))
           )))
-  (set-post-admission-active
+  (set-post-admission-active!
    [{:keys [spec]} activation]
    (jdbc/with-db-transaction [tx spec]
-                             (q/activate-post-admission tx activation))))
+                             (q/activate-post-admission! tx activation))))
