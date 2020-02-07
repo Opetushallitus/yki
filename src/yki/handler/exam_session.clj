@@ -99,7 +99,10 @@
               :path-params [id :- ::ys/id]
               :body [activation ::ys/post-admission-activation]
               :return ::ys/response
-             (exam-session-db/set-post-admission-active db (into {:exam_session_id id} activation)))
+             (if (exam-session-db/set-post-admission-active db (into {:exam_session_id id} activation))
+                 (response {:success true})
+                 (not-found {:success false
+                  :error "Exam session not found"})))
 
         (context routing/registration-uri []
           (GET "/" {session :session}
