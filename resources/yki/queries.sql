@@ -234,7 +234,7 @@ SELECT
     WHERE exam_session_id = e.id
   ) loc
  ) as location,
-  within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open
+  within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) OR within_dt_range(now(), e.post_admission_start_date, ed.post_admission_end_date) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -278,7 +278,7 @@ SELECT
     WHERE exam_session_id = e.id
   ) loc
 ) AS location,
-  within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open
+  within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) OR within_dt_range(now(), e.post_admission_start_date, ed.post_admission_end_date) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
