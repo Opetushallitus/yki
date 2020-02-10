@@ -40,6 +40,7 @@
       ],
       "session_date": "2039-05-02",
       "participants": 0,
+      "pa_participants": 0,
       "max_participants": 50,
       "registration_start_date": "2039-01-01",
       "organizer_oid": "1.2.3.4",
