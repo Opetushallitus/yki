@@ -809,7 +809,7 @@ WHERE organizer_id =
     AND deleted_at IS NULL);
 
 -- name: select-exam-dates
-SELECT ed.exam_date, ed.registration_start_date, ed.registration_end_date, ed.post_admission_end_date,
+SELECT ed.id, ed.exam_date, ed.registration_start_date, ed.registration_end_date, ed.post_admission_end_date,
 (
   SELECT array_to_json(array_agg(lang))
   FROM (
