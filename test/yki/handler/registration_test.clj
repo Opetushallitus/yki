@@ -21,7 +21,6 @@
             [yki.handler.auth]
             [yki.handler.routing :as routing]
             [yki.handler.registration]))
-
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
 
@@ -103,7 +102,6 @@
           payment-link (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           email-request (pgq/take email-q)]
-
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
         (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))
