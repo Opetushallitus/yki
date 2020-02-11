@@ -31,6 +31,7 @@
       (f/parse maybe-date)))
 
 (s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))
+(s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION" "OTHER"})
 (s/def ::date         (st/spec
                        {:spec (partial date?)
                         :type :date-time
@@ -276,6 +277,7 @@
 ;; exam session participant
 (s/def ::state                    ::non-blank-string)
 (s/def ::form                     ::registration)
+(s/def ::kind                     ::registration-kind)
 (s/def ::original_exam_session_id (s/nilable ::id))
 (s/def :participant/order_number  (s/nilable ::order-number))
 (s/def :participant/created       (s/nilable ::created))
@@ -284,6 +286,7 @@
                                                    :participant/created
                                                    :participant/order_number
                                                    ::original_exam_session_id
+                                                   ::kind
                                                    ::state]))
 (s/def :exam-session/participants (s/coll-of ::exam-session-participant))
 (s/def ::participants-response    (s/keys :req-un [:exam-session/participants]))

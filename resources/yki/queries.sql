@@ -729,6 +729,7 @@ SELECT
   r.form,
   r.state,
   r.id as registration_id,
+  r.kind,
   r.original_exam_session_id,
   pa.order_number,
   pa.created
