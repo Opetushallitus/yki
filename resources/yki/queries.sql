@@ -475,7 +475,7 @@ SELECT NOT EXISTS (
      WHERE re.exam_session_id = :exam_session_id
        AND re.id != COALESCE(:registration_id, 0)
        AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-       AND re.kind IS 'POST_ADMISSION'
+       AND re.kind = 'POST_ADMISSION'
   GROUP BY es.post_admission_quota
     HAVING (es.post_admission_quota - COUNT(re.id)) <= 0
 ) as exists;
@@ -564,7 +564,8 @@ INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
-  AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
+  AND ((re.kind = 'ADMISSION' AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
+       OR (re.kind = 'POST_ADMISSION' AND (ed.post_admission_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')))
   AND re.state = 'STARTED'
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
