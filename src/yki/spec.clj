@@ -154,6 +154,8 @@
 (s/def ::dates (s/coll-of ::exam-date-type))
 (s/def ::exam-date-response (s/keys :req-un [::dates]))
 
+(s/def ::post-admission-end-date-update (s/keys :req-un [::post_admission_end_date]))
+
 ;; exam session queue
 (s/def ::to-queue-request (s/keys :req-un [::email]))
 

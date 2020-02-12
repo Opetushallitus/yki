@@ -899,5 +899,15 @@ UPDATE exam_session
 UPDATE exam_session
    SET post_admission_start_date = :post_admission_start_date,
        post_admission_quota = :post_admission_quota
---  WHERE post_admission_active = FALSE
-   WHERE id = :exam_session_id
+   WHERE post_admission_active = FALSE AND id = :exam_session_id;
+
+--name: update-post-admission-end-date!
+UPDATE exam_date
+   SET post_admission_end_date = :post_admission_end_date
+ WHERE id = :exam_date_id;
+
+--name: delete-post-admission-end-date!
+UPDATE exam_date
+   SET post_admission_end_date = NULL
+ WHERE id = :exam_date_id;
+ 
