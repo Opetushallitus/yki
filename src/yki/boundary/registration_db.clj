@@ -90,7 +90,7 @@
       (:exists exists)))
   (exam-session-post-registration-open?
     [{:keys [spec]} id]
-    (let [exists (first (q/select-exam-session-registration-open spec {:exam_session_id id}))]
+    (let [exists (first (q/select-exam-session-post-registration-open spec {:exam_session_id id}))]
       (:exists exists)))
   (update-participant-email!
     [{:keys [spec]} email participant-id]
