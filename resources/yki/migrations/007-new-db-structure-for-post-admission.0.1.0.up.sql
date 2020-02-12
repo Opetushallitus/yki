@@ -52,6 +52,7 @@ BEGIN
                        FROM exam_session es
                  INNER JOIN exam_date ed ON es.exam_date_id = ed.id
                       WHERE es.id = exam_session_post_registration_open.exam_date_id
+                        AND es.post_admission_active = TRUE
                         AND within_dt_range(at_point_in_time, es.post_admission_start_date, ed.post_admission_end_date)
                  ) as exists;
 END;
