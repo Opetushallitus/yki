@@ -518,6 +518,7 @@ RETURNING id as updated;
 -- name: update-registration-exam-session!
 UPDATE registration
 SET exam_session_id = :exam_session_id,
+    kind = 'ADMISSION',
     original_exam_session_id = (SELECT exam_session_id
                                 FROM registration
                                 WHERE id = :registration_id)
