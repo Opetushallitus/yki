@@ -165,5 +165,7 @@
           )))
   (set-post-admission-active!
    [{:keys [spec]} activation]
-   (jdbc/with-db-transaction [tx spec]
-                             (q/activate-post-admission! tx activation))))
+   (log/debug (str "Changing post admission active state to " (:post_admission_active activation) " for exam session " (:exam_session_id activation)))
+   (int->boolean (jdbc/with-db-transaction [tx spec]
+                               (q/activate-post-admission! tx activation)))))
+
