@@ -193,16 +193,37 @@
 
 (defn insert-exam-session
   [exam-date-id oid count]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
-        language_code,
-        level_code,
-        office_oid,
-        exam_date_id,
-        max_participants,
-        published_at)
-          VALUES (
-            (SELECT id FROM organizer where oid = " oid "),
-            'fin', 'PERUS', '1.2.3.4.5'," exam-date-id ", " count ", null)")))
+  ; this replacement is done because every single oid comes in prequoted and it'd be too much effort right now to fix those
+  ; feel free to do so if you have time
+  (let [office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+          language_code,
+          level_code,
+          office_oid,
+          exam_date_id,
+          max_participants,
+          published_at)
+            VALUES (
+              (SELECT id FROM organizer where oid = " oid "),
+              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null)"))))
+
+(defn insert-exam-session-with-post-admission
+  [exam-date-id oid count quota]
+  ; see above
+  (let [office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+          language_code,
+          level_code,
+          office_oid,
+          exam_date_id,
+          max_participants,
+          published_at,
+          post_admission_start_date,
+          post_admission_quota,
+          post_admission_active)
+            VALUES (
+              (SELECT id FROM organizer where oid = " oid "),
+              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null, '2018-12-07', " quota ", true)"))))
 
 (defn insert-exam-session-location
   [oid lang]

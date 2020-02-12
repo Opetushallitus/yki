@@ -1,4 +1,4 @@
-(ns yki.handler.registration-test
+(ns yki.handler.post-registration-test
   (:require [clojure.test :refer :all]
             [integrant.core :as ig]
             [ring.mock.request :as mock]
@@ -58,19 +58,22 @@
            :phone_number "04012345"
            :email "test@test.com"})
 
-(deftest registration-create-and-update-test
+(deftest registration-post-admission-create-and-update-test
   (base/insert-base-data)
   (base/insert-organizer "'1.2.3.5'")
   (base/insert-payment-config "'1.2.3.5'")
   (base/insert-languages "'1.2.3.5'")
-  (base/insert-exam-session 1 "'1.2.3.5'" 50)
+  ; both exam sessions are expected to share post admission dates for the relevant checks to work
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_date SET registration_end_date = '2018-12-01', post_admission_end_date = '2039-12-31'")
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_session SET post_admission_start_date = '2018-12-07', post_admission_quota = 20, post_admission_active = true WHERE id = 1")
+  (base/insert-exam-session-with-post-admission 1 "'1.2.3.5'" 50 20)
   (base/insert-exam-session-location "'1.2.3.5'" "fi")
   (base/insert-exam-session-location "'1.2.3.5'" "sv")
   (base/insert-exam-session-location "'1.2.3.5'" "en")
   (base/insert-login-link base/code-ok "2038-01-01")
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")
 
-  (with-routes!
+  (with-routes!  ;; TODO: test if this can be toplevel and deftests inside this to avoid duplication
     (fn [server]
       (merge (base/cas-mock-routes (:port server))
              {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
@@ -86,6 +89,7 @@
                                                       :content-type "application/json"
                                                       :request-method :post))
           init-response-body     (base/body-as-json (:response init-response))
+          _ (println "init-response-body" init-response-body)
           id                     (init-response-body "registration_id")
           create-twice-response  (-> session
                                      (peridot/request (str routing/registration-api-root "/init")
@@ -98,22 +102,24 @@
                                                       :body (j/write-value-as-string form)
                                                       :content-type "application/json"
                                                       :request-method :post))
+          _ (println "submit-response:" (base/body-as-json (:response submit-response)))
           payment                (base/select-one (str "SELECT * FROM payment WHERE registration_id = " id))
           exam-session           (base/select-one "SELECT * FROM exam_date WHERE id = 1")
           payment-link           (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
+          _ (println "submitted-registration:" submitted-registration)
           email-request          (pgq/take email-q)]
 
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
-        (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))
+        (is (= init-response-body (j/read-value (slurp "test/resources/init_post_registration_response.json"))))
         (is (= (:state registration) "STARTED"))
         (is (some? (:started_at registration))))
 
       (testing "second post before submitting should return init data"
         (let [create-twice-response-body (base/body-as-json (:response create-twice-response))]
           (is (= (get-in create-twice-response [:response :status]) 200))
-          (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))))
+          (is (= init-response-body (j/read-value (slurp "test/resources/init_post_registration_response.json"))))))
 
       (testing "post submit endpoint should create payment"
         (is (= (get-in submit-response [:response :status]) 200))
@@ -157,7 +163,7 @@
           (is (= (get-in create-twice-response [:response :status]) 409))))
 
       (testing "when session is full should return conflict with proper error"
-        (fill-exam-session 50, "ADMISSION")
+        (fill-exam-session 20 "POST_ADMISSION")
         (let [session-full-response (-> session
                                         (peridot/request (str routing/registration-api-root "/init")
                                                          :body (j/write-value-as-string {:exam_session_id 2})
