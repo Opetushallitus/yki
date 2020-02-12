@@ -59,6 +59,15 @@
 (def post-admission
   (slurp "test/resources/post_admission.json"))
 
+(def post-admission-updated
+  (slurp "test/resources/post_admission_updated.json"))
+
+(def post-admission-activation
+  (slurp "test/resources/post_admission_activation.json"))
+
+(def post-admission-deactivation
+  (slurp "test/resources/post_admission_deactivation.json"))
+
 (defn change-entry
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))

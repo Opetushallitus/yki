@@ -63,7 +63,7 @@
              (base/select-one "SELECT max_participants FROM exam_session where id = 1")))
       (is (= (:status response) 200))))
 
-   (testing "delete exam session endpoint should remove exam session and it's location"
+  (testing "delete exam session endpoint should remove exam session and it's location"
     (let [request (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/1"))
           response (base/send-request-with-tx request)
           data-sync-q (base/data-sync-q)
@@ -76,17 +76,54 @@
       (is (some? (:exam-session sync-req)))
       (is (= (:type sync-req) "DELETE"))))
 
-    (testing "create exam session post admission endpoint adds post admission to exam session"
-      (let [create-es-request         (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
-                                          (mock/content-type "application/json; charset=UTF-8"))
-            response                  (base/send-request-with-tx create-es-request)
-            response-body             (base/body-as-json response)
-            exam-session-id           (get response-body "id")
-            create-pa-to-es-request   (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/post-admission") base/post-admission)
-                                          (mock/content-type "application/json; charset=UTF-8"))
-            pa-response               (base/send-request-with-tx create-pa-to-es-request)]
-                (is (= {:post_admission_start_date "2039-03-02" :post_admission_quota 50 :post_admission_active false}
-                       (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id)))))))
+  (let [exam-session-route (str routing/organizer-api-root "/1.2.3.4/exam-session")]
+    (letfn [(mock-request [method path body] (-> (mock/request method path body)
+                                                 (mock/content-type "application/json; charset=UTF-8")
+                                                 (base/send-request-with-tx)
+                                                 (base/body-as-json)))
+            (create-es []                    (-> (mock-request :post (str exam-session-route) base/exam-session)))
+            (create-pa [exam-session-id]     (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission") base/post-admission)))
+            (update-pa [exam-session-id]     (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission") base/post-admission-updated)))
+            (activate-pa [exam-session-id]   (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission/activation") base/post-admission-activation)))
+            (deactivate-pa [exam-session-id] (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission/activation") base/post-admission-deactivation)))]
+
+      (testing "can add post admission to exam session"
+               (let [create-es-response (create-es)
+                     exam-session-id    (get create-es-response "id")
+                     create-pa-response (create-pa exam-session-id)]
+                 (is (= {:post_admission_start_date "2039-03-02" :post_admission_quota 50 :post_admission_active false}
+                        (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id))))))
+
+      (testing "can update existing post admission if post admission has not been activated"
+               (let [create-es-response (create-es)
+                     exam-session-id    (get create-es-response "id")
+                     create-pa-response (create-pa exam-session-id)
+                     update-pa-response (update-pa exam-session-id)]
+                 (is (= {:post_admission_start_date "2039-02-02" :post_admission_quota 10 :post_admission_active false}
+                        (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id))))))
+
+      (testing "can not update existing post admission if post admission has been activated"
+               (let [create-es-response   (create-es)
+                     exam-session-id      (get create-es-response "id")
+                     create-pa-response   (create-pa exam-session-id)
+                     activate-pa-response (activate-pa exam-session-id)
+                     update-pa-response   (update-pa exam-session-id)]
+                 (is (= {"success" true} create-pa-response))
+                 (is (= {:post_admission_active true}
+                        (base/select-one (str "SELECT post_admission_active FROM exam_session WHERE id = " exam-session-id))))
+                 (is (= {"success" false "error" "Exam session not found"} update-pa-response))))
+
+      (testing "can update activated post admission details again after it has been deactivated"
+               (let [create-es-response     (create-es)
+                     exam-session-id        (get create-es-response "id")
+                     create-pa-response     (create-pa exam-session-id)
+                     activate-pa-response   (activate-pa exam-session-id)
+                     deactivate-pa-response (deactivate-pa exam-session-id)
+                     update-pa-response     (update-pa exam-session-id)]
+                 (is (= {"success" true} update-pa-response))
+                 (is (= {:post_admission_start_date "2039-02-02" :post_admission_quota 10 :post_admission_active false}
+                        (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id))))
+                 )))))
 
 (deftest exam-session-update-max-participants-fail-test
   (base/insert-base-data)
@@ -107,4 +144,3 @@
         response             (base/send-request-with-tx request)]
     (testing "should not allow deleting exam session with participants"
       (is (= (:status response) 409)))))
-
