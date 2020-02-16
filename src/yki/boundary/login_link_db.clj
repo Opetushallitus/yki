@@ -20,4 +20,4 @@
   (get-login-link-by-code [{:keys [spec]} code]
     (first (q/select-login-link-by-code spec {:code code})))
   (get-login-link-by-exam-session-and-registration-id [{:keys [spec]} exam-session-id registration-id]
-    (first (q/select-login-link-by-exam-session-and-registration-id))))
+    (first (q/select-login-link-by-exam-session-and-registration-id spec {:exam_session_id exam-session-id :registration_id registration-id}))))

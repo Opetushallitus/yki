@@ -141,6 +141,7 @@
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :query-params [emailLang :- ::ys/language-code]
               :return ::ys/response
+              (log/info "id: " id " registration-id: " registration-id " emailLang: " emailLang)
               (if (registration/resend-link db url-helper email-q emailLang id registration-id)
                   (response {:success true})
                   (not-found {:success false
