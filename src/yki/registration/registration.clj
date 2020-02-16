@@ -122,6 +122,36 @@
               :subject (template-util/subject url-helper link-type lang template-data)
               :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
+(defn resend-link [db url-helper email-q lang exam-session-id registration-id]
+  (let [login-link              (login-link-db/get-login-link-by-exam-session-and-registration-id db exam-session-id registration-id)
+        participant-id          (:participant_id login-link)
+        registration-data       (registration-db/get-registration-data db registration-id participant-id lang)
+        code                    (:code login-link)
+        login-url               (url-helper :yki.login-link.url code)
+        email                   (:email (registration-db/get-participant-by-id db participant-id))
+        registration-kind       (:kind registration-data)
+        registration-end-time   (c/next-start-of-day 
+                                  (f/parse 
+                                    (if (= registration-kind "POST_ADMISSION")
+                                        (:post_admission_end_date registration-data)
+                                        (:registration_end_date registration-data))))
+        expiration-date         (t/min-date 
+                                  (if (= registration-kind "POST_ADMISSION")
+                                      (c/date-from-now 2)
+                                      (c/date-from-now 8))
+                                  registration-end-time)
+        link-type               (:type login-link)
+        template-data           (assoc registration-data
+                                       :amount "??.??" ;FIX ME, need to inject payment config here and probably also to handler
+                                       :language (template-util/get-language url-helper (:language_code registration-data) lang)
+                                       :level (template-util/get-level url-helper (:level_code registration-data) lang)
+                                       :expiration-date (c/format-date-to-finnish-format expiration-date))]
+      (pgq/put email-q 
+              {:recipients [email]
+                :created (System/currentTimeMillis)
+                :subject (template-util/subject url-helper link-type lang template-data)
+                :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
+
 (defn submit-registration-abstract-flow
   []
   (fn [db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration]
@@ -131,7 +161,7 @@
                             (assoc form :ssn (:ssn identity)))
           participant-id  (get-participant-id db identity)
           email           (:email form)
-          started?        (= (:state exam-session-registration) "STARTED")]  ; TODO: Mikä tila on kun ilmo on ohi, mutta jälki-ilmo auki?
+          started?        (= (:state exam-session-registration) "STARTED")]
       (when email
         (registration-db/update-participant-email! db email participant-id))
       (if-let [registration-data (when started? (registration-db/get-registration-data db registration-id participant-id lang))]

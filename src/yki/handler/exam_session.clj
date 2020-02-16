@@ -3,6 +3,7 @@
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.registration-db :as registration-db]
             [yki.registration.paytrail-payment :as paytrail-payment]
+            [yki.registration.registration :as registration]
             [yki.handler.routing :as routing]
             [yki.util.audit-log :as audit-log]
             [pgqueue.core :as pgq]
@@ -103,7 +104,6 @@
                  (response {:success true})
                  (not-found {:success false
                   :error "Exam session not found"})))
-
         (context routing/registration-uri []
           (GET "/" {session :session}
             :path-params [id :- ::ys/id]
@@ -137,6 +137,14 @@
                   (response {:success true}))
                 (not-found {:success false
                             :error "Registration not found"})))
+            (POST "/resendConfirmation" request
+              :path-params [id :- ::ys/id registration-id :- ::ys/id]
+              :query-params [emailLang :- ::ys/language-code]
+              :return ::ys/response
+              (if (registration/resend-link db url-helper email-q emailLang id registration-id)
+                  (response {:success true})
+                  (not-found {:success false
+                             :error "Registration not found"})))
             (POST "/confirm-payment" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response

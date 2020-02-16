@@ -406,6 +406,14 @@ FROM login_link l INNER JOIN participant p
   ON l.participant_id = p.id
 WHERE l.code = :code;
 
+-- name: select-login-link-by-exam-session-and-registration-id
+SELECT
+  l.code,
+  l.participant_id,
+  l.type
+FROM login_link l
+WHERE l.exam_session_id = :exam_session_id AND l.registration_id = :registration_id;
+
 -- name: try-to-acquire-lock!
 UPDATE task_lock SET
   last_executed = current_timestamp,
@@ -551,10 +559,12 @@ RETURNING id as updated;
 SELECT re.state,
        re.exam_session_id,
        re.participant_id,
+       re.kind,
        es.language_code,
        es.level_code,
        ed.exam_date,
        ed.registration_end_date,
+       ed.post_admission_end_date,
        esl.street_address,
        esl.post_office,
        esl.zip,
@@ -566,7 +576,7 @@ INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
   AND ((re.kind = 'ADMISSION' AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
        OR (re.kind = 'POST_ADMISSION' AND (ed.post_admission_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')))
-  AND re.state = 'STARTED'
+  AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
