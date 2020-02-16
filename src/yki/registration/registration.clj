@@ -123,7 +123,7 @@
               :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
 (defn resend-link [db url-helper email-q lang exam-session-id registration-id]
-  (let [login-link              (login-link-db/get-login-link-by-exam-session-and-registration-id db exam-session-id registration-id)
+  (let [login-link              (login-link-db/get-login-link-by-exam-session-and-registration-id db registration-id)
         log1                    (log/info "login-link: " login-link)
         participant-id          (:participant_id login-link)
         log2 (log/info "participantId: " participant-id)
