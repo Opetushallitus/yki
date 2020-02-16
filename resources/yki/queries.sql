@@ -412,7 +412,7 @@ SELECT
   l.participant_id,
   l.type
 FROM login_link l
-WHERE l.exam_session_id = :exam_session_id AND l.registration_id = :registration_id;
+WHERE l.registration_id = :registration_id;
 
 -- name: try-to-acquire-lock!
 UPDATE task_lock SET
