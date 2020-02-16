@@ -124,22 +124,31 @@
 
 (defn resend-link [db url-helper email-q lang exam-session-id registration-id]
   (let [login-link              (login-link-db/get-login-link-by-exam-session-and-registration-id db exam-session-id registration-id)
+        log1                    (log/info "login-link: " login-link)
         participant-id          (:participant_id login-link)
+        log2 (log/info "participantId: " participant-id)
         registration-data       (registration-db/get-registration-data db registration-id participant-id lang)
+        log3 (log/info "reg-data: " registration-data)
         code                    (:code login-link)
+        log4 (log/info "code: " code)
         login-url               (url-helper :yki.login-link.url code)
+        log5 (log/info "loginurl: " login-url)
         email                   (:email (registration-db/get-participant-by-id db participant-id))
+        log6 (log/info "email: " email)
         registration-kind       (:kind registration-data)
+        log7 (log/info "regKind: " registration-kind)
         registration-end-time   (c/next-start-of-day 
                                   (f/parse 
                                     (if (= registration-kind "POST_ADMISSION")
                                         (:post_admission_end_date registration-data)
                                         (:registration_end_date registration-data))))
+        log7 (log/info "reg-end-time: " registration-end-time)
         expiration-date         (t/min-date 
                                   (if (= registration-kind "POST_ADMISSION")
                                       (c/date-from-now 2)
                                       (c/date-from-now 8))
                                   registration-end-time)
+        log8 (log/info "exp date: " expiration-date)
         link-type               (:type login-link)
         template-data           (assoc registration-data
                                        :amount "??.??" ;FIX ME, need to inject payment config here and probably also to handler
