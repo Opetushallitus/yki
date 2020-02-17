@@ -137,15 +137,16 @@
                   (response {:success true}))
                 (not-found {:success false
                             :error "Registration not found"})))
-            (POST "/resendConfirmation" request
-              :path-params [id :- ::ys/id registration-id :- ::ys/id]
-              :query-params [emailLang :- ::ys/language-code]
-              :return ::ys/response
-              (log/info "id: " id " registration-id: " registration-id " emailLang: " emailLang)
-              (if (registration/resend-link db url-helper email-q emailLang id registration-id)
-                  (response {:success true})
-                  (not-found {:success false
-                             :error "Registration not found"})))
+            ; Regarding email confirmation resend: needs to generate a whole new login link and invalidate old one
+            ; (POST "/resendConfirmation" request
+            ;   :path-params [id :- ::ys/id registration-id :- ::ys/id]
+            ;   :query-params [emailLang :- ::ys/language-code]
+            ;   :return ::ys/response
+            ;   (log/info "id: " id " registration-id: " registration-id " emailLang: " emailLang)
+            ;   (if (registration/resend-link db url-helper email-q emailLang id registration-id)
+            ;       (response {:success true})
+            ;       (not-found {:success false
+            ;                  :error "Registration not found"})))
             (POST "/confirm-payment" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response

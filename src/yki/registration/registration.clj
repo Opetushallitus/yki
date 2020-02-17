@@ -122,44 +122,36 @@
               :subject (template-util/subject url-helper link-type lang template-data)
               :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
-(defn resend-link [db url-helper email-q lang exam-session-id registration-id]
-  (let [login-link              (login-link-db/get-login-link-by-exam-session-and-registration-id db registration-id)
-        log1                    (log/info "login-link: " login-link)
-        participant-id          (:participant_id login-link)
-        log2 (log/info "participantId: " participant-id)
-        registration-data       (registration-db/get-registration-data db registration-id participant-id lang)
-        log3 (log/info "reg-data: " registration-data)
-        code                    (:code login-link)
-        log4 (log/info "code: " code)
-        login-url               (url-helper :yki.login-link.url code)
-        log5 (log/info "loginurl: " login-url)
-        email                   (:email (registration-db/get-participant-by-id db participant-id))
-        log6 (log/info "email: " email)
-        registration-kind       (:kind registration-data)
-        log7 (log/info "regKind: " registration-kind)
-        registration-end-time   (c/next-start-of-day 
-                                  (f/parse 
-                                    (if (= registration-kind "POST_ADMISSION")
-                                        (:post_admission_end_date registration-data)
-                                        (:registration_end_date registration-data))))
-        log7 (log/info "reg-end-time: " registration-end-time)
-        expiration-date         (t/min-date 
-                                  (if (= registration-kind "POST_ADMISSION")
-                                      (c/date-from-now 2)
-                                      (c/date-from-now 8))
-                                  registration-end-time)
-        log8 (log/info "exp date: " expiration-date)
-        link-type               (:type login-link)
-        template-data           (assoc registration-data
-                                       :amount "??.??" ;FIX ME, need to inject payment config here and probably also to handler
-                                       :language (template-util/get-language url-helper (:language_code registration-data) lang)
-                                       :level (template-util/get-level url-helper (:level_code registration-data) lang)
-                                       :expiration-date (c/format-date-to-finnish-format expiration-date))]
-      (pgq/put email-q 
-              {:recipients [email]
-                :created (System/currentTimeMillis)
-                :subject (template-util/subject url-helper link-type lang template-data)
-                :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
+; FINISH ME. needs to create a new login link, cant reuse old because of hash
+; (defn resend-link [db url-helper email-q lang exam-session-id registration-id]
+;   (let [login-link              (login-link-db/get-login-link-by-exam-session-and-registration-id db registration-id)
+;         participant-id          (:participant_id login-link)
+;         registration-data       (registration-db/get-registration-data db registration-id participant-id lang)
+;         code                    (:code login-link)
+;         login-url               (url-helper :yki.login-link.url code)
+;         email                   (:email (registration-db/get-participant-by-id db participant-id))
+;         registration-kind       (:kind registration-data)
+;         registration-end-time   (c/next-start-of-day 
+;                                   (f/parse 
+;                                     (if (= registration-kind "POST_ADMISSION")
+;                                         (:post_admission_end_date registration-data)
+;                                         (:registration_end_date registration-data))))
+;         expiration-date         (t/min-date 
+;                                   (if (= registration-kind "POST_ADMISSION")
+;                                       (c/date-from-now 2)
+;                                       (c/date-from-now 8))
+;                                   registration-end-time)
+;         link-type               (:type login-link)
+;         template-data           (assoc registration-data
+;                                        :amount "??.??" ;FIX ME, need to inject payment config here and probably also to handler
+;                                        :language (template-util/get-language url-helper (:language_code registration-data) lang)
+;                                        :level (template-util/get-level url-helper (:level_code registration-data) lang)
+;                                        :expiration-date (c/format-date-to-finnish-format expiration-date))]
+;       (pgq/put email-q 
+;               {:recipients [email]
+;                 :created (System/currentTimeMillis)
+;                 :subject (template-util/subject url-helper link-type lang template-data)
+;                 :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
 (defn submit-registration-abstract-flow
   []
