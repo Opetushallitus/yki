@@ -181,8 +181,17 @@
                                          :oid            oid
                                          :form_version   1
                                          :participant_id participant-id}
-                registration-end-time   (c/next-start-of-day (f/parse (:registration_end_date registration-data)))
-                expiration-date         (t/min-date (c/date-from-now 8) registration-end-time)
+                registration-kind       (:kind registration-data)
+                registration-end-time   (c/next-start-of-day 
+                                          (f/parse 
+                                            (if (= registration-kind "POST_ADMISSION")
+                                                (:post_admission_end_date registration-data)
+                                                (:registration_end_date registration-data))))
+                expiration-date         (t/min-date 
+                                          (if (= registration-kind "POST_ADMISSION")
+                                              (c/date-from-now 1)
+                                              (c/date-from-now 8))
+                                          registration-end-time)
                 payment-link            {:participant_id        participant-id
                                          :exam_session_id       nil
                                          :registration_id       registration-id
