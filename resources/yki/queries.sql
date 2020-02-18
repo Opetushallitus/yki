@@ -711,11 +711,12 @@ SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
-WHERE ((ed.registration_end_date + interval '1 day') >= current_date
+WHERE ((ed.registration_end_date + interval '1 day') >= current_date 
+  OR (ed.post_admission_end_date + interval '1 day') >= current_date
   OR ((ed.registration_end_date + :duration::interval) >= current_date
       AND pss.failed_at IS NOT NULL
       AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
-AND ed.registration_start_date <= current_date
+AND (ed.registration_start_date <= current_date OR es.post_admission_start_date <= current_date)
 AND (SELECT COUNT(1)
      FROM registration re
      WHERE re.exam_session_id = es.id AND re.state = 'COMPLETED') > 0;
