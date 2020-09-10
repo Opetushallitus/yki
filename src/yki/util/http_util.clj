@@ -9,7 +9,7 @@
 (defn do-request
   [{:keys [url method] :as opts}]
 
-  (let [opts        (update opts :headers merge {"clientSubSystemCode" "yki" "Caller-Id" "yki"})
+  (let [opts        (update opts :headers merge {"Caller-Id" "1.2.246.562.10.00000000001.yki"})
         method-name (string/upper-case (name method))
         start       (System/currentTimeMillis)
         response    @(http/request opts)
