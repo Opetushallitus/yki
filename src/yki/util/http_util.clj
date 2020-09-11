@@ -1,7 +1,7 @@
 (ns yki.util.http-util
   (:require [org.httpkit.client :as http]
             [clojure.string :as string]
-            [clojure.tools.logging :refer [info]])
+            [clojure.tools.logging :refer [info]]))
 
 (defn- remove-ssn [url]
   (string/replace url #"hetu.*?(?=&|\?|$)" "hetu=***********"))
