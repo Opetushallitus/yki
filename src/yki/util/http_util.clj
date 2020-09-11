@@ -1,7 +1,7 @@
 (ns yki.util.http-util
   (:require [org.httpkit.client :as http]
             [clojure.string :as string]
-            [clojure.tools.logging :refer [info]]))
+            [clojure.tools.logging :refer [info]])
 
 (defn- remove-ssn [url]
   (string/replace url #"hetu.*?(?=&|\?|$)" "hetu=***********"))
@@ -12,6 +12,7 @@
   (let [opts        (update opts :headers merge {"Caller-Id" "1.2.246.562.10.00000000001.yki"})
         method-name (string/upper-case (name method))
         start       (System/currentTimeMillis)
+        _ (info "do-request, opts:" opts)
         response    @(http/request opts)
         time        (- (System/currentTimeMillis) start)
         status      (:status response 500)
