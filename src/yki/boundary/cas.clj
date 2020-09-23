@@ -17,8 +17,7 @@
       (assoc :body (json/generate-string body))))
 
 (defn- create-params [cas-session-id body]
-  (cond-> {:headers {"Cookie" (str "JSESSIONID=" cas-session-id)
-                     "Caller-Id" "1.2.246.562.10.00000000001.yki"}
+  (cond-> {:headers {"Cookie" (str "JSESSIONID=" cas-session-id)}
            :follow-redirects false}
     (some? body)
     (request-with-json-body body)))
