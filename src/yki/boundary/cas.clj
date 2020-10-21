@@ -47,7 +47,7 @@
   (cas-authenticated-post [_ url body]
     (cas-http (cas/cas-client (url-helper :cas-client) "1.2.246.562.10.00000000001.yki") cas-params :post url body))
 
-  (get-cas-session [_ cas-params] (.run (.fetchCasSession (cas/cas-client (url-helper :cas-client) "1.2.246.562.10.00000000001.yki") cas-params "JSESSIONID")))))
+  (get-cas-session [_ cas-params] (.run (.fetchCasSession (cas/cas-client (url-helper :cas-client) "1.2.246.562.10.00000000001.yki") cas-params "JSESSIONID"))))
 
 (defmethod ig/init-key :yki.boundary.cas/cas-client [_ {:keys [url-helper cas-creds]}]
   (fn [service]
