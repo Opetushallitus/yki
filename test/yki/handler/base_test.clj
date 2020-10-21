@@ -189,9 +189,16 @@
 (defn insert-exam-dates []
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-01-01', '2039-03-01')"))
 
+(defn insert-exam-history-dates [exam-date reg-start reg-end]
+  (println "INSERT EXAM HISTORY DATES: " exam-date reg-start reg-end)
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" exam-date "', '" reg-start "', '" reg-end "')")))
+
 (def select-participant "(SELECT id from participant WHERE external_user_id = 'test@user.com')")
 
 (def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
+
+(defn select-exam-date-by-date [exam-date]
+  (str "(SELECT id from exam_date WHERE exam_date='" exam-date "')"))
 
 (defn insert-exam-session
   [exam-date-id oid count]
@@ -244,6 +251,24 @@
         'Other info',
         '" lang "',
         (SELECT id FROM exam_session where organizer_id =  (SELECT id FROM organizer where oid = " oid ") ))")))
+
+(defn insert-exam-session-location-by-date
+  [exam-date lang]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
+    street_address,
+    post_office,
+    zip,
+    other_location_info,
+    lang,
+    exam_session_id)
+      VALUES (
+        'Omenia',
+        'Upseerinkatu 11',
+        'Espoo',
+        '00240',
+        'Other info',
+        '" lang "',
+        (SELECT id FROM exam_session where exam_date_id =(SELECT id from exam_date WHERE exam_date='" exam-date "')))")))
 
 (defn insert-base-data []
   (insert-organizer "'1.2.3.4'")
