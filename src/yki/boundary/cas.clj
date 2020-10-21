@@ -3,7 +3,7 @@
    [integrant.core :as ig]
    [yki.util.http-util :as http-util]
    [cheshire.core :as json]
-   [clj-util.cas :as cas]))
+   [clj-cas.cas :as cas]))
 
 (defprotocol CasAccess
   (validate-ticket [this ticket])
@@ -38,7 +38,7 @@
   CasAccess
   (validate-ticket [_ ticket]
     (let [cas-client (cas/cas-client (url-helper :cas-client))
-          username   (.run (.validateServiceTicket cas-client (url-helper :yki.cas.login-success) ticket))]
+          username   (.run (.validateServiceTicket cas-client (url-helper :yki.cas.login-success) ticket (cas-client/decodeOppijaAttributes)))]
       username))
 
   (cas-authenticated-get [_ url]
