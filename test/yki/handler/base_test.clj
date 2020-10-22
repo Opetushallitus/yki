@@ -190,14 +190,13 @@
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-01-01', '2039-03-01')"))
 
 (defn insert-exam-history-dates [exam-date reg-start reg-end]
-  (println "INSERT EXAM HISTORY DATES: " exam-date reg-start reg-end)
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" exam-date "', '" reg-start "', '" reg-end "')")))
 
 (def select-participant "(SELECT id from participant WHERE external_user_id = 'test@user.com')")
 
 (def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
 
-(defn select-exam-date-by-date [exam-date]
+(defn select-exam-date-id [exam-date]
   (str "(SELECT id from exam_date WHERE exam_date='" exam-date "')"))
 
 (defn insert-exam-session

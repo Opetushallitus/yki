@@ -15,6 +15,13 @@
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
+(defn- get-exam-date [response-body date]
+  (let [exam-dates (fn [r] (get-in r ["session_date"]))
+        exam-sessions (get-in response-body ["exam_sessions"])
+        date-map (map exam-dates exam-sessions)
+        get-date (fn [r] (some #{r} date-map))]
+    (get-date date)))
+
 (deftest exam-session-validation-test
   (let [invalid-exam-session (base/change-entry base/exam-session "session_date" "NOT_A_DATE")
         request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") invalid-exam-session)
@@ -25,43 +32,6 @@
       (is (= {:count 0}
              (base/select-one "SELECT COUNT(1) FROM exam_session")))
       (is (= (:status response) 400)))))
-
-(deftest ^:test-refresh/focus exam-session-history-test
-  (println "------- this is a history test")
-  (base/insert-organizer "'1.2.3.4'")
-  (base/insert-languages "'1.2.3.4'")
-  ;(base/insert-exam-dates)
-
-  (testing "insert history dates"
-    (let [date-id (fn [date] (-> date
-                                 (base/select-exam-date-by-date)
-                                 (base/select-one)
-                                 :id))
-          ;"2018-01-01T00:00:00Z"
-          history-dates [["2040-06-01" "2040-03-01" "2040-05-30"]
-                         ["2040-04-01" "2040-03-01" "2040-03-30"]
-                         ["2039-12-01" "2040-11-01" "2040-11-30"]
-                         ["2039-10-01" "2039-10-01" "2039-10-30"]]
-          insert-dates (fn [dates] (let [[exam-date reg-start reg-end] dates]
-                                     (base/insert-exam-history-dates exam-date reg-start reg-end)
-                                     (->  (date-id exam-date)
-                                          (base/insert-exam-session "'1.2.3.4'" 5))
-                                     (base/insert-exam-session-location-by-date exam-date "fi")))
-          iterate-dates (fn [dates] (for [d dates] (insert-dates d)))]
-      (doall (iterate-dates history-dates))))
-
-  (testing "get exm session history endpoint should exam session history from past six months"
-    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/history?from=2040-04-1"))
-          response (base/send-request-with-tx request)
-          response-body (base/body-as-json response)
-          exam-sessions (get-in response-body ["exam_sessions"])
-          exam-dates (fn [r] (get-in r ["session_date"]) exam-sessions)]
-      (doall (for [r (get-in response-body ["exam_sessions"])] (println "***" (get-in r ["session_date"]) "***")))
-      (println "Exam dates vector: " (map exam-dates exam-sessions))
-      (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
-      (is (= (:status response) 200))))
-
-  (testing "get exam session hisotry endpoint with 'days' parameter should return limited exam sessions history from past days"))
 
 (deftest exam-session-crud-test
   (base/insert-organizer "'1.2.3.4'")
@@ -160,6 +130,43 @@
           (is (= {"success" true} update-pa-response))
           (is (= {:post_admission_start_date "2039-02-02" :post_admission_quota 10 :post_admission_active false}
                  (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id)))))))))
+
+(deftest exam-session-history-test
+  (base/insert-organizer "'1.2.3.4'")
+  (base/insert-languages "'1.2.3.4'")
+
+  (let [exam-dates [["2040-06-01" "2040-03-01" "2040-05-30"]
+                    ["2040-04-01" "2040-03-01" "2040-03-30"]
+                    ["2039-12-01" "2040-11-01" "2040-11-30"]
+                    ["2039-10-01" "2039-10-01" "2039-10-30"]]
+        date-id (fn [date] (-> date
+                               (base/select-exam-date-id)
+                               (base/select-one)
+                               :id))
+        insert-dates (fn [dates] (let [[exam-date reg-start reg-end] dates]
+                                   (base/insert-exam-history-dates exam-date reg-start reg-end)
+                                   (base/insert-exam-session (date-id exam-date) "'1.2.3.4'" 5)
+                                   (base/insert-exam-session-location-by-date exam-date "fi")))
+        iterate-exam-dates (fn [dates] (for [d dates] (insert-dates d)))]
+    (doall (iterate-exam-dates exam-dates)))
+
+  (testing "exam session history endpoint should return exam session history from past six months"
+    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/history?from=2040-04-01T00:00:00Z"))
+          response (base/send-request-with-tx request)
+          response-body (base/body-as-json response)]
+      (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
+      (is (= (:status response) 200))
+      (is (= (get-exam-date response-body "2039-12-01") "2039-12-01"))
+      (is (= (get-exam-date response-body "2039-10-01") nil))))
+
+  (testing "exam session history endpoint with 'days' parameter should return limited sessions history from past days"
+    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/history?from=2040-06-01T00:00:00Z&days=100"))
+          response (base/send-request-with-tx request)
+          response-body (base/body-as-json response)]
+      (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
+      (is (= (:status response) 200))
+      (is (= (get-exam-date response-body "2040-04-01") "2040-04-01"))
+      (is (= (get-exam-date response-body "2039-12-01") nil)))))
 
 (deftest exam-session-update-max-participants-fail-test
   (base/insert-base-data)

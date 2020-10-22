@@ -49,16 +49,11 @@
         (GET "/" []
           :query-params [{from :- ::ys/date nil} {days :- ::ys/days nil}]
           :return ::ys/exam-sessions-response
-          (log/info "----------------- HISTORY -------------")
-          (log/info "From: " from)
-          (log/info "Days: ", days)
-          ;"2040-04-21T00:00:00.000Z"
           (let [history-date (-> from
                                  (c/to-long)
                                  (c/from-long)
                                  (t/minus (t/days (if days days 180))))
                 string-date (f/unparse (f/formatter "yyyy-MM-dd") history-date)]
-            (log/info "New date: " string-date)
             (response {:exam_sessions (exam-session-db/get-exam-sessions db oid string-date)}))))
 
       (context "/:id" []
