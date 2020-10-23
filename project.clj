@@ -16,7 +16,7 @@
                  [com.layerware/pgqueue "0.5.1"]
                  [selmer "1.12.12"]
                  [metosin/compojure-api "2.0.0-alpha25"]
-                 [metosin/jsonista "0.2.2"]
+                 [metosin/jsonista "0.2.7"]
                  [metosin/muuntaja "0.6.4"]
                  [metosin/spec-tools "0.9.1"]
                  [org.postgresql/postgresql "42.2.5"]
@@ -32,6 +32,7 @@
                  [oph/clj-cas "0.6.1-SNAPSHOT"]
                  [fi.vm.sade/scala-cas_2.12 "2.3.0-YKI-SNAPSHOT"]
                  [org.http4s/http4s-blaze-client_2.12 "0.16.6a"]
+                 [org.http4s/blaze-http_2.12 "0.12.11"]
                  [fi.vm.sade/auditlogger "8.3.0-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]]
   :cloverage {:ns-exclude-regex [#"dev" #"user" #"yki.main" #"yki.middleware.no-auth" #"yki.migrations"]}

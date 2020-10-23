@@ -13,11 +13,11 @@
 (defn- success-redirect [url-helper lang exam-session-id]
   (found (url-helper :payment.success-redirect lang exam-session-id)))
 
-(defn- error-redirect [url-helper lang exam-session-id]
-  (found (url-helper :payment.error-redirect lang exam-session-id)))
+(defn- error-redirect [url-helper lang]
+  (found (url-helper :payment.error-redirect lang)))
 
-(defn- cancel-redirect [url-helper lang exam-session-id]
-  (found (url-helper :payment.cancel-redirect lang exam-session-id)))
+(defn- cancel-redirect [url-helper lang]
+  (found (url-helper :payment.cancel-redirect lang)))
 
 (defn- handle-exceptions [url-helper f]
   (try

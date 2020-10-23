@@ -81,13 +81,15 @@
                            :sv "msg_sv"}})
 
 (defn cas-mock-routes [port]
-  {"/cas/v1/tickets" {:status 201
+  {"/v1/tickets" {:status 201
                       :method :post
-                      :headers {"Location" (str "http://localhost:" port "/cas/v1/tickets/TGT-1-FFDFHDSJK")}
+                      :headers {"Location" (str "http://localhost:" port "/v1/tickets/TGT-1-FFDFHDSJK")}
+                      :caller-id {"Caller-Id" "1.2.246.562.10.00000000001.yki"}
                       :body "ST-1-FFDFHDSJK2"}
    "/oppijanumerorekisteri-service/j_spring_cas_security_check" {:status 200
-                                                                 :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}
-   "/cas/v1/tickets/TGT-1-FFDFHDSJK" {:status 200
+                                                                 :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}
+                                                                 :caller-id {"Caller-Id" "1.2.246.562.10.00000000001.yki"}}
+   "/v1/tickets/TGT-1-FFDFHDSJK" {:status 200
                                       :method :post
                                       :body "ST-1-FFDFHDSJK2"}})
 
