@@ -38,7 +38,7 @@
   CasAccess
   (validate-ticket [_ ticket]
     (let [cas-client (cas/cas-client (url-helper :cas-client) "1.2.246.562.10.00000000001.yki")
-          username   (.run (.validateServiceTicketWithOppijaAttributes cas-client (url-helper :yki.cas.login-success) ticket))]
+          username   (.run (.validateServiceTicket cas-client (url-helper :yki.cas.login-success) ticket))]
       username))
 
   (cas-authenticated-get [_ url]

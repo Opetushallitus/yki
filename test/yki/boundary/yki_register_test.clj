@@ -75,7 +75,7 @@
 
 (def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-122F;Ankka;Iines;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;201190-083N;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]))
 
-(comment (deftest sync-exam-session-participants-test
+(deftest sync-exam-session-participants-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
   (testing "should send participants as csv and add basic auth header"
@@ -92,4 +92,4 @@
             request (first (:recordings (first @(:routes server))))
             req-body (get-in request [:request :body "postData"])]
         (is (= (get-in request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
-        (is (= req-body csv)))))))
+        (is (= req-body csv))))))
