@@ -40,7 +40,7 @@
 (defn login [ticket request cas-client permissions-client onr-client url-helper db]
   (try
     (if ticket
-      (let [username      (cas/validate-ticket (cas-client "/") ticket)
+      (let [username      (cas/validate-ticket (cas-client "/cas") ticket)
             _             (cas-ticket-db/create-ticket! db ticket)
             permissions   (permissions/virkailija-by-username permissions-client username)
             person-oid    (:oidHenkilo permissions)
