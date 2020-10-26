@@ -35,7 +35,7 @@
     "/kayttooikeus-service/j_spring_cas_security_check" {:status 200
                                                          :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"
                                                                    "Caller-Id" "1.2.246.562.10.00000000001.yki"}}
-    "/serviceValidate" {:status 200 :content-type "application/xml;charset=UTF-8"
+    "/cas/serviceValidate" {:status 200 :content-type "application/xml;charset=UTF-8"
                             :body (slurp "test/resources/serviceResponse.xml")
                             :headers {"Caller-Id" "1.2.246.562.10.00000000001.yki"}}}
    (base/cas-mock-routes port)))
