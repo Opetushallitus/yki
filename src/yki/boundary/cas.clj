@@ -18,7 +18,7 @@
 
 (defn- create-params [cas-session-id body]
   (cond-> {:headers {"Cookie" (str "JSESSIONID=" cas-session-id)
-                     "Caller-Id" "1.2.246.562.10.00000000001.yki"}
+                     :caller-id {"Caller-Id" "1.2.246.562.10.00000000001.yki"}}
            :follow-redirects false}
     (some? body)
     (request-with-json-body body)))
