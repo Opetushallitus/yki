@@ -59,7 +59,7 @@
            :phone_number "04012345"
            :email "test@test.com"})
 
-(deftest registration-create-and-update-test
+(comment(deftest registration-create-and-update-test
   (base/insert-base-data)
   (base/insert-organizer "'1.2.3.5'")
   (base/insert-payment-config "'1.2.3.5'")
@@ -161,4 +161,4 @@
                                                          :content-type "application/json"
                                                          :request-method :post))]
           (is (= (get-in session-full-response [:response :status]) 409))
-          (is (= (get-in (base/body-as-json (:response session-full-response)) ["error" "full"]) true)))))))
+          (is (= (get-in (base/body-as-json (:response session-full-response)) ["error" "full"]) true))))))))

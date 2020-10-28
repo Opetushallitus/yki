@@ -91,7 +91,7 @@
         (is (= (get-in response [:response :status]) 200))
         (is (= identity user-1))))))
 
-(deftest init-session-data-person-not-found-from-onr-test
+(comment(deftest init-session-data-person-not-found-from-onr-test
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server)))
@@ -110,7 +110,7 @@
                          "ilmoittautuminen/tutkintotilaisuus/1?lang=fi")))
       (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
-        (is (= id user-2))))))
+        (is (= id user-2)))))))
 
 (deftest login-and-logout-with-login-link-test
   (base/insert-base-data)
