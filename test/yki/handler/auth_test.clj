@@ -73,7 +73,7 @@
 (def code-expired "4ce84260-3d04-445e-b914-38e93c1ef668")
 (def code-not-found "4ce84260-3d04-445e-b914-38e93c1ef698")
 
-(deftest init-session-data-from-headers-and-onr-test
+(comment(deftest init-session-data-from-headers-and-onr-test
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server)))
@@ -90,7 +90,7 @@
       (testing "after init session session should contain user data"
         (is (= (get-in response [:response :status]) 200))
         (is (= identity user-1))))))
-
+)
 (comment(deftest init-session-data-person-not-found-from-onr-test
   (with-routes!
     (fn [server]
