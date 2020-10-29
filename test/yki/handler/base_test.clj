@@ -56,6 +56,18 @@
 (def payment-formdata-json
   (read-json-from-file "test/resources/payment_formdata.json"))
 
+(def post-admission
+  (slurp "test/resources/post_admission.json"))
+
+(def post-admission-updated
+  (slurp "test/resources/post_admission_updated.json"))
+
+(def post-admission-activation
+  (slurp "test/resources/post_admission_activation.json"))
+
+(def post-admission-deactivation
+  (slurp "test/resources/post_admission_deactivation.json"))
+
 (defn change-entry
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
@@ -72,9 +84,11 @@
   {"/cas/v1/tickets" {:status 201
                       :method :post
                       :headers {"Location" (str "http://localhost:" port "/cas/v1/tickets/TGT-1-FFDFHDSJK")}
+                      :caller-id {"Caller-Id" "1.2.246.562.10.00000000001.yki"}
                       :body "ST-1-FFDFHDSJK2"}
    "/oppijanumerorekisteri-service/j_spring_cas_security_check" {:status 200
-                                                                 :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}
+                                                                 :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}
+                                                                 :caller-id {"Caller-Id" "1.2.246.562.10.00000000001.yki"}}
    "/cas/v1/tickets/TGT-1-FFDFHDSJK" {:status 200
                                       :method :post
                                       :body "ST-1-FFDFHDSJK2"}})
@@ -135,6 +149,7 @@
                         :gender "1"
                         :nationalities ["180"]
                         :birthdate "1999-01-01"
+                        :ssn "201190-083N"
                         :certificate_lang "fi"
                         :exam_lang "fi"
                         :post_office "Ankkalinna"
@@ -180,16 +195,37 @@
 
 (defn insert-exam-session
   [exam-date-id oid count]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
-        language_code,
-        level_code,
-        office_oid,
-        exam_date_id,
-        max_participants,
-        published_at)
-          VALUES (
-            (SELECT id FROM organizer where oid = " oid "),
-            'fin', 'PERUS', '1.2.3.4.5'," exam-date-id ", " count ", null)")))
+  ; this replacement is done because every single oid comes in prequoted and it'd be too much effort right now to fix those
+  ; feel free to do so if you have time
+  (let [office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+          language_code,
+          level_code,
+          office_oid,
+          exam_date_id,
+          max_participants,
+          published_at)
+            VALUES (
+              (SELECT id FROM organizer where oid = " oid "),
+              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null)"))))
+
+(defn insert-exam-session-with-post-admission
+  [exam-date-id oid count quota]
+  ; see above
+  (let [office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+          language_code,
+          level_code,
+          office_oid,
+          exam_date_id,
+          max_participants,
+          published_at,
+          post_admission_start_date,
+          post_admission_quota,
+          post_admission_active)
+            VALUES (
+              (SELECT id FROM organizer where oid = " oid "),
+              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null, '2018-12-07', " quota ", true)"))))
 
 (defn insert-exam-session-location
   [oid lang]
@@ -300,4 +336,5 @@
   ([request]
    (send-request-with-tx request 8080))
   ([request port]
+   (clojure.pprint/pprint request)
    ((create-routes port) request)))

@@ -105,17 +105,18 @@
                     (create-url-params exam-session)) basic-auth)))
 
 (defn- ssn-or-birthdate [ssn birthdate]
-  (or ssn
-      (let [[year month day] (str/split birthdate #"-")]
-        (str
-         day
-         month
-         (subs year 2 4)
-         (if (< (Integer/valueOf year) 2000) "-" "A")))))
+  (if-not (str/blank? ssn)
+          ssn
+          (let [[year month day] (str/split birthdate #"-")]
+            (str
+              day
+              month
+              (subs year 2 4)
+              (if (< (Integer/valueOf year) 2000) "-" "A")))))
 
 (defn- convert-gender
   [gender ssn]
-  (if ssn
+  (if-not (str/blank? ssn)
     (let [identifier (Integer/valueOf (subs ssn 7 10))
           remainder (rem identifier 2)]
       (if (= remainder 1)

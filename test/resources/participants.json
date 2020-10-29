@@ -16,6 +16,7 @@
         "zip": "12346"
       },
       "registration_id": 1,
+      "kind": "ADMISSION",
       "order_number": null,
       "state": "COMPLETED",
       "original_exam_session_id": null
@@ -29,6 +30,7 @@
         "email": "aa@al.fi",
         "certificate_lang": "fi",
         "birthdate": "1999-01-01",
+        "ssn": "201190-083N",
         "last_name": "Ankka",
         "first_name": "Aku",
         "nationalities": ["180"],
@@ -36,6 +38,7 @@
         "zip": "12345"
       },
       "registration_id": 2,
+      "kind": "ADMISSION",
       "order_number": null,
       "state": "COMPLETED",
       "original_exam_session_id": null
@@ -57,6 +60,7 @@
       },
       "original_exam_session_id": null,
       "order_number": "order1234",
+      "kind": "ADMISSION",
       "state": "EXPIRED",
       "registration_id": 3
     }

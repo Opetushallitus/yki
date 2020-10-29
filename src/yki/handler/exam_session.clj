@@ -3,12 +3,13 @@
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.registration-db :as registration-db]
             [yki.registration.paytrail-payment :as paytrail-payment]
+            [yki.registration.registration :as registration]
             [yki.handler.routing :as routing]
             [yki.util.audit-log :as audit-log]
             [pgqueue.core :as pgq]
             [ring.util.response :refer [response not-found]]
             [clojure.tools.logging :as log]
-            [ring.util.http-response :refer [bad-request conflict]]
+            [ring.util.http-response :refer [conflict internal-server-error ok]]
             [ring.util.request]
             [yki.spec :as ys]
             [integrant.core :as ig]))
@@ -86,6 +87,23 @@
                             :error "Exam session not found"}))
               (conflict {:error "Cannot delete exam session with participants"}))))
 
+        (POST routing/post-admission-uri request
+          :path-params [id :- ::ys/id]
+          :body [post-admission ::ys/post-admission-update]
+          :return ::ys/response
+            (if (exam-session-db/update-post-admission-details! db id post-admission)
+                (response {:success true})
+                (not-found {:success false
+                  :error "Exam session not found"})))
+
+        (POST (str routing/post-admission-uri "/activation") request
+              :path-params [id :- ::ys/id]
+              :body [activation ::ys/post-admission-activation]
+              :return ::ys/response
+             (if (exam-session-db/set-post-admission-active! db (merge {:exam_session_id id} activation))
+                 (response {:success true})
+                 (not-found {:success false
+                  :error "Exam session not found"})))
         (context routing/registration-uri []
           (GET "/" {session :session}
             :path-params [id :- ::ys/id]
@@ -119,6 +137,16 @@
                   (response {:success true}))
                 (not-found {:success false
                             :error "Registration not found"})))
+            ; Regarding email confirmation resend: needs to generate a whole new login link and invalidate old one
+            ; (POST "/resendConfirmation" request
+            ;   :path-params [id :- ::ys/id registration-id :- ::ys/id]
+            ;   :query-params [emailLang :- ::ys/language-code]
+            ;   :return ::ys/response
+            ;   (log/info "id: " id " registration-id: " registration-id " emailLang: " emailLang)
+            ;   (if (registration/resend-link db url-helper email-q emailLang id registration-id)
+            ;       (response {:success true})
+            ;       (not-found {:success false
+            ;                  :error "Registration not found"})))
             (POST "/confirm-payment" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response

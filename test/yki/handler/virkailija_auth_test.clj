@@ -33,9 +33,11 @@
     "/oppijanumerorekisteri-service/henkilo/1.2.3.4.5/master" {:status 200 :content-type "application/json"
                                                                :body (slurp "test/resources/onr_henkilo_by_hetu.json")}
     "/kayttooikeus-service/j_spring_cas_security_check" {:status 200
-                                                         :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}}
+                                                         :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"
+                                                                   "Caller-Id" "1.2.246.562.10.00000000001.yki"}}
     "/cas/serviceValidate" {:status 200 :content-type "application/xml;charset=UTF-8"
-                            :body (slurp "test/resources/serviceResponse.xml")}}
+                            :body (slurp "test/resources/serviceResponse.xml")
+                            :headers {"Caller-Id" "1.2.246.562.10.00000000001.yki"}}}
    (base/cas-mock-routes port)))
 
 (defn- create-routes

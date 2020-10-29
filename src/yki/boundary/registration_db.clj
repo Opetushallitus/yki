@@ -22,7 +22,9 @@
   (get-payment-config-by-order-number [db order-number])
   (complete-registration-and-payment! [db payment-params])
   (exam-session-space-left? [db exam-session-id registration-id])
+  (exam-session-quota-left? [db exam-session-id registration-id])
   (exam-session-registration-open? [db exam-session-id])
+  (exam-session-post-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
   (get-participant-data-by-order-number [db order-number])
   (get-registration [db registration-id external-user-id])
@@ -77,9 +79,18 @@
     (let [exists (first (q/select-exam-session-space-left spec {:exam_session_id exam-session-id
                                                                 :registration_id registration-id}))]
       (:exists exists)))
+  (exam-session-quota-left?
+    [{:keys [spec]} exam-session-id registration-id]
+    (let [exists (first (q/select-exam-session-quota-left spec {:exam_session_id exam-session-id
+                                                                :registration_id registration-id}))]
+      (:exists exists)))
   (exam-session-registration-open?
     [{:keys [spec]} id]
     (let [exists (first (q/select-exam-session-registration-open spec {:exam_session_id id}))]
+      (:exists exists)))
+  (exam-session-post-registration-open?
+    [{:keys [spec]} id]
+    (let [exists (first (q/select-exam-session-post-registration-open spec {:exam_session_id id}))]
       (:exists exists)))
   (update-participant-email!
     [{:keys [spec]} email participant-id]

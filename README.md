@@ -1,4 +1,4 @@
-# yki
+# YKI - Yleinen Kielitutkinto · [![Build Status](https://travis-ci.org/Opetushallitus/yki.svg?branch=master)](https://travis-ci.org/Opetushallitus/yki)
 
 Registration system for National Certificates of Language Proficiency (YKI).
 
@@ -124,9 +124,53 @@ lein bikeshed
 lein release :major, :minor or :patch
 ```
 
+## Glossary
+
+| *Term* | *Description* |
+| SOLKI | TBD |
+| ONR | TBD |
+
+## Architecture
+
+### Job Queues
+
+YKI uses database backed job queues to prevent certain tasks from running more than once. The queues themselves are implemented using [pgqueue](https://github.com/layerware/pgqueue) and it is recommended to familiarize yourself with how this library works to understand the rest of the job queue code.
+
+#### `email-q`
+
+_Email requests_ added to this queue will be handled by the `email-queue-reader` scheduled task.
+
+#### `data-sync-q`
+
+_Data synchronization requests_ added to this queue will be handled by the `data-sync-queue-reader` scheduled task.
+
+### Scheduled Tasks
+
+YKI uses asynchronous scheduled tasks to keep data up-to-date and for maintenance tasks. Job queue system is used by some tasks to prevent running the same task twice to avoid data duplication issues.
+
+#### `registration-state-handler`
+
+Handles general state of single registration state, effectively marking incomplete registrations to expired and other similar state changes which are time bound, such as not having paid the exam fee on time.
+
+#### `participants-sync-handler`
+
+Synchronizes (TODO: to SOLKI?) completed exam session registration participant data.
+
+#### `email-queue-reader`
+
+Handles sending emails from email queues to recipients. Emails to be sent and queue handling are managed by the `exam-session-queue-handler` task.
+
+#### `data-sync-queue-reader`
+
+Handles exam session and organizer data synchronization (TODO: to SOLKI?), including deletion.
+
+#### `exam-session-queue-handler`
+
+Manages logic for selecting the correct email template to be sent to people in various email queues. Uses database-backed job queue to prevent sending same email multiple times.
+
 ## Legal
 
-Copyright (c) 2013-2019 Finnish National Agency for Education - Opetushallitus
+Copyright (c) 2013-2020 Finnish National Agency for Education - Opetushallitus
 
 This program is free software:  Licensed under the EUPL, Version 1.2 or - as
 soon as they will be approved by the European Commission - subsequent versions

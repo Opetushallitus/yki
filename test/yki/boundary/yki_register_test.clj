@@ -44,7 +44,7 @@
                                                                              :body (slurp "test/resources/maatjavaltiot2_180.json")}}
     (testing "should create valid csv line with birth date"
       (let [result (yki-register/create-partipant-csv (base/create-url-helper (str "localhost:" port)) base/registration-form "5.4.3.2.1")
-            csv-line "5.4.3.2.1;010199-;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
+            csv-line "5.4.3.2.1;201190-083N;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]
         (is (= result csv-line))))
 
     (testing "should create valid csv line with ssn"
@@ -73,7 +73,7 @@
             delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-exam-session-req)]
         "tests that exception is not thrown"))))
 
-(def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-122F;Ankka;Iines;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;010199-;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]))
+(def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-122F;Ankka;Iines;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;201190-083N;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi"]))
 
 (deftest sync-exam-session-participants-test
   (base/insert-base-data)

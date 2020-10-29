@@ -143,7 +143,9 @@
                           :access-log #ig/ref :yki.middleware.access-log/with-logging
                           :exam-session-handler #ig/ref :yki.handler/exam-session
                           :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                          :auth #ig/ref :yki.middleware.auth/with-authentication}}
+                          :auth #ig/ref :yki.middleware.auth/with-authentication}
+
+  }
 
   :duct.profile/dev   #duct/include "dev"
   :duct.profile/local #duct/include "local"

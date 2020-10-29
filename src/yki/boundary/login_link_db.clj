@@ -9,7 +9,8 @@
 
 (defprotocol LoginLinks
   (create-login-link! [db login-link])
-  (get-login-link-by-code [db code]))
+  (get-login-link-by-code [db code])
+  (get-login-link-by-exam-session-and-registration-id [db registration-id]))
 
 (extend-protocol LoginLinks
   duct.database.sql.Boundary
@@ -17,4 +18,6 @@
     (jdbc/with-db-transaction [tx spec]
       (q/insert-login-link<! tx login-link)))
   (get-login-link-by-code [{:keys [spec]} code]
-    (first (q/select-login-link-by-code spec {:code code}))))
+    (first (q/select-login-link-by-code spec {:code code})))
+  (get-login-link-by-exam-session-and-registration-id [{:keys [spec]} registration-id]
+    (first (q/select-login-link-by-exam-session-and-registration-id spec {:registration_id registration-id}))))

@@ -27,7 +27,6 @@
                               :environment         env
                               :user-agent          (headers "user-agent")
                               :caller-id           (headers "Caller-Id")
-                              :clientSubsystemCode (headers "clientSubSystemCode")
                               :x-forwarded-for     (headers "x-forwarded-for")
                               :x-real-ip           (headers "x-real-ip")
                               :remote-ip           remote-addr

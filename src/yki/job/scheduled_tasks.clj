@@ -39,7 +39,7 @@
        (try
          (handler-fn request)
          (catch Exception e
-           (let [created (c/from-long (:created request))
+           (let [created     (c/from-long (:created request))
                  retry-until (t/plus created (t/days retry-duration-in-days))]
              (if (t/after? (t/now) retry-until)
                (log/error "Stopped retrying" request)
@@ -106,12 +106,12 @@
            (log/info "Exam session with queue and free space" exam-session)
            (try
              (doseq [item (:queue exam-session)]
-               (let [lang (:lang item)
-                     email (:email item)
-                     exam-session-id (:exam_session_id exam-session)
+               (let [lang             (:lang item)
+                     email            (:email item)
+                     exam-session-id  (:exam_session_id exam-session)
                      exam-session-url (url-helper :exam-session.url exam-session-id lang)
-                     language (template-util/get-language url-helper (:language_code exam-session) lang)
-                     level (template-util/get-level url-helper (:level_code exam-session) lang)]
+                     language         (template-util/get-language url-helper (:language_code exam-session) lang)
+                     level            (template-util/get-level url-helper (:level_code exam-session) lang)]
                  (log/info "Sending notification to email" email)
                  (pgq/put email-q
                           {:recipients [email]

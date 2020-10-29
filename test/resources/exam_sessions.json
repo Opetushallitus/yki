@@ -5,6 +5,10 @@
       "registration_end_date": "2039-03-01",
       "office_oid": null,
       "id": 1,
+      "post_admission_quota": null,
+      "post_admission_active": false,
+      "post_admission_start_date": null,
+      "post_admission_end_date": null,
       "location": [
         {
           "lang": "fi",
@@ -36,6 +40,7 @@
       ],
       "session_date": "2039-05-02",
       "participants": 0,
+      "pa_participants": 0,
       "max_participants": 50,
       "registration_start_date": "2039-01-01",
       "organizer_oid": "1.2.3.4",
