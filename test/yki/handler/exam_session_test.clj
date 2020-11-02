@@ -159,7 +159,7 @@
       (is (= (get-exam-date response-body "2039-12-01") "2039-12-01"))
       (is (= (get-exam-date response-body "2039-10-01") nil))))
 
-  (testing "exam session history endpoint with 'days' parameter should return limited sessions history from past days"
+  (testing "exam session history endpoint with 'days' parameter should return limited sessions from past days"
     (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/history?from=2040-06-01T00:00:00Z&days=100"))
           response (base/send-request-with-tx request)
           response-body (base/body-as-json response)]
