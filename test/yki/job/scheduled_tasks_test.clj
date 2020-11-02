@@ -6,8 +6,6 @@
             [pgqueue.core :as pgq]
             [clojure.string :as s]
             [clojure.java.jdbc :as jdbc]
-            [yki.util.common :as c]
-            [clj-time.format :as f]
             [clj-time.core :as t]
             [yki.handler.base-test :as base]
             [yki.boundary.exam-session-db :as exam-session-db]
@@ -129,18 +127,11 @@
         (reader)
         (is (= (pgq/count email-q) 0))))))
 
-(def date-formatter (f/formatter c/date-format))
-
-(defn yesterday []
-  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 1))))
-
-(defn two-weeks-ago []
-  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 14))))
-
 (deftest handle-exam-session-participants-sync-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
-  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (yesterday) "'"))
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (base/yesterday) "'"))
+  (base/insert-post-admission-registration "'1.2.3.4'" 50 20)
   (with-routes!
     {"/osallistujat" {:status 200
                       :body "{}"}
@@ -156,18 +147,18 @@
           _ (handler)
           sync_status (base/select-one "SELECT * FROM participant_sync_status")]
       (testing "should send participants to yki register and set sync status to success"
-        (is (= (count (:recordings (first @(:routes server)))) 1))
+        (is (= (count (:recordings (first @(:routes server)))) 2))
         (is (some? (:success_at sync_status))))
       (testing "should send participants only once"
         (handler)
-        (is (= (count (:recordings (first @(:routes server)))) 1))))))
+        (is (= (count (:recordings (first @(:routes server)))) 2))))))
 
 (deftest handle-exam-session-participants-failure-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
 
-  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (two-weeks-ago) "'"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant_sync_status (exam_session_id, failed_at) VALUES (1, '" (yesterday) "')"))
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (base/two-weeks-ago) "'"))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant_sync_status (exam_session_id, failed_at) VALUES (1, '" (base/yesterday) "')"))
 
   (with-routes!
     {"/osallistujat" {:status 500
