@@ -35,7 +35,7 @@
                 :contact_phone_number "123456"
                 :extra "shared@oph.fi"
                 :merchant {:merchant_id 123456 :merchant_secret "SECRET"}
-                :languages [{:language_code "fin" :level_code "PERUS"},
+                :languages [{:language_code "fin" :level_code "PERUS"}
                             {:language_code "eng" :level_code "PERUS"}]})
 
 (defn- read-json-from-file [path]
@@ -197,6 +197,11 @@
                                        :email "roope@al.fi"
                                        :street_address "Katu 5"
                                        :phone_number "+3584012347"})
+(defn select [query]
+  (jdbc/query @embedded-db/conn query))
+
+(defn select-one [query]
+  (first (select query)))
 
 (defn insert-organizer [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
@@ -326,7 +331,7 @@
                                     ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')"))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form, kind) values
-                                    ('5.4.3.2.3','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string post-admission-registration-form) "', 'POST_ADMISSION')")))
+                                    ('5.4.3.2.4','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string post-admission-registration-form) "', 'POST_ADMISSION')")))
 
 (defn insert-unpaid-expired-registration []
   (jdbc/execute! @embedded-db/conn (str
@@ -344,12 +349,6 @@
 (defn insert-cas-ticket []
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO cas_ticketstore (ticket) VALUES ('ST-15126') ON CONFLICT (ticket) DO NOTHING")))
 
-(defn select [query]
-  (jdbc/query @embedded-db/conn query))
-
-(defn select-one [query]
-  (first (select query)))
-
 (defn get-exam-session-id []
   (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))
 
@@ -358,7 +357,7 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_end_date) VALUES ('" (two-weeks-from-now) "', '2019-08-01', '2019-10-01', '" (two-weeks-from-now) "')"))
   (let [exam-date-id (:id (select-one (select-exam-date-id (two-weeks-from-now))))
         office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))
-        insert-exam (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+        insert-exam (select (str "INSERT INTO exam_session (organizer_id,
           language_code,
           level_code,
           office_oid,
@@ -372,7 +371,7 @@
               (SELECT id FROM organizer where oid = " oid "),'fin', 'PERUS', '" office-oid "', " exam-date-id ", " count ", null, '" (two-weeks-ago) "', " quota ", true)"))
         exam-session-id  (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
         user-id (:id (select-one (str "SELECT id from participant WHERE external_user_id = 'thirdtest@user.com';")))
-        insert-registration (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
+        insert-registration (select (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
     (doall insert-exam)
     (doall insert-registration)))
 
