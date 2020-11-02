@@ -357,7 +357,7 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_end_date) VALUES ('" (two-weeks-from-now) "', '2019-08-01', '2019-10-01', '" (two-weeks-from-now) "')"))
   (let [exam-date-id (:id (select-one (select-exam-date-id (two-weeks-from-now))))
         office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))
-        insert-exam (select (str "INSERT INTO exam_session (organizer_id,
+        insert-exam (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
           language_code,
           level_code,
           office_oid,
@@ -371,7 +371,7 @@
               (SELECT id FROM organizer where oid = " oid "),'fin', 'PERUS', '" office-oid "', " exam-date-id ", " count ", null, '" (two-weeks-ago) "', " quota ", true)"))
         exam-session-id  (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
         user-id (:id (select-one (str "SELECT id from participant WHERE external_user_id = 'thirdtest@user.com';")))
-        insert-registration (select (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
+        insert-registration (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
     (doall insert-exam)
     (doall insert-registration)))
 
