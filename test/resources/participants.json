@@ -11,37 +11,64 @@
         "certificate_lang": "fi",
         "last_name": "Ankka",
         "first_name": "Iines",
-        "nationalities": ["246"],
+        "nationalities": [
+          "246"
+        ],
         "street_address": "Katu 4",
         "zip": "12346"
       },
-      "registration_id": 1,
-      "kind": "ADMISSION",
+      "original_exam_session_id": null,
       "order_number": null,
+      "kind": "ADMISSION",
       "state": "COMPLETED",
-      "original_exam_session_id": null
+      "registration_id": 1
     },
     {
       "form": {
         "post_office": "Ankkalinna",
+        "ssn": "201190-083N",
         "exam_lang": "fi",
         "phone_number": "+3584012345",
         "gender": "1",
         "email": "aa@al.fi",
         "certificate_lang": "fi",
-        "birthdate": "1999-01-01",
-        "ssn": "201190-083N",
         "last_name": "Ankka",
         "first_name": "Aku",
-        "nationalities": ["180"],
+        "birthdate": "1999-01-01",
+        "nationalities": [
+          "180"
+        ],
         "street_address": "Katu 3",
         "zip": "12345"
       },
-      "registration_id": 2,
-      "kind": "ADMISSION",
+      "original_exam_session_id": null,
       "order_number": null,
+      "kind": "ADMISSION",
       "state": "COMPLETED",
-      "original_exam_session_id": null
+      "registration_id": 2
+    },
+    {
+      "form": {
+        "post_office": "Ankkalinna",
+        "ssn": "301079-083N",
+        "exam_lang": "fi",
+        "phone_number": "+3584012347",
+        "gender": null,
+        "email": "roope@al.fi",
+        "certificate_lang": "fi",
+        "last_name": "Ankka",
+        "first_name": "Roope",
+        "nationalities": [
+          "246"
+        ],
+        "street_address": "Katu 5",
+        "zip": "12346"
+      },
+      "original_exam_session_id": null,
+      "order_number": null,
+      "kind": "POST_ADMISSION",
+      "state": "COMPLETED",
+      "registration_id": 3
     },
     {
       "form": {
@@ -54,7 +81,9 @@
         "certificate_lang": "fi",
         "last_name": "Ankka",
         "first_name": "Iines",
-        "nationalities": ["246"],
+        "nationalities": [
+          "246"
+        ],
         "street_address": "Katu 4",
         "zip": "12346"
       },
@@ -62,7 +91,7 @@
       "order_number": "order1234",
       "kind": "ADMISSION",
       "state": "EXPIRED",
-      "registration_id": 3
+      "registration_id": 4
     }
   ]
 }
