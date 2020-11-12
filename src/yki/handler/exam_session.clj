@@ -12,6 +12,9 @@
             [ring.util.http-response :refer [conflict internal-server-error ok]]
             [ring.util.request]
             [yki.spec :as ys]
+            [clj-time.core :as t]
+            [clj-time.format :as f]
+            [clj-time.coerce :as c]
             [integrant.core :as ig]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
@@ -42,6 +45,16 @@
                             :change {:type audit-log/create-op
                                      :new exam-session}})
             (response {:id exam-session-id}))))
+      (context "/history" []
+        (GET "/" []
+          :query-params [{from :- ::ys/date nil} {days :- ::ys/days nil}]
+          :return ::ys/exam-sessions-response
+          (let [history-date (-> from
+                                 (c/to-long)
+                                 (c/from-long)
+                                 (t/minus (t/days (if days days 180))))
+                string-date (f/unparse (f/formatter "yyyy-MM-dd") history-date)]
+            (response {:exam_sessions (exam-session-db/get-exam-sessions db oid string-date)}))))
 
       (context "/:id" []
         (PUT "/" request
@@ -91,19 +104,19 @@
           :path-params [id :- ::ys/id]
           :body [post-admission ::ys/post-admission-update]
           :return ::ys/response
-            (if (exam-session-db/update-post-admission-details! db id post-admission)
-                (response {:success true})
-                (not-found {:success false
-                  :error "Exam session not found"})))
+          (if (exam-session-db/update-post-admission-details! db id post-admission)
+            (response {:success true})
+            (not-found {:success false
+                        :error "Exam session not found"})))
 
         (POST (str routing/post-admission-uri "/activation") request
-              :path-params [id :- ::ys/id]
-              :body [activation ::ys/post-admission-activation]
-              :return ::ys/response
-             (if (exam-session-db/set-post-admission-active! db (merge {:exam_session_id id} activation))
-                 (response {:success true})
-                 (not-found {:success false
-                  :error "Exam session not found"})))
+          :path-params [id :- ::ys/id]
+          :body [activation ::ys/post-admission-activation]
+          :return ::ys/response
+          (if (exam-session-db/set-post-admission-active! db (merge {:exam_session_id id} activation))
+            (response {:success true})
+            (not-found {:success false
+                        :error "Exam session not found"})))
         (context routing/registration-uri []
           (GET "/" {session :session}
             :path-params [id :- ::ys/id]

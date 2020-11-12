@@ -109,6 +109,7 @@
 (s/def ::queue_full                 boolean?)
 (s/def ::queue                      int?)
 (s/def ::from                       ::date)
+(s/def ::days                       int?)
 ; post admission extensions for exam-session
 (s/def ::post_admission_quota      (s/nilable pos-int?))
 (s/def ::post_admission_start_date (s/nilable ::date))
@@ -233,21 +234,20 @@
 (s/def ::street_address ::non-blank-string)
 (s/def ::phone_number ::non-blank-string)
 
-
 (s/def ::registration (s/keys
-  :req-un [::first_name
-            ::last_name
-            ::nationalities
-            ::certificate_lang
-            ::exam_lang
-            (or ::birthdate ::ssn)
-            ::post_office
-            ::zip
-            ::street_address
-            ::phone_number
-            ::email]
-  :opt-un [::gender
-            ::nationality_desc]))
+                       :req-un [::first_name
+                                ::last_name
+                                ::nationalities
+                                ::certificate_lang
+                                ::exam_lang
+                                (or ::birthdate ::ssn)
+                                ::post_office
+                                ::zip
+                                ::street_address
+                                ::phone_number
+                                ::email]
+                       :opt-un [::gender
+                                ::nationality_desc]))
 
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 

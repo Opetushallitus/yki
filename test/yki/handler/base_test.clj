@@ -20,6 +20,9 @@
             [yki.middleware.no-auth]
             [yki.handler.registration]
             [yki.util.url-helper]
+            [yki.util.common :as c]
+            [clj-time.format :as f]
+            [clj-time.core :as t]
             [yki.handler.organizer]))
 
 (def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
@@ -32,7 +35,7 @@
                 :contact_phone_number "123456"
                 :extra "shared@oph.fi"
                 :merchant {:merchant_id 123456 :merchant_secret "SECRET"}
-                :languages [{:language_code "fin" :level_code "PERUS"},
+                :languages [{:language_code "fin" :level_code "PERUS"}
                             {:language_code "eng" :level_code "PERUS"}]})
 
 (defn- read-json-from-file [path]
@@ -67,6 +70,17 @@
 
 (def post-admission-deactivation
   (slurp "test/resources/post_admission_deactivation.json"))
+
+(def date-formatter (f/formatter c/date-format))
+
+(defn yesterday []
+  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 1))))
+
+(defn two-weeks-ago []
+  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 14))))
+
+(defn two-weeks-from-now []
+  (f/unparse (f/formatter c/date-format) (t/plus (t/now) (t/days 14))))
 
 (defn change-entry
   [json-string key value]
@@ -171,6 +185,24 @@
                           :street_address "Katu 4"
                           :phone_number "+3584012346"})
 
+(def post-admission-registration-form {:first_name  "Roope"
+                                       :last_name  "Ankka"
+                                       :gender nil
+                                       :nationalities ["246"]
+                                       :ssn "301079-083N"
+                                       :certificate_lang "fi"
+                                       :exam_lang "fi"
+                                       :post_office "Ankkalinna"
+                                       :zip "12346"
+                                       :email "roope@al.fi"
+                                       :street_address "Katu 5"
+                                       :phone_number "+3584012347"})
+(defn select [query]
+  (jdbc/query @embedded-db/conn query))
+
+(defn select-one [query]
+  (first (select query)))
+
 (defn insert-organizer [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
         VALUES (" oid ", '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi')")))
@@ -187,11 +219,18 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO attachment_metadata (external_id, organizer_id) values ('a0d5dfc2', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
 
 (defn insert-exam-dates []
-  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-01-01', '2039-03-01')"))
+  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-01-01', '2039-03-01')")
+  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_end_date) VALUES ('2039-05-10', '2039-01-01', '2039-03-01', '2039-04-15')"))
+
+(defn insert-exam-history-dates [exam-date reg-start reg-end]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" exam-date "', '" reg-start "', '" reg-end "')")))
 
 (def select-participant "(SELECT id from participant WHERE external_user_id = 'test@user.com')")
 
 (def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
+
+(defn select-exam-date-id [exam-date]
+  (str "(SELECT id from exam_date WHERE exam_date='" exam-date "')"))
 
 (defn insert-exam-session
   [exam-date-id oid count]
@@ -245,6 +284,24 @@
         '" lang "',
         (SELECT id FROM exam_session where organizer_id =  (SELECT id FROM organizer where oid = " oid ") ))")))
 
+(defn insert-exam-session-location-by-date
+  [exam-date lang]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
+    street_address,
+    post_office,
+    zip,
+    other_location_info,
+    lang,
+    exam_session_id)
+      VALUES (
+        'Omenia',
+        'Upseerinkatu 11',
+        'Espoo',
+        '00240',
+        'Other info',
+        '" lang "',
+        (SELECT id FROM exam_session where exam_date_id =(SELECT id from exam_date WHERE exam_date='" exam-date "')))")))
+
 (defn insert-base-data []
   (insert-organizer "'1.2.3.4'")
   (insert-payment-config "'1.2.3.4'")
@@ -256,7 +313,8 @@
   (insert-exam-session-location "'1.2.3.4'" "sv")
   (insert-exam-session-location "'1.2.3.4'" "en")
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') "))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('anothertest@user.com', 'anothertest@user.com') ")))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('anothertest@user.com', 'anothertest@user.com') "))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('thirdtest@user.com', 'thirdtest@user.com') ")))
 
 (defn insert-payment []
   (jdbc/execute! @embedded-db/conn (str
@@ -270,7 +328,10 @@
     ('5.4.3.2.2', '" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
   (jdbc/execute! @embedded-db/conn (str
                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                    ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')")))
+                                    ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')"))
+  (jdbc/execute! @embedded-db/conn (str
+                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form, kind) values
+                                    ('5.4.3.2.4','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string post-admission-registration-form) "', 'POST_ADMISSION')")))
 
 (defn insert-unpaid-expired-registration []
   (jdbc/execute! @embedded-db/conn (str
@@ -288,14 +349,31 @@
 (defn insert-cas-ticket []
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO cas_ticketstore (ticket) VALUES ('ST-15126') ON CONFLICT (ticket) DO NOTHING")))
 
-(defn select [query]
-  (jdbc/query @embedded-db/conn query))
-
-(defn select-one [query]
-  (first (select query)))
-
 (defn get-exam-session-id []
   (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))
+
+(defn insert-post-admission-registration
+  [oid count quota]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_end_date) VALUES ('" (two-weeks-from-now) "', '2019-08-01', '2019-10-01', '" (two-weeks-from-now) "')"))
+  (let [exam-date-id (:id (select-one (select-exam-date-id (two-weeks-from-now))))
+        office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))
+        insert-exam (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+          language_code,
+          level_code,
+          office_oid,
+          exam_date_id,
+          max_participants,
+          published_at,
+          post_admission_start_date,
+          post_admission_quota,
+          post_admission_active)
+            VALUES (
+              (SELECT id FROM organizer where oid = " oid "),'fin', 'PERUS', '" office-oid "', " exam-date-id ", " count ", null, '" (two-weeks-ago) "', " quota ", true)"))
+        exam-session-id  (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
+        user-id (:id (select-one (str "SELECT id from participant WHERE external_user_id = 'thirdtest@user.com';")))
+        insert-registration (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
+    (doall insert-exam)
+    (doall insert-registration)))
 
 (defn login-with-login-link [session]
   (-> session
