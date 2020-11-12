@@ -18,7 +18,7 @@
 								"id": "a2e914e6-9974-44c6-89a9-f3dcaddbddc8",
 								"exec": [
 									"var jsonData = JSON.parse(responseBody);",
-									"postman.setEnvironmentVariable(\"test_id\", jsonData.id);"
+									"postman.setEnvironmentVariable(\"session_id\", jsonData.id);"
 								],
 								"type": "text/javascript"
 							}
