@@ -131,12 +131,12 @@
 ;         login-url               (url-helper :yki.login-link.url code)
 ;         email                   (:email (registration-db/get-participant-by-id db participant-id))
 ;         registration-kind       (:kind registration-data)
-;         registration-end-time   (c/next-start-of-day 
-;                                   (f/parse 
+;         registration-end-time   (c/next-start-of-day
+;                                   (f/parse
 ;                                     (if (= registration-kind "POST_ADMISSION")
 ;                                         (:post_admission_end_date registration-data)
 ;                                         (:registration_end_date registration-data))))
-;         expiration-date         (t/min-date 
+;         expiration-date         (t/min-date
 ;                                   (if (= registration-kind "POST_ADMISSION")
 ;                                       (c/date-from-now 2)
 ;                                       (c/date-from-now 8))
@@ -147,7 +147,7 @@
 ;                                        :language (template-util/get-language url-helper (:language_code registration-data) lang)
 ;                                        :level (template-util/get-level url-helper (:level_code registration-data) lang)
 ;                                        :expiration-date (c/format-date-to-finnish-format expiration-date))]
-;       (pgq/put email-q 
+;       (pgq/put email-q
 ;               {:recipients [email]
 ;                 :created (System/currentTimeMillis)
 ;                 :subject (template-util/subject url-helper link-type lang template-data)
@@ -182,16 +182,16 @@
                                          :form_version   1
                                          :participant_id participant-id}
                 registration-kind       (:kind registration-data)
-                registration-end-time   (c/next-start-of-day 
-                                          (f/parse 
-                                            (if (= registration-kind "POST_ADMISSION")
-                                                (:post_admission_end_date registration-data)
-                                                (:registration_end_date registration-data))))
-                expiration-date         (t/min-date 
+                registration-end-time   (c/next-start-of-day
+                                         (f/parse
                                           (if (= registration-kind "POST_ADMISSION")
-                                              (c/date-from-now 1)
-                                              (c/date-from-now 8))
-                                          registration-end-time)
+                                            (:post_admission_end_date registration-data)
+                                            (:registration_end_date registration-data))))
+                expiration-date         (t/min-date
+                                         (if (= registration-kind "POST_ADMISSION")
+                                           (c/date-from-now 1)
+                                           (c/date-from-now 8))
+                                         registration-end-time)
                 payment-link            {:participant_id        participant-id
                                          :exam_session_id       nil
                                          :registration_id       registration-id

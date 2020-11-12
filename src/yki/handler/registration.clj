@@ -8,7 +8,7 @@
             [clojure.tools.logging :as log]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config url-helper email-q onr-client]}]
+(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config url-helper email-q onr-client user-config]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? payment-config) (some? url-helper) (some? email-q) (some? onr-client)]}
   (api
    (context routing/registration-api-root []
@@ -23,7 +23,7 @@
                                :change {:type audit/create-op
                                         :new registration-init}})
        (registration/init-registration db
-                                       (:session request)
+                                       (or user-config (:session request))
                                        registration-init
                                        payment-config))
      (context "/:id" []
@@ -36,7 +36,7 @@
                                                                      url-helper
                                                                      email-q
                                                                      lang
-                                                                     (:session request)
+                                                                     (or user-config (:session request))
                                                                      id
                                                                      registration
                                                                      payment-config
