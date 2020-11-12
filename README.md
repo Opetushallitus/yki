@@ -4,7 +4,7 @@ Registration system for National Certificates of Language Proficiency (YKI).
 
 ## Developing
 
-### Setup
+### **Setup**
 
 When you first clone this repository, run:
 
@@ -15,7 +15,7 @@ lein duct setup
 This will create files for local configuration, and prep your system
 for the project.
 
-### Environment
+### **Environment**
 
 Before launching local development environment start PostgreSQL in docker container.
 
@@ -69,8 +69,31 @@ dev=> (reset)
 :resumed
 ```
 
+### **Local configuration and development**
 
-### Testing
+Since some endpoints are still under development, it is a good idea to manually add some data to following tables to enable further testing:
+
+- organizer
+- exam_date
+- exam_date_language
+- exam_language
+
+Local.edn example template can be found in [local-configuations](local-configuration/local.edn.template). This template does not use user authentication and has a set hard coded user. It also has all the sync jobs disabled.
+
+### **Postman collection**
+
+Project has a postman collection to ease up development. Collection and environment can be found [here](docs/postman) and need to be manually imported. Tables mentioned in the "Local configuration and development" should have some dummy data in them. Referencing to this data, following Postman environment variables should be updated to correspond these values:
+
+- oid (oid content from organizer)
+- exam_date (exam_date content from exam_date)
+- date_id (id content from exam_date)
+
+Rest of the environment variables are updated as follows:
+
+* When creating a new exam session, set date_id is referenced and returned session id is set to variable {{session_id}}. Other 'Virkailija: Exam session management' operations are referencing to this session id.
+* When 'oppija' registration is initialized, set session_id is referenced and returned registration id is set to variable {{registration_id}}
+
+### **Testing**
 
 Testing is fastest through the REPL, as you avoid environment startup
 time.
@@ -87,39 +110,46 @@ lein test
 ```
 
 Rerun tests on file change.
+
 ```sh
 lein test-refresh
 ```
 
 Test coverage reporting.
+
 ```sh
 lein cloverage
 ```
 
-### Formatting
+### **Formatting**
+
 ```sh
 lein cljfmt check
 lein cljfmt fix
 ```
 
-### Static code analysis
+### **Static code analysis**
 
 [eastwood](https://github.com/jonase/eastwood)
+
 ```sh
 lein eastwood
 ```
 
 [kibit](https://github.com/jonase/kibit)
+
 ```sh
 lein kibit
 ```
 
 [bikeshed](https://github.com/dakrone/lein-bikeshed)
+
 ```sh
 lein bikeshed
 ```
 
-### Release
+### **Release**
+
 ```sh
 lein release :major, :minor or :patch
 ```
@@ -132,7 +162,7 @@ lein release :major, :minor or :patch
 
 ## Architecture
 
-### Job Queues
+### **Job Queues**
 
 YKI uses database backed job queues to prevent certain tasks from running more than once. The queues themselves are implemented using [pgqueue](https://github.com/layerware/pgqueue) and it is recommended to familiarize yourself with how this library works to understand the rest of the job queue code.
 
