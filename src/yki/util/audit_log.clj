@@ -21,6 +21,7 @@
 (def registration "registration")
 (def registration-init "registration-init")
 (def exam-session "exam-session")
+(def exam-date "exam-date")
 
 (defonce jsonParser (JsonParser.))
 
