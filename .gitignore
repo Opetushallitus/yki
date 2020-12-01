@@ -24,6 +24,8 @@ lsp/
 
 # Visual Studio Code metadata
 .vscode
+.clj-kondo/
+.lsp/
 
 # Visual Studio Code plugins
 .calva
