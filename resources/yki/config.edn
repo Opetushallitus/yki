@@ -21,7 +21,7 @@
 
   :yki/api [#ig/ref :yki.handler/status
             #ig/ref :yki.handler/code
-            #ig/ref :yki.handler/exam-date
+            #ig/ref :yki.handler/exam-date-public
             #ig/ref :yki.handler/auth
             #ig/ref :yki.handler/payment
             #ig/ref :yki.handler/login-link
@@ -103,6 +103,8 @@
 
   :yki.handler/status {:db #ig/ref :duct.database/sql}
 
+  :yki.handler/exam-date-public {:db #ig/ref :duct.database/sql}
+
   :yki.handler/exam-date {:db #ig/ref :duct.database/sql}
 
   :yki.handler/registration {:db #ig/ref :duct.database/sql
@@ -142,13 +144,10 @@
                           :file-handler #ig/ref  :yki.handler/file
                           :access-log #ig/ref :yki.middleware.access-log/with-logging
                           :exam-session-handler #ig/ref :yki.handler/exam-session
+                          :exam-date-handler #ig/ref :yki.handler/exam-date
                           :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                          :auth #ig/ref :yki.middleware.auth/with-authentication}
+                          :auth #ig/ref :yki.middleware.auth/with-authentication}}
 
-  }
-
-  :duct.profile/dev   #duct/include "dev"
-  :duct.profile/local #duct/include "local"
-  :duct.profile/prod  {}
-}
-
+ :duct.profile/dev   #duct/include "dev"
+ :duct.profile/local #duct/include "local"
+ :duct.profile/prod  {}}
