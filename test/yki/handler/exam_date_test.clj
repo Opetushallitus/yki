@@ -45,10 +45,11 @@
     (base/send-request-with-tx request)))
 
 (deftest get-exam-dates-test
-  (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-date"))
-        response (base/send-request-with-tx request)]
-    (testing "should return 200"
-      (is (= (:status response) 200)))))
+  (testing "can get exam dates"
+    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-date"))
+          response (base/send-request-with-tx request)]
+      (testing "should return 200"
+        (is (= (:status response) 200))))))
 
 (deftest exam-date-new-date-test
 
@@ -120,7 +121,7 @@
       (is (= (get-success-status response-body) false))
       (is (= (:status response) 409)))))
 
-(deftest ^:test-refresh/focus exam-date-language-test
+(deftest exam-date-language-test
 
   (base/insert-organizer "'1.2.3.4'")
 
