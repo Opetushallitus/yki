@@ -1,0 +1,283 @@
+{
+	"info": {
+		"_postman_id": "3c08fc37-70de-4dff-b5fe-55405d1999d9",
+		"name": "Yki local",
+		"description": "Pre reqs: \n\t- Orgnization (set id to env vars)\n\t- Organization languages\n\t- Session date (set id to env vars)\n\t- Session languages\n\nVirkalija: Create session\n\t- Creates a new session and saves the returned id in env vars\n\nVirkailija: List Sessions\n\t- Lists sessions from the organization",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Virkailija: Exam session management",
+			"item": [
+				{
+					"name": "Virkailija: Create exam session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "a2e914e6-9974-44c6-89a9-f3dcaddbddc8",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"session_id\", jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"session_date\": \"2020-12-23\", \n\t\"language_code\": \"eng\",\n\t\"level_code\": \"PERUS\",\n\t\"max_participants\": 50,\n\t\"office_oid\": null,\n\t\"published_at\": \"2020-11-04T00:00:00.000Z\",\n\t\"location\": [\n\t\t{\n\t\t\t\"name\": \"Omenia\",\n\t\t\t\"street_address\": \"Upseerinkatu 11\",\n\t\t\t\"post_office\": \"Espoo\",\n\t\t\t\"zip\": \"00240\",\n\t\t\t\"other_location_info\": \"auditorio A2\",\n\t\t\t\"extra_information\": null,\n\t\t\t\"lang\": \"en\"\n\t\t}\n\t]\n}\n"
+						},
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-session",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-session"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: Configure post admission",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n \"post_admission_start_date\": \"2020-11-05\",\n \"post_admission_quota\": 5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-session/{{session_id}}/post-admission",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-session",
+								"{{session_id}}",
+								"post-admission"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: Activate post admission",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"post_admission_active\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-session/{{session_id}}/post-admission/activation",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-session",
+								"{{session_id}}",
+								"post-admission",
+								"activation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: List sessions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-session",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-session"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: Get session registrations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-session",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-session"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Oppija: Registration",
+			"item": [
+				{
+					"name": "Oppija: Init registration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "782097c7-56c0-41f1-9bab-3e53c5f6d9cc",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"registration_id\", jsonData.registration_id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"exam_session_id\": {{session_id}}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{oppija}}/registration/init",
+							"host": [
+								"{{oppija}}"
+							],
+							"path": [
+								"registration",
+								"init"
+							]
+						},
+						"description": "Requirements: session_id "
+					},
+					"response": []
+				},
+				{
+					"name": "Oppija: Submit registration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"first_name\": \"Leslie\",\n\t\"last_name\": \"Knope\",\n\t\"post_office\": \"Pawnee\",\n\t\"ssn\": \"301079-122F\",\n\t\"exam_lang\": \"en\",\n\t\"email\": \"leslie.knope@testi.fi\",\n\t\"phone_number\": \"05012341234\",\n\t\"birthdate\": \"1979-10-30\",\n\t\"nationalities\": [\n\t\t\"180\"\n\t],\n\t\"street_address\": \"Street 1\",\n\t\"zip\": \"012344\",\n\t\"certificate_lang\": \"en\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{oppija}}/registration/{{registration_id}}/submit?lang=en",
+							"host": [
+								"{{oppija}}"
+							],
+							"path": [
+								"registration",
+								"{{registration_id}}",
+								"submit"
+							],
+							"query": [
+								{
+									"key": "lang",
+									"value": "en"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "db2cdab0-6fce-46c5-8b34-6b59f5b29357",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "20c6dc8b-1aa0-4b50-a81f-9195cd02f879",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"protocolProfileBehavior": {}
+}

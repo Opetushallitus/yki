@@ -79,10 +79,10 @@
 (defn- sync-organizer
   [db url-helper basic-auth disabled organizer-oid office-oid]
   (let [organizer (first (organizer-db/get-organizers-by-oids db [organizer-oid]))
-        organization (organization/get-organization-by-oid url-helper (or office-oid organizer-oid))
-        request (create-sync-organizer-req organizer organization)]
+        organization (when (= disabled false) (organization/get-organization-by-oid url-helper (or office-oid organizer-oid)))
+        request (when (= disabled false) create-sync-organizer-req organizer organization)]
     (if disabled
-      (log/info "Sending disabled. Logging request " request)
+      (log/info "Organizer sync sending disabled.")
       (do-post (url-helper :yki-register.organizer) (json/write-value-as-string request) basic-auth))))
 
 (defn- create-url-params
@@ -106,13 +106,13 @@
 
 (defn- ssn-or-birthdate [ssn birthdate]
   (if-not (str/blank? ssn)
-          ssn
-          (let [[year month day] (str/split birthdate #"-")]
-            (str
-              day
-              month
-              (subs year 2 4)
-              (if (< (Integer/valueOf year) 2000) "-" "A")))))
+    ssn
+    (let [[year month day] (str/split birthdate #"-")]
+      (str
+       day
+       month
+       (subs year 2 4)
+       (if (< (Integer/valueOf year) 2000) "-" "A")))))
 
 (defn- convert-gender
   [gender ssn]

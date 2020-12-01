@@ -1,0 +1,61 @@
+; With this local setup it is possible to test most of the postman endpoints against your local database without authentication
+; All the syncing jobs are disabled
+; Please note that this configuration has a hard coded participant information
+
+; For local endpoint testing, only required opintopolku url-helper host is "alb-host"
+{:yki.util/url-helper {:virkailija-host        "https://virkailija.untuvaopintopolku.fi"
+                       :oppija-host            "https://virkailija.untuvaopintopolku.fi"
+                       :yki-register-host      "https://virkailija.untuvaopintopolku.fi"
+                       :alb-host               "https://virkailija.untuvaopintopolku.fi"
+                       :tunnistus-host         "https://virkailija.untuvaopintopolku.fi"
+                       :yki-host-virkailija    "https://virkailija.untuvaopintopolku.fi"}
+ :yki.middleware.no-auth/with-authentication
+ {:session-config {:key "ad7tbRZIG839gDo2"
+                   :cookie-attrs {:max-age 28800
+                                  :http-only true
+                                  :secure false
+                                  :domain "localhost"
+                                  :path "/yki"}}}
+
+ :yki.handler/organizer {:db #ig/ref :duct.database/sql
+                         :url-helper #ig/ref :yki.util/url-helper
+                         :file-handler #ig/ref :yki.handler/file
+                         :access-log #ig/ref :yki.middleware.access-log/with-logging
+                         :auth #ig/ref :yki.middleware.no-auth/with-authentication}
+
+ :yki.handler/registration {:db #ig/ref :duct.database/sql
+                            :auth #ig/ref :yki.middleware.no-auth/with-authentication
+                            :url-helper #ig/ref :yki.util/url-helper
+                            :email-q #ig/ref :yki.job.job-queue/email-q
+                            :onr-client #ig/ref :yki.boundary.onr/onr-client
+                            :access-log #ig/ref :yki.middleware.access-log/with-logging
+                            :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                                             :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                             :amount {:PERUS "100.00"
+                                                      :KESKI "123.00"
+                                                      :YLIN "160.00"}}
+                            ; User configutation. Changing the id will create a new participant.
+                            :user-config {:identity {:external-user-id "local_test@testi.fi"
+                                                     :email "local_test@testi.fi"
+                                                     :ssn "301079-122F"
+                                                     :oid "1.2.3.4"}}}
+
+ :yki.job.scheduled-tasks/email-queue-reader {:email-q #ig/ref :yki.job.job-queue/email-q
+                                              :disabled true
+                                              :url-helper #ig/ref :yki.util/url-helper
+                                              :retry-duration-in-days 14}
+
+ :yki.job.scheduled-tasks/participants-sync-handler {:db #ig/ref :duct.database/sql
+                                                     :disabled true
+                                                     :basic-auth {:user "user_placeholder"
+                                                                  :password "password_placeholder"}
+                                                     :url-helper #ig/ref :yki.util/url-helper
+                                                     :retry-duration-in-days 14}
+
+ :yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
+                                                  :db #ig/ref :duct.database/sql
+                                                  :disabled true
+                                                    :basic-auth {:user "user_placeholder"
+                                                                :password "password_placeholder"}
+                                                  :url-helper #ig/ref :yki.util/url-helper
+                                                  :retry-duration-in-days 14}}
