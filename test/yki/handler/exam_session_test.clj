@@ -140,11 +140,11 @@
                     ["2039-12-01" "2040-11-01" "2040-11-30"]
                     ["2039-10-01" "2039-10-01" "2039-10-30"]]
         date-id (fn [date] (-> date
-                               (base/select-exam-date-id)
+                               (base/select-exam-date-id-by-date)
                                (base/select-one)
                                :id))
         insert-dates (fn [dates] (let [[exam-date reg-start reg-end] dates]
-                                   (base/insert-exam-history-dates exam-date reg-start reg-end)
+                                   (base/insert-custom-exam-date exam-date reg-start reg-end)
                                    (base/insert-exam-session (date-id exam-date) "'1.2.3.4'" 5)
                                    (base/insert-exam-session-location-by-date exam-date "fi")))
         iterate-exam-dates (fn [dates] (for [d dates] (insert-dates d)))]
