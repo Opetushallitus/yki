@@ -17,7 +17,7 @@
   (context routing/exam-session-public-api-root []
     :coercion :spec
     (GET "/" []
-      :query-params [{from :- ::ys/date nil}]
+      :query-params [{from :- ::ys/date-type nil}]
       :return ::ys/exam-sessions-response
       (let [exam-sessions (exam-session-db/get-exam-sessions db nil from)
             with-fee (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]

@@ -76,7 +76,7 @@ INSERT INTO organizer (
   :contact_email,
   :contact_phone_number,
   :extra
-);
+) ON CONFLICT DO NOTHING;
 
 -- name: update-organizer!
 UPDATE organizer
@@ -711,7 +711,7 @@ SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
-WHERE ((ed.registration_end_date + interval '1 day') >= current_date 
+WHERE ((ed.registration_end_date + interval '1 day') >= current_date
   OR (ed.post_admission_end_date + interval '1 day') >= current_date
   OR ((ed.registration_end_date + :duration::interval) >= current_date
       AND pss.failed_at IS NOT NULL
@@ -827,14 +827,157 @@ SELECT ed.id, ed.exam_date, ed.registration_start_date, ed.registration_end_date
 (
   SELECT array_to_json(array_agg(lang))
   FROM (
-    SELECT language_code
+    SELECT language_code, level_code
     FROM exam_date_language
-    WHERE exam_date_id = ed.id
+    WHERE exam_date_id = ed.id AND deleted_at IS NULL
   ) lang
 ) AS languages
 FROM exam_date ed
-WHERE ed.registration_end_date >= current_date
+WHERE ed.registration_end_date >= current_date AND deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
+
+-- name: select-organizer-exam-dates
+SELECT
+ed.id,
+ed.exam_date,
+ed.registration_start_date,
+ed.registration_end_date,
+ed.post_admission_start_date,
+ed.post_admission_end_date,
+ed.post_admission_enabled,
+(
+  SELECT array_to_json(array_agg(lang))
+  FROM (
+    SELECT language_code, level_code
+    FROM exam_date_language
+    WHERE exam_date_id = ed.id AND deleted_at IS NULL
+  ) lang
+) AS languages,
+( SELECT COUNT(1)
+  FROM exam_session
+  WHERE exam_date_id = ed.id) AS exam_session_count
+FROM exam_date ed
+WHERE ed.registration_end_date >= current_date AND deleted_at IS NULL
+ORDER BY ed.exam_date ASC;
+
+
+
+-- name: insert-exam-date<!
+INSERT INTO exam_date (
+  exam_date,
+  registration_start_date,
+  registration_end_date
+) VALUES (
+  :exam_date,
+  :registration_start_date,
+  :registration_end_date
+);
+
+-- name: insert-exam-date-language!
+INSERT INTO exam_date_language(
+  exam_date_id,
+  language_code,
+  level_code
+) VALUES (
+  :exam_date_id,
+  :language_code,
+  :level_code
+);
+
+-- name: select-exam-date-by-id
+SELECT
+  ed.id,
+  ed.exam_date,
+  ed.registration_start_date,
+  ed.registration_end_date,
+  ed.post_admission_enabled,
+  ed.post_admission_start_date,
+  ed.post_admission_end_date,
+(
+  SELECT array_to_json(array_agg(lang))
+  FROM (
+    SELECT language_code, level_code
+    FROM exam_date_language
+    WHERE exam_date_id = ed.id AND deleted_at IS NULL
+  ) lang
+) AS languages,
+( SELECT COUNT(1)
+  FROM exam_session
+  WHERE exam_date_id = ed.id) AS exam_session_count
+FROM exam_date ed
+WHERE ed.id = :id AND deleted_at IS NULL;
+
+-- name: select-exam-dates-by-date
+SELECT
+  ed.id,
+  ed.exam_date,
+  ed.registration_start_date,
+  ed.registration_end_date,
+  ed.post_admission_enabled,
+  ed.post_admission_start_date,
+  ed.post_admission_end_date,
+(
+  SELECT array_to_json(array_agg(lang))
+  FROM (
+    SELECT language_code, level_code
+    FROM exam_date_language
+    WHERE exam_date_id = ed.id AND deleted_at IS NULL
+  ) lang
+) AS languages
+FROM exam_date ed
+WHERE ed.exam_date = :exam_date AND deleted_at IS NULL;
+
+-- name: select-exam-date-session-count
+SELECT
+  COUNT(1)
+FROM exam_session
+WHERE exam_date_id = :id;
+
+-- name: select-exam-date-languages
+SELECT
+  edl.id,
+  edl.exam_date_id,
+  edl.language_code,
+  edl.level_code
+FROM exam_date_language edl
+WHERE edl.exam_date_id = :exam_date_id AND edl.deleted_at IS NULL;
+
+-- name: select-exam-date-language
+SELECT
+  edl.id,
+  edl.exam_date_id,
+  edl.language_code,
+  edl.level_code
+FROM exam_date_language edl
+  WHERE exam_date_id = :exam_date_id
+    AND level_code = :level_code
+    AND language_code = :language_code
+    AND deleted_at IS NULL;
+
+-- name: update-exam-date-post-admission-details!
+UPDATE exam_date
+   SET post_admission_start_date = :post_admission_start_date,
+       post_admission_end_date = :post_admission_end_date,
+       post_admission_enabled = :post_admission_enabled
+   WHERE id = :id;
+
+-- name: delete-exam-date!
+UPDATE exam_date
+  SET deleted_at = current_timestamp
+  WHERE id = :id AND deleted_at IS NULL;
+
+-- name: delete-exam-date-languages!
+UPDATE exam_date_language
+  SET deleted_at = current_timestamp
+  WHERE exam_date_id = :exam_date_id AND deleted_at IS NULL;
+
+-- name: delete-exam-date-language!
+UPDATE exam_date_language
+  SET deleted_at = current_timestamp
+  WHERE exam_date_id = :exam_date_id
+    AND level_code = :level_code
+    AND language_code = :language_code
+    AND deleted_at IS NULL;
 
 -- name: insert-exam-session-queue!
 INSERT INTO exam_session_queue (
@@ -923,4 +1066,3 @@ UPDATE exam_date
 UPDATE exam_date
    SET post_admission_end_date = NULL
  WHERE id = :exam_date_id;
- 

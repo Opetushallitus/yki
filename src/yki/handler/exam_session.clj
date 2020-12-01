@@ -27,7 +27,7 @@
   (fn [oid]
     (context "/" []
       (GET "/" []
-        :query-params [{from :- ::ys/date nil}]
+        :query-params [{from :- ::ys/date-type nil}]
         :return ::ys/exam-sessions-response
         (response {:exam_sessions (exam-session-db/get-exam-sessions db oid from)}))
       (POST "/" request
@@ -47,7 +47,7 @@
             (response {:id exam-session-id}))))
       (context "/history" []
         (GET "/" []
-          :query-params [{from :- ::ys/date nil} {days :- ::ys/days nil}]
+          :query-params [{from :- ::ys/date-type nil} {days :- ::ys/days nil}]
           :return ::ys/exam-sessions-response
           (let [history-date (-> from
                                  (c/to-long)
