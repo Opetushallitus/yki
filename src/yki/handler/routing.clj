@@ -48,3 +48,4 @@
 
 (def code-api-root (str api-root "/code"))
 
+(def exam-date-uri "/exam-date")
