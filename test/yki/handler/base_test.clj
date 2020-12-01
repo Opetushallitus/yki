@@ -14,6 +14,7 @@
             [yki.handler.login-link :as login-link]
             [yki.handler.routing :as routing]
             [yki.handler.exam-session]
+            [yki.handler.exam-date]
             [yki.handler.file]
             [yki.handler.auth]
             [yki.job.job-queue]
@@ -52,6 +53,9 @@
 
 (def exam-session
   (slurp "test/resources/exam_session.json"))
+
+(def exam-date
+  (slurp "test/resources/exam_date.json"))
 
 (def organization
   (slurp "test/resources/organization.json"))
@@ -205,7 +209,7 @@
 
 (defn insert-organizer [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
-        VALUES (" oid ", '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi')")))
+        VALUES (" oid ", '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi') ON CONFLICT DO NOTHING")))
 
 (defn insert-payment-config [oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO payment_config (organizer_id, merchant_id, merchant_secret)
@@ -222,15 +226,21 @@
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-01-01', '2039-03-01')")
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_end_date) VALUES ('2039-05-10', '2039-01-01', '2039-03-01', '2039-04-15')"))
 
-(defn insert-exam-history-dates [exam-date reg-start reg-end]
+(defn insert-custom-exam-date [exam-date reg-start reg-end]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" exam-date "', '" reg-start "', '" reg-end "')")))
 
 (def select-participant "(SELECT id from participant WHERE external_user_id = 'test@user.com')")
 
 (def select-exam-session "(SELECT id from exam_session WHERE max_participants = 5)")
 
-(defn select-exam-date-id [exam-date]
+(defn select-exam-date [id]
+  (str "(SELECT * from exam_date WHERE id=" id ")"))
+
+(defn select-exam-date-id-by-date [exam-date]
   (str "(SELECT id from exam_date WHERE exam_date='" exam-date "')"))
+
+(defn select-exam-date-languages-by-date-id [exam-date-id]
+  (str "(SELECT language_code, level_code from exam_date_language WHERE exam_date_id='" exam-date-id "' AND deleted_at IS NULL)"))
 
 (defn insert-exam-session
   [exam-date-id oid count]
@@ -355,7 +365,7 @@
 (defn insert-post-admission-registration
   [oid count quota]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_end_date) VALUES ('" (two-weeks-from-now) "', '2019-08-01', '2019-10-01', '" (two-weeks-from-now) "')"))
-  (let [exam-date-id (:id (select-one (select-exam-date-id (two-weeks-from-now))))
+  (let [exam-date-id (:id (select-one (select-exam-date-id-by-date (two-weeks-from-now))))
         office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))
         insert-exam (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
           language_code,
@@ -390,6 +400,9 @@
                                                                      :url-helper url-helper
                                                                      :email-q (email-q)
                                                                      :data-sync-q  (data-sync-q)})
+
+        exam-date-handler (ig/init-key :yki.handler/exam-date {:db db})
+
         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
         auth (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper url-helper
                                                                        :db db
@@ -407,6 +420,7 @@
                                                                                        :access-log (access-log)
                                                                                        :url-helper url-helper
                                                                                        :exam-session-handler exam-session-handler
+                                                                                       :exam-date-handler exam-date-handler
                                                                                        :file-handler file-handler}))]
     (routes organizer-handler auth-handler)))
 
