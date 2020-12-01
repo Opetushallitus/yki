@@ -7,6 +7,270 @@
 	},
 	"item": [
 		{
+			"name": "Virkailija: Exam date management",
+			"item": [
+				{
+					"name": "Virkailija: Get exam dates",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "8f1df71b-9f47-48d4-8281-aae80feef53c",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-date",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-date"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: Create exam date",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "9990c550-9c9a-42de-b94b-a84c2c7e3b2e",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"virkailija_exam_date_id\", jsonData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"exam_date\": \"2021-06-09\",\n\t\"registration_start_date\": \"2021-01-01\",\n\t\"registration_end_date\": \"2021-01-30\",\n    \"post_admission_end_date\": \"2021-02-10\",\n\t\"languages\": [\n\t\t{\n\t\t\t\"language_code\": \"fin\",\n\t\t\t\"level_code\": \"YLIN\" \n\t\t}\n\t]\n}\n\n"
+						},
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-date",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-date"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: Add language level",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ac7dfeab-f63e-4fc1-958f-4e0f88147546",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\n [\n\t\t{\n\t\t\t\"language_code\": \"eng\",\n\t\t\t\"level_code\": \"PERUS\" \n\t\t}\n\t]\n\n\n"
+						},
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-date/{{virkailija_exam_date_id}}/languages",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-date",
+								"{{virkailija_exam_date_id}}",
+								"languages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: Delete language level",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f71f520d-1e11-41b0-83b4-6099963a1785",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\n [\n\t\t{\n\t\t\t\"language_code\": \"eng\",\n\t\t\t\"level_code\": \"YLIN\" \n\t\t}\n\t]\n\n\n"
+						},
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-date/{{virkailija_exam_date_id}}/languages",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-date",
+								"{{virkailija_exam_date_id}}",
+								"languages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: Delete exam date",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d835302e-9e31-4dcc-8347-3458c5590ca2",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-date/{{virkailija_exam_date_id}}",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-date",
+								"{{virkailija_exam_date_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Virkailija: Update post admission conf",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c06f4aab-13ab-43be-937c-5d0f208194f1",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"post_admission_start_date\": \"2021-04-01T00:00:00Z\",\n  \"post_admission_end_date\": \"2021-04-30T00:00:00Z\",\n  \"post_admission_enabled\": true\n}\n"
+						},
+						"url": {
+							"raw": "{{virkailija}}/{{oid}}/exam-date/{{virkailija_exam_date_id}}/post-admission",
+							"host": [
+								"{{virkailija}}"
+							],
+							"path": [
+								"{{oid}}",
+								"exam-date",
+								"{{virkailija_exam_date_id}}",
+								"post-admission"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
 			"name": "Virkailija: Exam session management",
 			"item": [
 				{
@@ -38,7 +302,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"session_date\": \"2020-12-23\", \n\t\"language_code\": \"eng\",\n\t\"level_code\": \"PERUS\",\n\t\"max_participants\": 50,\n\t\"office_oid\": null,\n\t\"published_at\": \"2020-11-04T00:00:00.000Z\",\n\t\"location\": [\n\t\t{\n\t\t\t\"name\": \"Omenia\",\n\t\t\t\"street_address\": \"Upseerinkatu 11\",\n\t\t\t\"post_office\": \"Espoo\",\n\t\t\t\"zip\": \"00240\",\n\t\t\t\"other_location_info\": \"auditorio A2\",\n\t\t\t\"extra_information\": null,\n\t\t\t\"lang\": \"en\"\n\t\t}\n\t]\n}\n"
+							"raw": "{\n\t\"session_date\": \"2021-01-30\", \n\t\"language_code\": \"eng\",\n\t\"level_code\": \"PERUS\",\n\t\"max_participants\": 50,\n\t\"office_oid\": null,\n\t\"published_at\": \"2020-11-04T00:00:00.000Z\",\n\t\"location\": [\n\t\t{\n\t\t\t\"name\": \"Omenia\",\n\t\t\t\"street_address\": \"Upseerinkatu 11\",\n\t\t\t\"post_office\": \"Espoo\",\n\t\t\t\"zip\": \"00240\",\n\t\t\t\"other_location_info\": \"auditorio A2\",\n\t\t\t\"extra_information\": null,\n\t\t\t\"lang\": \"en\"\n\t\t}\n\t]\n}\n"
 						},
 						"url": {
 							"raw": "{{virkailija}}/{{oid}}/exam-session",
@@ -148,13 +412,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{virkailija}}/{{oid}}/exam-session",
+							"raw": "{{virkailija}}/{{oid}}/exam-session/{{session_id}}/registration",
 							"host": [
 								"{{virkailija}}"
 							],
 							"path": [
 								"{{oid}}",
-								"exam-session"
+								"exam-session",
+								"{{session_id}}",
+								"registration"
 							]
 						}
 					},
