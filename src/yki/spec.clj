@@ -115,6 +115,7 @@
 ; post admission extensions for exam-session
 (s/def ::post_admission_quota      (s/nilable pos-int?))
 (s/def ::post_admission_start_date (s/nilable ::date-type))
+(s/def ::post_admission_end_date (s/nilable ::date-type))
 (s/def ::post_admission_active     boolean?)
 
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -133,14 +134,16 @@
                                        ::organizer_oid
                                        ::post_admission_quota
                                        ::post_admission_start_date
+                                       ::post_admission_end_date
                                        ::post_admission_active]))
+
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::from-param (s/keys :opt-un [::from]))
 
-(s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_quota]))
+(s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_quota]))
 
-(s/def ::post-admission-activation (s/keys :req-un [::post_admission_active]))
+(s/def ::post-admission-activation (s/keys :req-un [::post_admission_quota]))
 
 (s/def ::id-response (s/keys :req-un [::id]))
 

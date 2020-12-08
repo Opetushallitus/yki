@@ -15,6 +15,20 @@
   (if (nil? post-date) false (let [to-date (fn [d] (c/from-long d))]
                                (t/before? (to-date current-date) (to-date post-date)))))
 
+(defn toggle-post-admission [db id enabled]
+  (let [current (exam-date-db/get-exam-date-by-id db id)
+        is-configured? (and
+                        (some? (:post_admission_start_date current))
+                        (some? (:post_admission_end_date current)))]
+    (cond
+      (= current nil) (not-found
+                       {:success false :error "Exam date not found"})
+      (= false is-configured?) (conflict
+                                {:success false :error "Post admission start and end dates are not configured"})
+      :else (if (exam-date-db/toggle-post-admission! db id enabled)
+              (ok {:success true})
+              (internal-server-error {:success false :error "Could not enable post admission for the exam date"})))))
+
 (defmethod ig/init-key :yki.handler/exam-date [_ {:keys [db]}]
   (fn [oid]
     (context "/" []
@@ -72,28 +86,6 @@
                       (internal-server-error {:success false
                                               :error "Could not delete the exam date"})))))
 
-        (POST "/post-admission" request
-          :path-params [id :- ::ys/id]
-          :body [post-admission ::ys/exam-date-post-admission-update]
-          :return ::ys/response
-          (let [{post-start :post_admission_start_date post-end :post_admission_end_date} post-admission
-                current (exam-date-db/get-exam-date-by-id db id)
-                post-admission-date-errors (remove nil?
-                                                   (vector
-                                                    (when (is-first-date-before-second post-end post-start)
-                                                      {:success false :error "Post admission start date has to be before it's end date"})
-                                                    (when (is-first-date-before-second post-start (:registration_end_date current))
-                                                      {:success false :error "Post admission start date has to be after registration has ended"})
-                                                    (when (is-first-date-before-second (:exam_date current) post-end)
-                                                      {:success false :error "Post admission end date has to be before exam date"})))]
-            (cond
-              (= current nil) (not-found
-                               {:success false :error "Exam date not found"})
-              (not-empty post-admission-date-errors) (conflict (first post-admission-date-errors))
-              :else (if (exam-date-db/update-post-admission-details! db id post-admission)
-                      (ok {:success true})
-                      (internal-server-error {:success false :error "Could not delete the exam date"})))))
-
         (POST "/languages" request
           :path-params [id :- ::ys/id]
           :body [languages ::ys/languages]
@@ -143,4 +135,37 @@
                                            :old exam-date
                                            :new (assoc exam-date :languages (:languages (exam-date-db/get-exam-date-by-id db id)))}})
                   (ok {:success true}))
-                (internal-server-error {:success false :error "Could not delete exam date languages"})))))))))
+                (internal-server-error {:success false :error "Could not delete exam date languages"})))))
+
+        (context "/post-admission" []
+          (POST "/" request
+            :path-params [id :- ::ys/id]
+            :body [post-admission ::ys/exam-date-post-admission-update]
+            :return ::ys/response
+            (let [{post-start :post_admission_start_date post-end :post_admission_end_date} post-admission
+                  current (exam-date-db/get-exam-date-by-id db id)
+                  post-admission-date-errors (remove nil?
+                                                     (vector
+                                                      (when (is-first-date-before-second post-end post-start)
+                                                        {:success false :error "Post admission start date has to be before it's end date"})
+                                                      (when (is-first-date-before-second post-start (:registration_end_date current))
+                                                        {:success false :error "Post admission start date has to be after registration has ended"})
+                                                      (when (is-first-date-before-second (:exam_date current) post-end)
+                                                        {:success false :error "Post admission end date has to be before exam date"})))]
+              (cond
+                (= current nil) (not-found
+                                 {:success false :error "Exam date not found"})
+                (not-empty post-admission-date-errors) (conflict (first post-admission-date-errors))
+                :else (if (exam-date-db/update-post-admission-details! db id post-admission)
+                        (ok {:success true})
+                        (internal-server-error {:success false :error "Could not delete the exam date"})))))
+
+          (POST "/enable" request
+            :path-params [id :- ::ys/id]
+            :return ::ys/response
+            (toggle-post-admission db id true))
+
+          (POST "/disable" request
+            :path-params [id :- ::ys/id]
+            :return ::ys/response
+            (toggle-post-admission db id false)))))))

@@ -37,8 +37,7 @@
   (delete-exam-date! [db id])
   (delete-exam-date-languages! [db id languages])
   (update-post-admission-details! [db id post-admission])
-  (delete-post-admission-end-date! [db exam-date-id])
-  (update-post-admission-end-date! [db exam-date-id new-end-date]))
+  (toggle-post-admission! [db id enabled]))
 
 (extend-protocol ExamDate
   duct.database.sql.Boundary
@@ -82,6 +81,11 @@
                                                       :post_admission_start_date (string->date (:post_admission_start_date post-admission))
                                                       :post_admission_end_date (string->date (:post_admission_end_date post-admission))
                                                       :post_admission_enabled (:post_admission_enabled post-admission)})))
+  (toggle-post-admission!
+    [{:keys [spec]} id enabled]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-exam-date-post-admission-status! tx {:id id
+                                                     :post_admission_enabled enabled})))
   (delete-exam-date! [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (q/delete-exam-date! tx {:id id})
@@ -93,10 +97,4 @@
         (q/delete-exam-date-language! tx {:exam_date_id id
                                           :level_code (:level_code lang)
                                           :language_code (:language_code lang)}))
-      true))
-  (delete-post-admission-end-date! [{:keys [spec]} exam-date-id]
-    (jdbc/with-db-transaction [tx spec]
-      (q/delete-post-admission-end-date! tx {:exam_date_id exam-date-id})))
-  (update-post-admission-end-date! [{:keys [spec]} exam-date-id new-end-date]
-    (jdbc/with-db-transaction [tx spec]
-      (q/update-post-admission-end-date! tx {:exam_date_id exam-date-id :post_admission_end_date (f/parse new-end-date)}))))
+      true)))

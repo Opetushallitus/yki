@@ -11,20 +11,4 @@
     :coercion :spec
     (GET "/" []
       :return ::ys/exam-date-response
-      (ok {:dates (exam-date-db/get-exam-dates db)}))
-    (context "/:id" []
-      (POST "/post-admission-end-date" []
-        :body [end-date ::ys/post-admission-end-date-update]
-        :path-params [id :- ::ys/id]
-        :return ::ys/response
-        (if (nil? (:post_admission_end_date end-date))
-          (not-found {:success false :error "End date can not be null"})
-          (if (exam-date-db/update-post-admission-end-date! db id (:post_admission_end_date end-date))
-            (ok {:success true})
-            (not-found {:success false :error "Exam date not found"}))))
-      (DELETE "/post-admission-end-date" []
-        :path-params [id :- ::ys/id]
-        :return ::ys/response
-        (if (exam-date-db/delete-post-admission-end-date! db id)
-          (ok {:success true})
-          (not-found {:success false :error "Exam date not found"}))))))
+      (ok {:dates (exam-date-db/get-exam-dates db)}))))
