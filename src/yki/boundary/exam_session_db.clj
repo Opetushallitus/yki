@@ -55,8 +55,8 @@
   (add-to-exam-session-queue! [db email lang exam-session-id])
   (update-exam-session-queue-last-notified-at! [db email exam-session-id])
   (remove-from-exam-session-queue! [db email exam-session-id])
-  (update-post-admission-details! [db id post-admission])
-  (set-post-admission-active! [db activation]))
+  (set-post-admission-active! [db id quota])
+  (set-post-admission-deactive! [db id]))
 
 (extend-protocol ExamSessions
   duct.database.sql.Boundary
@@ -160,18 +160,14 @@
       (q/delete-from-exam-session-queue! tx {:exam_session_id exam-session-id
                                              :email email})))
 
-  (update-post-admission-details!
-    [{:keys [spec]} id post-admission]
-    (jdbc/with-db-transaction [tx spec]
-      (let [current-post-admission (first (q/fetch-post-admission-details tx {:exam_session_id id}))]
-        (when (and (false? (:post_admission_active current-post-admission))
-                   (> (:post_admission_quota post-admission) 0))
-          (q/update-post-admission-details! tx {:exam_session_id id
-                                                :post_admission_start_date (string->date (:post_admission_start_date post-admission))
-                                                :post_admission_quota (:post_admission_quota post-admission)})))))
   (set-post-admission-active!
-    [{:keys [spec]} activation]
-    (log/debug (str "Changing post admission active state to " (:post_admission_active activation) " for exam session " (:exam_session_id activation)))
-    (int->boolean (jdbc/with-db-transaction [tx spec]
-                    (q/activate-post-admission! tx activation)))))
+    [{:keys [spec]} id quota]
+    (jdbc/with-db-transaction [tx spec]
+      (q/activate-exam-session-post-admission! tx {:exam_session_id id
+                                                   :post_admission_quota quota})))
+
+  (set-post-admission-deactive!
+    [{:keys [spec]} id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/deactivate-exam-session-post-admission! tx {:exam_session_id id}))))
 
