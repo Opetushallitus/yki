@@ -64,8 +64,8 @@
   (base/insert-payment-config "'1.2.3.5'")
   (base/insert-languages "'1.2.3.5'")
   ; both exam sessions are expected to share post admission dates for the relevant checks to work
-  (jdbc/execute! @embedded-db/conn "UPDATE exam_date SET registration_end_date = '2018-12-01', post_admission_end_date = '2039-12-31'")
-  (jdbc/execute! @embedded-db/conn "UPDATE exam_session SET post_admission_start_date = '2018-12-07', post_admission_quota = 20, post_admission_active = true WHERE id = 1")
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_date SET registration_end_date = '2018-12-01', post_admission_start_date = '2018-12-07', post_admission_end_date = '2039-12-31', post_admission_enabled = true")
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_session SET post_admission_quota = 20, post_admission_active = true WHERE id = 1")
   (base/insert-exam-session-with-post-admission 1 "'1.2.3.5'" 50 20)
   (base/insert-exam-session-location "'1.2.3.5'" "fi")
   (base/insert-exam-session-location "'1.2.3.5'" "sv")
@@ -89,6 +89,7 @@
                                                       :content-type "application/json"
                                                       :request-method :post))
           init-response-body     (base/body-as-json (:response init-response))
+
           _ (println "init-response-body" init-response-body)
           id                     (init-response-body "registration_id")
           create-twice-response  (-> session
@@ -104,7 +105,6 @@
                                                       :request-method :post))
           _ (println "submit-response:" (base/body-as-json (:response submit-response)))
           payment                (base/select-one (str "SELECT * FROM payment WHERE registration_id = " id))
-          exam-session           (base/select-one "SELECT * FROM exam_date WHERE id = 1")
           payment-link           (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           _ (println "submitted-registration:" submitted-registration)
