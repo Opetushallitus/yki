@@ -18,11 +18,13 @@
     "post_admission_end_date": null,
     "post_admission_active": false,
     "post_admission_quota": null,
+    "post_admission_activated_at": null,
+    "post_admission_enabled": false,
     "location": [
       {
         "lang": "fi",
         "extra_information": null,
-        "post_office":"Espoo",
+        "post_office": "Espoo",
         "name": "Omenia",
         "other_location_info": "Other info",
         "street_address": "Upseerinkatu 11",
