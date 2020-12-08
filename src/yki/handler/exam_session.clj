@@ -107,23 +107,41 @@
                           (not-found {:success false
                                       :error "Exam session not found"}))))))
 
-        (POST routing/post-admission-uri request
-          :path-params [id :- ::ys/id]
-          :body [post-admission ::ys/post-admission-update]
-          :return ::ys/response
-          (if (exam-session-db/update-post-admission-details! db id post-admission)
-            (response {:success true})
-            (not-found {:success false
-                        :error "Exam session not found"})))
-
-        (POST (str routing/post-admission-uri "/activation") request
+        (POST (str routing/post-admission-uri "/activate") request
           :path-params [id :- ::ys/id]
           :body [activation ::ys/post-admission-activation]
           :return ::ys/response
-          (if (exam-session-db/set-post-admission-active! db (merge {:exam_session_id id} activation))
-            (response {:success true})
-            (not-found {:success false
-                        :error "Exam session not found"})))
+          (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
+            (cond
+              (= exam-session nil) (do (log/error "Could not find exam session with id" id)
+                                       (not-found {:success false :error "Exam session not found"}))
+              (= (:post_admission_enabled exam-session) false) (do (log/error "Post admissions are not enabled for exam session" id "with an exam date" (:session_date exam-session))
+                                                                   (conflict {:success false :error "Post admissions are not enabled for this exam date"}))
+              (< (:post_admission_quota activation) 1) (do (log/error "Attempting to set too small quota of" (:post_admission_quota activation) "for exam session " id)
+                                                           (conflict {:success false :error "Minimum quota for post admission is 1"}))
+              :else
+              (if (exam-session-db/set-post-admission-active! db id (:post_admission_quota activation))
+                (response {:success true})
+                (do
+                  (log/error "Error occured when attempting to activate post admission for exam session" id)
+                  (internal-server-error {:success false
+                                          :error "Could not activate post admission"}))))))
+
+        (POST (str routing/post-admission-uri "/deactivate") request
+          :path-params [id :- ::ys/id]
+          :return ::ys/response
+          (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
+            (if exam-session
+              (if (exam-session-db/set-post-admission-deactive! db id)
+                (response {:success true})
+                (do
+                  (log/error "Error occured when attempting to deactivate post admission for exam session" id)
+                  (internal-server-error {:success false
+                                          :error "Could not deactivate post admission"})))
+
+              (do (log/error "Could not find exam session with id" id)
+                  (not-found {:success false :error "Exam session not found"})))))
+
         (context routing/registration-uri []
           (GET "/" {session :session}
             :path-params [id :- ::ys/id]
@@ -157,6 +175,8 @@
                   (response {:success true}))
                 (not-found {:success false
                             :error "Registration not found"})))
+
+
             ; Regarding email confirmation resend: needs to generate a whole new login link and invalidate old one
             ; (POST "/resendConfirmation" request
             ;   :path-params [id :- ::ys/id registration-id :- ::ys/id]
@@ -167,6 +187,8 @@
             ;       (response {:success true})
             ;       (not-found {:success false
             ;                  :error "Registration not found"})))
+
+
             (POST "/confirm-payment" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response

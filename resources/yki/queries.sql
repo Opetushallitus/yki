@@ -177,17 +177,6 @@ INSERT INTO exam_session_location(
   :exam_session_id
 );
 
--- name: insert-exam-session-date!
-INSERT INTO exam_date(
-  exam_date,
-  registration_start_date,
-  registration_end_date
-) VALUES (
-  :exam_date,
-  :registration_start_date,
-  :registration_end_date
-);
-
 -- name: select-exam-session-office-oids
 SELECT es.office_oid
 FROM exam_session es
@@ -203,9 +192,10 @@ SELECT
   e.max_participants,
   ed.registration_start_date,
   ed.registration_end_date,
-  e.post_admission_start_date,
+  e.post_admission_activated_at,
   e.post_admission_quota,
   e.post_admission_active,
+  ed.post_admission_start_date,
   ed.post_admission_end_date,
   e.office_oid,
   e.published_at,
@@ -237,8 +227,9 @@ SELECT
     WHERE exam_session_id = e.id
   ) loc
  ) as location,
+(SELECT post_admission_enabled FROM exam_date WHERE id = e.exam_date_id) AS post_admission_enabled,
   within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-  OR (within_dt_range(now(), e.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active = TRUE) as open
+  OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active = TRUE AND ed.post_admission_enabled) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -252,8 +243,10 @@ SELECT
   ed.exam_date AS session_date,
   ed.registration_start_date,
   ed.registration_end_date,
-  e.post_admission_start_date,
+  e.post_admission_activated_at,
+  ed.post_admission_start_date,
   ed.post_admission_end_date,
+  ed.post_admission_enabled,
   e.post_admission_quota,
   e.language_code,
   e.level_code,
@@ -287,7 +280,7 @@ SELECT
   ) loc
 ) AS location,
 (within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-  OR (within_dt_range(now(), e.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active)) as open
+  OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active AND ed.post_admission_enabled)) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -716,7 +709,7 @@ WHERE ((ed.registration_end_date + interval '1 day') >= current_date
   OR ((ed.registration_end_date + :duration::interval) >= current_date
       AND pss.failed_at IS NOT NULL
       AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
-AND (ed.registration_start_date <= current_date OR es.post_admission_start_date <= current_date)
+AND (ed.registration_start_date <= current_date OR es.post_admission_activated_at <= current_date)
 AND (SELECT COUNT(1)
      FROM registration re
      WHERE re.exam_session_id = es.id AND re.state = 'COMPLETED') > 0;
@@ -961,6 +954,11 @@ UPDATE exam_date
        post_admission_enabled = :post_admission_enabled
    WHERE id = :id;
 
+-- name: update-exam-date-post-admission-status!
+UPDATE exam_date
+   SET post_admission_enabled = :post_admission_enabled
+   WHERE id = :id;
+
 -- name: delete-exam-date!
 UPDATE exam_date
   SET deleted_at = current_timestamp
@@ -1049,7 +1047,7 @@ WHERE exam_session_id = :exam_session_id
   AND LOWER(email) = LOWER(:email);
 
 --name: fetch-post-admission-details
-SELECT post_admission_start_date, post_admission_active, post_admission_quota
+SELECT post_admission_activated_at, post_admission_active, post_admission_quota
   FROM exam_session
  WHERE id = :exam_session_id;
 
@@ -1058,11 +1056,17 @@ UPDATE exam_session
    SET post_admission_active = :post_admission_active
  WHERE id = :exam_session_id;
 
---name: update-post-admission-details!
+-- name: activate-exam-session-post-admission!
 UPDATE exam_session
-   SET post_admission_start_date = :post_admission_start_date,
-       post_admission_quota = :post_admission_quota
+   SET post_admission_activated_at = now(),
+       post_admission_quota = :post_admission_quota,
+       post_admission_active = TRUE
    WHERE post_admission_active = FALSE AND id = :exam_session_id;
+
+-- name: deactivate-exam-session-post-admission!
+UPDATE exam_session
+   SET post_admission_active = FALSE
+   WHERE post_admission_active = TRUE AND id = :exam_session_id;
 
 --name: update-post-admission-end-date!
 UPDATE exam_date
