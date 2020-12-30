@@ -21,6 +21,7 @@ project.clj
 
 # Language Server Protocol (LSP) logfiles
 lsp/
+.lsp/
 
 # Visual Studio Code metadata
 .vscode
