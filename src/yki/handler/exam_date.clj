@@ -9,7 +9,7 @@
             [clj-time.coerce :as c]
             [clj-time.core :as t]
             [integrant.core :as ig]
-            [clojure.string :as str]))
+            [clojure.set :as set]))
 
 (defn is-first-date-before-second [current-date post-date]
   (if (nil? post-date) false (let [to-date (fn [d] (c/from-long d))]
@@ -91,21 +91,17 @@
           :body [languages ::ys/languages]
           :return ::ys/response
           (let [exam-date (exam-date-db/get-exam-date-by-id db id)
-                exam-date-languages (:languages exam-date)
-                existing-row (fn [old-lang new-lang] (when (and
-                                                            (= (:language_code old-lang) (:language_code new-lang))
-                                                            (= (:level_code old-lang) (:level_code new-lang))) new-lang))
-                map-language-rows (fn [lang]  (remove nil? (map (fn [row] (existing-row lang row)) languages)))
-                get-existing-rows (->> exam-date-languages
-                                       (map map-language-rows)
-                                       flatten)
-                language-error-message (when (= false (empty? get-existing-rows))
-                                         (str "Following language levels exist for this exam date: " (str/join get-existing-rows)))]
+                exam-date-languages (vec (:languages exam-date))
+                new-languages (set/difference (set languages) (set exam-date-languages))
+                removable-languages (set/difference (set exam-date-languages) (set languages))]
+
+            (when (not-empty new-languages) (log/info "Adding languages to exam date " id ": " new-languages))
+            (when (not-empty removable-languages) (log/info "Removing languages from exam date " id ": " removable-languages))
+
             (cond
               (= exam-date nil) (not-found {:success false :error "Exam date not found"})
-              (= false (nil? language-error-message)) (conflict {:success false :error language-error-message})
               :else
-              (if (exam-date-db/create-exam-date-languages! db id languages)
+              (if (exam-date-db/create-and-delete-exam-date-languages! db id new-languages removable-languages)
                 (do
                   (audit-log/log {:request request
                                   :target-kv {:k audit-log/exam-date
