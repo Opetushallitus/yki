@@ -153,13 +153,13 @@
         (is (= (:status response) 200))
         (is (= 2 (count (base/select (base/select-exam-date-languages-by-date-id exam-date-id)))))))
 
-    (testing "cannot add a language-level pair to a exam date if it already exists"
+    (testing "can post a language-level pair to a exam date even if it already exists"
       (let [languages (slurp "test/resources/languages.json")
             exam-date-id (get-exam-date-id-by-date "2039-10-12")
             response (post-exam-date-languages exam-date-id languages)
             response-body (base/body-as-json response)]
-        (is (= (:status response) 409))
-        (is (= (get-success-status response-body) false))
+        (is (= (:status response) 200))
+        (is (= (get-success-status response-body) true))
         (is (= 2 (count (base/select (base/select-exam-date-languages-by-date-id exam-date-id))))))))
 
   (let [delete-exam-date-languages (fn [id exam-date-languages]
