@@ -1,14 +1,6 @@
-DO $$
-BEGIN
-  IF EXISTS(SELECT *
-    FROM information_schema.columns
-    WHERE table_name='exam_session' and column_name='post_admission_start_date')
-  THEN
-      ALTER TABLE "public"."exam_session" RENAME COLUMN "post_admission_start_date" TO "post_admission_activated_at";
-  END IF;
-END $$;
+ALTER TABLE exam_session
+ADD COLUMN IF NOT EXISTS post_admission_activated_at DATE DEFAULT NULL;
 
--- Is post registration open for exam session?
 CREATE OR REPLACE FUNCTION exam_session_post_registration_open(exam_date_id bigint,
                                                                at_point_in_time timestamptz DEFAULT now()) RETURNS SETOF boolean AS $$
 BEGIN
