@@ -871,7 +871,7 @@ ed.post_admission_enabled,
   FROM exam_session
   WHERE exam_date_id = ed.id) AS exam_session_count
 FROM exam_date ed
-WHERE ed.registration_end_date >= current_date AND deleted_at IS NULL
+WHERE (ed.registration_end_date >= current_date OR ed.post_admission_end_date >= current_date) AND deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
 
 
@@ -1082,12 +1082,12 @@ UPDATE exam_session
    SET post_admission_activated_at = now(),
        post_admission_quota = :post_admission_quota,
        post_admission_active = TRUE
-   WHERE post_admission_active = FALSE AND id = :exam_session_id;
+   WHERE id = :exam_session_id;
 
 -- name: deactivate-exam-session-post-admission!
 UPDATE exam_session
    SET post_admission_active = FALSE
-   WHERE post_admission_active = TRUE AND id = :exam_session_id;
+   WHERE id = :exam_session_id;
 
 --name: update-post-admission-end-date!
 UPDATE exam_date
