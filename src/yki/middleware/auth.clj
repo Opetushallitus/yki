@@ -137,8 +137,8 @@
     :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
    {:pattern #".*/api/registration.*"
     :handler participant-authenticated}
-    {:pattern #".*/api/exam-date/.*"
-     :handler oph-admin-access}
+   {:pattern #".*/api/exam-date/.*"
+    :handler oph-admin-access}
    {:pattern #".*/payment/formdata"
     :handler participant-authenticated}
    {:pattern #".*/payment/success"

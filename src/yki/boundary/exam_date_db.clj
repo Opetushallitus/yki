@@ -36,6 +36,7 @@
   (get-exam-date-languages [db id])
   (delete-exam-date! [db id])
   (delete-exam-date-languages! [db id languages])
+  (create-and-delete-exam-date-languages! [db id new-languages removed-languages])
   (update-post-admission-details! [db id post-admission])
   (toggle-post-admission! [db id enabled]))
 
@@ -52,12 +53,6 @@
           (doseq [lang (:languages exam-date)]
             (q/insert-exam-date-language! tx (assoc lang :exam_date_id exam-date-id)))
           exam-date-id))))
-  (create-exam-date-languages!
-    [{:keys [spec]} exam-date-id languages]
-    (jdbc/with-db-transaction [tx spec]
-      (doseq [lang languages]
-        (q/insert-exam-date-language! tx (assoc lang :exam_date_id exam-date-id)))
-      true))
   (get-exam-date-by-id [{:keys [spec]} id]
     (first (q/select-exam-date-by-id spec {:id id})))
   (get-exam-dates [{:keys [spec]}]
@@ -95,6 +90,23 @@
     (jdbc/with-db-transaction [tx spec]
       (doseq [lang languages]
         (q/delete-exam-date-language! tx {:exam_date_id id
+                                          :level_code (:level_code lang)
+                                          :language_code (:language_code lang)}))
+      true))
+  (create-exam-date-languages!
+    [{:keys [spec]} exam-date-id languages]
+    (jdbc/with-db-transaction [tx spec]
+      (doseq [lang languages]
+        (q/insert-exam-date-language! tx (assoc lang :exam_date_id exam-date-id)))
+      true))
+
+  (create-and-delete-exam-date-languages!
+    [{:keys [spec]} exam-date-id added-languages removed-languages]
+    (jdbc/with-db-transaction [tx spec]
+      (doseq [lang added-languages]
+        (q/insert-exam-date-language! tx (assoc lang :exam_date_id exam-date-id)))
+      (doseq [lang removed-languages]
+        (q/delete-exam-date-language! tx {:exam_date_id exam-date-id
                                           :level_code (:level_code lang)
                                           :language_code (:language_code lang)}))
       true)))
