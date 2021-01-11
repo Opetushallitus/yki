@@ -73,7 +73,7 @@
           :return ::ys/single-exam-date-response
           (if-let [exam-date (exam-date-db/get-exam-date-by-id db id)]
             (ok {:date exam-date})
-            (do (log/error "Could not find an exam date with id " id)
+            (do (log/error "Could not get an exam date with id " id)
                 (not-found {:success false
                             :error "Exam date not found"}))))
 
@@ -126,6 +126,27 @@
                   (ok {:success true}))
                 (do (log/error "Error occured when modifying languages in exam date " id)
                     (internal-server-error {:success false :error "Could not create exam date languages"}))))))
+
+        (DELETE "/languages" request
+          :path-params [id :- ::ys/id]
+          :body [languages ::ys/languages]
+          :return ::ys/response
+          (let [exam-date (exam-date-db/get-exam-date-by-id db id)
+                session-count (:count (exam-date-db/get-exam-date-session-count db id))]
+            (cond
+              (= exam-date nil) (not-found {:success false :error "Exam date not found"})
+              (> session-count 0) (conflict {:success false :error "Cannot delete languages from exam date with assigned exam sessions"})
+              :else
+              (if (exam-date-db/delete-exam-date-languages! db id languages)
+                (do
+                  (audit-log/log {:request request
+                                  :target-kv {:k audit-log/exam-date
+                                              :v id}
+                                  :change {:type audit-log/update-op
+                                           :old exam-date
+                                           :new (assoc exam-date :languages (:languages (exam-date-db/get-exam-date-by-id db id)))}})
+                  (ok {:success true}))
+                (internal-server-error {:success false :error "Could not delete exam date languages"})))))
 
         (context "/post-admission" []
           (POST "/" request
