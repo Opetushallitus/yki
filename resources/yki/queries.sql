@@ -871,7 +871,7 @@ ed.post_admission_enabled,
   FROM exam_session
   WHERE exam_date_id = ed.id) AS exam_session_count
 FROM exam_date ed
-WHERE (ed.registration_end_date >= current_date OR ed.post_admission_end_date >= current_date) AND deleted_at IS NULL
+WHERE ed.exam_date >= current_date AND deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
 
 
