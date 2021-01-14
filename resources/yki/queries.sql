@@ -264,6 +264,9 @@ SELECT
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
 ) AS participants,
+  (SELECT COUNT(1)
+    FROM registration re
+    WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
   o.oid as organizer_oid,
 (SELECT array_to_json(array_agg(loc))
   FROM (
