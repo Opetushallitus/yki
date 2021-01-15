@@ -8,6 +8,7 @@
     "registration_start_date": "2017-12-01",
     "open": true,
     "max_participants": 5,
+    "pa_participants": 0,
     "language_code": "fin",
     "office_oid": "1.2.3.4.5",
     "published_at": null,
