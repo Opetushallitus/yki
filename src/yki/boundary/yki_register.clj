@@ -80,7 +80,7 @@
   [db url-helper basic-auth disabled organizer-oid office-oid]
   (let [organizer (first (organizer-db/get-organizers-by-oids db [organizer-oid]))
         organization (when (= disabled false) (organization/get-organization-by-oid url-helper (or office-oid organizer-oid)))
-        request (when (= disabled false) create-sync-organizer-req organizer organization)]
+        request (when (= disabled false) (create-sync-organizer-req organizer organization))]
     (if disabled
       (log/info "Organizer sync sending disabled.")
       (do-post (url-helper :yki-register.organizer) (json/write-value-as-string request) basic-auth))))
