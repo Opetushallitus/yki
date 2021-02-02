@@ -11,7 +11,7 @@
                                    AMOUNT ORDER_NUMBER MSG_SETTLEMENT_PAYER
                                    MSG_UI_MERCHANT_PANEL PARAMS_IN PARAMS_OUT]} secret]
   (let [plaintext (str/join "|" (remove nil? [secret MERCHANT_ID LOCALE URL_SUCCESS URL_CANCEL URL_NOTIFY AMOUNT ORDER_NUMBER MSG_SETTLEMENT_PAYER MSG_UI_MERCHANT_PANEL PARAMS_IN PARAMS_OUT]))]
-    (-> plaintext (.getBytes "ISO-8859-1") DigestUtils/sha256Hex str/upper-case)))
+    (-> plaintext (.getBytes "UTF-8") DigestUtils/sha256Hex str/upper-case)))
 
 (defn generate-form-data [{:keys [paytrail-host yki-payment-uri merchant_id merchant_secret]}
                           amount
