@@ -57,7 +57,7 @@
                                                    :disabled true
                                                    :basic-auth {:user "user" :password "pass"}
                                                    :url-helper #ig/ref :yki.util/url-helper
-                                                   :retry-duration-in-days 14}
+                                                   :retry-duration-in-days 0}
 
   :yki.job.scheduled-tasks/exam-session-queue-handler {:db #ig/ref :duct.database/sql
                                                        :url-helper #ig/ref :yki.util/url-helper

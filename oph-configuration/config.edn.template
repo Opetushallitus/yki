@@ -34,7 +34,7 @@
                                                  :basic-auth {:user "{{yki_register_user}}"
                                                               :password "{{yki_register_password}}"}
                                                  :url-helper #ig/ref :yki.util/url-helper
-                                                 :retry-duration-in-days 14}
+                                                 :retry-duration-in-days 0}
 
 :yki.handler/payment {:db #ig/ref :duct.database/sql
                       :auth #ig/ref :yki.middleware.auth/with-authentication
