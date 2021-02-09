@@ -8,6 +8,7 @@
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.yki-register :as yki-register]
             [yki.util.template-util :as template-util]
+            [yki.util.common :as util]
             [yki.job.job-queue]
             [clj-time.coerce :as c]
             [clj-time.core :as t]
@@ -108,16 +109,21 @@
              (doseq [item (:queue exam-session)]
                (let [lang             (:lang item)
                      email            (:email item)
+                     created          (c/from-long (:created item))
                      exam-session-id  (:exam_session_id exam-session)
+                     last_notified    (:last_notified_at exam-session)
                      exam-session-url (url-helper :exam-session.url exam-session-id lang)
+                     reg-start-time   (t/plus  (c/from-long (:registration_start_date exam-session)) (t/hours 10))
+                     prequeue         (t/before? (util/set-timezone created) reg-start-time)
+                     notification     (if (and prequeue (nil? last_notified)) "prequeue_notification" "queue_notification")
                      language         (template-util/get-language url-helper (:language_code exam-session) lang)
                      level            (template-util/get-level url-helper (:level_code exam-session) lang)]
-                 (log/info "Sending notification to email" email)
+                 (log/info "Queue handler triggered" notification "for email" email)
                  (pgq/put email-q
                           {:recipients [email]
                            :created (System/currentTimeMillis)
-                           :subject (template-util/subject url-helper "queue_notification" lang exam-session)
-                           :body (template-util/render url-helper "queue_notification"
+                           :subject (template-util/subject url-helper notification lang exam-session)
+                           :body (template-util/render url-helper notification
                                                        lang
                                                        (assoc exam-session
                                                               :exam-session-url exam-session-url
