@@ -889,6 +889,10 @@ AND exam_session_id IN (SELECT id
                                               FROM exam_session
                                               WHERE id = :exam_session_id));
 
+-- name: delete-from-exam-session-queue-by-session-id!
+DELETE FROM exam_session_queue
+ WHERE id = :exam_session_id;
+
 -- name: update-exam-session-queue-last-notified-at!
 UPDATE exam_session_queue
 SET last_notified_at = current_timestamp
