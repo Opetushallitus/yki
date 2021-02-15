@@ -116,6 +116,7 @@
     (login-link-db/create-login-link! db
                                       (assoc login-link
                                              :code hashed))
+    (log/info "Login link created for " email ". Adding to email queue")
     (pgq/put email-q
              {:recipients [email]
               :created (System/currentTimeMillis)

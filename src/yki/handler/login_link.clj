@@ -9,6 +9,7 @@
             [yki.util.common :as c]
             [pgqueue.core :as pgq]
             [clj-time.core :as t]
+            [clojure.tools.logging :as log]
             [yki.job.job-queue]
             [ring.util.http-response :refer [ok]]
             [buddy.core.hash :as hash]
@@ -29,6 +30,7 @@
        :body [login-link ::ys/login-link]
        :query-params [lang :- ::ys/language-code]
        :return ::ys/response
+       (log/info "Login link requested for: " login-link)
        (let [participant-id   (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                    :email (:email login-link)}))
              exam-session-id  (:exam_session_id login-link)
