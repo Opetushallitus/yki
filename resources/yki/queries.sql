@@ -356,7 +356,7 @@ WHERE exam_session_id = :id;
 DELETE FROM exam_session
 WHERE id = (SELECT es.id FROM exam_session es
             INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-            WHERE es.id = :id AND ed.registration_start_date > current_date
+            WHERE es.id = :id AND ed.registration_start_date >= current_date
             AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
 -- name: insert-participant<!

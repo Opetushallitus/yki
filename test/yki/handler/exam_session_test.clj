@@ -150,17 +150,8 @@
         iterate-exam-dates (fn [dates] (for [d dates] (insert-dates d)))]
     (doall (iterate-exam-dates exam-dates)))
 
-  (testing "exam session history endpoint should return exam session history from past six months"
-    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/history?from=2040-04-01T00:00:00Z"))
-          response (base/send-request-with-tx request)
-          response-body (base/body-as-json response)]
-      (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
-      (is (= (:status response) 200))
-      (is (= (get-exam-date response-body "2039-12-01") "2039-12-01"))
-      (is (= (get-exam-date response-body "2039-10-01") nil))))
-
-  (testing "exam session history endpoint with 'days' parameter should return limited sessions from past days"
-    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/history?from=2040-06-01T00:00:00Z&days=100"))
+  (testing "exam session endpoint with 'days' parameter should return sessions from past days"
+    (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session?from=2040-06-01T00:00:00Z&days=100"))
           response (base/send-request-with-tx request)
           response-body (base/body-as-json response)]
       (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
