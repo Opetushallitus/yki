@@ -8,7 +8,6 @@
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.yki-register :as yki-register]
             [yki.util.template-util :as template-util]
-            [yki.util.common :as util]
             [yki.job.job-queue]
             [clj-time.coerce :as c]
             [clj-time.core :as t]
