@@ -356,7 +356,7 @@ WHERE exam_session_id = :id;
 DELETE FROM exam_session
 WHERE id = (SELECT es.id FROM exam_session es
             INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-            WHERE es.id = :id AND ed.registration_start_date > current_date
+            WHERE es.id = :id AND ed.registration_start_date >= current_date
             AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
 -- name: insert-participant<!
@@ -711,7 +711,7 @@ SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
-WHERE ((ed.registration_end_date + interval '1 day') >= current_date 
+WHERE ((ed.registration_end_date + interval '1 day') >= current_date
   OR (ed.post_admission_end_date + interval '1 day') >= current_date
   OR ((ed.registration_end_date + :duration::interval) >= current_date
       AND pss.failed_at IS NOT NULL
@@ -855,15 +855,18 @@ INSERT INTO exam_session_queue (
 -- name: select-exam-sessions-with-queue
 SELECT
  esq.exam_session_id,
+ esq.last_notified_at,
  es.language_code,
  es.level_code,
  ed.exam_date,
+ ed.registration_start_date,
  esl.name,
  esl.street_address,
  esl.post_office,
  esl.zip,
  array_to_json(array_agg(json_build_object('email', esq.email)::jsonb ||
-                         json_build_object('lang', esq.lang)::jsonb)) as queue
+                         json_build_object('lang', esq.lang)::jsonb ||
+                         json_build_object('created', esq.created)::jsonb)) as queue
 FROM exam_session_queue esq
 INNER JOIN exam_session es ON es.id = esq.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
@@ -875,7 +878,7 @@ WHERE current_timestamp AT TIME ZONE 'Europe/Helsinki' BETWEEN (current_date + t
   AND es.max_participants > (SELECT COUNT(1)
                             FROM registration re
                             WHERE re.exam_session_id = es.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
-GROUP BY esq.exam_session_id, es.language_code, es.level_code, ed.exam_date, esl.street_address, esl.post_office, esl.zip, esl.name;
+GROUP BY esq.exam_session_id, esq.last_notified_at, es.language_code, es.level_code, ed.exam_date, ed.registration_start_date, esl.street_address, esl.post_office, esl.zip, esl.name;
 
 -- name: delete-from-exam-session-queue!
 DELETE FROM exam_session_queue
@@ -885,6 +888,10 @@ AND exam_session_id IN (SELECT id
                         WHERE exam_date_id = (SELECT exam_date_id
                                               FROM exam_session
                                               WHERE id = :exam_session_id));
+
+-- name: delete-from-exam-session-queue-by-session-id!
+DELETE FROM exam_session_queue
+ WHERE id = :exam_session_id;
 
 -- name: update-exam-session-queue-last-notified-at!
 UPDATE exam_session_queue
@@ -923,4 +930,3 @@ UPDATE exam_date
 UPDATE exam_date
    SET post_admission_end_date = NULL
  WHERE id = :exam_date_id;
- 

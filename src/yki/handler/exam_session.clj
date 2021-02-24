@@ -27,9 +27,15 @@
   (fn [oid]
     (context "/" []
       (GET "/" []
-        :query-params [{from :- ::ys/date nil}]
+        :query-params [{from :- ::ys/date nil} {days :- ::ys/days nil}]
         :return ::ys/exam-sessions-response
-        (response {:exam_sessions (exam-session-db/get-exam-sessions db oid from)}))
+        (let [from-date  (if from (c/from-long from) (t/now))
+              history-date (if days (-> from-date
+                                        (t/minus (t/days days))) from-date)
+              new-from-date (f/unparse (f/formatter "yyyy-MM-dd") history-date)
+              sessions (exam-session-db/get-exam-sessions db oid new-from-date)]
+          (response {:exam_sessions sessions})))
+
       (POST "/" request
         :body [exam-session ::ys/exam-session]
         :return ::ys/id-response
@@ -45,16 +51,6 @@
                             :change {:type audit-log/create-op
                                      :new exam-session}})
             (response {:id exam-session-id}))))
-      (context "/history" []
-        (GET "/" []
-          :query-params [{from :- ::ys/date nil} {days :- ::ys/days nil}]
-          :return ::ys/exam-sessions-response
-          (let [history-date (-> from
-                                 (c/to-long)
-                                 (c/from-long)
-                                 (t/minus (t/days (if days days 180))))
-                string-date (f/unparse (f/formatter "yyyy-MM-dd") history-date)]
-            (response {:exam_sessions (exam-session-db/get-exam-sessions db oid string-date)}))))
 
       (context "/:id" []
         (PUT "/" request
@@ -84,21 +80,32 @@
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [exam-session (exam-session-db/get-exam-session-by-id db id)
-                participants (:participants exam-session)]
-            (if (zero? participants)
-              (if (exam-session-db/delete-exam-session! db id oid (send-to-queue
-                                                                   data-sync-q
-                                                                   (assoc exam-session :organizer_oid oid)
-                                                                   "DELETE"))
-                (do
-                  (audit-log/log {:request request
-                                  :target-kv {:k audit-log/exam-session
-                                              :v id}
-                                  :change {:type audit-log/delete-op}})
-                  (response {:success true}))
-                (not-found {:success false
-                            :error "Exam session not found"}))
-              (conflict {:error "Cannot delete exam session with participants"}))))
+                participants (when exam-session (:participants exam-session))
+                reg-start-date (when exam-session (c/from-long (:registration_start_date exam-session)))]
+            (log/info "Deleting exam session: " id)
+            (cond
+              (nil? exam-session) (do (log/error "Could not find exam session " id)
+                                      (not-found {:success false
+                                                  :error "Exam session not found"}))
+              (> participants 0) (do (log/error "Cannot delete exam session with participants " id)
+                                     (conflict {:success false
+                                                :error "Cannot delete exam session with participants"}))
+              (t/after? (t/minus (t/now) (t/days 1)) reg-start-date) (do (log/error "Cannot delete exam session after registration start date " id)
+                                                                         (conflict {:success false
+                                                                                    :error "Cannot delete exam session after registration start date "}))
+              :else (if (exam-session-db/delete-exam-session! db id oid (send-to-queue
+                                                                         data-sync-q
+                                                                         (assoc exam-session :organizer_oid oid)
+                                                                         "DELETE"))
+                      (do
+                        (audit-log/log {:request request
+                                        :target-kv {:k audit-log/exam-session
+                                                    :v id}
+                                        :change {:type audit-log/delete-op}})
+                        (response {:success true}))
+                      (do (log/error "Error occured when deleting exam session " id)
+                          (not-found {:success false
+                                      :error "Exam session not found"}))))))
 
         (POST routing/post-admission-uri request
           :path-params [id :- ::ys/id]

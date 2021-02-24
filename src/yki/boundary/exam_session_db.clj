@@ -110,7 +110,8 @@
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
        tx
-       #(let [deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
+       #(let [deleted-queue (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
+              deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
           (when deleted
             (send-to-queue-fn))
           deleted))))
@@ -159,13 +160,12 @@
       (let [current-post-admission (first (q/fetch-post-admission-details tx {:exam_session_id id}))]
         (when (and (false? (:post_admission_active current-post-admission))
                    (> (:post_admission_quota post-admission) 0))
-              (q/update-post-admission-details! tx {:exam_session_id id
-                                                    :post_admission_start_date (string->date (:post_admission_start_date post-admission))
-                                                    :post_admission_quota (:post_admission_quota post-admission)}))
-          )))
+          (q/update-post-admission-details! tx {:exam_session_id id
+                                                :post_admission_start_date (string->date (:post_admission_start_date post-admission))
+                                                :post_admission_quota (:post_admission_quota post-admission)})))))
   (set-post-admission-active!
-   [{:keys [spec]} activation]
-   (log/debug (str "Changing post admission active state to " (:post_admission_active activation) " for exam session " (:exam_session_id activation)))
-   (int->boolean (jdbc/with-db-transaction [tx spec]
-                               (q/activate-post-admission! tx activation)))))
+    [{:keys [spec]} activation]
+    (log/debug (str "Changing post admission active state to " (:post_admission_active activation) " for exam session " (:exam_session_id activation)))
+    (int->boolean (jdbc/with-db-transaction [tx spec]
+                    (q/activate-post-admission! tx activation)))))
 
