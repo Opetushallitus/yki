@@ -13,11 +13,11 @@
 (defn- success-redirect [url-helper lang exam-session-id]
   (found (url-helper :payment.success-redirect lang exam-session-id)))
 
-(defn- error-redirect [url-helper lang]
-  (found (url-helper :payment.error-redirect lang)))
+(defn- error-redirect [url-helper lang exam-session-id]
+  (found (url-helper :payment.error-redirect lang exam-session-id)))
 
-(defn- cancel-redirect [url-helper lang]
-  (found (url-helper :payment.cancel-redirect lang)))
+(defn- cancel-redirect [url-helper lang exam-session-id]
+  (found (url-helper :payment.cancel-redirect lang exam-session-id)))
 
 (defn- handle-exceptions [url-helper f]
   (try
@@ -49,7 +49,8 @@
          (handle-exceptions url-helper
                             #(if (paytrail-payment/valid-return-params? db params)
                                (let [payment (paytrail-payment/get-payment db params)
-                                     lang (or (:lang payment) "fi")]
+                                     lang (or (:lang payment) "fi")
+                                     exam-session-id (:exam_session_id payment)]
                                  (if (paytrail-payment/handle-payment-return db email-q url-helper params)
                                    (do
                                      (audit/log-participant {:request request
@@ -57,9 +58,9 @@
                                                                          :v (:ORDER_NUMBER params)}
                                                              :change {:type audit/create-op
                                                                       :new params}})
-                                     (success-redirect url-helper lang (:exam_session_id payment)))
-                                   (error-redirect url-helper lang)))
-                               (error-redirect url-helper "fi")))))
+                                     (success-redirect url-helper lang exam-session-id))
+                                   (error-redirect url-helper lang exam-session-id)))
+                               (error-redirect url-helper "fi" nil)))))
      (GET "/cancel" request
        (let [params (:params request)]
          (log/info "Received payment cancel params" params)
@@ -67,14 +68,15 @@
                             #(if (paytrail-payment/valid-return-params? db params)
                                (do
                                  (let [payment (paytrail-payment/get-payment db params)
-                                       lang (or (:lang payment) "fi")]
+                                       lang (or (:lang payment) "fi")
+                                       exam-session-id (:exam_session_id payment)]
                                    (audit/log-participant {:request request
                                                            :target-kv {:k audit/payment
                                                                        :v (:ORDER_NUMBER params)}
                                                            :change {:type audit/cancel-op
                                                                     :new params}})
-                                   (cancel-redirect url-helper lang)))
-                               (error-redirect url-helper "fi")))))
+                                   (cancel-redirect url-helper lang exam-session-id)))
+                               (error-redirect url-helper "fi" nil)))))
      (GET "/notify" {params :params}
        (log/info "Received payment notify params" params)
        (if (paytrail-payment/valid-return-params? db params)
