@@ -31,6 +31,10 @@ lsp/
 # Clojure linter
 .clj-kondo/
 
+# Visual Studio Code extensions
+.clj-kondo/
+.lsp/
+
 # Allow all and any scratch files to exist in project root
 scratch.*
 
