@@ -20,7 +20,7 @@
 (defn- empty-or-match [value regexp]
   (or (str/blank? value) (re-matches regexp value)))
 
-(s/def ::ssn (s/and string? #(empty-or-match % ssn-regexp)))
+(s/def ::ssn (s/and (s/nilable string?) #(empty-or-match % ssn-regexp)))
 (s/def ::amount (s/and string? #(re-matches amount-regexp %)))
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code  #{"fi" "sv" "en"})
