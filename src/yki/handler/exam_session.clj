@@ -27,7 +27,7 @@
   (fn [oid]
     (context "/" []
       (GET "/" []
-        :query-params [{from :- ::ys/date nil} {days :- ::ys/days nil}]
+        :query-params [{from :- ::ys/date-type nil} {days :- ::ys/days nil}]
         :return ::ys/exam-sessions-response
         (let [from-date  (if from (c/from-long from) (t/now))
               history-date (if days (-> from-date
