@@ -89,9 +89,7 @@
 (defn- redirect-to-cas-oppija
   [request url-helper]
   (let [lang ((:query-params request) "lang")
-        url-key (if lang
-                  (str "cas-oppija-url." lang)
-                  "cas-oppija-url.fi")]
+        url-key (str "cas-oppija.login")]
     (assoc
      (see-other (url-helper url-key))
      :session
