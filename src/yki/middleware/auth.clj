@@ -86,12 +86,12 @@
   [request]
   (oph-admin? (get-organizations-from-session (:session request))))
 
-(defn- redirect-to-shibboleth
+(defn- redirect-to-cas-oppija
   [request url-helper]
   (let [lang ((:query-params request) "lang")
         url-key (if lang
-                  (str "tunnistus.url." lang)
-                  "tunnistus.url.fi")]
+                  (str "cas-oppija-url." lang)
+                  "cas-oppija-url.fi")]
     (assoc
      (see-other (url-helper url-key))
      :session
@@ -134,7 +134,7 @@
     :request-method :post}
    {:pattern #".*/auth.*"
     :handler no-access
-    :on-error (fn [req _] (redirect-to-shibboleth req url-helper))}
+    :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
    {:pattern #".*/api/registration.*"
     :handler participant-authenticated}
     {:pattern #".*/api/exam-date/.*"

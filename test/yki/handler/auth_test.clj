@@ -46,7 +46,7 @@
                                       :request-method :get))]
     (testing "unauthenticated user should be redirected with http code 303"
       (is (= (get-in response [:response :status]) 303))
-      (is (= ((get-in response [:response :headers]) "Location") "https:///shibboleth/ykiLoginFI")))))
+      (is (= ((get-in response [:response :headers]) "Location") "https:///cas-oppija/ykiLoginFI")))))
 
 (def user-1 {"last_name" "Aakula"
              "nick_name" "Emma"
