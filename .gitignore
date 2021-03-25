@@ -25,6 +25,10 @@ lsp/
 # Visual Studio Code metadata
 .vscode
 
+# Visual Studio Code plugins
+.calva
+.lsp
+
 # Allow all and any scratch files to exist in project root
 scratch.*
 

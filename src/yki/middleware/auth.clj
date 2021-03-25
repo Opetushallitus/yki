@@ -88,12 +88,14 @@
 
 (defn- redirect-to-cas-oppija
   [request url-helper]
-  (let [lang ((:query-params request) "lang")
-        url-key (str "cas-oppija.login")]
+  (log/info "Redirecting to cas oppija")
+  (let [exam-session-id ((:query-params request) "examSessionId")
+        lang (or ((:query-params request) "lang") "fi")]
+
     (assoc
-     (see-other (url-helper url-key))
+     (see-other (url-helper :cas-oppija.login exam-session-id))
      :session
-     {:success-redirect (url-helper :exam-session.redirect ((:query-params request) "examSessionId") (or lang "fi"))})))
+     {:success-redirect (url-helper :exam-session.redirect exam-session-id lang)})))
 
 (defn- rules
   "OPH users with admin role are allowed to call all endpoints without restrictions to organizer.
@@ -108,6 +110,8 @@
    {:pattern #".*/auth/initsession"
     :handler any-access}
    {:pattern #".*/auth/user"
+    :handler any-access}
+   {:pattern #".*/auth/callback"
     :handler any-access}
    {:pattern #".*/api/exam-session"
     :handler any-access
@@ -135,8 +139,8 @@
     :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
    {:pattern #".*/api/registration.*"
     :handler participant-authenticated}
-    {:pattern #".*/api/exam-date/.*"
-     :handler oph-admin-access}
+   {:pattern #".*/api/exam-date/.*"
+    :handler oph-admin-access}
    {:pattern #".*/payment/formdata"
     :handler participant-authenticated}
    {:pattern #".*/payment/success"

@@ -46,7 +46,7 @@
                                       :request-method :get))]
     (testing "unauthenticated user should be redirected with http code 303"
       (is (= (get-in response [:response :status]) 303))
-      (is (= ((get-in response [:response :headers]) "Location") "https://localhost:8080/cas-oppija/login?service=http://yki.localhost:8080/yki/ilmoittautuminen/tutkintotilaisuus/$1?lang=$2")))))
+      (is (= ((get-in response [:response :headers]) "Location") "https://localhost:8080/cas-oppija/login?service=http://yki.localhost:8080/yki/auth/callback?examSessionId=")))))
 
 (def user-1 {"last_name" "Aakula"
              "nick_name" "Emma"
@@ -54,7 +54,7 @@
              "post_office" ""
              "oid" "1.2.246.562.24.81121191558"
              "external-user-id" "1.2.246.562.24.81121191558"
-             "nationalities" ["246"],
+             "nationalities" ["246"]
              "street_address" ""
              "first_name" "Emma"
              "zip" ""})
@@ -65,7 +65,7 @@
              "post_office" ""
              "oid" nil
              "external-user-id" "260553-959D"
-             "nationalities" [],
+             "nationalities" []
              "street_address" "Ateläniitynpolku 29 G"
              "first_name" "Carl-Erik"
              "zip" ""})

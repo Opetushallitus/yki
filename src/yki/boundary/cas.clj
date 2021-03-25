@@ -2,11 +2,14 @@
   (:require
    [integrant.core :as ig]
    [yki.util.http-util :as http-util]
+   [org.httpkit.client :as http]
    [cheshire.core :as json]
+   [clojure.tools.logging :as log]
    [clj-cas.cas :as cas]))
 
 (defprotocol CasAccess
   (validate-ticket [this ticket])
+  (validate-oppija-ticket [this ticket callback-url])
   (get-cas-session [this cas-params])
   (cas-authenticated-post [this url body])
   (cas-authenticated-get [this url]))
@@ -33,6 +36,16 @@
                                                   (create-params cas-session-id body)))]
         new-resp))
     resp))
+(defn- cas-oppija-ticket-validation  [ticket validate-service-url callback-url url-helper]
+  ; TODO: Temporary logs, remove
+  (log/info "Cas oppija validate ticket: " ticket)
+  (log/info "Cas oppija servie validation url: " validate-service-url)
+  (log/info "Cas oppija ticket callback url: " callback-url)
+  (let [{:keys [status body]} @(http/get validate-service-url {:query-params {:ticket ticket
+                                                                              :service callback-url}
+                                                               :headers {"Caller-Id" "1.2.246.562.10.00000000001.yki"}})]
+    (when (= status 200)
+      body)))
 
 (defrecord CasClient [url-helper cas-params]
   CasAccess
@@ -40,6 +53,13 @@
     (let [cas-client (cas/cas-client (url-helper :cas-client) "1.2.246.562.10.00000000001.yki")
           username   (.run (.validateServiceTicket cas-client (url-helper :yki.cas.login-success) ticket))]
       username))
+
+  (validate-oppija-ticket [_ ticket callback-url]
+
+    (let [validate-service-url  (url-helper :cas-oppija.validate-service)
+          cas-validate-response (cas-oppija-ticket-validation ticket validate-service-url callback-url url-helper)]
+      (log/info "Cas validation response " cas-validate-response)
+      cas-validate-response))
 
   (cas-authenticated-get [_ url]
     (cas-http (cas/cas-client (url-helper :cas-client) "1.2.246.562.10.00000000001.yki") cas-params :get url))
