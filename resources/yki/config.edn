@@ -107,6 +107,8 @@
 
   :yki.handler/exam-date {:db #ig/ref :duct.database/sql}
 
+  :yki.handler/contact {:db #ig/ref :duct.database/sql}
+
   :yki.handler/registration {:db #ig/ref :duct.database/sql
                              :auth #ig/ref :yki.middleware.auth/with-authentication
                              :url-helper #ig/ref :yki.util/url-helper
@@ -146,7 +148,12 @@
                           :exam-session-handler #ig/ref :yki.handler/exam-session
                           :exam-date-handler #ig/ref :yki.handler/exam-date
                           :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                          :auth #ig/ref :yki.middleware.auth/with-authentication}}
+                          :auth #ig/ref :yki.middleware.auth/with-authentication
+                          :contact-handler #ig/ref :yki.handler/contact}}
+
+ :duct.profile/dev   #duct/include "dev"
+ :duct.profile/local #duct/include "local"
+ :duct.profile/prod  {}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"

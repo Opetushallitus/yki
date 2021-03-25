@@ -213,6 +213,18 @@ SELECT
     WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
   o.oid as organizer_oid,
  (
+  SELECT array_to_json(array_agg(contact_row))
+  FROM (
+    SELECT
+        name,
+        email,
+        phone_number
+        FROM contact co
+        WHERE co.id = (SELECT esc.contact_id FROM exam_session_contact esc WHERE esc.exam_session_id = e.id AND deleted_at IS NULL LIMIT 1)
+        AND deleted_at IS NULL
+    ) contact_row
+ ) as contact,
+ (
   SELECT array_to_json(array_agg(loc))
   FROM (
     SELECT
@@ -268,6 +280,18 @@ SELECT
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
   o.oid as organizer_oid,
+(
+  SELECT array_to_json(array_agg(contact_row))
+  FROM (
+    SELECT
+        name,
+        email,
+        phone_number
+        FROM contact co
+        WHERE co.id = (SELECT esc.contact_id FROM exam_session_contact esc WHERE esc.exam_session_id = e.id AND deleted_at IS NULL LIMIT 1)
+        AND deleted_at IS NULL
+    ) contact_row
+ ) as contact,
 (SELECT array_to_json(array_agg(loc))
   FROM (
     SELECT
@@ -1080,3 +1104,75 @@ UPDATE exam_date
 UPDATE exam_date
    SET post_admission_end_date = NULL
  WHERE id = :exam_date_id;
+
+--name: select-contacts-by-oid
+SELECT
+  con.id,
+  con.organizer_id,
+  con.name,
+  con.email,
+  con.phone_number,
+  con.created,
+  con.modified,
+  :oid as organizer_oid
+FROM contact con
+WHERE con.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
+  AND con.deleted_at IS NULL;
+
+--name: insert-contact<!
+INSERT INTO contact (
+  organizer_id,
+  name,
+  email,
+  phone_number
+) VALUES (
+    (SELECT id FROM organizer
+      WHERE oid = :oid AND deleted_at IS NULL),
+    :name,
+    :email,
+    :phone_number
+);
+
+--name: insert-exam-session-contact<!
+INSERT INTO exam_session_contact (
+  exam_session_id,
+  contact_id
+) VALUES (
+  :exam_session_id,
+  :contact_id
+);
+
+-- name: select-exam-session-contact-id
+SELECT esc.id
+  FROM exam_session_contact esc
+WHERE esc.exam_session_id = :exam_session_id
+  AND esc.contact_id = :contact_id
+  AND deleted_at IS NULL;
+
+--name: select-contact-id-with-details
+SELECT
+  con.id
+FROM contact con
+WHERE con.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
+  AND con.name = :name
+  AND con.email = :email
+  AND con.phone_number = :phone_number
+  AND con.deleted_at IS NULL;
+
+--name: select-existing-session-contact
+SELECT esc.id
+  FROM exam_session_contact esc
+WHERE esc.exam_session_id = :exam_session_id
+  AND esc.contact_id = (SELECT
+      con.id
+    FROM contact con
+    WHERE con.name = :name
+      AND con.email = :email
+      AND con.phone_number = :phone_number
+      AND con.deleted_at IS NULL)
+  AND deleted_at IS NULL;
+
+--name: delete-exam-session-contact-by-session-id!
+UPDATE exam_session_contact
+  SET deleted_at = current_timestamp
+  WHERE exam_session_id = :exam_session_id AND deleted_at IS NULL;
