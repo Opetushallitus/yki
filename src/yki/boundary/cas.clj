@@ -37,10 +37,7 @@
         new-resp))
     resp))
 (defn- cas-oppija-ticket-validation  [ticket validate-service-url callback-url url-helper]
-  ; TODO: Temporary logs, remove
-  (log/info "Cas oppija validate ticket: " ticket)
-  (log/info "Cas oppija servie validation url: " validate-service-url)
-  (log/info "Cas oppija ticket callback url: " callback-url)
+  (log/info "Cas oppija validating ticket")
   (let [{:keys [status body]} @(http/get validate-service-url {:query-params {:ticket ticket
                                                                               :service callback-url}
                                                                :headers {"Caller-Id" "1.2.246.562.10.00000000001.yki"}})]
@@ -58,7 +55,6 @@
 
     (let [validate-service-url  (url-helper :cas-oppija.validate-service)
           cas-validate-response (cas-oppija-ticket-validation ticket validate-service-url callback-url url-helper)]
-      (log/info "Cas validation response " cas-validate-response)
       cas-validate-response))
 
   (cas-authenticated-get [_ url]

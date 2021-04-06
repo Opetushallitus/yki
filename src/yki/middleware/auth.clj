@@ -91,7 +91,6 @@
   (log/info "Redirecting to cas oppija")
   (let [exam-session-id ((:query-params request) "examSessionId")
         lang (or ((:query-params request) "lang") "fi")]
-
     (assoc
      (see-other (url-helper :cas-oppija.login exam-session-id))
      :session

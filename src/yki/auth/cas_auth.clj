@@ -8,7 +8,7 @@
             [yki.boundary.cas-ticket-db :as cas-ticket-db]
             [clojure.tools.logging :refer [info error]]
             [yki.boundary.permissions :as permissions]
-            [ring.util.http-response :refer [ok found]]
+            [ring.util.http-response :refer [ok found see-other]]
             [clojure.tools.logging :as log]
             [clojure.string :as str]
             [clojure.data.xml :as xml])
@@ -108,9 +108,7 @@
                  [k v] m]
              [k (clojure.string/join " " v)])))
 
-;; TODO: Remove extra logs
 (defn process-cas-attributes [response]
-  (log/info "Process cas attributes")
   (let [xml-response  (-> response
                           (xml/parse-str)
                           (xml->map))
@@ -128,7 +126,6 @@
     (assoc (process-attributes attributes) :success? success :failureMessage failure)))
 
 (defn oppija-login-response [exam-session-id session cas-attributes url-helper onr-client]
-  (log/info "Create oppija login response")
   (let [{:keys [VakinainenKotimainenLahiosoitePostitoimipaikkaS
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
@@ -149,7 +146,7 @@
         redirect-uri  (if (:success-redirect session)
                         (str (:success-redirect session) "?lang=" lang)
                         (url-helper :exam-session.redirect exam-session-id lang))]
-    (log/info "Redirecting user to url: " redirect-uri)
+    (info "Redirecting oppija to url: " redirect-uri)
     (if (and sn firstName nationalIdentificationNumber)
       (assoc
        (found redirect-uri)
@@ -167,23 +164,20 @@
           :nationalities (mapv #(get % "kansalaisuusKoodi") kansalaisuus)
           :external-user-id (or oidHenkilo nationalIdentificationNumber)}
          address)
-        :auth-method "CAS"
+        :auth-method "SUOMIFI"
         :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))
 
 (defn oppija-login [exam-session-id ticket request cas-client onr-client url-helper]
   (try
-    (log/info "Begin oppija ticket handling: " ticket)
+    (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
       (let [callback-uri   (url-helper :cas-oppija.login-success exam-session-id)
             cas-response   (cas/validate-oppija-ticket (cas-client "/") ticket callback-uri)
             cas-attributes (process-cas-attributes cas-response)
-            session        (:session request)
-            ;; TODO: Temporary, remove
-            res (when (:success?  cas-attributes) (oppija-login-response exam-session-id session cas-attributes url-helper onr-client))]
-        (log/info "Attributes from cas response " cas-attributes)
+            session        (:session request)]
         (if (:success?  cas-attributes)
-          res
+          (oppija-login-response exam-session-id session cas-attributes url-helper onr-client)
           (validation-failed-response (:failureMessage cas-attributes))))
       unauthorized)
     (catch Exception e
@@ -203,3 +197,14 @@
   [session url-helper]
   (info "user" (-> session :identity :username) "logged out")
   (assoc (found (url-helper :cas.logout)) :session nil))
+
+(defn cas-oppija-logout
+  [url-helper]
+  (let [redirect-url (url-helper :cas-oppija.logout-redirect)]
+    (info "Redirecting oppija to" redirect-url)
+    (assoc (found redirect-url) :session nil)))
+
+(defn oppija-logout [url-helper lang]
+  (let [redirect-url (url-helper :cas-oppija.logout lang)]
+    (info "Sending cas oppija logout to" redirect-url)
+    (assoc (see-other redirect-url) :session nil)))

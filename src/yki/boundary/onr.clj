@@ -19,8 +19,6 @@
         ((json/read-value body) "oidHenkilo")
         (log/error "ONR get-or-create-person request:" (str person " status: " status " : " body)))))
   (get-person-by-ssn [_ ssn]
-    ;; TODO: Remove log
-    (log/info "Get person with ssn:" ssn)
     (let [url (url-helper :onr-service.person-by-ssn ssn)
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
