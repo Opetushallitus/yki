@@ -702,21 +702,42 @@ INSERT INTO participant_sync_status(
                     WHERE exam_session_id = :exam_session_id)
 ON CONFLICT DO NOTHING;
 
+--name: insert-relocated-participants-sync-status!
+INSERT INTO participant_sync_status(
+  relocated_at,
+  exam_session_id
+) VALUES (
+  current_timestamp,
+  (SELECT :exam_session_id
+    WHERE NOT EXISTS (SELECT exam_session_id
+                    FROM participant_sync_status
+                    WHERE exam_session_id = :exam_session_id
+                     AND relocated_at IS NOT NULL
+                     AND success_at IS NULL)))
+ON CONFLICT DO NOTHING;
+
 -- Syncronization is done during registration period and
 -- failed sync attempts will be retried for given period
 -- after registration has ended.
+-- Exam sessions where participants have been relocated to another
+-- session after the registration has ended, are synced and retried
+-- for one day after the relocation.
 
 -- name: select-exam-sessions-to-be-synced
 SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
-WHERE ((ed.registration_end_date + interval '1 day') >= current_date
-  OR (ed.post_admission_end_date + interval '1 day') >= current_date
-  OR ((ed.registration_end_date + :duration::interval) >= current_date
-      AND pss.failed_at IS NOT NULL
-      AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
-AND (ed.registration_start_date <= current_date OR es.post_admission_start_date <= current_date)
+WHERE ((((ed.registration_end_date + interval '1 day') >= current_date
+    OR (ed.post_admission_end_date + interval '1 day') >= current_date
+    OR ((ed.registration_end_date + :duration::interval) >= current_date
+        AND pss.failed_at IS NOT NULL
+        AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
+    AND (ed.registration_start_date <= current_date OR es.post_admission_start_date <= current_date))
+  OR (pss.relocated_at IS NOT NULL
+    AND pss.success_at IS NULL
+    AND ed.registration_start_date < current_date
+    AND (pss.relocated_at + interval '1 day') > current_date))
 AND (SELECT COUNT(1)
      FROM registration re
      WHERE re.exam_session_id = es.id AND re.state = 'COMPLETED') > 0;
