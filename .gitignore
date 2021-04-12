@@ -34,6 +34,7 @@ lsp/
 # Visual Studio Code extensions
 .clj-kondo/
 .lsp/
+.calva/
 
 # Allow all and any scratch files to exist in project root
 scratch.*
