@@ -106,9 +106,6 @@
                               ::opt-un [::organizer_id
                                         ::organizer_oid]))
 
-(s/def ::contacts (s/coll-of ::contact-type))
-(s/def ::contacts-response (s/keys :req-un [::contacts]))
-
 ;; exam-session
 (s/def ::organizer_oid              ::oid)
 (s/def ::office_oid                 (s/nilable ::oid))
