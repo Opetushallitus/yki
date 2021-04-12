@@ -31,6 +31,8 @@ lsp/
 # Visual Studio Code plugins
 .calva
 .lsp
+# Clojure linter
+.clj-kondo/
 
 # Visual Studio Code extensions
 .clj-kondo/

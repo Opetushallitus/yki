@@ -23,8 +23,8 @@
                           :type "DELETE"
                           :created (System/currentTimeMillis)})))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler exam-date-handler data-sync-q access-log]}]
-  {:pre [(some? db) (some? url-helper) (some? auth) (some? file-handler) (some? exam-session-handler) (some? exam-date-handler) (some? data-sync-q) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler exam-date-handler contact-handler data-sync-q access-log]}]
+  {:pre [(some? db) (some? url-helper) (some? auth) (some? file-handler) (some? exam-session-handler) (some? exam-date-handler) (some? contact-handler) (some? data-sync-q) (some? access-log)]}
   (api
    (context routing/organizer-api-root []
      :middleware [auth access-log]
@@ -82,5 +82,6 @@
        (context routing/exam-session-uri []
          (exam-session-handler oid))
        (context routing/exam-date-uri []
-         (exam-date-handler oid))))))
-
+         (exam-date-handler oid))
+       (context routing/organizer-contact-uri []
+         (contact-handler oid))))))

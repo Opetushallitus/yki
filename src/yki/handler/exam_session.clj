@@ -39,6 +39,8 @@
       (POST "/" request
         :body [exam-session ::ys/exam-session]
         :return ::ys/id-response
+        (log/info "Create exam sessio")
+        (log/info "" exam-session)
         (if-let [exam-session-id (exam-session-db/create-exam-session! db oid exam-session
                                                                        (send-to-queue
                                                                         data-sync-q

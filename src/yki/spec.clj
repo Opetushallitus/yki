@@ -99,6 +99,16 @@
                                                 ::lang]))
 (s/def ::location (s/coll-of ::exam-session-location))
 
+;; organizer-contact
+(s/def ::organizer_id ::id)
+(s/def ::contact-type (s/keys :req-un [::name
+                                       (or ::email ::phone_number)]
+                              ::opt-un [::organizer_id
+                                        ::organizer_oid]))
+
+(s/def ::contacts (s/coll-of ::contact-type))
+(s/def ::contacts-response (s/keys :req-un [::contacts]))
+
 ;; exam-session
 (s/def ::organizer_oid              ::oid)
 (s/def ::office_oid                 (s/nilable ::oid))
@@ -117,7 +127,8 @@
 (s/def ::post_admission_start_date (s/nilable ::date-type))
 (s/def ::post_admission_end_date (s/nilable ::date-type))
 (s/def ::post_admission_active     boolean?)
-
+; exam-session-contact
+(s/def ::contact                    (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
                                        ::language_code
                                        ::level_code
@@ -127,6 +138,7 @@
                               :opt-un [::id
                                        ::office_oid
                                        ::exam_fee
+                                       ::contact
                                        ::open
                                        ::queue
                                        ::queue_full
