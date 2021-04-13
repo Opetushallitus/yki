@@ -21,6 +21,7 @@
     "post_admission_quota": 20,
     "post_admission_enabled": true,
     "post_admission_activated_at": null,
+    "contact": null,
     "location": [
       {
         "lang": "fi",
