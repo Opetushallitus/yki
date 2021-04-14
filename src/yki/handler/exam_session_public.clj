@@ -22,9 +22,14 @@
       (let [exam-sessions (exam-session-db/get-exam-sessions db nil from)
             with-fee (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
         (ok {:exam_sessions with-fee})))
+
     (GET "/pricing" []
-      :return ::ys/price-type
-      (ok (:amount payment-config)))
+      :return ::ys/pricing-type
+      (let [prices     (:amount payment-config)
+            exam       (select-keys prices [:PERUS :KESKI :YLIN])
+            evaluation (select-keys prices [:READING :LISTENING :WRITING :SPEAKING])]
+        (ok {:exam-prices exam :evaluation-prices evaluation})))
+
     (context "/:id" []
       (GET "/" []
         :return ::ys/exam-session
@@ -32,6 +37,7 @@
         (if-let [exam-session (exam-session-db/get-exam-session-by-id db id)]
           (ok (assoc exam-session :exam_fee (get-exam-fee payment-config exam-session)))
           (not-found "Exam session not found")))
+
       (POST "/queue" []
         :path-params [id :- ::ys/id]
         :query-params [lang :- ::ys/language-code]
