@@ -122,6 +122,9 @@
    {:pattern #".*/api/exam-session"
     :handler any-access
     :request-method :get}
+   {:pattern #".*/api/evaluation-period/.*"
+    :handler any-access
+    :request-method :get}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
    {:pattern #".*/api/virkailija/organizer/.*/exam-date.*"

@@ -232,6 +232,10 @@
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_start_date, post_admission_end_date, post_admission_enabled)
                                     VALUES ('2041-07-01', '2041-01-01', '2041-01-30', '2041-03-01', '2041-03-30', true)"))
 
+(defn insert-evaluation-period []
+  (jdbc/execute! @embedded-db/conn "INSERT INTO evaluation_period(exam_date, start_date, end_date, language_code, level_code)
+                                    VALUES ('2041-06-01', '2041-08-01', '2041-08-15', 'fi', 'PERUS')"))
+
 (defn insert-custom-exam-date [exam-date reg-start reg-end]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" exam-date "', '" reg-start "', '" reg-end "')")))
 

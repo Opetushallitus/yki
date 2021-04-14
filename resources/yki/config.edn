@@ -28,7 +28,8 @@
             #ig/ref :yki.handler/exam-session-public
             #ig/ref :yki.handler/localisation
             #ig/ref :yki.handler/registration
-            #ig/ref :yki.handler/organizer]
+            #ig/ref :yki.handler/organizer
+            #ig/ref :yki.handler/evaluation-period]
 
   :yki/migrations {}
 
@@ -146,7 +147,9 @@
                           :exam-session-handler #ig/ref :yki.handler/exam-session
                           :exam-date-handler #ig/ref :yki.handler/exam-date
                           :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                          :auth #ig/ref :yki.middleware.auth/with-authentication}}
+                          :auth #ig/ref :yki.middleware.auth/with-authentication}
+
+  :yki.handler/evaluation-period {:db #ig/ref :duct.database/sql}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"

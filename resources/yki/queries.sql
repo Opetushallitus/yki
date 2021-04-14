@@ -1205,3 +1205,16 @@ WHERE esc.exam_session_id = :exam_session_id
 UPDATE exam_session_contact
   SET deleted_at = current_timestamp
   WHERE exam_session_id = :exam_session_id AND deleted_at IS NULL;
+
+--name: select-upcoming-evalution-periods
+SELECT
+  ed.exam_date,
+  ep.language_code,
+  ep.level_code,
+  ep.evaluation_start_date,
+  ep.evaluation_end_date,
+  (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
+FROM evaluation_period ep
+INNER JOIN exam_date ed ON ep.exam_date_id = ed.id
+WHERE ep.deleted_at IS NULL
+  AND  ((ep.evaluation_end_date + time '23:59' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'));

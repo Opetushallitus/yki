@@ -356,3 +356,16 @@
 
 (s/def ::pricing-type (s/keys :req-un [::exam-prices
                                        ::evaluation-prices]))
+;; Re-evaluation period
+(s/def ::evaluation_start_date   ::date-type)
+(s/def ::evaluation_end_date     ::date-type)
+
+(s/def ::evaluation-period (s/keys :req-un [::exam_date
+                                            ::evaluation_start_date
+                                            ::evaluation_end_date
+                                            ::level_code
+                                            ::language_code]
+                                   ::opt-un [::open]))
+
+(s/def ::evaluation_periods (s/coll-of ::evaluation-period))
+(s/def ::evaluation-periods-response (s/keys :req-un [::evaluation_periods]))
