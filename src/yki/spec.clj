@@ -336,3 +336,20 @@
 
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
+
+
+(s/def ::PERUS ::non-blank-string)
+(s/def ::KESKI ::non-blank-string)
+(s/def ::YLIN ::non-blank-string)
+(s/def ::READING ::non-blank-string)
+(s/def ::LISTENING ::non-blank-string)
+(s/def ::WRITING ::non-blank-string)
+(s/def ::SPEAKING ::non-blank-string)
+
+(s/def ::price-type (s/keys :req-un [::PERUS
+                                     ::KESKI
+                                     ::YLIN
+                                     ::READING
+                                     ::LISTENING
+                                     ::WRITING
+                                     ::SPEAKING]))

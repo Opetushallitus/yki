@@ -22,6 +22,9 @@
       (let [exam-sessions (exam-session-db/get-exam-sessions db nil from)
             with-fee (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
         (ok {:exam_sessions with-fee})))
+    (GET "/pricing" []
+      :return ::ys/price-type
+      (ok (:amount payment-config)))
     (context "/:id" []
       (GET "/" []
         :return ::ys/exam-session
