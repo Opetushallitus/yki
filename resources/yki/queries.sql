@@ -1206,7 +1206,7 @@ UPDATE exam_session_contact
   SET deleted_at = current_timestamp
   WHERE exam_session_id = :exam_session_id AND deleted_at IS NULL;
 
---name: select-upcoming-evalution-periods
+--name: select-evaluation-by-id
 SELECT
   ed.exam_date,
   ep.language_code,
@@ -1214,7 +1214,48 @@ SELECT
   ep.evaluation_start_date,
   ep.evaluation_end_date,
   (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
-FROM evaluation_period ep
+FROM evaluation ep
+INNER JOIN exam_date ed ON ep.exam_date_id = ed.id
+WHERE ep.deleted_at IS NULL
+  AND  ep.id = :evaluation_id;
+
+--name: select-upcoming-evalution-periods
+SELECT
+  ep.id,
+  ed.exam_date,
+  ep.language_code,
+  ep.level_code,
+  ep.evaluation_start_date,
+  ep.evaluation_end_date,
+  (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
+FROM evaluation ep
 INNER JOIN exam_date ed ON ep.exam_date_id = ed.id
 WHERE ep.deleted_at IS NULL
   AND  ((ep.evaluation_end_date + time '23:59' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'));
+
+--name: insert-evaluation-order<!
+INSERT INTO evaluation_order (
+  evaluation_id,
+  first_names,
+  last_name,
+  email,
+  phone_number
+) VALUES (
+  :evaluation_id,
+  :first_names,
+  :last_name,
+  :email,
+  :phone_number
+);
+
+--name: insert-evaluation-order-subtest!
+INSERT INTO evaluation_order_subtest (
+  evaluation_order_id,
+  subtest
+) VALUES (
+  :evaluation_order_id,
+  :subtest
+);
+
+--name: select-subtests
+SELECT code from subtest;

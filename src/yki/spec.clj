@@ -360,7 +360,8 @@
 (s/def ::evaluation_start_date   ::date-type)
 (s/def ::evaluation_end_date     ::date-type)
 
-(s/def ::evaluation-period (s/keys :req-un [::exam_date
+(s/def ::evaluation-period (s/keys :req-un [::id
+                                            ::exam_date
                                             ::evaluation_start_date
                                             ::evaluation_end_date
                                             ::level_code
@@ -369,3 +370,14 @@
 
 (s/def ::evaluation_periods (s/coll-of ::evaluation-period))
 (s/def ::evaluation-periods-response (s/keys :req-un [::evaluation_periods]))
+
+(s/def ::first_names ::non-blank-string)
+(s/def ::subtest-kind #{"READING" "LISTENING" "WRITING" "SPEAKING"})
+(s/def ::subtests (s/coll-of ::subtest-kind))
+
+(s/def ::evaluation-order (s/keys
+                           :req-un [::first_names
+                                    ::last_name
+                                    ::email
+                                    ::phone_number
+                                    ::subtests]))

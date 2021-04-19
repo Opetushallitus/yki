@@ -34,7 +34,7 @@
 
 (def exam-session-public-api-root (str api-root "/exam-session"))
 
-(def evaluation-period-root (str api-root "/evaluation-period"))
+(def evaluation-root (str api-root "/evaluation"))
 
 (def virkailija-api-root (str api-root "/virkailija"))
 

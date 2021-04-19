@@ -122,7 +122,7 @@
    {:pattern #".*/api/exam-session"
     :handler any-access
     :request-method :get}
-   {:pattern #".*/api/evaluation-period/.*"
+   {:pattern #".*/api/evaluation.*"
     :handler any-access
     :request-method :get}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"

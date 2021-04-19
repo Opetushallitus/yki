@@ -93,6 +93,13 @@ Rest of the environment variables are updated as follows:
 * When creating a new exam session, set date_id is referenced and returned session id is set to variable {{session_id}}. Other 'Virkailija: Exam session management' operations are referencing to this session id.
 * When 'oppija' registration is initialized, set session_id is referenced and returned registration id is set to variable {{registration_id}}
 
+### **External development credentials**
+
+[Suomi.fi](https://palveluhallinta.suomi.fi/fi/tuki/artikkelit/5a82ef7ab03cdc41de664a2b)
+
+[Paytrail](https://docs.paytrail.com/credentials/)
+
+
 ### **Testing**
 
 Testing is fastest through the REPL, as you avoid environment startup
@@ -120,7 +127,6 @@ Test coverage reporting.
 ```sh
 lein cloverage
 ```
-
 ### **Formatting**
 
 ```sh
@@ -161,6 +167,26 @@ lein release :major, :minor or :patch
 | ONR | TBD |
 
 ## Architecture
+
+### **Concepts**
+
+#### `payment`
+
+Handles payments related to the exam session registrations.
+
+#### `evaluation_period`
+
+Indicates the timeframe in what participant can request a re-evaluation for their test.
+Evaluation period consists of date of the test (exam_date), start and end dates, language and the language level.
+OPH organizers configure these timeframes based on when the tests have been first evaluated and results sent out.
+
+#### `evaluation_order`
+
+Handles orders and payments related to re-evaluation (evaluation in system).
+Flows similarly to 'payment'.
+Price is formed of four different subtests and the participant can select 1-4 to each order.
+Subtests are linked to the order through evaluation_order_subtest relation.
+Order's payment is stored in evaluation_payment relation.
 
 ### **Job Queues**
 
