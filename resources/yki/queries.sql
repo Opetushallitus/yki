@@ -1259,3 +1259,78 @@ INSERT INTO evaluation_order_subtest (
 
 --name: select-subtests
 SELECT code from subtest;
+
+-- name: select-next-evaluation-order-number-suffix
+SELECT nextval('payment_order_number_seq');
+
+-- name: insert-initial-evaluation-payment<!
+INSERT INTO evaluation_payment(
+  state,
+  evaluation_order_id,
+  amount,
+  lang,
+  order_number
+) VALUES (
+  'UNPAID',
+  :evaluation_order_id,
+  :amount,
+  :lang,
+  :order_number
+);
+
+--name: select-evaluation-order-by-id
+SELECT
+  eo.id,
+  ev.language_code,
+  ev.level_code,
+  ed.exam_date,
+  ep.order_number,
+  ep.amount,
+  ep.lang,
+  ep.state
+FROM evaluation_order eo
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
+INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
+WHERE eo.id = :evaluation_order_id;
+
+-- name: select-evaluation-payment-by-order-number
+SELECT
+  ep.state,
+  ep.evaluation_order_id,
+  ep.amount,
+  ep.lang,
+  ep.reference_number,
+  ep.order_number,
+  ep.external_payment_id,
+  ep.payment_method,
+  ep.payed_at
+FROM evaluation_payment ep
+INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
+WHERE order_number = :order_number;
+
+--name: select-finished-evaluation-order-by-id
+SELECT
+  ev.language_code,
+  ev.level_code,
+  ed.exam_date,
+  ep.amount,
+  ep.lang
+FROM evaluation_order eo
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
+INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
+WHERE eo.id = :evaluation_order_id;
+
+
+-- name: update-evaluation-payment!
+ UPDATE evaluation_payment
+ SET
+    state = :state::payment_state,
+    external_payment_id = :external_payment_id,
+    payment_method = :payment_method,
+    reference_number = :reference_number,
+    payed_at = :payed_at,
+    modified = current_timestamp
+WHERE
+  order_number = :order_number;

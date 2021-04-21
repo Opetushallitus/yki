@@ -36,6 +36,8 @@
 
 (def evaluation-root (str api-root "/evaluation"))
 
+(def evaluation-payment-root (str app-root "/evaluation-payment"))
+
 (def virkailija-api-root (str api-root "/virkailija"))
 
 (def organizer-api-root (str virkailija-api-root "/organizer"))
