@@ -29,9 +29,10 @@
     (GET "/" []
       :return ::ys/evaluation-periods-response
       (ok {:evaluation_periods (evaluation-db/get-upcoming-evaluation-periods db)}))
+    ;; TODO Validate
     (GET "/order/:id" []
       :path-params [id :- ::ys/id]
-      (ok (evaluation-db/get-finished-evaluation-order-by-id db id)))
+      (ok (evaluation-db/get-evaluation-order-by-id db id)))
     (context "/:id" []
       (GET "/" []
         :path-params [id :- ::ys/id]

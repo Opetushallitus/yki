@@ -33,13 +33,11 @@
 (extend-protocol Evaluations
   duct.database.sql.Boundary
   (get-upcoming-evaluation-periods [{:keys [spec]}]
-    (q/select-upcoming-evalution-periods spec))
+    (q/select-upcoming-evaluation-periods spec))
   (get-evaluation-period-by-id [{:keys [spec]} id]
     (first (q/select-evaluation-by-id spec {:evaluation_id id})))
   (get-evaluation-order-by-id [{:keys [spec]} id]
     (first (q/select-evaluation-order-by-id spec {:evaluation_order_id id})))
-  (get-finished-evaluation-order-by-id [{:keys [spec]} id]
-    (first (q/select-finished-evaluation-order-by-id spec {:evaluation_order_id id})))
   (get-subtests [{:keys [spec]}]
     (q/select-subtests spec))
   (get-payment-by-order-number

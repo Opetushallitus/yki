@@ -1208,6 +1208,7 @@ UPDATE exam_session_contact
 
 --name: select-evaluation-by-id
 SELECT
+  ep.id,
   ed.exam_date,
   ep.language_code,
   ep.level_code,
@@ -1219,7 +1220,7 @@ INNER JOIN exam_date ed ON ep.exam_date_id = ed.id
 WHERE ep.deleted_at IS NULL
   AND  ep.id = :evaluation_id;
 
---name: select-upcoming-evalution-periods
+--name: select-upcoming-evaluation-periods
 SELECT
   ep.id,
   ed.exam_date,
@@ -1284,7 +1285,6 @@ SELECT
   ev.language_code,
   ev.level_code,
   ed.exam_date,
-  ep.order_number,
   ep.amount,
   ep.lang,
   ep.state
@@ -1309,18 +1309,6 @@ FROM evaluation_payment ep
 INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
 WHERE order_number = :order_number;
 
---name: select-finished-evaluation-order-by-id
-SELECT
-  ev.language_code,
-  ev.level_code,
-  ed.exam_date,
-  ep.amount,
-  ep.lang
-FROM evaluation_order eo
-INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
-INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
-INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
-WHERE eo.id = :evaluation_order_id;
 
 
 -- name: update-evaluation-payment!
