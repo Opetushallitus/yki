@@ -158,9 +158,6 @@
                           :auth #ig/ref :yki.middleware.auth/with-authentication}
 
   :yki.handler/evaluation {:db #ig/ref :duct.database/sql
-                           :auth #ig/ref :yki.middleware.auth/with-authentication
-                           :access-log #ig/ref :yki.middleware.access-log/with-logging
-                           :url-helper #ig/ref :yki.util/url-helper
                            :payment-config {}}}
 
  :duct.profile/dev   #duct/include "dev"

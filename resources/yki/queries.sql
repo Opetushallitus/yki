@@ -1287,7 +1287,15 @@ SELECT
   ed.exam_date,
   ep.amount,
   ep.lang,
-  ep.state
+  ep.state,
+  (
+    SELECT array_to_json(array_agg(subtest))
+    FROM (
+      SELECT subtest
+      FROM evaluation_order_subtest
+      WHERE evaluation_order_id= eo.id
+    ) subtest
+  ) AS subtests
 FROM evaluation_order eo
 INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
 INNER JOIN exam_date ed ON ev.exam_date_id = ed.id

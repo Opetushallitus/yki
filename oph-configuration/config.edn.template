@@ -51,8 +51,6 @@
                                        :merchant_secret "{{yki_evaluation_merchant_secret}}"}}
 
 :yki.handler/evaluation { :db #ig/ref :duct.database/sql
-                          :auth #ig/ref :yki.middleware.auth/with-authentication
-                          :access-log #ig/ref :yki.middleware.access-log/with-logging
                           :payment-config {:amount {:READING "{{yki_exam_session_fee_reading}}"
                                                           :LISTENING "{{yki_exam_session_fee_listening}}"
                                                           :WRITING "{{yki_exam_session_fee_writing}}"

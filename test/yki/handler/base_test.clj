@@ -20,6 +20,7 @@
             [yki.job.job-queue]
             [yki.middleware.no-auth]
             [yki.handler.registration]
+            [yki.handler.evaluation]
             [yki.util.url-helper]
             [yki.util.common :as c]
             [clj-time.format :as f]
@@ -77,14 +78,20 @@
 
 (def date-formatter (f/formatter c/date-format))
 
+(defn days-ago [days]
+  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days days))))
+
+(defn days-from-now [days]
+  (f/unparse (f/formatter c/date-format) (t/plus (t/now) (t/days days))))
+
 (defn yesterday []
-  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 1))))
+  (days-ago 1))
 
 (defn two-weeks-ago []
-  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 14))))
+  (days-ago 14))
 
 (defn two-weeks-from-now []
-  (f/unparse (f/formatter c/date-format) (t/plus (t/now) (t/days 14))))
+  (days-from-now 14))
 
 (defn change-entry
   [json-string key value]
@@ -232,10 +239,6 @@
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_start_date, post_admission_end_date, post_admission_enabled)
                                     VALUES ('2041-07-01', '2041-01-01', '2041-01-30', '2041-03-01', '2041-03-30', true)"))
 
-(defn insert-evaluation-period []
-  (jdbc/execute! @embedded-db/conn "INSERT INTO evaluation_period(exam_date, start_date, end_date, language_code, level_code)
-                                    VALUES ('2041-06-01', '2041-08-01', '2041-08-15', 'fi', 'PERUS')"))
-
 (defn insert-custom-exam-date [exam-date reg-start reg-end]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" exam-date "', '" reg-start "', '" reg-end "')")))
 
@@ -254,6 +257,9 @@
 
 (defn select-exam-date-languages-by-date-id [exam-date-id]
   (str "(SELECT language_code, level_code from exam_date_language WHERE exam_date_id='" exam-date-id "' AND deleted_at IS NULL)"))
+
+(defn select-evaluation-by-date [exam-date]
+  (str "(SELECT * from evaluation WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")"))
 
 (defn insert-exam-session
   [exam-date-id oid count]
@@ -323,6 +329,21 @@
         'Other info',
         '" lang "',
         (SELECT id FROM exam_session where exam_date_id =(SELECT id from exam_date WHERE exam_date='" exam-date "')))")))
+
+(defn insert-evaluation-data []
+  (jdbc/execute! @embedded-db/conn
+                 "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2019-05-02', '2019-01-01', '2019-03-01')")
+  (jdbc/execute! @embedded-db/conn
+                 (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" (two-weeks-ago) "', '" (days-ago 30) "', '" (days-ago 25) "')"))
+  (let [exam-date-id (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
+                                    VALUES (" (exam-date-id "2039-05-02") ", '2041-08-01', '2041-08-15', 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
+                                    VALUES (" (exam-date-id "2039-05-10") ", '2041-08-01', '2041-08-15', 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
+                                    VALUES (" (exam-date-id (two-weeks-ago)) ", '" (yesterday) "', '" (two-weeks-from-now) "', 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
+                                    VALUES (" (exam-date-id "2019-05-02") ", '2019-08-01', '2019-08-15', 'fin', 'PERUS')"))))
 
 (defn insert-base-data []
   (insert-organizer "'1.2.3.4'")
