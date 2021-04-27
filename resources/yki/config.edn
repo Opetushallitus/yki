@@ -125,9 +125,7 @@
                         :url-helper #ig/ref :yki.util/url-helper}
 
   :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
-                                   :auth #ig/ref :yki.middleware.auth/with-authentication
                                    :email-q #ig/ref :yki.job.job-queue/email-q
-                                   :access-log #ig/ref :yki.middleware.access-log/with-logging
                                    :url-helper #ig/ref :yki.util/url-helper
                                    :payment-config {}}
 

@@ -51,15 +51,15 @@
                                                  subtest))
               missing-subtests   (remove nil? (map missing-config (:subtests order)))
               validation-error   (cond
-                                   (= evaluation nil)                       (evaluation-not-found id)
-                                   (= (:open evaluation) false)             (conflict             {:success false
-                                                                                                   :error (str "Evaluation period is not ongoing for evaluation" id)})
-                                   (empty? (:subtests order))               (unprocessable-entity {:success false
-                                                                                                   :error "Minimum of one subtest is required to place an order"})
-                                   (= (distinct? (:subtests order)) false)  (unprocessable-entity {:success false
-                                                                                                   :error "Duplicate subtests are not allowed on the same order"})
-                                   (not-empty missing-subtests)             (unprocessable-entity {:success false
-                                                                                                   :error (str "Cannot process subtests without price configuration " (apply str (interpose " " missing-subtests)))})
+                                   (= evaluation nil)                             (evaluation-not-found id)
+                                   (= (:open evaluation) false)                   (conflict             {:success false
+                                                                                                         :error (str "Evaluation period is not ongoing for evaluation " id)})
+                                   (empty? (:subtests order))                     (unprocessable-entity {:success false
+                                                                                                         :error "Minimum of one subtest is required to place an order"})
+                                   (= (apply distinct? (:subtests order)) false)  (unprocessable-entity {:success false
+                                                                                                         :error "Duplicate subtests are not allowed on the same order"})
+                                   (not-empty missing-subtests)                   (unprocessable-entity {:success false
+                                                                                                         :error (str "Cannot process subtests without price configuration " (apply str (interpose " " missing-subtests)))})
                                    :else nil)]
           (if (some? validation-error)
             validation-error

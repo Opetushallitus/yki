@@ -1240,13 +1240,13 @@ INSERT INTO evaluation_order (
   first_names,
   last_name,
   email,
-  phone_number
+  birthdate
 ) VALUES (
   :evaluation_id,
   :first_names,
   :last_name,
   :email,
-  :phone_number
+  :birthdate
 );
 
 --name: insert-evaluation-order-subtest!

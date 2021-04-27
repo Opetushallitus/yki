@@ -379,5 +379,5 @@
                            :req-un [::first_names
                                     ::last_name
                                     ::email
-                                    ::phone_number
+                                    ::birthdate
                                     ::subtests]))

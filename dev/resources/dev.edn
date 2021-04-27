@@ -26,7 +26,6 @@
                                         :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"}}
 
  :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
-                       :auth #ig/ref :yki.middleware.auth/with-authentication
                        :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                         :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/evaluation-payment"
                                         :merchant_id 13466
