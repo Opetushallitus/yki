@@ -11,6 +11,7 @@
                         :alb-host            "{{host_alb}}"
                         :tunnistus-host      "{{host_tunnistus}}"
                         :oppija-host         "{{host_oppija}}"
+                        :oppija-sub-domain   "yki."
                         :yki-register-host   "{{yki_register_host}}"
                         :yki-host-virkailija "{{host_ilb}}"}
 

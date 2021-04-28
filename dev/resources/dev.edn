@@ -15,6 +15,7 @@
 
  :yki.util/url-helper {:virkailija-host        "virkailija.untuvaopintopolku.fi"
                        :oppija-host            "untuvaopintopolku.fi"
+                       :oppija-sub-domain      "yki."
                        :yki-register-host      "http://localhost:8080"
                        :alb-host               "https://virkailija.untuvaopintopolku.fi"
                        :tunnistus-host         "tunnistus.untuvaopintopolku.fi"
