@@ -20,6 +20,7 @@
   (get-upcoming-evaluation-periods [db])
   (get-evaluation-period-by-id [db id])
   (get-evaluation-order-by-id [db id])
+  (get-evaluation-order-with-payment [db id])
   (get-finished-evaluation-order-by-id [db id])
   (get-subtests [db])
   (get-payment-by-order-number [db order-number])
@@ -38,6 +39,8 @@
     (first (q/select-evaluation-by-id spec {:evaluation_id id})))
   (get-evaluation-order-by-id [{:keys [spec]} id]
     (first (q/select-evaluation-order-by-id spec {:evaluation_order_id id})))
+  (get-evaluation-order-with-payment [{:keys [spec]} id]
+    (first (q/select-evaluation-order-with-payment spec {:evaluation_order_id id})))
   (get-subtests [{:keys [spec]}]
     (q/select-subtests spec))
   (get-payment-by-order-number

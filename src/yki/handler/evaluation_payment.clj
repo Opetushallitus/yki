@@ -11,12 +11,15 @@
             [integrant.core :as ig]))
 
 (defn- success-redirect [url-helper lang order-id]
+  (log/info "Payment success, redirecting to: " (url-helper :evaluation-payment.success-redirect lang order-id))
   (found (url-helper :evaluation-payment.success-redirect lang order-id)))
 
 (defn- error-redirect [url-helper lang order-id]
+  (log/info "Payment error, redirecting to: " (url-helper :evaluation-payment.error-redirect lang order-id))
   (found (url-helper :evaluation-payment.error-redirect lang order-id)))
 
 (defn- cancel-redirect [url-helper lang order-id]
+  (log/info "Payment cancelled, redirecting to: " (url-helper :evaluation-payment.cancel-redirect lang order-id))
   (found (url-helper :evaluation-payment.cancel-redirect lang order-id)))
 
 (defn- handle-exceptions [url-helper f]
@@ -26,26 +29,27 @@
       (log/error e "Payment handling failed")
       (error-redirect url-helper))))
 
-(defmethod ig/init-key :yki.handler/evaluation-payment [_ {:keys [db auth access-log payment-config url-helper email-q]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? payment-config) (some? url-helper) (some? email-q)]}
+(defmethod ig/init-key :yki.handler/evaluation-payment [_ {:keys [db payment-config url-helper email-q]}]
+  {:pre [(some? db) (some? payment-config) (some? url-helper) (some? email-q)]}
   (api
    (context (str routing/evaluation-payment-root) []
      :coercion :spec
-     :middleware [auth access-log]
      (GET "/formdata" {session :session}
        :query-params [evaluation-order-id :- ::ys/id {lang :- ::ys/language-code "fi"}]
        :return ::ys/pt-payment-form-data
-       (let [order (evaluation-db/get-evaluation-order-by-id db evaluation-order-id)]
+       (if-let [order (evaluation-db/get-evaluation-order-with-payment db evaluation-order-id)]
          (if (= (:state order) "PAID")
            (do
              (log/error "Order" evaluation-order-id "has already been paid")
              (conflict {:error "Order has already been paid"}))
            (if-let [formdata (paytrail-payment/create-evaluation-payment-form-data url-helper order payment-config)]
              (do
-               (log/info "Get payment form data success")
+               (log/info "Get payment form data success " formdata)
                (ok formdata))
              (do (log/error "Failed to create form data from " order)
-                 (internal-server-error {:error "Payment form data creation failed"}))))))
+                 (internal-server-error {:error "Payment form data creation failed"}))))
+         (do (log/error "Could not find evaluation with id" evaluation-order-id)
+             (internal-server-error {:error "Could not find evaluation order"}))))
      (GET "/success" request
        (let [params (:params request)]
          (log/info "Received evaluation payment success params" params)

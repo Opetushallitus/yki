@@ -1302,6 +1302,30 @@ INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
 INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
 WHERE eo.id = :evaluation_order_id;
 
+--name: select-evaluation-order-with-payment
+SELECT
+  eo.id,
+  ev.language_code,
+  ev.level_code,
+  ed.exam_date,
+  ep.amount,
+  ep.lang,
+  ep.order_number,
+  ep.state,
+  (
+    SELECT array_to_json(array_agg(subtest))
+    FROM (
+      SELECT subtest
+      FROM evaluation_order_subtest
+      WHERE evaluation_order_id= eo.id
+    ) subtest
+  ) AS subtests
+FROM evaluation_order eo
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
+INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
+WHERE eo.id = :evaluation_order_id;
+
 -- name: select-evaluation-payment-by-order-number
 SELECT
   ep.state,
