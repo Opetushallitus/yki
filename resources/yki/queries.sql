@@ -904,9 +904,12 @@ ed.post_admission_enabled,
 ) AS languages,
 ( SELECT COUNT(1)
   FROM exam_session
-  WHERE exam_date_id = ed.id) AS exam_session_count
+  WHERE exam_date_id = ed.id) AS exam_session_count,
+ev.evaluation_start_date,
+ev.evaluation_end_date
 FROM exam_date ed
-WHERE ed.exam_date >= current_date AND deleted_at IS NULL
+LEFT JOIN evaluation ev ON ev.exam_date_id = ed.id
+WHERE ed.exam_date >= current_date AND ed.deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
 
 
@@ -952,9 +955,13 @@ SELECT
 ) AS languages,
 ( SELECT COUNT(1)
   FROM exam_session
-  WHERE exam_date_id = ed.id) AS exam_session_count
+  WHERE exam_date_id = ed.id) AS exam_session_count,
+  ev.evaluation_start_date,
+ev.evaluation_end_date
 FROM exam_date ed
-WHERE ed.id = :id AND deleted_at IS NULL;
+LEFT JOIN evaluation ev ON ev.exam_date_id = ed.id
+WHERE ed.id = :id AND ed.deleted_at IS NULL;
+
 
 -- name: select-exam-dates-by-date
 SELECT
@@ -1210,13 +1217,14 @@ UPDATE exam_session_contact
 SELECT
   ep.id,
   ed.exam_date,
-  ep.language_code,
-  ep.level_code,
+  edl.language_code,
+  edl.level_code,
   ep.evaluation_start_date,
   ep.evaluation_end_date,
   (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
 FROM evaluation ep
-INNER JOIN exam_date ed ON ep.exam_date_id = ed.id
+INNER JOIN exam_date_language edl on ep.exam_date_language_id = edl.id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE ep.deleted_at IS NULL
   AND  ep.id = :evaluation_id;
 
@@ -1224,15 +1232,37 @@ WHERE ep.deleted_at IS NULL
 SELECT
   ep.id,
   ed.exam_date,
-  ep.language_code,
-  ep.level_code,
+  edl.language_code,
+  edl.level_code,
   ep.evaluation_start_date,
   ep.evaluation_end_date,
   (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
 FROM evaluation ep
-INNER JOIN exam_date ed ON ep.exam_date_id = ed.id
+INNER JOIN exam_date_language edl on ep.exam_date_language_id = edl.id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE ep.deleted_at IS NULL
   AND  ((ep.evaluation_end_date + time '23:59' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'));
+
+--name: insert-evaluation!
+INSERT INTO evaluation (
+  exam_date_id,
+  exam_date_language_id,
+  evaluation_start_date,
+  evaluation_end_date
+) VALUES (
+  :exam_date_id,
+  :exam_date_language_id,
+  :evaluation_start_date,
+  :evaluation_end_date
+);
+--name: select-evaluations-by-exam-date-id
+SELECT ev.id,
+ev.exam_date_language_id,
+ev.evaluation_start_date,
+ev.evaluation_end_date
+ FROM evaluation ev
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
+WHERE edl.exam_date_id = :exam_date_id AND ev.deleted_at IS NULL;
 
 --name: insert-evaluation-order<!
 INSERT INTO evaluation_order (
@@ -1282,8 +1312,8 @@ INSERT INTO evaluation_payment(
 --name: select-evaluation-order-by-id
 SELECT
   eo.id,
-  ev.language_code,
-  ev.level_code,
+  edl.language_code,
+  edl.level_code,
   ed.exam_date,
   ep.amount,
   ep.lang,
@@ -1298,15 +1328,16 @@ SELECT
   ) AS subtests
 FROM evaluation_order eo
 INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
-INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
 INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE eo.id = :evaluation_order_id;
 
 --name: select-evaluation-order-with-payment
 SELECT
   eo.id,
-  ev.language_code,
-  ev.level_code,
+  edl.language_code,
+  edl.level_code,
   ed.exam_date,
   ep.amount,
   ep.lang,
@@ -1322,8 +1353,9 @@ SELECT
   ) AS subtests
 FROM evaluation_order eo
 INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
-INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
 INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE eo.id = :evaluation_order_id;
 
 -- name: select-evaluation-payment-by-order-number

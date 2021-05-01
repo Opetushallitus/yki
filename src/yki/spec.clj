@@ -122,7 +122,7 @@
 ; post admission extensions for exam-session
 (s/def ::post_admission_quota      (s/nilable pos-int?))
 (s/def ::post_admission_start_date (s/nilable ::date-type))
-(s/def ::post_admission_end_date (s/nilable ::date-type))
+(s/def ::post_admission_end_date   (s/nilable ::date-type))
 (s/def ::post_admission_active     boolean?)
 ; exam-session-contact
 (s/def ::contact                    (s/nilable (s/coll-of ::contact-type)))
@@ -182,6 +182,10 @@
 
 (s/def ::post-admission-end-date-update (s/keys :req-un [::post_admission_end_date]))
 (s/def ::exam-date-post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_enabled]))
+
+(s/def ::evaluation_start_date (s/nilable ::date-type))
+(s/def ::evaluation_end_date   (s/nilable ::date-type))
+(s/def ::exam-date-evaluation (s/keys :req-un [::evaluation_start_date ::evaluation_end_date]))
 
 
 ;; exam session queue

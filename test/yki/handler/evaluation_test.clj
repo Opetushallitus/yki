@@ -24,17 +24,6 @@
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
 
-(def payment-config
-  {:paytrail-host  "https://payment.paytrail.com/e2"
-   :yki-payment-uri "http://localhost:3000/yki/evaluation-payment"
-   :merchant_id 13466
-   :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
-   :amount {:READING "50.00"
-            :LISTENING "50.00"
-            :WRITING "50.00"
-            :SPEAKING "50.00"}
-   :test_mode true})
-
 (def mock-evaluation-order
   {:first_names "Mary Änne"
    :last_name "Smith"

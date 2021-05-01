@@ -1,6 +1,7 @@
 (ns yki.handler.exam-date
   (:require [compojure.api.sweet :refer [context GET DELETE POST PUT]]
             [yki.boundary.exam-date-db :as exam-date-db]
+            [yki.boundary.evaluation-db :as evaluation-db]
             [ring.util.http-response :refer [ok not-found conflict internal-server-error]]
             [yki.util.audit-log :as audit-log]
             [clojure.tools.logging :as log]
@@ -180,4 +181,36 @@
           (POST "/disable" request
             :path-params [id :- ::ys/id]
             :return ::ys/response
-            (toggle-post-admission db id false)))))))
+            (toggle-post-admission db id false)))
+
+        (POST "/evaluation" request
+          :path-params [id :- ::ys/id]
+          :body [evaluation ::ys/exam-date-evaluation]
+          :return ::ys/response
+          (if-let [exam-date (exam-date-db/get-exam-date-by-id db id)]
+            (let [{:keys [evaluation_start_date evaluation_end_date]} evaluation
+                  exam-date-languages (exam-date-db/get-exam-date-languages db id)
+                  evaluations         (evaluation-db/get-evaluation-periods-by-exam-date-id db id)]
+              (cond
+                (empty? exam-date-languages)                 (do (log/error "Could not find language options for exam date " id)
+                                                                 (conflict {:success false
+                                                                            :error "Could not find language options for exam date"}))
+                (not-empty evaluations)                      (do (log/error "Evaluation configuration for exam date" id "already exists")
+                                                                 (conflict {:success false
+                                                                            :error "Evaluation configuration for exam date already exists"}))
+                (is-first-date-before-second
+                 evaluation_end_date (:exam_date exam-date)) (do (log/error "Evaluation end date " evaluation_end_date " has to be before exam date " (:exam_date exam-date))
+                                                                 (conflict {:success false
+                                                                            :error "Evaluation end date has to be after the exam date"}))
+                (is-first-date-before-second
+                 evaluation_end_date evaluation_start_date)  (do (log/error "Evaluation start date " evaluation_start_date " has to be before it's end date " evaluation_end_date)
+                                                                 (conflict {:success false
+                                                                            :error "Evaluation start date has to be before it's end date"}))
+                :else                                        (if-let [success (evaluation-db/create-evaluation! db exam-date-languages evaluation)]
+                                                               (ok {:success true})
+                                                               (do (log/error "Error occured when attempting to create evaluation period for exam date " id)
+                                                                   (internal-server-error {:success false
+                                                                                           :error "Could not create evaluation period"})))))
+            (do (log/error "Could not find exam date with id " id)
+                (not-found
+                 {:success false :error "Exam date not found"}))))))))
