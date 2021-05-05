@@ -9,6 +9,9 @@
       "post_admission_active": false,
       "post_admission_start_date": null,
       "post_admission_end_date": null,
+      "post_admission_activated_at": null,
+      "post_admission_enabled": false,
+      "contact": null,
       "location": [
         {
           "lang": "fi",

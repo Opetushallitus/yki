@@ -22,6 +22,11 @@
         get-date (fn [r] (some #{r} date-map))]
     (get-date date)))
 
+(defn- get-new-entry [orig-entry new-values]
+  (reduce-kv (fn [entry k v]
+               (base/change-entry entry (name k) v))
+             orig-entry new-values))
+
 (deftest exam-session-validation-test
   (let [invalid-exam-session (base/change-entry base/exam-session "session_date" "NOT_A_DATE")
         request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") invalid-exam-session)
@@ -37,6 +42,7 @@
   (base/insert-organizer "'1.2.3.4'")
   (base/insert-languages "'1.2.3.4'")
   (base/insert-exam-dates)
+  (base/insert-post-admission-dates)
 
   (testing "post exam session endpoint should add valid exam session to database and send sync request to queue"
     (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session") base/exam-session)
@@ -83,53 +89,46 @@
       (is (some? (:exam-session sync-req)))
       (is (= (:type sync-req) "DELETE"))))
 
+  ; '2039-05-02' no post admission
+  ; '2041-06-01' post admission, disabled
+  ; '2041-07-01' post admission, enabled
   (let [exam-session-route (str routing/organizer-api-root "/1.2.3.4/exam-session")]
-    (letfn [(mock-request [method path body] (-> (mock/request method path body)
-                                                 (mock/content-type "application/json; charset=UTF-8")
-                                                 (base/send-request-with-tx)
-                                                 (base/body-as-json)))
-            (create-es []                    (-> (mock-request :post (str exam-session-route) base/exam-session)))
-            (create-pa [exam-session-id]     (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission") base/post-admission)))
-            (update-pa [exam-session-id]     (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission") base/post-admission-updated)))
-            (activate-pa [exam-session-id]   (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission/activation") base/post-admission-activation)))
-            (deactivate-pa [exam-session-id] (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission/activation") base/post-admission-deactivation)))]
+    (letfn [(mock-request [method path body]  (-> (mock/request method path body)
+                                                  (mock/content-type "application/json; charset=UTF-8")
+                                                  (base/send-request-with-tx)))
+            (create-pa-enabled-es []          (->> (get-new-entry base/exam-session {:session_date "2041-07-01"})
+                                                   (mock-request :post (str exam-session-route))
+                                                   (base/body-as-json)))
+            (create-pa-disabled-es []         (->> (get-new-entry base/exam-session {:session_date "2041-06-01"})
+                                                   (mock-request :post (str exam-session-route))
+                                                   (base/body-as-json)))
+            (activate [exam-session-id entry] (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission/activate") entry)))
+            (deactivate [exam-session-id]     (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission/deactivate") "{}")))]
 
-      (testing "can add post admission to exam session"
-        (let [create-es-response (create-es)
-              exam-session-id    (get create-es-response "id")
-              create-pa-response (create-pa exam-session-id)]
-          (is (= {:post_admission_start_date "2039-03-02" :post_admission_quota 50 :post_admission_active false}
-                 (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id))))))
+      (testing "can activate a exam session post admission"
+        (let [exam-session-response (create-pa-enabled-es)
+              exam-session-id (get exam-session-response "id")
+              response (activate exam-session-id (get-new-entry "{}" {:post_admission_quota 5}))
+              exam-session (base/select-one (str "SELECT * FROM exam_session WHERE id = " exam-session-id))]
+          (is (= (:status response) 200))
+          (is (= (:post_admission_active exam-session) true))
+          (is (= (:post_admission_quota exam-session) 5))))
 
-      (testing "can update existing post admission if post admission has not been activated"
-        (let [create-es-response (create-es)
-              exam-session-id    (get create-es-response "id")
-              create-pa-response (create-pa exam-session-id)
-              update-pa-response (update-pa exam-session-id)]
-          (is (= {:post_admission_start_date "2039-02-02" :post_admission_quota 10 :post_admission_active false}
-                 (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id))))))
+      (testing "cannot activate post admission if post admissions are not enabled for that date"
+        (let [exam-session-response (create-pa-disabled-es)
+              exam-session-id (get exam-session-response "id")
+              response (activate exam-session-id (get-new-entry "{}" {:post_admission_quota 5}))
+              exam-session (base/select-one (str "SELECT * FROM exam_session WHERE id = " exam-session-id))]
+          (is (= (:status response) 409))
+          (is (= (:post_admission_active exam-session) false))
+          (is (= (:post_admission_quota exam-session) nil))))
 
-      (testing "can not update existing post admission if post admission has been activated"
-        (let [create-es-response   (create-es)
-              exam-session-id      (get create-es-response "id")
-              create-pa-response   (create-pa exam-session-id)
-              activate-pa-response (activate-pa exam-session-id)
-              update-pa-response   (update-pa exam-session-id)]
-          (is (= {"success" true} create-pa-response))
-          (is (= {:post_admission_active true}
-                 (base/select-one (str "SELECT post_admission_active FROM exam_session WHERE id = " exam-session-id))))
-          (is (= {"success" false "error" "Exam session not found"} update-pa-response))))
-
-      (testing "can update activated post admission details again after it has been deactivated"
-        (let [create-es-response     (create-es)
-              exam-session-id        (get create-es-response "id")
-              create-pa-response     (create-pa exam-session-id)
-              activate-pa-response   (activate-pa exam-session-id)
-              deactivate-pa-response (deactivate-pa exam-session-id)
-              update-pa-response     (update-pa exam-session-id)]
-          (is (= {"success" true} update-pa-response))
-          (is (= {:post_admission_start_date "2039-02-02" :post_admission_quota 10 :post_admission_active false}
-                 (base/select-one (str "SELECT post_admission_start_date, post_admission_quota, post_admission_active FROM exam_session WHERE id = " exam-session-id)))))))))
+      (testing "can disable post admissions for exam session"
+        (let [exam-session-id (:id (base/select-one (base/select-exam-session-by-date "2041-07-01")))
+              response (deactivate exam-session-id)
+              exam-session (base/select-one (str "SELECT * FROM exam_session WHERE id = " exam-session-id))]
+          (is (= (:status response) 200))
+          (is (= (:post_admission_active exam-session) false)))))))
 
 (deftest exam-session-history-test
   (base/insert-organizer "'1.2.3.4'")
@@ -140,11 +139,11 @@
                     ["2039-12-01" "2040-11-01" "2040-11-30"]
                     ["2039-10-01" "2039-10-01" "2039-10-30"]]
         date-id (fn [date] (-> date
-                               (base/select-exam-date-id)
+                               (base/select-exam-date-id-by-date)
                                (base/select-one)
                                :id))
         insert-dates (fn [dates] (let [[exam-date reg-start reg-end] dates]
-                                   (base/insert-exam-history-dates exam-date reg-start reg-end)
+                                   (base/insert-custom-exam-date exam-date reg-start reg-end)
                                    (base/insert-exam-session (date-id exam-date) "'1.2.3.4'" 5)
                                    (base/insert-exam-session-location-by-date exam-date "fi")))
         iterate-exam-dates (fn [dates] (for [d dates] (insert-dates d)))]

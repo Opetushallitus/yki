@@ -23,8 +23,8 @@
                           :type "DELETE"
                           :created (System/currentTimeMillis)})))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler data-sync-q access-log]}]
-  {:pre [(some? db) (some? url-helper) (some? auth) (some? file-handler) (some? exam-session-handler) (some? data-sync-q) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler exam-date-handler data-sync-q access-log]}]
+  {:pre [(some? db) (some? url-helper) (some? auth) (some? file-handler) (some? exam-session-handler) (some? exam-date-handler) (some? data-sync-q) (some? access-log)]}
   (api
    (context routing/organizer-api-root []
      :middleware [auth access-log]
@@ -35,8 +35,8 @@
        (log/info "creating organizer" organizer)
        (when (organizer-db/create-organizer! db organizer)
          (audit-log/log
-          {:request request,
-           :target-kv {:k audit-log/organizer, :v (:oid organizer)},
+          {:request request
+           :target-kv {:k audit-log/organizer, :v (:oid organizer)}
            :change {:type audit-log/create-op, :new organizer}})
          (response {:success true})))
      (GET "/" {session :session}
@@ -80,4 +80,6 @@
        (context routing/file-uri []
          (file-handler oid))
        (context routing/exam-session-uri []
-         (exam-session-handler oid))))))
+         (exam-session-handler oid))
+       (context routing/exam-date-uri []
+         (exam-date-handler oid))))))

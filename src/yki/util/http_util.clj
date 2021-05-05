@@ -6,10 +6,19 @@
 (defn- remove-ssn [url]
   (string/replace url #"hetu.*?(?=&|\?|$)" "hetu=***********"))
 
+(def csrf-value "yki")
+
+(defn headers-and-cookies-settings [opts]
+  (-> opts
+      (update :headers merge
+              {"Caller-Id" "1.2.246.562.10.00000000001.yki"}
+              {"CSRF" csrf-value})
+      (update :cookies merge {"CSRF" {:value csrf-value :path "/"}})))
+
 (defn do-request
   [{:keys [url method] :as opts}]
 
-  (let [opts        (update opts :headers merge {"Caller-Id" "1.2.246.562.10.00000000001.yki"})
+  (let [opts        (headers-and-cookies-settings opts)
         method-name (string/upper-case (name method))
         start       (System/currentTimeMillis)
         _ (info "do-request, opts:" opts)

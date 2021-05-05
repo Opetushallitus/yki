@@ -5,6 +5,7 @@
   "max_participants": 50,
   "office_oid": null,
   "published_at": "2018-01-01T00:00:00.000Z",
+  "contact": null,
   "location": [
     {
       "name": "Omenia",

@@ -21,13 +21,23 @@ project.clj
 
 # Language Server Protocol (LSP) logfiles
 lsp/
+.lsp/
 
 # Visual Studio Code metadata
 .vscode
+.clj-kondo/
+.lsp/
 
 # Visual Studio Code plugins
 .calva
 .lsp
+# Clojure linter
+.clj-kondo/
+
+# Visual Studio Code extensions
+.clj-kondo/
+.lsp/
+.calva/
 
 # Allow all and any scratch files to exist in project root
 scratch.*
