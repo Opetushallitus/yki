@@ -28,6 +28,9 @@ lsp/
 .clj-kondo/
 .lsp/
 
+# Visual Studio Code plugins
+.calva
+.lsp
 # Clojure linter
 .clj-kondo/
 

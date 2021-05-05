@@ -28,6 +28,7 @@
                  [org.clojure/core.memoize "0.7.1"]
                  [ring-logger "1.0.1"]
                  [ch.qos.logback/logback-classic "1.2.3"]
+                 [org.clojure/data.xml "0.0.8"]
                  ;; these two are necessary for Scala Cas Client
                  [oph/clj-cas "0.6.1-SNAPSHOT"]
                  [fi.vm.sade/scala-cas_2.12 "2.1.0-SNAPSHOT"]

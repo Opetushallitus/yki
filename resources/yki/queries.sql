@@ -213,6 +213,18 @@ SELECT
     WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
   o.oid as organizer_oid,
  (
+  SELECT array_to_json(array_agg(contact_row))
+  FROM (
+    SELECT
+        name,
+        email,
+        phone_number
+        FROM contact co
+        WHERE co.id = (SELECT esc.contact_id FROM exam_session_contact esc WHERE esc.exam_session_id = e.id AND deleted_at IS NULL LIMIT 1)
+        AND deleted_at IS NULL
+    ) contact_row
+ ) as contact,
+ (
   SELECT array_to_json(array_agg(loc))
   FROM (
     SELECT
@@ -268,6 +280,18 @@ SELECT
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
   o.oid as organizer_oid,
+(
+  SELECT array_to_json(array_agg(contact_row))
+  FROM (
+    SELECT
+        name,
+        email,
+        phone_number
+        FROM contact co
+        WHERE co.id = (SELECT esc.contact_id FROM exam_session_contact esc WHERE esc.exam_session_id = e.id AND deleted_at IS NULL LIMIT 1)
+        AND deleted_at IS NULL
+    ) contact_row
+ ) as contact,
 (SELECT array_to_json(array_agg(loc))
   FROM (
     SELECT
@@ -698,21 +722,42 @@ INSERT INTO participant_sync_status(
                     WHERE exam_session_id = :exam_session_id)
 ON CONFLICT DO NOTHING;
 
+--name: insert-relocated-participants-sync-status!
+INSERT INTO participant_sync_status(
+  relocated_at,
+  exam_session_id
+) VALUES (
+  current_timestamp,
+  (SELECT :exam_session_id
+    WHERE NOT EXISTS (SELECT exam_session_id
+                    FROM participant_sync_status
+                    WHERE exam_session_id = :exam_session_id
+                     AND relocated_at IS NOT NULL
+                     AND success_at IS NULL)))
+ON CONFLICT DO NOTHING;
+
 -- Syncronization is done during registration period and
 -- failed sync attempts will be retried for given period
 -- after registration has ended.
+-- Exam sessions where participants have been relocated to another
+-- session after the registration has ended, are synced and retried
+-- for one day after the relocation.
 
 -- name: select-exam-sessions-to-be-synced
 SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
-WHERE ((ed.registration_end_date + interval '1 day') >= current_date
-  OR (ed.post_admission_end_date + interval '1 day') >= current_date
-  OR ((ed.registration_end_date + :duration::interval) >= current_date
-      AND pss.failed_at IS NOT NULL
-      AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
-AND (ed.registration_start_date <= current_date OR ed.post_admission_start_date <= current_date)
+WHERE ((((ed.registration_end_date + interval '1 day') >= current_date
+    OR (ed.post_admission_end_date + interval '1 day') >= current_date
+    OR ((ed.registration_end_date + :duration::interval) >= current_date
+        AND pss.failed_at IS NOT NULL
+        AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
+    AND (ed.registration_start_date <= current_date OR es.post_admission_start_date <= current_date))
+  OR (pss.relocated_at IS NOT NULL
+    AND pss.success_at IS NULL
+    AND ed.registration_start_date < current_date
+    AND (pss.relocated_at + interval '1 day') > current_date))
 AND (SELECT COUNT(1)
      FROM registration re
      WHERE re.exam_session_id = es.id AND re.state = 'COMPLETED') > 0;
@@ -1080,3 +1125,75 @@ UPDATE exam_date
 UPDATE exam_date
    SET post_admission_end_date = NULL
  WHERE id = :exam_date_id;
+
+--name: select-contacts-by-oid
+SELECT
+  con.id,
+  con.organizer_id,
+  con.name,
+  con.email,
+  con.phone_number,
+  con.created,
+  con.modified,
+  :oid as organizer_oid
+FROM contact con
+WHERE con.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
+  AND con.deleted_at IS NULL;
+
+--name: insert-contact<!
+INSERT INTO contact (
+  organizer_id,
+  name,
+  email,
+  phone_number
+) VALUES (
+    (SELECT id FROM organizer
+      WHERE oid = :oid AND deleted_at IS NULL),
+    :name,
+    :email,
+    :phone_number
+);
+
+--name: insert-exam-session-contact<!
+INSERT INTO exam_session_contact (
+  exam_session_id,
+  contact_id
+) VALUES (
+  :exam_session_id,
+  :contact_id
+);
+
+-- name: select-exam-session-contact-id
+SELECT esc.id
+  FROM exam_session_contact esc
+WHERE esc.exam_session_id = :exam_session_id
+  AND esc.contact_id = :contact_id
+  AND deleted_at IS NULL;
+
+--name: select-contact-id-with-details
+SELECT
+  con.id
+FROM contact con
+WHERE con.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
+  AND con.name = :name
+  AND con.email = :email
+  AND con.phone_number = :phone_number
+  AND con.deleted_at IS NULL;
+
+--name: select-existing-session-contact
+SELECT esc.id
+  FROM exam_session_contact esc
+WHERE esc.exam_session_id = :exam_session_id
+  AND esc.contact_id = (SELECT
+      con.id
+    FROM contact con
+    WHERE con.name = :name
+      AND con.email = :email
+      AND con.phone_number = :phone_number
+      AND con.deleted_at IS NULL)
+  AND deleted_at IS NULL;
+
+--name: delete-exam-session-contact-by-session-id!
+UPDATE exam_session_contact
+  SET deleted_at = current_timestamp
+  WHERE exam_session_id = :exam_session_id AND deleted_at IS NULL;

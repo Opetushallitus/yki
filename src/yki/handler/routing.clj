@@ -16,6 +16,8 @@
 
 (def virkailija-auth-logout (str auth-root virkailija-auth-uri "/logout"))
 
+(def oppija-auth-callback (str auth-root "/callback"))
+
 (def auth-callback (str auth-root "/login"))
 
 (def localisation-api-root (str api-root "/localisation"))

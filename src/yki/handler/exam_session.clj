@@ -39,6 +39,8 @@
       (POST "/" request
         :body [exam-session ::ys/exam-session]
         :return ::ys/id-response
+        (log/info "Create exam sessio")
+        (log/info "" exam-session)
         (if-let [exam-session-id (exam-session-db/create-exam-session! db oid exam-session
                                                                        (send-to-queue
                                                                         data-sync-q
@@ -164,19 +166,21 @@
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]
               :return ::ys/response
-              (if (exam-session-db/update-registration-exam-session! db (:to_exam_session_id relocate-request) registration-id oid)
-                (do
-                  (audit-log/log {:request request
-                                  :target-kv {:k audit-log/registration
-                                              :v registration-id}
-                                  :change {:type audit-log/update-op
-                                           :old {:exam_session_id id}
-                                           :new {:exam_session_id (:to_exam_session_id relocate-request)}}})
-                  (response {:success true}))
-                (not-found {:success false
-                            :error "Registration not found"})))
-
-
+              (log/info "Start relocating registration" registration-id " from session " id " to session " (:to_exam_session_id relocate-request))
+              (let [to-exam-session-id (:to_exam_session_id relocate-request)
+                    success?           (exam-session-db/update-registration-exam-session! db to-exam-session-id registration-id oid)]
+                (if success?
+                  (do
+                    (audit-log/log {:request request
+                                    :target-kv {:k audit-log/registration
+                                                :v registration-id}
+                                    :change {:type audit-log/update-op
+                                             :old {:exam_session_id id}
+                                             :new {:exam_session_id (:to_exam_session_id relocate-request)}}})
+                    (exam-session-db/init-relocated-participants-sync-status! db id to-exam-session-id)
+                    (response {:success true}))
+                  (not-found {:success false
+                              :error "Registration not found"}))))
             ; Regarding email confirmation resend: needs to generate a whole new login link and invalidate old one
             ; (POST "/resendConfirmation" request
             ;   :path-params [id :- ::ys/id registration-id :- ::ys/id]
