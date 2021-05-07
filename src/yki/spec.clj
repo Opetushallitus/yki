@@ -20,7 +20,7 @@
 (defn- empty-or-match [value regexp]
   (or (str/blank? value) (re-matches regexp value)))
 
-(s/def ::ssn (s/and string? #(empty-or-match % ssn-regexp)))
+(s/def ::ssn (s/and (s/nilable string?) #(empty-or-match % ssn-regexp)))
 (s/def ::amount (s/and string? #(re-matches amount-regexp %)))
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code  #{"fi" "sv" "en"})
@@ -32,10 +32,10 @@
 
 (s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))
 (s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION" "OTHER"})
-(s/def ::date         (st/spec
-                       {:spec (partial date?)
-                        :type :date-time
-                        :json-schema/default "2018-01-01T00:00:00Z"}))
+(s/def ::date-type         (st/spec
+                            {:spec (partial date?)
+                             :type :date-time
+                             :json-schema/default "2018-01-01T00:00:00Z"}))
 (s/def ::time         (s/and string? #(re-matches time-regex %)))
 (s/def ::email-type   (s/and string? #(re-matches email-regex %)))
 (s/def ::oid          (s/and string? #(re-matches oid-regex %)))
@@ -43,9 +43,9 @@
 (s/def ::email        ::email-type)
 
 ;; organizer
-(s/def ::agreement_start_date ::date)
-(s/def ::agreement_end_date   ::date)
-(s/def ::created              ::date)
+(s/def ::agreement_start_date ::date-type)
+(s/def ::agreement_end_date   ::date-type)
+(s/def ::created              ::date-type)
 (s/def ::contact_name         (s/and string? #(<= (count %) 256)))
 (s/def ::language_code        ::exam-language-code)
 (s/def ::level_code           (s/and string? #(<= (count %) 16)))
@@ -59,6 +59,8 @@
 (s/def ::external-id-type     (s/keys :req-un [::external_id]))
 (s/def ::language             (s/keys :req-un [::language_code]
                                       :opt-un [::level_code]))
+(s/def ::exam-date-language   (s/keys :req-un [::language_code
+                                               ::level_code]))
 (s/def ::attachment           (s/keys :req-un [::external_id
                                                ::created]))
 (s/def ::languages            (s/or :null nil? :array (s/coll-of ::language)))
@@ -97,24 +99,33 @@
                                                 ::lang]))
 (s/def ::location (s/coll-of ::exam-session-location))
 
+;; organizer-contact
+(s/def ::organizer_id ::id)
+(s/def ::contact-type (s/keys :req-un [::name
+                                       (or ::email ::phone_number)]
+                              ::opt-un [::organizer_id
+                                        ::organizer_oid]))
+
 ;; exam-session
 (s/def ::organizer_oid              ::oid)
 (s/def ::office_oid                 (s/nilable ::oid))
-(s/def ::session_date               ::date)
+(s/def ::session_date               ::date-type)
 (s/def ::max_participants           pos-int?)
-(s/def ::published_at               (s/nilable ::date))
+(s/def ::published_at               (s/nilable ::date-type))
 (s/def ::participants               int?)
 (s/def ::exam_fee                   ::amount)
 (s/def ::open                       boolean?)
 (s/def ::queue_full                 boolean?)
 (s/def ::queue                      int?)
-(s/def ::from                       ::date)
+(s/def ::from                       ::date-type)
 (s/def ::days                       int?)
 ; post admission extensions for exam-session
 (s/def ::post_admission_quota      (s/nilable pos-int?))
-(s/def ::post_admission_start_date (s/nilable ::date))
+(s/def ::post_admission_start_date (s/nilable ::date-type))
+(s/def ::post_admission_end_date (s/nilable ::date-type))
 (s/def ::post_admission_active     boolean?)
-
+; exam-session-contact
+(s/def ::contact                    (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
                                        ::language_code
                                        ::level_code
@@ -124,6 +135,7 @@
                               :opt-un [::id
                                        ::office_oid
                                        ::exam_fee
+                                       ::contact
                                        ::open
                                        ::queue
                                        ::queue_full
@@ -131,33 +143,50 @@
                                        ::organizer_oid
                                        ::post_admission_quota
                                        ::post_admission_start_date
+                                       ::post_admission_end_date
                                        ::post_admission_active]))
+
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::from-param (s/keys :opt-un [::from]))
 
-(s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_quota]))
+(s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_quota]))
 
-(s/def ::post-admission-activation (s/keys :req-un [::post_admission_active]))
+(s/def ::post-admission-activation (s/keys :req-un [::post_admission_quota]))
 
 (s/def ::id-response (s/keys :req-un [::id]))
 
 ;; exam date
-(s/def ::exam_date                 ::date)
-(s/def ::registration_start_date   ::date)
-(s/def ::registration_end_date     ::date)
-(s/def ::post_admission_end_date   (s/nilable ::date))
+(s/def ::exam_date                 ::date-type)
+(s/def ::registration_start_date   ::date-type)
+(s/def ::registration_end_date     ::date-type)
+(s/def ::post_admission_end_date   (s/nilable ::date-type))
+(s/def ::post_admission_enabled boolean?)
+(s/def ::exam_session_count         int?)
+(s/def ::languages      (s/or :null nil? :array (s/coll-of ::exam-date-language)))
+
 (s/def ::exam-date-type (s/keys :req-un [::exam_date
                                          ::registration_start_date
                                          ::registration_end_date
+                                         ::languages]
+                                :opt-un [::id
+                                         ::post_admission_start_date
                                          ::post_admission_end_date
-                                         ::languages]))
+                                         ::post_admission_enabled
+                                         ::exam_session_count]))
+
 (s/def ::dates (s/coll-of ::exam-date-type))
+(s/def ::date      ::exam-date-type)
+(s/def ::single-exam-date-response (s/keys :req-un [::date]))
 (s/def ::exam-date-response (s/keys :req-un [::dates]))
 
 (s/def ::post-admission-end-date-update (s/keys :req-un [::post_admission_end_date]))
+(s/def ::exam-date-post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_enabled]))
+
 
 ;; exam session queue
+
+
 (s/def ::to-queue-request (s/keys :req-un [::email]))
 
 ;; localisation
@@ -224,7 +253,7 @@
 (s/def ::nick_name (s/nilable ::non-blank-string))
 (s/def ::gender (s/nilable ::gender-code))
 (s/def ::nationalities (s/coll-of (s/and ::non-blank-string #(= (count %) 3))))
-(s/def ::birthdate (s/nilable ::date))
+(s/def ::birthdate (s/nilable ::date-type))
 (s/def ::post_office ::non-blank-string)
 (s/def ::nationality_desc ::non-blank-string)
 (s/def ::zip ::non-blank-string)

@@ -117,6 +117,8 @@
     :request-method :get}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
+   {:pattern #".*/api/virkailija/organizer/.*/exam-date.*"
+    :handler (partial virkailija-authenticated db)}
    {:pattern #".*/api/virkailija/organizer"
     :handler (partial virkailija-authenticated db) ; authorized on database level
     :request-method :get}

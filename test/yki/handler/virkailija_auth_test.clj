@@ -55,11 +55,15 @@
                                                                      :url-helper url-helper
                                                                      :email-q (base/email-q)
                                                                      :data-sync-q (base/data-sync-q)})
+
+        exam-date-handler (ig/init-key :yki.handler/exam-date {:db db})
+
         org-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
                                                                                  :access-log (base/access-log)
                                                                                  :data-sync-q  (base/data-sync-q)
                                                                                  :url-helper url-helper
                                                                                  :exam-session-handler exam-session-handler
+                                                                                 :exam-date-handler exam-date-handler
                                                                                  :auth auth
                                                                                  :file-handler {}}))
         auth-handler (base/auth-handler auth url-helper)]

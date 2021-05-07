@@ -8,6 +8,7 @@
     "registration_start_date": "2017-12-01",
     "open": true,
     "max_participants": 5,
+    "pa_participants": 0,
     "language_code": "fin",
     "office_oid": "1.2.3.4.5",
     "published_at": null,
@@ -18,11 +19,14 @@
     "post_admission_end_date": null,
     "post_admission_active": false,
     "post_admission_quota": null,
+    "post_admission_activated_at": null,
+    "post_admission_enabled": false,
+    "contact": null,
     "location": [
       {
         "lang": "fi",
         "extra_information": null,
-        "post_office":"Espoo",
+        "post_office": "Espoo",
         "name": "Omenia",
         "other_location_info": "Other info",
         "street_address": "Upseerinkatu 11",
