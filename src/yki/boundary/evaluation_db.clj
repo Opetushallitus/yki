@@ -46,7 +46,6 @@
   (get-evaluation-period-by-id [{:keys [spec]} id]
     (first (q/select-evaluation-by-id spec {:evaluation_id id})))
   (get-evaluation-periods-by-exam-date-id [{:keys [spec]} exam-date-id]
-    (println "get them" exam-date-id)
     (q/select-evaluations-by-exam-date-id spec {:exam_date_id exam-date-id}))
   (get-evaluation-order-by-id [{:keys [spec]} id]
     (first (q/select-evaluation-order-by-id spec {:evaluation_order_id id})))
