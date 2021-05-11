@@ -70,6 +70,7 @@
                                            :subtests
                                            (map subtest-price)
                                            (reduce +)
+                                           (format "%.2f")
                                            (bigdec))
                     init-payment-data {:evaluation_order_id order-id
                                        :lang                lang

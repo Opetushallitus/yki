@@ -90,7 +90,7 @@
         payment-data {:language-code lang
                       :order-number  (:order_number evaluation-order)
                       :msg (str (localisation/get-translation url-helper "common.paymentMessage" lang))}
-        amount        (if (:test_mode payment-config) "1.00" (:amount evaluation-order))
+        amount        (if (:test_mode payment-config) "1.00" (str (:amount evaluation-order)))
         form-data     (payment-util/generate-form-data payment-config amount payment-data)]
     form-data))
 
