@@ -9,6 +9,7 @@
             [yki.handler.routing :as routing]
             [clj-time.coerce :as c]
             [clj-time.core :as t]
+            [clj-time.format :as f]
             [integrant.core :as ig]
             [clojure.set :as set]))
 
@@ -37,8 +38,15 @@
   (fn [oid]
     (context "/" []
       (GET "/" []
+        :query-params [{from :- ::ys/date-type nil} {days :- ::ys/days nil}]
         :return ::ys/exam-date-response
-        (ok {:dates (exam-date-db/get-organizer-exam-dates db)}))
+        (let [from-date  (if from (c/from-long from) (t/now))
+              history-date (if days (-> from-date
+                                        (t/minus (t/days days))) from-date)
+              new-from-date (f/unparse (f/formatter "yyyy-MM-dd") history-date)
+              dates (exam-date-db/get-organizer-exam-dates db new-from-date)]
+          (ok {:dates dates})))
+
       (POST "/" request
         :body [exam-date ::ys/exam-date-type]
         :return ::ys/id-response

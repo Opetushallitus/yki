@@ -909,7 +909,7 @@ ev.evaluation_start_date,
 ev.evaluation_end_date
 FROM exam_date ed
 LEFT JOIN evaluation ev ON ev.exam_date_id = ed.id
-WHERE ed.exam_date >= current_date AND ed.deleted_at IS NULL
+WHERE ed.exam_date >= COALESCE(:from, current_date) AND ed.deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
 
 

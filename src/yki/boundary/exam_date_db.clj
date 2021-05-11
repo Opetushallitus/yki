@@ -28,7 +28,7 @@
   (create-exam-date! [db exam-date])
   (create-exam-date-languages! [db exam-date-id languages])
   (get-exam-dates [db])
-  (get-organizer-exam-dates [db])
+  (get-organizer-exam-dates [db from])
   (get-exam-date-by-id [db id])
   (get-exam-date-session-count [db id])
   (get-exam-dates-by-date [db exam-date])
@@ -57,8 +57,8 @@
     (first (q/select-exam-date-by-id spec {:id id})))
   (get-exam-dates [{:keys [spec]}]
     (q/select-exam-dates spec))
-  (get-organizer-exam-dates [{:keys [spec]}]
-    (q/select-organizer-exam-dates spec))
+  (get-organizer-exam-dates [{:keys [spec]} from]
+    (q/select-organizer-exam-dates spec {:from (string->date from)}))
   (get-exam-date-session-count [{:keys [spec]} id]
     (first (q/select-exam-date-session-count spec {:id id})))
   (get-exam-dates-by-date [{:keys [spec]} exam-date]
