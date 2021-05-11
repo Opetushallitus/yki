@@ -483,7 +483,7 @@ WHERE eo.id = " 1)))
       (peridot/request (str routing/auth-root "/login?code=" code-ok))))
 
 (defn create-url-helper [uri]
-  (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"}))
+  (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http" :oppija-sub-domain "yki."}))
 
 (defn create-routes [port]
   (let [uri (str "localhost:" port)
