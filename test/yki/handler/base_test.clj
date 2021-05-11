@@ -263,7 +263,7 @@
   (str "(SELECT * from exam_session WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")"))
 
 (defn select-exam-date-languages-by-date-id [exam-date-id]
-  (str "(SELECT language_code, level_code from exam_date_language WHERE exam_date_id='" exam-date-id "' AND deleted_at IS NULL)"))
+  (str "(SELECT id, language_code, level_code from exam_date_language WHERE exam_date_id='" exam-date-id "' AND deleted_at IS NULL)"))
 
 (defn select-evaluation-by-date [exam-date]
   (str "(SELECT * from evaluation WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")"))
@@ -343,15 +343,28 @@
   (jdbc/execute! @embedded-db/conn
                  (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" (two-weeks-ago) "', '" (days-ago 30) "', '" (days-ago 25) "')"))
   (let [exam-date-id          (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))
-        exam-date-language-id (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))]
-    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
-                                    VALUES (" (exam-date-id "2039-05-02") ", '2041-08-01', '2041-08-15', 'fin', 'PERUS')"))
-    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
-                                    VALUES (" (exam-date-id "2039-05-10") ", '2041-08-01', '2041-08-15', 'fin', 'PERUS')"))
-    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
-                                    VALUES (" (exam-date-id (two-weeks-ago)) ", '" (yesterday) "', '" (two-weeks-from-now) "', 'fin', 'PERUS')"))
-    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
-                                    VALUES (" (exam-date-id "2019-05-02") ", '2019-08-01', '2019-08-15', 'fin', 'PERUS')"))))
+        exam-date-language-id (fn [id]       (:id (select-one (select-exam-date-languages-by-date-id id))))
+        first-date-id         (exam-date-id "2039-05-02")
+        second-date-id        (exam-date-id "2039-05-10")
+        third-date-id         (exam-date-id (two-weeks-ago))
+        fourth-date-id        (exam-date-id "2019-05-02")]
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" first-date-id ", 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" second-date-id ", 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" third-date-id ", 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" fourth-date-id ", 'fin', 'PERUS')"))
+
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
+                                    VALUES (" first-date-id ", '2041-08-01', '2041-08-15', " (exam-date-language-id first-date-id) ")"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
+                                    VALUES (" second-date-id ", '2041-08-01', '2041-08-15', " (exam-date-language-id second-date-id) ")"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
+                                    VALUES (" third-date-id ", '" (yesterday) "', '" (two-weeks-from-now) "', " (exam-date-language-id third-date-id) ")"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
+                                    VALUES (" fourth-date-id ", '2019-08-01', '2019-08-15', " (exam-date-language-id fourth-date-id) ")"))))
 
 (defn insert-evaluation-payment-data []
   (let [exam-date (days-ago 30)
