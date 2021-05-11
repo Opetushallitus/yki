@@ -58,7 +58,7 @@
                                (let [payment   (paytrail-payment/get-evaluation-payment db params)
                                      lang      (or (:lang payment) "fi")
                                      order-id  (:evaluation_order_id payment)]
-                                 (if (paytrail-payment/handle-evaluation-payment-return db email-q url-helper params)
+                                 (if (paytrail-payment/handle-evaluation-payment-return db email-q url-helper payment-config params)
                                    (do
                                      (audit/log {:request request
                                                  :target-kv {:k audit/evaluation-payment

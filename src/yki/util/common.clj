@@ -1,6 +1,7 @@
 (ns yki.util.common
   (:require [clj-time.core :as t]
-            [clj-time.format :as f]))
+            [clj-time.format :as f]
+            [clj-time.coerce :as c]))
 
 (def date-format "YYYY-MM-dd")
 
@@ -24,3 +25,6 @@
 
 (defn format-date-string-to-finnish-format [date-string]
   (f/unparse finnish-date-formatter (f/parse date-string)))
+
+(defn finnish-date-from-long [date-long]
+  (format-date-to-finnish-format (c/from-long date-long)))

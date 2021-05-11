@@ -1,0 +1,59 @@
+{% extends "yki/templates/base.html" %} {% block content %}
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n email.evaluation_payment_kirjaamo.content.line1 %}:
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {{language}} {{level|lower}}, {{exam_date|date-format-with-dots}}
+  </td>
+</tr>
+
+{% for test in subtests %}
+<tr>
+  <td style="padding-left: 20px">{{test}}</td>
+</tr>
+{% endfor %}
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n registration.form.lastName %}: {{last_name}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px">
+    {% i18n registration.form.firstName %}: {{first_names}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px">
+    {% i18n registration.form.birthdate %}: {{birthdate|date-format-with-dots}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px">
+    {% i18n registration.form.email %}: {{email}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n email.evaluation_payment.content.orderNumber %}: {{order_number}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px">
+    {% i18n email.evaluation_payment.content.paid %}:
+    {{order_time|date-format-with-dots-from-long}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px">
+    {% i18n email.evaluation_payment.content.total %}: {{amount}} €
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n email.payment.content.line5 %}
+  </td>
+</tr>
+{% endblock %}

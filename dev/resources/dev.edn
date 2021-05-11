@@ -29,6 +29,7 @@
  :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
                                   :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                                    :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/evaluation-payment"
+                                                   :kirjaamo-email "kirjaamo@testi.fi"
                                                    :merchant_id 13466
                                                    :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"}
                                   :url-helper #ig/ref :yki.util/url-helper

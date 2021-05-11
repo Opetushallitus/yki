@@ -29,9 +29,34 @@
                 :body (template-util/render url-helper "payment_success" lang (assoc participant-data :language language :level level))}))
     success))
 
-;; TODO Add email sending to the customer and to Kirjaamo
-(defn handle-evaluation-payment-success [db email-q url-helper payment-params]
-  (let [success (evaluation-db/complete-payment! db payment-params)]
+(defn handle-evaluation-payment-success [db email-q url-helper payment-config payment-params]
+  (let [success       (evaluation-db/complete-payment! db payment-params)
+        order-data    (evaluation-db/get-order-data-by-order-number db (:order-number payment-params))
+        lang          (:lang order-data)
+        order-time    (System/currentTimeMillis)
+        template-data (assoc order-data
+                             :language (template-util/get-language url-helper (:language_code order-data) lang)
+                             :level (template-util/get-level url-helper (:level_code order-data) lang)
+                             :subtests (template-util/get-subtests url-helper (:subtests order-data) lang)
+                             :order_time order-time
+                             :amount (int (:amount order-data)))]
+
+    (info (str "Evaluation payment success, sending email to " (:email order-data) " and Kirjaamo"))
+
+    ;; Customer email
+    (pgq/put email-q
+             {:recipients [(:email order-data)]
+              :created order-time
+              :subject (template-util/evaluation-subject url-helper lang template-data)
+              :body (template-util/render url-helper "evaluation_payment_success" lang template-data)})
+
+    ;; Kirjaamo email
+    ;; Kirjaamo email will not be translated and only send in Finnish
+    (pgq/put email-q
+             {:recipients [(:kirjaamo-email payment-config)]
+              :created order-time
+              :subject (template-util/evaluation-subject url-helper "fi" template-data)
+              :body (template-util/render url-helper "evaluation_payment_kirjaamo" "fi" template-data)})
     success))
 
 (defn- handle-payment-cancelled [db payment-params]
@@ -91,9 +116,9 @@
     (error "Unknown return status" STATUS)))
 
 (defn handle-evaluation-payment-return
-  [db email-q url-helper {:keys [STATUS] :as params}]
+  [db email-q url-helper payment-config {:keys [STATUS] :as params}]
   (case STATUS
-    "PAID" (handle-evaluation-payment-success db email-q url-helper (payment-params params))
+    "PAID" (handle-evaluation-payment-success db email-q url-helper payment-config (payment-params params))
     "CANCELLED" (handle-payment-cancelled db (payment-params params))
     (error "Unknown return status" STATUS)))
 

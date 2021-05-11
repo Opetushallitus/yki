@@ -1373,6 +1373,40 @@ FROM evaluation_payment ep
 INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
 WHERE order_number = :order_number;
 
+-- name: select-evaluation-order-data-by-order-number
+SELECT
+  ep.state,
+  ep.evaluation_order_id,
+  ep.amount,
+  ep.lang,
+  ep.reference_number,
+  ep.order_number,
+  ep.external_payment_id,
+  ep.payment_method,
+  ep.payed_at,
+  edl.language_code,
+  edl.level_code,
+  ed.exam_date,
+  eo.first_names,
+  eo.last_name,
+  eo.email,
+  eo.birthdate,
+    (
+    SELECT array_to_json(array_agg(subtest))
+    FROM (
+      SELECT subtest
+      FROM evaluation_order_subtest
+      WHERE evaluation_order_id= eo.id
+    ) subtest
+  ) AS subtests
+FROM evaluation_payment ep
+INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
+WHERE order_number = :order_number;
+
+
 
 
 -- name: update-evaluation-payment!
@@ -1386,3 +1420,4 @@ WHERE order_number = :order_number;
     modified = current_timestamp
 WHERE
   order_number = :order_number;
+

@@ -30,6 +30,7 @@
   (get-finished-evaluation-order-by-id [db id])
   (get-subtests [db])
   (get-payment-by-order-number [db order-number])
+  (get-order-data-by-order-number [db order-number])
   (create-evaluation-order! [db evaluation-id evaluation-order])
   (create-evaluation! [db exam-date-languages evaluation])
   (create-evaluation-payment! [db payment])
@@ -56,6 +57,9 @@
   (get-payment-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-evaluation-payment-by-order-number spec {:order_number order-number})))
+  (get-order-data-by-order-number
+    [{:keys [spec]} order-number]
+    (first (q/select-evaluation-order-data-by-order-number spec {:order_number order-number})))
   (create-evaluation!
     [{:keys [spec]} exam-date-languages evaluation]
     (jdbc/with-db-transaction [tx spec]
