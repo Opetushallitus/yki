@@ -1260,9 +1260,8 @@ SELECT ev.id,
 ev.exam_date_language_id,
 ev.evaluation_start_date,
 ev.evaluation_end_date
- FROM evaluation ev
-INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
-WHERE edl.exam_date_id = :exam_date_id AND ev.deleted_at IS NULL;
+FROM evaluation ev
+WHERE ev.exam_date_id = :exam_date_id AND ev.deleted_at IS NULL;
 
 --name: insert-evaluation-order<!
 INSERT INTO evaluation_order (
