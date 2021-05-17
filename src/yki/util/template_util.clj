@@ -58,6 +58,9 @@
   [url-helper language-code lang]
   (localisation/get-translation url-helper (str "common.language." language-code) lang))
 
+(defn get-subtest [url-helper subtest lang]
+  (localisation/get-translation url-helper (subtest-translation-key subtest) lang))
+
 (defn get-subtests
   [url-helper subtests lang]
   (let [translated (fn [test] (localisation/get-translation url-helper (subtest-translation-key test) lang))]

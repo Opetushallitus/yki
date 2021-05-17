@@ -385,3 +385,17 @@
                                     ::email
                                     ::birthdate
                                     ::subtests]))
+
+(s/def ::params (s/keys :req-un [::MERCHANT_ID
+                                 ::LOCALE
+                                 ::URL_SUCCESS
+                                 ::URL_CANCEL
+                                 ::ORDER_NUMBER
+                                 ::MSG_SETTLEMENT_PAYER
+                                 ::MSG_UI_MERCHANT_PANEL
+                                 ::PARAMS_IN
+                                 ::PARAMS_OUT
+                                 ::AUTHCODE]))
+
+(s/def ::evalution-payment-form-data (s/keys :req-un [::uri
+                                                      ::params]))

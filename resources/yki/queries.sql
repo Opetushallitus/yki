@@ -1418,5 +1418,5 @@ WHERE order_number = :order_number;
     payed_at = :payed_at,
     modified = current_timestamp
 WHERE
-  order_number = :order_number;
+  order_number = :order_number AND state != 'PAID';;
 

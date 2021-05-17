@@ -36,17 +36,17 @@
      :coercion :spec
      (GET "/formdata" {session :session}
        :query-params [evaluation-order-id :- ::ys/id {lang :- ::ys/language-code "fi"}]
-       :return ::ys/pt-payment-form-data
+       :return ::ys/evaluation-payment-form-data
        (if-let [order (evaluation-db/get-evaluation-order-with-payment db evaluation-order-id)]
          (if (= (:state order) "PAID")
            (do
              (log/error "Order" evaluation-order-id "has already been paid")
              (conflict {:error "Order has already been paid"}))
-           (if-let [formdata (paytrail-payment/create-evaluation-payment-form-data url-helper order payment-config)]
+           (if-let [formdata (paytrail-payment/create-evaluation-payment-form-data order payment-config url-helper)]
              (do
-               (log/info "Get payment form data success " formdata)
+               (log/info "Get payment form data success for order " evaluation-order-id)
                (ok formdata))
-             (do (log/error "Failed to create form data from " order)
+             (do (log/error "Failed to create evaluation form data from order " order " and configuration " payment-config)
                  (internal-server-error {:error "Payment form data creation failed"}))))
          (do (log/error "Could not find evaluation with id" evaluation-order-id)
              (internal-server-error {:error "Could not find evaluation order"}))))

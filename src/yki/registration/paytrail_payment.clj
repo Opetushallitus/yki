@@ -40,23 +40,23 @@
                              :subtests (template-util/get-subtests url-helper (:subtests order-data) lang)
                              :order_time order-time
                              :amount (int (:amount order-data)))]
-
-    (info (str "Evaluation payment success, sending email to " (:email order-data) " and Kirjaamo"))
+    (when success
+      (info (str "Evaluation payment success, sending email to " (:email order-data) " and Kirjaamo"))
 
     ;; Customer email
-    (pgq/put email-q
-             {:recipients [(:email order-data)]
-              :created order-time
-              :subject (template-util/evaluation-subject url-helper lang template-data)
-              :body (template-util/render url-helper "evaluation_payment_success" lang template-data)})
+      (pgq/put email-q
+               {:recipients [(:email order-data)]
+                :created order-time
+                :subject (template-util/evaluation-subject url-helper lang template-data)
+                :body (template-util/render url-helper "evaluation_payment_success" lang template-data)})
 
     ;; Kirjaamo email
     ;; Kirjaamo email will not be translated and only send in Finnish
-    (pgq/put email-q
-             {:recipients [(:kirjaamo-email payment-config)]
-              :created order-time
-              :subject (template-util/evaluation-subject url-helper "fi" template-data)
-              :body (template-util/render url-helper "evaluation_payment_kirjaamo" "fi" template-data)})
+      (pgq/put email-q
+               {:recipients [(:kirjaamo-email payment-config)]
+                :created order-time
+                :subject (template-util/evaluation-subject url-helper "fi" template-data)
+                :body (template-util/render url-helper "evaluation_payment_kirjaamo" "fi" template-data)}))
     success))
 
 (defn- handle-payment-cancelled [db payment-params]
@@ -84,14 +84,12 @@
       (error "Payment not found for registration-id" registration-id))
     (error "Registration with state submitted not found" registration-id)))
 
-(defn create-evaluation-payment-form-data
-  [url-helper evaluation-order payment-config]
+(defn create-evaluation-payment-form-data [evaluation-order payment-config url-helper]
   (let [lang         (:lang evaluation-order)
         payment-data {:language-code lang
                       :order-number  (:order_number evaluation-order)
-                      :msg (str (localisation/get-translation url-helper "common.paymentMessage" lang))}
-        amount        (if (:test_mode payment-config) "1.00" (str (:amount evaluation-order)))
-        form-data     (payment-util/generate-form-data payment-config amount payment-data)]
+                      :msg (str (localisation/get-translation url-helper "common.paymentMessage.evaluation" lang))}
+        form-data     (payment-util/generate-evaluation-form-data payment-config payment-data url-helper (:subtests evaluation-order))]
     form-data))
 
 (defn valid-return-params? [db params]
