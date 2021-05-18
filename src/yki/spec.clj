@@ -397,5 +397,5 @@
                                  ::PARAMS_OUT
                                  ::AUTHCODE]))
 
-(s/def ::evalution-payment-form-data (s/keys :req-un [::uri
-                                                      ::params]))
+(s/def ::evaluation-payment-form-data (s/keys :req-un [::uri
+                                                       ::params]))
