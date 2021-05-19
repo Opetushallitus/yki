@@ -70,7 +70,7 @@
         (is (= (count open-evaluations) 1))
         (is (= ((first open-evaluations) "exam_date") (base/two-weeks-ago)))))
 
-    (let [evaluation-id (:id (base/select-one (base/select-evaluation-by-date (base/two-weeks-ago))))
+    (let [evaluation-id (:id (base/select-evaluation-by-date (base/two-weeks-ago)))
           request       (mock/request :get (str routing/evaluation-root "/" evaluation-id))
           response      (send-request request)
           response-body (base/body-as-json response)]
@@ -87,8 +87,8 @@
                                                :content-type "application/json"
                                                :body         (slurp "test/resources/localisation.json")}}
 
-    (let [open-evaluation-id   (:id (base/select-one (base/select-evaluation-by-date (base/two-weeks-ago))))
-          closed-evaluation-id (:id (base/select-one (base/select-evaluation-by-date "2019-05-02")))]
+    (let [open-evaluation-id   (:id (base/select-evaluation-by-date (base/two-weeks-ago)))
+          closed-evaluation-id (:id (base/select-evaluation-by-date "2019-05-02"))]
 
       (let [response         (evaluation-order-post open-evaluation-id mock-evaluation-order)
             response-body    (base/body-as-json response)
