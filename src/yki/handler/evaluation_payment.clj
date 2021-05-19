@@ -48,7 +48,7 @@
                (ok formdata))
              (do (log/error "Failed to create evaluation form data from order " order " and configuration " payment-config)
                  (internal-server-error {:error "Payment form data creation failed"}))))
-         (do (log/error "Could not find evaluation with id" evaluation-order-id)
+         (do (log/error "Could not find evaluation order with id" evaluation-order-id)
              (internal-server-error {:error "Could not find evaluation order"}))))
      (GET "/success" request
        (let [params (:params request)]

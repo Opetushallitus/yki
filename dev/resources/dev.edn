@@ -30,8 +30,12 @@
                                   :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                                    :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/evaluation-payment"
                                                    :kirjaamo-email "kirjaamo@testi.fi"
-                                                   :merchant_id 13466
-                                                   :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"}
+                                                   :merchant_id "13466"
+                                                   :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
+                                                   :amount {:READING "50.00"
+                                                            :LISTENING "50.00"
+                                                            :WRITING "50.00"
+                                                            :SPEAKING "50.00"}}
                                   :url-helper #ig/ref :yki.util/url-helper
                                   :email-q #ig/ref :yki.job.job-queue/email-q}
 

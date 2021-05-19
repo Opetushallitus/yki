@@ -1,13 +1,12 @@
 --;;
 CREATE TABLE IF NOT EXISTS evaluation (
   id BIGSERIAL PRIMARY KEY,
-  language_code CHAR(3) REFERENCES language (code) NOT NULL,
-  level_code TEXT REFERENCES exam_level (code) NOT NULL,
   exam_date_id BIGSERIAL NOT NULL REFERENCES exam_date(id),
+  exam_date_language_id BIGSERIAL REFERENCES exam_date_language(id) NOT NULL,
   evaluation_start_date DATE NOT NULL,
   evaluation_end_date DATE NOT NULL,
   deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-  UNIQUE (language_code, level_code, exam_date_id)
+  UNIQUE (exam_date_language_id)
 );
 
 -- Is re-evalution period open
@@ -39,7 +38,7 @@ CREATE TABLE IF NOT EXISTS evaluation_order (
   first_names TEXT NOT NULL,
   last_name TEXT NOT NULL,
   email TEXT,
-  phone_number TEXT,
+  birthdate TEXT,
   extra TEXT,
   created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
   deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL

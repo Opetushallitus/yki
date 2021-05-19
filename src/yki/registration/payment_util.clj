@@ -64,7 +64,7 @@
                                      url-helper subtests]
   (let [params-in     (str "MERCHANT_ID,LOCALE,URL_SUCCESS,URL_CANCEL,URL_NOTIFY,ORDER_NUMBER,MSG_SETTLEMENT_PAYER,MSG_UI_MERCHANT_PANEL" (subtest-params subtests) ",PARAMS_IN,PARAMS_OUT")
         params-out    "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS,PAYMENT_METHOD,SETTLEMENT_REFERENCE_NUMBER"
-        form-params (merge {:MERCHANT_ID  merchant_id
+        form-params (merge {:MERCHANT_ID  (if (integer? merchant_id) merchant_id (Integer/parseInt merchant_id))
                             :LOCALE       (case language-code "fi" "fi_FI" "sv" "sv_SE" "en" "en_US")
                             :URL_SUCCESS  (str yki-payment-uri "/success")
                             :URL_CANCEL   (str yki-payment-uri "/cancel")

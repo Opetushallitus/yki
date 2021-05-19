@@ -266,7 +266,7 @@
   (str "(SELECT id, language_code, level_code from exam_date_language WHERE exam_date_id='" exam-date-id "' AND deleted_at IS NULL)"))
 
 (defn select-evaluation-by-date [exam-date]
-  (str "(SELECT * from evaluation WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")"))
+  (select-one (str "(SELECT * from evaluation WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")")))
 
 (defn insert-exam-session
   [exam-date-id oid count]
@@ -366,33 +366,31 @@
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
                                     VALUES (" fourth-date-id ", '2019-08-01', '2019-08-15', " (exam-date-language-id fourth-date-id) ")"))))
 
-(defn insert-evaluation-payment-data []
-  (let [exam-date (days-ago 30)
-        exam-date-id (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))]
+(defn insert-evaluation-payment-data [{:keys [first_names last_name email birthdate]}]
 
-    (jdbc/execute! @embedded-db/conn
-                   (str "INSERT INTO exam_date (exam_date, registration_start_date, registration_end_date) VALUES ('" exam-date "', '" (days-ago 40) "', '" (days-ago 35) "')"))
-    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, language_code, level_code)
-                                    VALUES (" (exam-date-id exam-date) ", '" (yesterday) "', '" (two-weeks-from-now) "', 'fin', 'PERUS')"))
-
-    (let [evaluation-id (:id (select-one (select-evaluation-by-date exam-date)))]
-      (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order (evaluation_id, first_names, last_name, email, birthdate)
-                                    VALUES (" evaluation-id ", 'Anne Marie', 'Jones', 'anne@testi.fi', '2000-01-01')"))
-      (let [evaluation-order-id (:id (select-one (str "SELECT id FROM evaluation_order WHERE email = 'anne@testi.fi'")))]
-        (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
+  (let [evaluation-id (:id  (select-evaluation-by-date (two-weeks-ago)))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order (evaluation_id, first_names, last_name, email, birthdate)
+                                    VALUES (" evaluation-id ", '" first_names "', '" last_name "', '" email "', '" birthdate "')"))
+    (let [evaluation-order-id (:id (select-one (str "SELECT id FROM evaluation_order WHERE email = '" email "'")))]
+      (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
                                    VALUES (" evaluation-order-id ", 'READING')"))
-        (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
+      (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
                                VALUES (" evaluation-order-id ", 'LISTENING')"))
-        (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment
+      (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment
                                                (state, evaluation_order_id, amount, lang, order_number) VALUES
-                                               ('UNPAID'," evaluation-order-id ", 100, 'fi', 'YKI-EVA-TEST')"))))))
+                                               ('UNPAID'," evaluation-order-id ", 100, 'fi', 'YKI-EVA-TEST')")))))
 
-(defn get-evaluation-order []
+(defn get-evaluation-order-and-status [{:keys [first_names last_name email birthdate]}]
   (select-one (str "SELECT
   eo.id,
+  eo.first_names,
+  eo.last_name,
+  eo.email,
+  eo.birthdate,
   edl.language_code,
   edl.level_code,
   ed.exam_date,
+  ep.state,
   (
     SELECT array_to_json(array_agg(subtest))
     FROM (
@@ -403,21 +401,17 @@
   ) AS subtests
 FROM evaluation_order eo
 INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
-INNER JOIN exam_date_language edl OM edl.id = ev.exam_date_language_id
+INNER JOIN exam_date_language edl ON edl.id = ev.exam_date_language_id
 INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
-WHERE eo.id = " 1)))
+INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
+WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND eo.email = '" email "' AND eo.birthdate = '" birthdate "'")))
 
-
-    ;(let [evaluation-order-id (:id (select-one (str "SELECT id FROM evaluation_oder")))])
-    ;(jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
-    ;                                VALUES (" evaluation-id ", 'READING')"))
-    ;(jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
-    ;                               VALUES (" evaluation-id ", 'LISTENING')"))
-
-
-(defn insert-test []
-  (jdbc/execute! @embedded-db/conn
-                 (str "INSERT INTO exam_date (exam_date, registration_start_date, registration_end_date) VALUES ('" (days-ago 29) "', '" (days-ago 40) "', '" (days-ago 35) "')")))
+(defn get-evaluation-payment-status-by-orde-id [order-id]
+  (select-one
+   (str "SELECT ep.state, ep.amount
+         FROM evaluation_order eo
+         INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
+         WHERE eo.id = " order-id " AND deleted_at IS NULL")))
 
 (defn insert-base-data []
   (insert-organizer "'1.2.3.4'")
