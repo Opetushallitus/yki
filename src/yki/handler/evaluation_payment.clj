@@ -45,6 +45,9 @@
            (if-let [formdata (paytrail-payment/create-evaluation-payment-form-data order payment-config url-helper)]
              (do
                (log/info "Get payment form data success for order " evaluation-order-id)
+               ;; TODO remove, debugging
+               (log/info "Payment config: " payment-config)
+               (log/info "Return formdata: " formdata)
                (ok formdata))
              (do (log/error "Failed to create evaluation form data from order " order " and configuration " payment-config)
                  (internal-server-error {:error "Payment form data creation failed"}))))
