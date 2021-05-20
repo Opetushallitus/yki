@@ -48,7 +48,12 @@
                                        :yki-payment-uri "https://yki.{{host_oppija}}/yki/api/evaluation-payment"
                                        :kirjaamo-email "{{yki_evaluation_kirjaamo_email}}"
                                        :merchant_id "{{yki_evaluation_merchant_id}}"
-                                       :merchant_secret "{{yki_evaluation_merchant_secret}}"}}
+                                       :merchant_secret "{{yki_evaluation_merchant_secret}}"
+                                       :amount {:READING "{{yki_exam_session_fee_reading}}"
+                                                :LISTENING "{{yki_exam_session_fee_listening}}"
+                                                :WRITING "{{yki_exam_session_fee_writing}}"
+                                                :SPEAKING "{{yki_exam_session_fee_speaking}}"
+                                              }}}
 
 :yki.handler/evaluation { :db #ig/ref :duct.database/sql
                           :payment-config {:amount {:READING "{{yki_exam_session_fee_reading}}"
