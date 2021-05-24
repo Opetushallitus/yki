@@ -34,6 +34,7 @@
   (api
    (context (str routing/evaluation-payment-root) []
      :coercion :spec
+     :no-doc true
      (GET "/formdata" {session :session}
        :query-params [evaluation-order-id :- ::ys/id {lang :- ::ys/language-code "fi"}]
        :return ::ys/evaluation-payment-form-data

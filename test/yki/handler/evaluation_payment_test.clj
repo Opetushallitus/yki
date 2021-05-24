@@ -39,7 +39,7 @@
 (defn- send-request [request port]
   (let [handler (api (ig/init-key :yki.handler/evaluation-payment {:db (base/db)
                                                                    :payment-config   {:paytrail-host  "https://payment.paytrail.com/e2"
-                                                                                      :yki-payment-uri "http://localhost:8080/yki/api/evaluation-payment"
+                                                                                      :yki-payment-uri "http://localhost:8080/yki/evaluation-payment"
                                                                                       :merchant_id "12345"
                                                                                       :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
                                                                                       :kirjaamo-email "kirjaamo@testi.fi"

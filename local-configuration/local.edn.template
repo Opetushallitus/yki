@@ -85,7 +85,7 @@
     :auth #ig/ref :yki.middleware.auth/with-authentication
     :access-log #ig/ref :yki.middleware.access-log/with-logging
     :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                      :yki-payment-uri "http://example.com/yki/api/evaluation-payment"
+                      :yki-payment-uri "http://example.com/yki/evaluation-payment"
                       :merchant_id "13466"
                       :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
                       :kirjaamo_email "kirjaamo@testi.fi"

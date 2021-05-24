@@ -45,7 +45,7 @@
 
 :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
                       :payment-config {:paytrail-host "{{yki_paytrail_host}}"
-                                       :yki-payment-uri "https://yki.{{host_oppija}}/yki/api/evaluation-payment"
+                                       :yki-payment-uri "https://yki.{{host_oppija}}/yki/evaluation-payment"
                                        :kirjaamo-email "{{yki_evaluation_kirjaamo_email}}"
                                        :merchant_id "{{yki_evaluation_merchant_id}}"
                                        :merchant_secret "{{yki_evaluation_merchant_secret}}"
