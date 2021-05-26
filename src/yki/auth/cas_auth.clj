@@ -140,9 +140,9 @@
         address      {:post_office VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip VakinainenKotimainenLahiosoitePostinumero
                       :street_address VakinainenKotimainenLahiosoiteS}
-        lang          (or language (or (some #{(get-in asiointiKieli ["kieliKoodi"])}
-                                             ["fi" "sv"])
-                                       "fi"))
+        lang          (or language (some #{(get-in asiointiKieli ["kieliKoodi"])}
+                                         ["fi" "sv"])
+                          "fi")
         redirect-uri  (if (:success-redirect session)
                         (str (:success-redirect session))
                         (url-helper :exam-session.redirect exam-session-id lang))]
