@@ -176,7 +176,7 @@
             lang           (str/lower-case (or (some #{(-> request :route-params :*)}
                                                      ["FI" "SV" "EN"])
                                                "fi"))
-            callback-uri   (url-helper :cas-oppija.login-success examSessionId lang)
+            callback-uri   (url-helper (str "cas-oppija.login-success." lang) examSessionId)
             cas-response   (cas/validate-oppija-ticket (cas-client "/") ticket callback-uri)
             cas-attributes (process-cas-attributes cas-response)
             session        (:session request)]
