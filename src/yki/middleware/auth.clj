@@ -116,6 +116,9 @@
     :handler any-access}
    {:pattern #".*/auth/callback"
     :handler any-access}
+   {:pattern #"^.*/auth/callback.*"
+    :handler any-access
+    :request-method :get}
    {:pattern #".*/api/exam-session"
     :handler any-access
     :request-method :get}
