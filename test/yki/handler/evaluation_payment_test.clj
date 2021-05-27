@@ -37,7 +37,10 @@
 (use-fixtures :each embedded-db/with-transaction insert-prereq-data)
 
 (defn- send-request [request port]
-  (let [handler (api (ig/init-key :yki.handler/evaluation-payment {:db (base/db)
+  (let [url-helper (base/create-url-helper (str "localhost:" port))
+        handler (api (ig/init-key :yki.handler/evaluation-payment {:db (base/db)
+                                                                   :auth (base/auth url-helper)
+                                                                   :access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
                                                                    :payment-config   {:paytrail-host  "https://payment.paytrail.com/e2"
                                                                                       :yki-payment-uri "http://localhost:8080/yki/evaluation-payment"
                                                                                       :merchant_id "12345"

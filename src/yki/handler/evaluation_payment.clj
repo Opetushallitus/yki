@@ -11,15 +11,15 @@
             [integrant.core :as ig]))
 
 (defn- success-redirect [url-helper lang order-id]
-  (log/info "Payment success, redirecting to: " (url-helper :evaluation-payment.success-redirect lang order-id))
+  (log/info "Evaluation payment success, redirecting to: " (url-helper :evaluation-payment.success-redirect lang order-id))
   (found (url-helper :evaluation-payment.success-redirect lang order-id)))
 
 (defn- error-redirect [url-helper lang order-id]
-  (log/info "Payment error, redirecting to: " (url-helper :evaluation-payment.error-redirect lang order-id))
+  (log/info "Evaluation payment error, redirecting to: " (url-helper :evaluation-payment.error-redirect lang order-id))
   (found (url-helper :evaluation-payment.error-redirect lang order-id)))
 
 (defn- cancel-redirect [url-helper lang order-id]
-  (log/info "Payment cancelled, redirecting to: " (url-helper :evaluation-payment.cancel-redirect lang order-id))
+  (log/info "Evaluation payment cancelled, redirecting to: " (url-helper :evaluation-payment.cancel-redirect lang order-id))
   (found (url-helper :evaluation-payment.cancel-redirect lang order-id)))
 
 (defn- handle-exceptions [url-helper f]
@@ -29,12 +29,13 @@
       (log/error e "Payment handling failed")
       (error-redirect url-helper))))
 
-(defmethod ig/init-key :yki.handler/evaluation-payment [_ {:keys [db payment-config url-helper email-q]}]
-  {:pre [(some? db) (some? payment-config) (some? url-helper) (some? email-q)]}
+(defmethod ig/init-key :yki.handler/evaluation-payment [_ {:keys [db auth access-log payment-config url-helper email-q]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? payment-config) (some? url-helper) (some? email-q)]}
   (api
    (context (str routing/evaluation-payment-root) []
      :coercion :spec
      :no-doc true
+     :middleware [auth access-log]
      (GET "/formdata" {session :session}
        :query-params [evaluation-order-id :- ::ys/id {lang :- ::ys/language-code "fi"}]
        :return ::ys/evaluation-payment-form-data
