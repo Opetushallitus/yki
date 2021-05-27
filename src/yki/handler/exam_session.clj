@@ -166,7 +166,7 @@
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]
               :return ::ys/response
-              (log/info "Start relocating registration" registration-id " from session " id " to session " (:to_exam_session_id relocate-request))
+              (log/info "Start relocating registration" registration-id "from session" id "to session" (:to_exam_session_id relocate-request))
               (let [to-exam-session-id (:to_exam_session_id relocate-request)
                     success?           (exam-session-db/update-registration-exam-session! db to-exam-session-id registration-id oid)]
                 (if success?
@@ -177,7 +177,9 @@
                                     :change {:type audit-log/update-op
                                              :old {:exam_session_id id}
                                              :new {:exam_session_id (:to_exam_session_id relocate-request)}}})
-                    (exam-session-db/init-relocated-participants-sync-status! db id to-exam-session-id)
+                    ;; Handles synchronising original and destionation exam sessions to solki
+                    ;; Disabled until solki can figure out how to handle it on their end
+                    ;; (exam-session-db/init-relocated-participants-sync-status! db id to-exam-session-id)
                     (response {:success true}))
                   (not-found {:success false
                               :error "Registration not found"}))))
