@@ -32,9 +32,9 @@
 (defmethod ig/init-key :yki.handler/evaluation-payment [_ {:keys [db auth access-log payment-config url-helper email-q]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? payment-config) (some? url-helper) (some? email-q)]}
   (api
-   (context (str routing/evaluation-payment-root) []
+   (context routing/evaluation-payment-root []
      :coercion :spec
-     :no-doc true
+     ;:no-doc true
      :middleware [auth access-log]
      (GET "/formdata" {session :session}
        :query-params [evaluation-order-id :- ::ys/id {lang :- ::ys/language-code "fi"}]

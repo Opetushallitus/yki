@@ -124,7 +124,16 @@
     :request-method :get}
    {:pattern #".*/api/evaluation.*"
     :handler any-access}
-   {:pattern #".*/evaluation-payment.*"
+   {:pattern #".*/evaluation-payment/formdata"
+    :handler any-access
+    :request-method :get}
+   {:pattern #".*/evaluation-payment/success"
+    :handler any-access
+    :request-method :get}
+   {:pattern #".*/evaluation-payment/cancel"
+    :handler any-access
+    :request-method :get}
+   {:pattern #".*/evaluation-payment/notify"
     :handler any-access
     :request-method :get}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
