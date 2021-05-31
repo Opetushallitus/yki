@@ -125,7 +125,7 @@
                                    :attributes])]
     (assoc (process-attributes attributes) :success? success :failureMessage failure)))
 
-(defn oppija-login-response [exam-session-id session cas-attributes url-helper onr-client]
+(defn oppija-login-response [exam-session-id language session cas-attributes url-helper onr-client]
   (let [{:keys [VakinainenKotimainenLahiosoitePostitoimipaikkaS
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
@@ -140,11 +140,11 @@
         address      {:post_office VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip VakinainenKotimainenLahiosoitePostinumero
                       :street_address VakinainenKotimainenLahiosoiteS}
-        lang          (or (some #{(get-in asiointiKieli ["kieliKoodi"])}
-                                ["fi" "sv"])
+        lang          (or language (some #{(get-in asiointiKieli ["kieliKoodi"])}
+                                         ["fi" "sv"])
                           "fi")
         redirect-uri  (if (:success-redirect session)
-                        (str (:success-redirect session) "?lang=" lang)
+                        (str (:success-redirect session))
                         (url-helper :exam-session.redirect exam-session-id lang))]
     (info "Redirecting oppija to url: " redirect-uri)
     (if (and sn firstName nationalIdentificationNumber)
@@ -168,16 +168,20 @@
         :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))
 
-(defn oppija-login [exam-session-id ticket request cas-client onr-client url-helper]
+(defn oppija-login [ticket request cas-client onr-client url-helper]
   (try
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
-      (let [callback-uri   (url-helper :cas-oppija.login-success exam-session-id)
+      (let [{:strs [examSessionId]} (:query-params request)
+            lang           (str/lower-case (or (some #{(-> request :route-params :*)}
+                                                     ["FI" "SV" "EN"])
+                                               "fi"))
+            callback-uri   (url-helper (str "cas-oppija.login-success." lang) examSessionId)
             cas-response   (cas/validate-oppija-ticket (cas-client "/") ticket callback-uri)
             cas-attributes (process-cas-attributes cas-response)
             session        (:session request)]
         (if (:success?  cas-attributes)
-          (oppija-login-response exam-session-id session cas-attributes url-helper onr-client)
+          (oppija-login-response examSessionId lang session cas-attributes url-helper onr-client)
           (validation-failed-response (:failureMessage cas-attributes))))
       unauthorized)
     (catch Exception e

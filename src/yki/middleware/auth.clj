@@ -88,11 +88,15 @@
 
 (defn- redirect-to-cas-oppija
   [request url-helper]
-  (log/info "Redirecting to cas oppija")
+  (log/info "Redirect to cas-oppija")
   (let [exam-session-id ((:query-params request) "examSessionId")
-        lang (or ((:query-params request) "lang") "fi")]
+        lang            (or (some #{((:query-params request) "lang")}
+                                  ["fi" "sv" "en"])
+                            "fi")
+        success-url     (url-helper (str "cas-oppija.login-success." lang) exam-session-id)
+        login-url       (str (url-helper :cas-oppija.login lang) success-url)]
     (assoc
-     (see-other (url-helper :cas-oppija.login exam-session-id))
+     (see-other login-url)
      :session
      {:success-redirect (url-helper :exam-session.redirect exam-session-id lang)})))
 
@@ -112,6 +116,9 @@
     :handler any-access}
    {:pattern #".*/auth/callback"
     :handler any-access}
+   {:pattern #".*/auth/callback.*"
+    :handler any-access
+    :request-method :get}
    {:pattern #".*/api/exam-session"
     :handler any-access
     :request-method :get}

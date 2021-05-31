@@ -29,8 +29,8 @@
          (code-auth/logout url-helper (or (get-in session [:identity :lang]) "fi"))))
      (POST "/callback" request
        (cas-auth/cas-oppija-logout url-helper))
-     (GET "/callback" [ticket examSessionId :as request]
-       (cas-auth/oppija-login examSessionId ticket request cas-client onr-client url-helper))
+     (GET "/callback*" [ticket :as request]
+       (cas-auth/oppija-login ticket request cas-client onr-client url-helper))
      (context routing/virkailija-auth-uri []
        (POST "/callback" request
          (cas-auth/cas-logout db (get-in request [:params :logoutRequest])))
