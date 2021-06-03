@@ -164,7 +164,7 @@
           participant-id  (get-participant-id db identity)
           email           (:email form)
           started?        (= (:state exam-session-registration) "STARTED")]
-      (log/info (str "Get registration data with registration id" registration-id ", participant id" participant-id "and lang" lang ". Current state:" (:state exam-session-registration)))
+      (log/info (str "Get registration data with registration id " registration-id " , participant id " participant-id " and lang " lang ". Current state: " (:state exam-session-registration)))
       (when email
         (registration-db/update-participant-email! db email participant-id))
       (if-let [registration-data (when started? (registration-db/get-registration-data db registration-id participant-id lang))]
