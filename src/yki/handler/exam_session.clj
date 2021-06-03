@@ -177,7 +177,7 @@
                                              :new {:exam_session_id (:to_exam_session_id relocate-request)}}})
                     ;; Handles synchronising original and destionation exam sessions to solki
                     ;; Disabled until solki can figure out how to handle it on their end
-                    (exam-session-db/init-relocated-participants-sync-status! db id to-exam-session-id)
+                    ;;(exam-session-db/init-relocated-participants-sync-status! db id to-exam-session-id)
                     (response {:success true}))
                   (not-found {:success false
                               :error "Registration not found"}))))
