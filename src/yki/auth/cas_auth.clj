@@ -19,10 +19,6 @@
                    :body "Unauthorized"
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
-(defn- validation-failed-response [message]
-  (log/info "Ticket validation failed: " message)
-  {:status 403 :body {:error "Ticket validation failed"}})
-
 (defn- yki-permission? [permission]
   (= (:palvelu permission) "YKI"))
 
@@ -168,6 +164,10 @@
         :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))
 
+(defn- validation-failed-response [message exam-session-id lang url-helper]
+  (log/info "Ticket validation failed: " message)
+  (found (url-helper :exam-session.fail.redirect exam-session-id lang)))
+
 (defn oppija-login [ticket request cas-client onr-client url-helper]
   (try
     (info "Begin cas-oppija ticket handling: " ticket)
@@ -182,7 +182,7 @@
             session        (:session request)]
         (if (:success?  cas-attributes)
           (oppija-login-response examSessionId lang session cas-attributes url-helper onr-client)
-          (validation-failed-response (:failureMessage cas-attributes))))
+          (validation-failed-response (:failureMessage cas-attributes) examSessionId lang url-helper)))
       unauthorized)
     (catch Exception e
       (error e "Oppija cas ticket handling failed")
