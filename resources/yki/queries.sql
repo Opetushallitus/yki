@@ -722,18 +722,26 @@ INSERT INTO participant_sync_status(
                     WHERE exam_session_id = :exam_session_id)
 ON CONFLICT DO NOTHING;
 
+--name: select-relocated-session-for-sync
+SELECT es.id
+FROM exam_session es
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+WHERE es.id = :exam_session_id
+  AND (ed.exam_date - interval '14 day') >= current_date
+  AND (SELECT COUNT(1)
+     FROM participant_sync_status pss
+     WHERE pss.exam_session_id = es.id
+            AND pss.success_at IS NULL)  = 0;
+
+
+
 --name: insert-relocated-participants-sync-status!
 INSERT INTO participant_sync_status(
   relocated_at,
   exam_session_id
 ) VALUES (
   current_timestamp,
-  (SELECT :exam_session_id
-    WHERE NOT EXISTS (SELECT exam_session_id
-                    FROM participant_sync_status
-                    WHERE exam_session_id = :exam_session_id
-                     AND relocated_at IS NOT NULL
-                     AND success_at IS NULL)))
+  :exam_session_id)
 ON CONFLICT DO NOTHING;
 
 -- Syncronization is done during registration period and
