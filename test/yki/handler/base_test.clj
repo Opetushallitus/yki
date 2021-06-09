@@ -367,6 +367,7 @@
                                     VALUES (" fourth-date-id ", '2019-08-01', '2019-08-15', " (exam-date-language-id fourth-date-id) ")"))))
 
 (defn insert-evaluation-payment-data [{:keys [first_names last_name email birthdate]}]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE evaluation_payment_config SET merchant_id=12345, merchant_secret='6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ', email='kirjaamo@testi.fi' "))
 
   (let [evaluation-id (:id  (select-evaluation-by-date (two-weeks-ago)))]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order (evaluation_id, first_names, last_name, email, birthdate)
@@ -406,7 +407,7 @@ INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
 INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
 WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND eo.email = '" email "' AND eo.birthdate = '" birthdate "'")))
 
-(defn get-evaluation-payment-status-by-orde-id [order-id]
+(defn get-evaluation-payment-status-by-order-id [order-id]
   (select-one
    (str "SELECT ep.state, ep.amount
          FROM evaluation_order eo

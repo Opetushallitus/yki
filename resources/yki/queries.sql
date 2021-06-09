@@ -1405,9 +1405,6 @@ INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE order_number = :order_number;
 
-
-
-
 -- name: update-evaluation-payment!
  UPDATE evaluation_payment
  SET
@@ -1418,5 +1415,14 @@ WHERE order_number = :order_number;
     payed_at = :payed_at,
     modified = current_timestamp
 WHERE
-  order_number = :order_number AND state != 'PAID';;
+  order_number = :order_number AND state != 'PAID';
+
+-- For now we only have one config for evaluation payment with set id.
+-- name: select-evaluation-payment-config
+SELECT
+  merchant_id,
+  merchant_secret,
+  email,
+  test_mode
+FROM evaluation_payment_config WHERE id = 1;
 

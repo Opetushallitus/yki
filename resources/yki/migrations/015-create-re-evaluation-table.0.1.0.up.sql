@@ -53,8 +53,6 @@ CREATE TABLE IF NOT EXISTS evaluation_order_subtest (
   UNIQUE (evaluation_order_id, subtest)
 );
 
-ALTER TYPE login_link_type ADD VALUE IF NOT EXISTS 'EVALUATION_PAYMENT';
-
 --;;
 CREATE SEQUENCE IF NOT EXISTS evaluation_payment_order_number_seq;
 --;;
@@ -73,3 +71,15 @@ CREATE TABLE IF NOT EXISTS evaluation_payment (
   modified TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
+
+--;; Where evaluation payment is directed. Confirmation email is send to this email.
+CREATE TABLE IF NOT EXISTS evaluation_payment_config (
+  id int PRIMARY KEY,
+  merchant_id INT,
+  merchant_secret TEXT,
+  email TEXT,
+  test_mode BOOLEAN DEFAULT FALSE
+);
+
+--;; Appropriate merchant id and secret should be updated to database for each environment
+INSERT INTO evaluation_payment_config (id, email) values (1, 'placeholder@testi.fi') ON CONFLICT DO NOTHING;

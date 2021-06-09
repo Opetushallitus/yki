@@ -34,7 +34,7 @@
   (api
    (context routing/evaluation-payment-root []
      :coercion :spec
-     ;:no-doc true
+     :no-doc true
      :middleware [auth access-log]
      (GET "/formdata" {session :session}
        :query-params [evaluation-order-id :- ::ys/id {lang :- ::ys/language-code "fi"}]
@@ -44,26 +44,24 @@
            (do
              (log/error "Order" evaluation-order-id "has already been paid")
              (conflict {:error "Order has already been paid"}))
-           (if-let [formdata (paytrail-payment/create-evaluation-payment-form-data order payment-config url-helper)]
+           (if-let [formdata (paytrail-payment/create-evaluation-payment-form-data order (merge payment-config (evaluation-db/get-payment-config db)) url-helper)]
              (do
                (log/info "Get payment form data success for order " evaluation-order-id)
-               ;; TODO remove, debugging
-               (log/info "Payment config: " payment-config)
-               (log/info "Return formdata: " formdata)
                (ok formdata))
-             (do (log/error "Failed to create evaluation form data from order " order " and configuration " payment-config)
+             (do (log/error "Failed to create evaluation form data from order " order)
                  (internal-server-error {:error "Payment form data creation failed"}))))
          (do (log/error "Could not find evaluation order with id" evaluation-order-id)
              (internal-server-error {:error "Could not find evaluation order"}))))
      (GET "/success" request
-       (let [params (:params request)]
+       (let [params (:params request)
+             eval-config (merge payment-config (evaluation-db/get-payment-config db))]
          (log/info "Received evaluation payment success params" params)
          (handle-exceptions url-helper
-                            #(if (paytrail-payment/valid-evaluation-return-params? params payment-config)
+                            #(if (paytrail-payment/valid-evaluation-return-params? params eval-config)
                                (let [payment   (paytrail-payment/get-evaluation-payment db params)
                                      lang      (or (:lang payment) "fi")
                                      order-id  (:evaluation_order_id payment)]
-                                 (if (paytrail-payment/handle-evaluation-payment-return db email-q url-helper payment-config params)
+                                 (if (paytrail-payment/handle-evaluation-payment-return db email-q url-helper eval-config params)
                                    (do
                                      (audit/log {:request request
                                                  :target-kv {:k audit/evaluation-payment

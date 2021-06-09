@@ -30,16 +30,16 @@
     success))
 
 (defn handle-evaluation-payment-success [db email-q url-helper payment-config payment-params]
-  (let [success       (evaluation-db/complete-payment! db payment-params)
-        order-data    (evaluation-db/get-order-data-by-order-number db (:order-number payment-params))
-        lang          (:lang order-data)
-        order-time    (System/currentTimeMillis)
-        template-data (assoc order-data
-                             :language (template-util/get-language url-helper (:language_code order-data) lang)
-                             :level (template-util/get-level url-helper (:level_code order-data) lang)
-                             :subtests (template-util/get-subtests url-helper (:subtests order-data) lang)
-                             :order_time order-time
-                             :amount (int (:amount order-data)))]
+  (let [success        (evaluation-db/complete-payment! db payment-params)
+        order-data     (evaluation-db/get-order-data-by-order-number db (:order-number payment-params))
+        lang           (:lang order-data)
+        order-time     (System/currentTimeMillis)
+        template-data  (assoc order-data
+                              :language (template-util/get-language url-helper (:language_code order-data) lang)
+                              :level (template-util/get-level url-helper (:level_code order-data) lang)
+                              :subtests (template-util/get-subtests url-helper (:subtests order-data) lang)
+                              :order_time order-time
+                              :amount (int (:amount order-data)))]
     (when success
       (info (str "Evaluation payment success, sending email to " (:email order-data) " and Kirjaamo"))
 
@@ -53,7 +53,7 @@
     ;; Kirjaamo email
     ;; Kirjaamo email will not be translated and only send in Finnish
       (pgq/put email-q
-               {:recipients [(:kirjaamo-email payment-config)]
+               {:recipients [(:email payment-config)]
                 :created order-time
                 :subject (template-util/evaluation-subject url-helper "fi" template-data)
                 :body (template-util/render url-helper "evaluation_payment_kirjaamo" "fi" template-data)}))

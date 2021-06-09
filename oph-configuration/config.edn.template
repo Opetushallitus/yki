@@ -48,9 +48,6 @@
                                  :access-log #ig/ref :yki.middleware.access-log/with-logging
                                  :payment-config {:paytrail-host "{{yki_paytrail_host}}"
                                        :yki-payment-uri "https://yki.{{host_oppija}}/yki/evaluation-payment"
-                                       :kirjaamo-email "{{yki_evaluation_kirjaamo_email}}"
-                                       :merchant_id "{{yki_evaluation_merchant_id}}"
-                                       :merchant_secret "{{yki_evaluation_merchant_secret}}"
                                        :amount {:READING "{{yki_exam_session_fee_reading}}"
                                                 :LISTENING "{{yki_exam_session_fee_listening}}"
                                                 :WRITING "{{yki_exam_session_fee_writing}}"

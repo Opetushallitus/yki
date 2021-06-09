@@ -43,9 +43,6 @@
                                                                    :access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
                                                                    :payment-config   {:paytrail-host  "https://payment.paytrail.com/e2"
                                                                                       :yki-payment-uri "http://localhost:8080/yki/evaluation-payment"
-                                                                                      :merchant_id "12345"
-                                                                                      :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
-                                                                                      :kirjaamo-email "kirjaamo@testi.fi"
                                                                                       :amount {:READING "50.00"
                                                                                                :LISTENING "50.00"
                                                                                                :WRITING "50.00"
@@ -89,7 +86,7 @@
         (is (= "UNPAID" (:state evaluation-order))))
 
       (testing "when payment is successful, evaluation payment status should be PAID"
-        (is (= "PAID" (:state (base/get-evaluation-payment-status-by-orde-id (:id evaluation-order))))))
+        (is (= "PAID" (:state (base/get-evaluation-payment-status-by-order-id (:id evaluation-order))))))
 
       (testing "when payment is successful, user should be redirected to correct success url"
         (is (s/includes? location (str "tila?status=payment-success&lang=fi&id=" (:id evaluation-order)))))
