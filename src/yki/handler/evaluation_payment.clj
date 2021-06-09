@@ -22,6 +22,14 @@
   (log/info "Evaluation payment cancelled, redirecting to: " (url-helper :evaluation-payment.cancel-redirect lang order-id))
   (found (url-helper :evaluation-payment.cancel-redirect lang order-id)))
 
+(defn- evaluation-payment-config [db base-config]
+  (let [eval-config (->> db
+                         (evaluation-db/get-payment-config)
+                         (merge base-config))]
+    (if (:test_mode eval-config)
+      (assoc eval-config :amount {:READING "1.00" :LISTENING "1.00" :WRITING "1.00" :SPEAKING "1.00"})
+      eval-config)))
+
 (defn- handle-exceptions [url-helper f]
   (try
     (f)
@@ -44,7 +52,7 @@
            (do
              (log/error "Order" evaluation-order-id "has already been paid")
              (conflict {:error "Order has already been paid"}))
-           (if-let [formdata (paytrail-payment/create-evaluation-payment-form-data order (merge payment-config (evaluation-db/get-payment-config db)) url-helper)]
+           (if-let [formdata (paytrail-payment/create-evaluation-payment-form-data order (evaluation-payment-config db payment-config) url-helper)]
              (do
                (log/info "Get payment form data success for order " evaluation-order-id)
                (ok formdata))
@@ -53,8 +61,8 @@
          (do (log/error "Could not find evaluation order with id" evaluation-order-id)
              (internal-server-error {:error "Could not find evaluation order"}))))
      (GET "/success" request
-       (let [params (:params request)
-             eval-config (merge payment-config (evaluation-db/get-payment-config db))]
+       (let [params      (:params request)
+             eval-config (evaluation-payment-config db payment-config)]
          (log/info "Received evaluation payment success params" params)
          (handle-exceptions url-helper
                             #(if (paytrail-payment/valid-evaluation-return-params? params eval-config)
@@ -76,7 +84,7 @@
        (let [params (:params request)]
          (log/info "Received evaluation payment cancel params" params)
          (handle-exceptions url-helper
-                            #(if (paytrail-payment/valid-evaluation-return-params? params payment-config)
+                            #(if (paytrail-payment/valid-evaluation-return-params? params (evaluation-payment-config db payment-config))
                                (do
                                  (let [payment (paytrail-payment/get-evaluation-payment db params)
                                        lang (or (:lang payment) "fi")
@@ -90,7 +98,7 @@
                                (error-redirect url-helper "fi" nil)))))
      (GET "/notify" {params :params}
        (log/info "Received evaluation payment notify params" params)
-       (if (paytrail-payment/valid-evaluation-return-params? params payment-config)
+       (if (paytrail-payment/valid-evaluation-return-params? params (evaluation-payment-config db payment-config))
          (if (paytrail-payment/handle-evaluation-payment-return db email-q url-helper params)
            (ok "OK")
            (internal-server-error "Error in evaluation payment notify handling"))
