@@ -93,7 +93,11 @@
       (rollback-on-exception
        tx
        #(let [order-number-seq (:nextval (first (q/select-next-evaluation-order-number-suffix tx)))
-              order-number (str "YKI-EVAL" (format "%09d" order-number-seq))]
+              unix-ts-substr   (-> (System/currentTimeMillis)
+                                   (quot 1000)
+                                   (str)
+                                   (subs 4))
+              order-number     (str "YKI-EVAL" unix-ts-substr (format "%09d" order-number-seq))]
           (q/insert-initial-evaluation-payment<! tx (assoc payment :order_number order-number))))))
   (complete-payment!
     [{:keys [spec]} {:keys [order-number payment-id payment-method timestamp reference-number]}]
