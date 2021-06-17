@@ -98,8 +98,9 @@
                                (error-redirect url-helper "fi" nil)))))
      (GET "/notify" {params :params}
        (log/info "Received evaluation payment notify params" params)
-       (if (paytrail-payment/valid-evaluation-return-params? params (evaluation-payment-config db payment-config))
-         (if (paytrail-payment/handle-evaluation-payment-return db email-q url-helper params)
-           (ok "OK")
-           (internal-server-error "Error in evaluation payment notify handling"))
-         (internal-server-error "Error in evaluation payment notify handling"))))))
+       (let [eval-config (evaluation-payment-config db payment-config)]
+         (if (paytrail-payment/valid-evaluation-return-params? params (evaluation-payment-config db eval-config))
+           (if (paytrail-payment/handle-evaluation-payment-return db email-q url-helper eval-config params)
+             (ok "OK")
+             (internal-server-error "Error in evaluation payment notify handling"))
+           (internal-server-error "Error in evaluation payment notify handling")))))))
