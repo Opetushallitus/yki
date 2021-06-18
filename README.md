@@ -168,26 +168,6 @@ lein release :major, :minor or :patch
 
 ## Architecture
 
-### **Concepts**
-
-#### `payment`
-
-Handles payments related to the exam session registrations.
-
-#### `evaluation_period`
-
-Indicates the timeframe in what participant can request a re-evaluation for their test.
-Evaluation period consists of date of the test (exam_date), start and end dates, language and the language level.
-OPH organizers configure these timeframes based on when the tests have been first evaluated and results sent out.
-
-#### `evaluation_order`
-
-Handles orders and payments related to re-evaluation (evaluation in system).
-Flows similarly to 'payment'.
-Price is formed of four different subtests and the participant can select 1-4 to each order.
-Subtests are linked to the order through evaluation_order_subtest relation.
-Order's payment is stored in evaluation_payment relation.
-
 ### **Job Queues**
 
 YKI uses database backed job queues to prevent certain tasks from running more than once. The queues themselves are implemented using [pgqueue](https://github.com/layerware/pgqueue) and it is recommended to familiarize yourself with how this library works to understand the rest of the job queue code.
