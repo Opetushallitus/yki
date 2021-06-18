@@ -20,6 +20,7 @@
             [yki.job.job-queue]
             [yki.middleware.no-auth]
             [yki.handler.registration]
+            [yki.handler.evaluation]
             [yki.util.url-helper]
             [yki.util.common :as c]
             [clj-time.format :as f]
@@ -63,6 +64,9 @@
 (def payment-formdata-json
   (read-json-from-file "test/resources/payment_formdata.json"))
 
+(def evaluation-payment-formdata-json
+  (read-json-from-file "test/resources/evaluation_payment_formdata.json"))
+
 (def post-admission
   (slurp "test/resources/post_admission.json"))
 
@@ -77,14 +81,20 @@
 
 (def date-formatter (f/formatter c/date-format))
 
+(defn days-ago [days]
+  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days days))))
+
+(defn days-from-now [days]
+  (f/unparse (f/formatter c/date-format) (t/plus (t/now) (t/days days))))
+
 (defn yesterday []
-  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 1))))
+  (days-ago 1))
 
 (defn two-weeks-ago []
-  (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days 14))))
+  (days-ago 14))
 
 (defn two-weeks-from-now []
-  (f/unparse (f/formatter c/date-format) (t/plus (t/now) (t/days 14))))
+  (days-from-now 14))
 
 (defn change-entry
   [json-string key value]
@@ -245,11 +255,18 @@
 (defn select-exam-date-id-by-date [exam-date]
   (str "(SELECT id from exam_date WHERE exam_date='" exam-date "')"))
 
+(defn select-exam-date-language-by-exam-date [exam-date]
+  (str "(SELECT id FROM exam_date_language edl
+        INNER JOIN exam_date ed WHERE ed.id = edl.exam_date_id)"))
+
 (defn select-exam-session-by-date [exam-date]
   (str "(SELECT * from exam_session WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")"))
 
 (defn select-exam-date-languages-by-date-id [exam-date-id]
-  (str "(SELECT language_code, level_code from exam_date_language WHERE exam_date_id='" exam-date-id "' AND deleted_at IS NULL)"))
+  (str "(SELECT id, language_code, level_code from exam_date_language WHERE exam_date_id='" exam-date-id "' AND deleted_at IS NULL)"))
+
+(defn select-evaluation-by-date [exam-date]
+  (select-one (str "(SELECT * from evaluation WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")")))
 
 (defn insert-exam-session
   [exam-date-id oid count]
@@ -319,6 +336,83 @@
         'Other info',
         '" lang "',
         (SELECT id FROM exam_session where exam_date_id =(SELECT id from exam_date WHERE exam_date='" exam-date "')))")))
+
+(defn insert-evaluation-data []
+  (jdbc/execute! @embedded-db/conn
+                 "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2019-05-02', '2019-01-01', '2019-03-01')")
+  (jdbc/execute! @embedded-db/conn
+                 (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" (two-weeks-ago) "', '" (days-ago 30) "', '" (days-ago 25) "')"))
+  (let [exam-date-id          (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))
+        exam-date-language-id (fn [id]       (:id (select-one (select-exam-date-languages-by-date-id id))))
+        first-date-id         (exam-date-id "2039-05-02")
+        second-date-id        (exam-date-id "2039-05-10")
+        third-date-id         (exam-date-id (two-weeks-ago))
+        fourth-date-id        (exam-date-id "2019-05-02")]
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" first-date-id ", 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" second-date-id ", 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" third-date-id ", 'fin', 'PERUS')"))
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" fourth-date-id ", 'fin', 'PERUS')"))
+
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
+                                    VALUES (" first-date-id ", '2041-08-01', '2041-08-15', " (exam-date-language-id first-date-id) ")"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
+                                    VALUES (" second-date-id ", '2041-08-01', '2041-08-15', " (exam-date-language-id second-date-id) ")"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
+                                    VALUES (" third-date-id ", '" (yesterday) "', '" (two-weeks-from-now) "', " (exam-date-language-id third-date-id) ")"))
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
+                                    VALUES (" fourth-date-id ", '2019-08-01', '2019-08-15', " (exam-date-language-id fourth-date-id) ")"))))
+
+(defn insert-evaluation-payment-data [{:keys [first_names last_name email birthdate]}]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE evaluation_payment_config SET merchant_id=12345, merchant_secret='6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ', email='kirjaamo@testi.fi' "))
+
+  (let [evaluation-id (:id  (select-evaluation-by-date (two-weeks-ago)))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order (evaluation_id, first_names, last_name, email, birthdate)
+                                    VALUES (" evaluation-id ", '" first_names "', '" last_name "', '" email "', '" birthdate "')"))
+    (let [evaluation-order-id (:id (select-one (str "SELECT id FROM evaluation_order WHERE email = '" email "'")))]
+      (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
+                                   VALUES (" evaluation-order-id ", 'READING')"))
+      (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
+                               VALUES (" evaluation-order-id ", 'LISTENING')"))
+      (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment
+                                               (state, evaluation_order_id, amount, lang, order_number) VALUES
+                                               ('UNPAID'," evaluation-order-id ", 100, 'fi', 'YKI-EVA-TEST')")))))
+
+(defn get-evaluation-order-and-status [{:keys [first_names last_name email birthdate]}]
+  (select-one (str "SELECT
+  eo.id,
+  eo.first_names,
+  eo.last_name,
+  eo.email,
+  eo.birthdate,
+  edl.language_code,
+  edl.level_code,
+  ed.exam_date,
+  ep.state,
+  (
+    SELECT array_to_json(array_agg(subtest))
+    FROM (
+      SELECT subtest
+      FROM evaluation_order_subtest
+      WHERE evaluation_order_id= eo.id
+    ) subtest
+  ) AS subtests
+FROM evaluation_order eo
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date_language edl ON edl.id = ev.exam_date_language_id
+INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
+INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
+WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND eo.email = '" email "' AND eo.birthdate = '" birthdate "'")))
+
+(defn get-evaluation-payment-status-by-order-id [order-id]
+  (select-one
+   (str "SELECT ep.state, ep.amount
+         FROM evaluation_order eo
+         INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
+         WHERE eo.id = " order-id " AND deleted_at IS NULL")))
 
 (defn insert-base-data []
   (insert-organizer "'1.2.3.4'")
@@ -397,7 +491,7 @@
       (peridot/request (str routing/auth-root "/login?code=" code-ok))))
 
 (defn create-url-helper [uri]
-  (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http"}))
+  (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http" :oppija-sub-domain "yki."}))
 
 (defn create-routes [port]
   (let [uri (str "localhost:" port)

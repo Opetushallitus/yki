@@ -1,0 +1,22 @@
+{
+    "uri": "https://payment.paytrail.com/e2",
+    "params": {
+        "MERCHANT_ID": 12345,
+        "URL_SUCCESS": "http://localhost:8080/yki/evaluation-payment/success",
+        "PARAMS_OUT": "ORDER_NUMBER,PAYMENT_ID,AMOUNT,TIMESTAMP,STATUS,PAYMENT_METHOD,SETTLEMENT_REFERENCE_NUMBER",
+        "URL_CANCEL": "http://localhost:8080/yki/evaluation-payment/cancel",
+        "URL_NOTIFY": "http://localhost:8080/yki/evaluation-payment/notify",
+        "LOCALE": "fi_FI",
+        "PARAMS_IN": "MERCHANT_ID,LOCALE,URL_SUCCESS,URL_CANCEL,URL_NOTIFY,ORDER_NUMBER,MSG_SETTLEMENT_PAYER,MSG_UI_MERCHANT_PANEL,ITEM_TITLE[0],ITEM_QUANTITY[0],ITEM_UNIT_PRICE[0],ITEM_TITLE[1],ITEM_QUANTITY[1],ITEM_UNIT_PRICE[1],PARAMS_IN,PARAMS_OUT",
+        "MSG_SETTLEMENT_PAYER": "Tarkistusarviointi",
+        "MSG_UI_MERCHANT_PANEL": "Tarkistusarviointi",
+        "ORDER_NUMBER": "YKI-EVA-TEST",
+        "AUTHCODE": "834B2AC49C16A5CF87EC8E26FE185779DF022215F6A883209DE4092182A71655",
+        "ITEM_TITLE[0]": "Luetun ymmärtäminen",
+        "ITEM_QUANTITY[0]": 1,
+        "ITEM_UNIT_PRICE[0]": "50.00",
+        "ITEM_TITLE[1]": "Puheen ymmärtäminen",
+        "ITEM_QUANTITY[1]": 1,
+        "ITEM_UNIT_PRICE[1]": "50.00"
+    }
+}

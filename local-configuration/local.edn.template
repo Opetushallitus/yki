@@ -4,11 +4,13 @@
 
 ; For local endpoint testing, only required opintopolku url-helper host is "alb-host"
 {:yki.util/url-helper {:virkailija-host        "https://virkailija.untuvaopintopolku.fi"
-                       :oppija-host            "https://virkailija.untuvaopintopolku.fi"
+                       :oppija-host            "localhost:3000"
                        :yki-register-host      "https://virkailija.untuvaopintopolku.fi"
                        :alb-host               "https://virkailija.untuvaopintopolku.fi"
                        :tunnistus-host         "https://virkailija.untuvaopintopolku.fi"
-                       :yki-host-virkailija    "https://virkailija.untuvaopintopolku.fi"}
+                       :yki-host-virkailija    "https://virkailija.untuvaopintopolku.fi"
+                       :oppija-sub-domain      ""
+                       :scheme                 "http"}
  :yki.middleware.no-auth/with-authentication
  {:session-config {:key "ad7tbRZIG839gDo2"
                    :cookie-attrs {:max-age 28800
@@ -31,14 +33,25 @@
                             :access-log #ig/ref :yki.middleware.access-log/with-logging
                             :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                              :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                             :amount {:PERUS "100.00"
-                                                      :KESKI "123.00"
-                                                      :YLIN "160.00"}}
+                                             :amount {:PERUS "120.00"
+                                                      :KESKI "140.00"
+                                                      :YLIN "180.00"}}
                             ; User configutation. Changing the id will create a new participant.
                             :user-config {:identity {:external-user-id "local_test@testi.fi"
                                                      :email "local_test@testi.fi"
                                                      :ssn "301079-122F"
                                                      :oid "1.2.3.4"}}}
+
+   :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
+                                     :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                                                      :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                                      :amount {:PERUS "120.00"
+                                                               :KESKI "140.00"
+                                                               :YLIN "180.00"
+                                                               :READING "50.00"
+                                                               :LISTENING "50.00"
+                                                               :WRITING "50.00"
+                                                               :SPEAKING "50.00"}}}
 
  :yki.job.scheduled-tasks/email-queue-reader {:email-q #ig/ref :yki.job.job-queue/email-q
                                               :disabled true
@@ -58,4 +71,23 @@
                                                     :basic-auth {:user "user_placeholder"
                                                                 :password "password_placeholder"}
                                                   :url-helper #ig/ref :yki.util/url-helper
-                                                  :retry-duration-in-days 14}}
+                                                  :retry-duration-in-days 14}
+
+ :yki.handler/evaluation {:db #ig/ref :duct.database/sql
+                          :payment-config {:amount {:READING "50.00"
+                                                    :LISTENING "50.00"
+                                                    :WRITING "50.00"
+                                                    :SPEAKING "50.00"}}}
+
+ ;; Localhost is not acceptable redirect uri for paytrail atm. This is why when developing
+ ;; on locahost, random name can be set to resolve to localhost (here example.coom) in the host file
+:yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
+    :auth #ig/ref :yki.middleware.auth/with-authentication
+    :access-log #ig/ref :yki.middleware.access-log/with-logging
+    :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                      :yki-payment-uri "http://example.com/yki/evaluation-payment"
+                      :amount {:READING "50.00"
+                              :LISTENING "50.00"
+                              :WRITING "50.00"
+                              :SPEAKING "50.00"}
+                      :test_mode true}}}

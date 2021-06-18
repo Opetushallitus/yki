@@ -722,18 +722,26 @@ INSERT INTO participant_sync_status(
                     WHERE exam_session_id = :exam_session_id)
 ON CONFLICT DO NOTHING;
 
+--name: select-relocated-session-for-sync
+SELECT es.id
+FROM exam_session es
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+WHERE es.id = :exam_session_id
+  AND (ed.exam_date - interval '14 day') >= current_date
+  AND (SELECT COUNT(1)
+     FROM participant_sync_status pss
+     WHERE pss.exam_session_id = es.id
+            AND pss.success_at IS NULL)  = 0;
+
+
+
 --name: insert-relocated-participants-sync-status!
 INSERT INTO participant_sync_status(
   relocated_at,
   exam_session_id
 ) VALUES (
   current_timestamp,
-  (SELECT :exam_session_id
-    WHERE NOT EXISTS (SELECT exam_session_id
-                    FROM participant_sync_status
-                    WHERE exam_session_id = :exam_session_id
-                     AND relocated_at IS NOT NULL
-                     AND success_at IS NULL)))
+  :exam_session_id)
 ON CONFLICT DO NOTHING;
 
 -- Syncronization is done during registration period and
@@ -896,9 +904,12 @@ ed.post_admission_enabled,
 ) AS languages,
 ( SELECT COUNT(1)
   FROM exam_session
-  WHERE exam_date_id = ed.id) AS exam_session_count
+  WHERE exam_date_id = ed.id) AS exam_session_count,
+ev.evaluation_start_date,
+ev.evaluation_end_date
 FROM exam_date ed
-WHERE ed.exam_date >= current_date AND deleted_at IS NULL
+LEFT JOIN evaluation ev ON ev.exam_date_id = ed.id
+WHERE ed.exam_date >= COALESCE(:from, current_date) AND ed.deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
 
 
@@ -944,9 +955,13 @@ SELECT
 ) AS languages,
 ( SELECT COUNT(1)
   FROM exam_session
-  WHERE exam_date_id = ed.id) AS exam_session_count
+  WHERE exam_date_id = ed.id) AS exam_session_count,
+  ev.evaluation_start_date,
+ev.evaluation_end_date
 FROM exam_date ed
-WHERE ed.id = :id AND deleted_at IS NULL;
+LEFT JOIN evaluation ev ON ev.exam_date_id = ed.id
+WHERE ed.id = :id AND ed.deleted_at IS NULL;
+
 
 -- name: select-exam-dates-by-date
 SELECT
@@ -1197,3 +1212,217 @@ WHERE esc.exam_session_id = :exam_session_id
 UPDATE exam_session_contact
   SET deleted_at = current_timestamp
   WHERE exam_session_id = :exam_session_id AND deleted_at IS NULL;
+
+--name: select-evaluation-by-id
+SELECT
+  ep.id,
+  ed.exam_date,
+  edl.language_code,
+  edl.level_code,
+  ep.evaluation_start_date,
+  ep.evaluation_end_date,
+  (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
+FROM evaluation ep
+INNER JOIN exam_date_language edl on ep.exam_date_language_id = edl.id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
+WHERE ep.deleted_at IS NULL
+  AND  ep.id = :evaluation_id;
+
+--name: select-upcoming-evaluation-periods
+SELECT
+  ep.id,
+  ed.exam_date,
+  edl.language_code,
+  edl.level_code,
+  ep.evaluation_start_date,
+  ep.evaluation_end_date,
+  (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
+FROM evaluation ep
+INNER JOIN exam_date_language edl on ep.exam_date_language_id = edl.id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
+WHERE ep.deleted_at IS NULL
+  AND  ((ep.evaluation_end_date + time '23:59' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'));
+
+--name: insert-evaluation!
+INSERT INTO evaluation (
+  exam_date_id,
+  exam_date_language_id,
+  evaluation_start_date,
+  evaluation_end_date
+) VALUES (
+  :exam_date_id,
+  :exam_date_language_id,
+  :evaluation_start_date,
+  :evaluation_end_date
+);
+--name: select-evaluations-by-exam-date-id
+SELECT ev.id,
+ev.exam_date_language_id,
+ev.evaluation_start_date,
+ev.evaluation_end_date
+FROM evaluation ev
+WHERE ev.exam_date_id = :exam_date_id AND ev.deleted_at IS NULL;
+
+--name: insert-evaluation-order<!
+INSERT INTO evaluation_order (
+  evaluation_id,
+  first_names,
+  last_name,
+  email,
+  birthdate
+) VALUES (
+  :evaluation_id,
+  :first_names,
+  :last_name,
+  :email,
+  :birthdate
+);
+
+--name: insert-evaluation-order-subtest!
+INSERT INTO evaluation_order_subtest (
+  evaluation_order_id,
+  subtest
+) VALUES (
+  :evaluation_order_id,
+  :subtest
+);
+
+--name: select-subtests
+SELECT code from subtest;
+
+-- name: select-next-evaluation-order-number-suffix
+SELECT nextval('payment_order_number_seq');
+
+-- name: insert-initial-evaluation-payment<!
+INSERT INTO evaluation_payment(
+  state,
+  evaluation_order_id,
+  amount,
+  lang,
+  order_number
+) VALUES (
+  'UNPAID',
+  :evaluation_order_id,
+  :amount,
+  :lang,
+  :order_number
+);
+
+--name: select-evaluation-order-by-id
+SELECT
+  eo.id,
+  edl.language_code,
+  edl.level_code,
+  ed.exam_date,
+  ep.amount,
+  ep.lang,
+  ep.state,
+  (
+    SELECT array_to_json(array_agg(subtest))
+    FROM (
+      SELECT subtest
+      FROM evaluation_order_subtest
+      WHERE evaluation_order_id= eo.id
+    ) subtest
+  ) AS subtests
+FROM evaluation_order eo
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
+INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
+WHERE eo.id = :evaluation_order_id;
+
+--name: select-evaluation-order-with-payment
+SELECT
+  eo.id,
+  edl.language_code,
+  edl.level_code,
+  ed.exam_date,
+  ep.amount,
+  ep.lang,
+  ep.order_number,
+  ep.state,
+  (
+    SELECT array_to_json(array_agg(subtest))
+    FROM (
+      SELECT subtest
+      FROM evaluation_order_subtest
+      WHERE evaluation_order_id= eo.id
+    ) subtest
+  ) AS subtests
+FROM evaluation_order eo
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
+WHERE eo.id = :evaluation_order_id;
+
+-- name: select-evaluation-payment-by-order-number
+SELECT
+  ep.state,
+  ep.evaluation_order_id,
+  ep.amount,
+  ep.lang,
+  ep.reference_number,
+  ep.order_number,
+  ep.external_payment_id,
+  ep.payment_method,
+  ep.payed_at
+FROM evaluation_payment ep
+INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
+WHERE order_number = :order_number;
+
+-- name: select-evaluation-order-data-by-order-number
+SELECT
+  ep.state,
+  ep.evaluation_order_id,
+  ep.amount,
+  ep.lang,
+  ep.reference_number,
+  ep.order_number,
+  ep.external_payment_id,
+  ep.payment_method,
+  ep.payed_at,
+  edl.language_code,
+  edl.level_code,
+  ed.exam_date,
+  eo.first_names,
+  eo.last_name,
+  eo.email,
+  eo.birthdate,
+    (
+    SELECT array_to_json(array_agg(subtest))
+    FROM (
+      SELECT subtest
+      FROM evaluation_order_subtest
+      WHERE evaluation_order_id= eo.id
+    ) subtest
+  ) AS subtests
+FROM evaluation_payment ep
+INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
+INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
+WHERE order_number = :order_number;
+
+-- name: update-evaluation-payment!
+ UPDATE evaluation_payment
+ SET
+    state = :state::payment_state,
+    external_payment_id = :external_payment_id,
+    payment_method = :payment_method,
+    reference_number = :reference_number,
+    payed_at = :payed_at,
+    modified = current_timestamp
+WHERE
+  order_number = :order_number AND state != 'PAID';
+
+-- For now we only have one config for evaluation payment with set id.
+-- name: select-evaluation-payment-config
+SELECT
+  merchant_id,
+  merchant_secret,
+  email,
+  test_mode
+FROM evaluation_payment_config WHERE id = 1;
+

@@ -93,6 +93,13 @@ Rest of the environment variables are updated as follows:
 * When creating a new exam session, set date_id is referenced and returned session id is set to variable {{session_id}}. Other 'Virkailija: Exam session management' operations are referencing to this session id.
 * When 'oppija' registration is initialized, set session_id is referenced and returned registration id is set to variable {{registration_id}}
 
+### **External development credentials**
+
+[Suomi.fi](https://palveluhallinta.suomi.fi/fi/tuki/artikkelit/5a82ef7ab03cdc41de664a2b)
+
+[Paytrail](https://docs.paytrail.com/credentials/)
+
+
 ### **Testing**
 
 Testing is fastest through the REPL, as you avoid environment startup
@@ -120,7 +127,6 @@ Test coverage reporting.
 ```sh
 lein cloverage
 ```
-
 ### **Formatting**
 
 ```sh

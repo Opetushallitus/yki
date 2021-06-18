@@ -30,9 +30,13 @@
 
 (def payment-root (str app-root "/payment"))
 
+(def evaluation-payment-root (str app-root "/evaluation-payment"))
+
 (def registration-api-root (str api-root "/registration"))
 
 (def exam-session-public-api-root (str api-root "/exam-session"))
+
+(def evaluation-root (str api-root "/evaluation"))
 
 (def virkailija-api-root (str api-root "/virkailija"))
 

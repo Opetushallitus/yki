@@ -122,7 +122,7 @@
 ; post admission extensions for exam-session
 (s/def ::post_admission_quota      (s/nilable pos-int?))
 (s/def ::post_admission_start_date (s/nilable ::date-type))
-(s/def ::post_admission_end_date (s/nilable ::date-type))
+(s/def ::post_admission_end_date   (s/nilable ::date-type))
 (s/def ::post_admission_active     boolean?)
 ; exam-session-contact
 (s/def ::contact                    (s/nilable (s/coll-of ::contact-type)))
@@ -182,6 +182,10 @@
 
 (s/def ::post-admission-end-date-update (s/keys :req-un [::post_admission_end_date]))
 (s/def ::exam-date-post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_enabled]))
+
+(s/def ::evaluation_start_date (s/nilable ::date-type))
+(s/def ::evaluation_end_date   (s/nilable ::date-type))
+(s/def ::exam-date-evaluation (s/keys :req-un [::evaluation_start_date ::evaluation_end_date]))
 
 
 ;; exam session queue
@@ -336,3 +340,62 @@
 
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
+
+(s/def ::PERUS ::non-blank-string)
+(s/def ::KESKI ::non-blank-string)
+(s/def ::YLIN ::non-blank-string)
+(s/def ::READING ::non-blank-string)
+(s/def ::LISTENING ::non-blank-string)
+(s/def ::WRITING ::non-blank-string)
+(s/def ::SPEAKING ::non-blank-string)
+
+(s/def ::exam-prices (s/keys :req-un [::PERUS
+                                      ::KESKI
+                                      ::YLIN]))
+
+(s/def ::evaluation-prices (s/keys :req-un [::READING
+                                            ::LISTENING
+                                            ::WRITING
+                                            ::SPEAKING]))
+
+(s/def ::pricing-type (s/keys :req-un [::exam-prices
+                                       ::evaluation-prices]))
+;; Re-evaluation period
+(s/def ::evaluation_start_date   ::date-type)
+(s/def ::evaluation_end_date     ::date-type)
+
+(s/def ::evaluation-period (s/keys :req-un [::id
+                                            ::exam_date
+                                            ::evaluation_start_date
+                                            ::evaluation_end_date
+                                            ::level_code
+                                            ::language_code]
+                                   ::opt-un [::open]))
+
+(s/def ::evaluation_periods (s/coll-of ::evaluation-period))
+(s/def ::evaluation-periods-response (s/keys :req-un [::evaluation_periods]))
+
+(s/def ::first_names ::non-blank-string)
+(s/def ::subtest-kind #{"READING" "LISTENING" "WRITING" "SPEAKING"})
+(s/def ::subtests (s/coll-of ::subtest-kind))
+
+(s/def ::evaluation-order (s/keys
+                           :req-un [::first_names
+                                    ::last_name
+                                    ::email
+                                    ::birthdate
+                                    ::subtests]))
+
+(s/def ::params (s/keys :req-un [::MERCHANT_ID
+                                 ::LOCALE
+                                 ::URL_SUCCESS
+                                 ::URL_CANCEL
+                                 ::ORDER_NUMBER
+                                 ::MSG_SETTLEMENT_PAYER
+                                 ::MSG_UI_MERCHANT_PANEL
+                                 ::PARAMS_IN
+                                 ::PARAMS_OUT
+                                 ::AUTHCODE]))
+
+(s/def ::evaluation-payment-form-data (s/keys :req-un [::uri
+                                                       ::params]))
