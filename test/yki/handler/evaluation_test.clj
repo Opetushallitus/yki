@@ -41,7 +41,7 @@
     (handler request)))
 
 (defn- evaluation-order-post [evaluation-id order]
-  (let [request          (-> (mock/request :post (str routing/evaluation-root "/" evaluation-id "/order")
+  (let [request          (-> (mock/request :post (str routing/evaluation-root "/" evaluation-id "/order?lang=fi")
                                            (j/write-value-as-string  order))
                              (mock/content-type "application/json; charset=UTF-8"))]
 

@@ -386,6 +386,18 @@
                                     ::birthdate
                                     ::subtests]))
 
+(s/def ::evaluation_ordeer_id      pos-int?)
+(s/def ::evaluation-order-response (s/keys :req-un [::evaluation_order_id]))
+
+(s/def ::evaluation-response (s/keys
+                              :req-un [::id
+                                       ::language_code
+                                       ::level_code
+                                       ::exam_date
+                                       ::subtests
+                                       ::lang
+                                       ::amount]))
+
 (s/def ::params (s/keys :req-un [::MERCHANT_ID
                                  ::LOCALE
                                  ::URL_SUCCESS
