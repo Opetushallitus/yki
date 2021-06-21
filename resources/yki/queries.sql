@@ -1221,7 +1221,8 @@ SELECT
   edl.level_code,
   ep.evaluation_start_date,
   ep.evaluation_end_date,
-  (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
+  (ep.evaluation_start_date <= (current_timestamp AT TIME ZONE 'Europe/Helsinki')::DATE)
+    AND  (ep.evaluation_end_date >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')::DATE) as open
 FROM evaluation ep
 INNER JOIN exam_date_language edl on ep.exam_date_language_id = edl.id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
@@ -1236,12 +1237,13 @@ SELECT
   edl.level_code,
   ep.evaluation_start_date,
   ep.evaluation_end_date,
-  (within_dt_range(now(), ep.evaluation_start_date, ep.evaluation_end_date)) as open
+  (ep.evaluation_start_date <= (current_timestamp AT TIME ZONE 'Europe/Helsinki')::DATE)
+    AND  (ep.evaluation_end_date >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')::DATE) as open
 FROM evaluation ep
 INNER JOIN exam_date_language edl on ep.exam_date_language_id = edl.id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE ep.deleted_at IS NULL
-  AND  ((ep.evaluation_end_date + time '23:59' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'));
+  AND  (ep.evaluation_end_date >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')::DATE);
 
 --name: insert-evaluation!
 INSERT INTO evaluation (
