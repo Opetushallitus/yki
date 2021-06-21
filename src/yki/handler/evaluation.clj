@@ -28,9 +28,10 @@
     (GET "/" []
       :return ::ys/evaluation-periods-response
       (ok {:evaluation_periods (evaluation-db/get-upcoming-evaluation-periods db)}))
-        ;; TODO Add proper response
+
     (GET "/order/:id" []
       :path-params [id :- ::ys/id]
+     ;; :return ::ys/evaluation-response
       (ok (evaluation-db/get-evaluation-order-by-id db id)))
 
     (context "/:id" []
@@ -40,11 +41,12 @@
         (if-let [evaluation (evaluation-db/get-evaluation-period-by-id db id)]
           (ok evaluation)
           (evaluation-not-found id)))
+
       (POST "/order" []
         :body [order ::ys/evaluation-order]
         :path-params [id :- ::ys/id]
-        ;;:return ::ys/response
-        ;; TODO Add proper response
+        :query-params [lang :- ::ys/language-code]
+        :return ::ys/evaluation-order-response
         (let [evaluation         (evaluation-db/get-evaluation-period-by-id db id)
               price-config       (:amount payment-config)
               missing-config     (fn [subtest] (when (not (contains? price-config (keyword subtest)))
@@ -64,8 +66,7 @@
           (if (some? validation-error)
             validation-error
             (if-let [order-id (evaluation-db/create-evaluation-order! db id order)]
-              (let [lang              "fi"
-                    subtest-price     (fn [subtest] (get (subtest-price-config price-config) (keyword subtest)))
+              (let [subtest-price     (fn [subtest] (get (subtest-price-config price-config) (keyword subtest)))
                     final-price       (->> order
                                            :subtests
                                            (map subtest-price)
@@ -73,7 +74,7 @@
                                            (format "%.2f")
                                            (bigdec))
                     init-payment-data {:evaluation_order_id order-id
-                                       :lang                lang
+                                       :lang                (or lang "fi")
                                        :amount              final-price}
                     payment           (evaluation-db/create-evaluation-payment! db init-payment-data)]
                 (ok {:evaluation_order_id order-id}))

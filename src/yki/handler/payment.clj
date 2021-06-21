@@ -31,7 +31,7 @@
   (api
    (context routing/payment-root []
      :coercion :spec
-     ;:no-doc true
+     :no-doc true
      :middleware [auth access-log]
      (GET "/formdata" {session :session}
        :query-params [registration-id :- ::ys/id {lang :- ::ys/language-code "fi"}]
