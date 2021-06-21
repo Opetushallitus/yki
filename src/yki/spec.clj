@@ -386,7 +386,7 @@
                                     ::birthdate
                                     ::subtests]))
 
-(s/def ::evaluation_ordeer_id      pos-int?)
+(s/def ::evaluation_order_id      pos-int?)
 (s/def ::evaluation-order-response (s/keys :req-un [::evaluation_order_id]))
 
 (s/def ::evaluation-response (s/keys
