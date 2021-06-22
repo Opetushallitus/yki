@@ -74,11 +74,8 @@
     (parser/render "{{subject}}: {{language}} {{level|lower}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject :level level :language language))))
 
 (defn evaluation-subject
-  [url-helper lang params]
-  (let [subject (localisation/get-translation url-helper (str "email.evaluation_payment.subject") lang)
-        level (get-level url-helper (:level_code params) lang)
-        language (get-language url-helper (:language_code params) lang)]
-    (parser/render "{{subject}}: {{language}} {{level|lower}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject :level level :language language))))
+  [params]
+  (parser/render "{{subject}} {{language}} {{level|lower}}, {{exam_date|date-format-with-dots}}" params))
 
 (defn render
   [url-helper template lang params]
