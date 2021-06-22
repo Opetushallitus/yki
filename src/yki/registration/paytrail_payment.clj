@@ -35,6 +35,7 @@
         lang           (:lang order-data)
         order-time     (System/currentTimeMillis)
         template-data  (assoc order-data
+                              :subject (str (localisation/get-translation url-helper (str "email.evaluation_payment.subject") lang) ":")
                               :language (template-util/get-language url-helper (:language_code order-data) lang)
                               :level (template-util/get-level url-helper (:level_code order-data) lang)
                               :subtests (template-util/get-subtests url-helper (:subtests order-data) lang)
@@ -47,16 +48,23 @@
       (pgq/put email-q
                {:recipients [(:email order-data)]
                 :created order-time
-                :subject (template-util/evaluation-subject url-helper lang template-data)
+                :subject (template-util/evaluation-subject template-data)
                 :body (template-util/render url-helper "evaluation_payment_success" lang template-data)})
 
     ;; Kirjaamo email
     ;; Kirjaamo email will not be translated and only send in Finnish
-      (pgq/put email-q
-               {:recipients [(:email payment-config)]
-                :created order-time
-                :subject (template-util/evaluation-subject url-helper "fi" template-data)
-                :body (template-util/render url-helper "evaluation_payment_kirjaamo" "fi" template-data)}))
+      (let [template-with-subject   (assoc template-data :subject "YKI,")
+            kirjaamo-template       (if (= lang "fi")
+                                      template-with-subject
+                                      (assoc template-with-subject
+                                             :language (template-util/get-language url-helper (:language_code order-data) "fi")
+                                             :level (template-util/get-level url-helper (:level_code order-data) "fi")
+                                             :subtests (template-util/get-subtests url-helper (:subtests order-data) "fi")))]
+        (pgq/put email-q
+                 {:recipients [(:email payment-config)]
+                  :created order-time
+                  :subject (template-util/evaluation-subject kirjaamo-template)
+                  :body (template-util/render url-helper "evaluation_payment_kirjaamo" "fi" kirjaamo-template)})))
     success))
 
 (defn- handle-payment-cancelled [db payment-params]
