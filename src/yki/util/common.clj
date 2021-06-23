@@ -1,7 +1,8 @@
 (ns yki.util.common
   (:require [clj-time.core :as t]
             [clj-time.format :as f]
-            [clj-time.coerce :as c]))
+            [clj-time.coerce :as c]
+            [clojure.string :as str]))
 
 (def date-format "YYYY-MM-dd")
 
@@ -28,3 +29,9 @@
 
 (defn finnish-date-from-long [date-long]
   (format-date-to-finnish-format (c/from-long date-long)))
+
+;; Allow digits, unicode letters, space and chars '``*+@&.,-_
+;; Implemented to catch solki breaking ";" and might need expanding (card no. 218)
+(defn sanitized-string [input]
+  (str/replace (str/trim input) #"[^0-9\-\'\´\`\p{L}\p{M}*+.,_&@ ]" ""))
+
