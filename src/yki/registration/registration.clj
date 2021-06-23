@@ -53,6 +53,13 @@
        :identifications [{:idpEntityId "oppijaToken" :identifier email}]
        :eiSuomalaistaHetua true))))
 
+(defn- sanitized-form [form]
+  (let [{:keys [first_name last_name street_address]} form]
+    (assoc form
+           :first_name (c/sanitized-string first_name)
+           :last_name (c/sanitized-string last_name)
+           :street_address (c/sanitized-string street_address))))
+
 (defn- create-init-response
   [db session exam_session_id registration-id payment-config]
   (let [exam-session (exam-session-db/get-exam-session-by-id db exam_session_id)
@@ -164,8 +171,9 @@
 
 (defn submit-registration-abstract-flow
   []
-  (fn [db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration]
-    (let [identity        (:identity session)
+  (fn [db url-helper email-q lang session registration-id raw-form payment-config onr-client exam-session-registration]
+    (let [form            (sanitized-form raw-form)
+          identity        (:identity session)
           form-with-email (if (= (:auth-method session) "EMAIL")
                             (assoc form :email (:external-user-id identity))
                             (assoc form :ssn (:ssn identity)))
