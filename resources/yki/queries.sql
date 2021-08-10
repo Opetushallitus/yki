@@ -905,10 +905,9 @@ ed.post_admission_enabled,
 ( SELECT COUNT(1)
   FROM exam_session
   WHERE exam_date_id = ed.id) AS exam_session_count,
-ev.evaluation_start_date,
-ev.evaluation_end_date
+(SELECT ev.evaluation_start_date FROM evaluation ev WHERE ev.exam_date_id = ed.id LIMIT 1),
+(SELECT ev.evaluation_end_date FROM evaluation ev WHERE ev.exam_date_id = ed.id LIMIT 1)
 FROM exam_date ed
-LEFT JOIN evaluation ev ON ev.exam_date_id = ed.id
 WHERE ed.exam_date >= COALESCE(:from, current_date) AND ed.deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
 
