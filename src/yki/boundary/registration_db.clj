@@ -19,6 +19,7 @@
   (create-payment-and-update-registration! [db payment registration after-fn])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
+  (get-registration-data-by-participant [db registration-id participant-id lang])
   (get-payment-config-by-order-number [db order-number])
   (complete-registration-and-payment! [db payment-params])
   (exam-session-space-left? [db exam-session-id registration-id])
@@ -133,6 +134,9 @@
   (get-registration-data
     [{:keys [spec]} registration-id participant-id lang]
     (first (q/select-registration-data spec {:id registration-id :participant_id participant-id :lang lang})))
+  (get-registration-data-by-participant
+    [{:keys [spec]} registration-id participant-id lang]
+    (first (q/select-registration-data-by-participant spec {:id registration-id :participant_id participant-id :lang lang})))
   (get-or-create-participant!
     [{:keys [spec]} participant]
     (jdbc/with-db-transaction [tx spec]
