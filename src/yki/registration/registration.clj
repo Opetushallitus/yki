@@ -154,6 +154,14 @@
 ;                 :subject (template-util/subject url-helper link-type lang template-data)
 ;                 :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
+;; Get registration data with participant found in session
+;; In a case user has two different registration forms open and a non matching session,
+;; checks for a matching open registration for the current one
+(defn get-registration-data [db registration-id participant-id lang]
+  (if-let [with-participant (registration-db/get-registration-data db registration-id participant-id lang)]
+    with-participant
+    (registration-db/get-registration-data-by-participant db registration-id participant-id lang)))
+
 (defn submit-registration-abstract-flow
   []
   (fn [db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration]
@@ -167,7 +175,7 @@
       (log/info (str "Get registration data with registration id " registration-id " , participant id " participant-id " and lang " lang ". Current state: " (:state exam-session-registration)))
       (when email
         (registration-db/update-participant-email! db email participant-id))
-      (if-let [registration-data (when started? (registration-db/get-registration-data db registration-id participant-id lang))]
+      (if-let [registration-data (when started? (get-registration-data db registration-id participant-id lang))]
         (if-let [oid                 (or (:oid identity)
                                          (onr/get-or-create-person
                                           onr-client
@@ -182,7 +190,7 @@
                                          :form           form-with-email
                                          :oid            oid
                                          :form_version   1
-                                         :participant_id participant-id}
+                                         :participant_id (or (:participant_id registration-data) participant-id)}
                 registration-kind       (:kind registration-data)
                 registration-end-time   (c/next-start-of-day
                                          (f/parse

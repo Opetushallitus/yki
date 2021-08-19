@@ -36,8 +36,8 @@
                                                   (create-params cas-session-id body)))]
         new-resp))
     resp))
+
 (defn- cas-oppija-ticket-validation  [ticket validate-service-url callback-url url-helper]
-  (log/info "Cas oppija validating ticket")
   (let [{:keys [status body]} @(http/get validate-service-url {:query-params {:ticket ticket
                                                                               :service callback-url}
                                                                :headers {"Caller-Id" "1.2.246.562.10.00000000001.yki"}})]
