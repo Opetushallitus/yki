@@ -39,7 +39,7 @@
                             ; User configutation. Changing the id will create a new participant.
                             :user-config {:identity {:external-user-id "local_test@testi.fi"
                                                      :email "local_test@testi.fi"
-                                                     :ssn "301079-122F"
+                                                     :ssn "301079-900U"
                                                      :oid "1.2.3.4"}}}
 
    :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
