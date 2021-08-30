@@ -177,7 +177,7 @@
                         :gender "1"
                         :nationalities ["180"]
                         :birthdate "1999-01-01"
-                        :ssn "201190-083N"
+                        :ssn "201190-9012"
                         :certificate_lang "fi"
                         :exam_lang "fi"
                         :post_office "Ankkalinna"
@@ -190,7 +190,7 @@
                           :last_name  "Ankka"
                           :gender nil
                           :nationalities ["246"]
-                          :ssn "301079-122F"
+                          :ssn "301079-900U"
                           :certificate_lang "fi"
                           :exam_lang "fi"
                           :post_office "Ankkalinna"
