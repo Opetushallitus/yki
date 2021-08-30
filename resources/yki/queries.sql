@@ -1237,9 +1237,8 @@ WHERE esc.exam_session_id = :exam_session_id
   AND deleted_at IS NULL;
 
 --name: delete-exam-session-contact-by-session-id!
-UPDATE exam_session_contact
-  SET deleted_at = current_timestamp
-  WHERE exam_session_id = :exam_session_id AND deleted_at IS NULL;
+DELETE FROM exam_session_contact
+  WHERE exam_session_id = :exam_session_id;
 
 --name: select-evaluation-by-id
 SELECT
