@@ -99,12 +99,19 @@
                                                 ::lang]))
 (s/def ::location (s/coll-of ::exam-session-location))
 
+
+
 ;; organizer-contact
+
+
+(s/def :contact/name (s/nilable ::name))
+(s/def :contact/email (s/nilable ::email))
+(s/def :contact/phone_number (s/nilable ::phone_number))
 (s/def ::organizer_id ::id)
-(s/def ::contact-type (s/keys :req-un [::name
-                                       (or ::email ::phone_number)]
-                              ::opt-un [::organizer_id
-                                        ::organizer_oid]))
+
+(s/def ::contact-type (s/keys :req-un [(or :contact/name :contact/email :contact/phone_number)]
+                              :opt-un [::organizer_id
+                                       ::organizer_oid]))
 
 ;; exam-session
 (s/def ::organizer_oid              ::oid)
@@ -370,7 +377,7 @@
                                             ::evaluation_end_date
                                             ::level_code
                                             ::language_code]
-                                   ::opt-un [::open]))
+                                   :opt-un [::open]))
 
 (s/def ::evaluation_periods (s/coll-of ::evaluation-period))
 (s/def ::evaluation-periods-response (s/keys :req-un [::evaluation_periods]))
