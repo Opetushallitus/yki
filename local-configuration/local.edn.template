@@ -1,6 +1,7 @@
 ; With this local setup it is possible to test most of the postman endpoints against your local database without authentication
 ; All the syncing jobs are disabled
 ; Please note that this configuration has a hard coded participant information
+; NOTE: example.com is used as return address with paytrail. It must be added to your HOSTS file 127.0.0.1 example.com
 
 ; For local endpoint testing, only required opintopolku url-helper host is "alb-host"
 {:yki.util/url-helper {:virkailija-host        "https://virkailija.untuvaopintopolku.fi"
@@ -11,13 +12,6 @@
                        :yki-host-virkailija    "https://virkailija.untuvaopintopolku.fi"
                        :oppija-sub-domain      ""
                        :scheme                 "http"}
- :yki.middleware.no-auth/with-authentication
- {:session-config {:key "ad7tbRZIG839gDo2"
-                   :cookie-attrs {:max-age 28800
-                                  :http-only true
-                                  :secure false
-                                  :domain "localhost"
-                                  :path "/yki"}}}
 
  :yki.handler/organizer {:db #ig/ref :duct.database/sql
                          :url-helper #ig/ref :yki.util/url-helper
@@ -32,7 +26,9 @@
                             :onr-client #ig/ref :yki.boundary.onr/onr-client
                             :access-log #ig/ref :yki.middleware.access-log/with-logging
                             :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                             :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                             :merchant_id 13466
+                                             :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
+                                             :yki-payment-uri "http://example.com:8080/yki/payment"
                                              :amount {:PERUS "120.00"
                                                       :KESKI "140.00"
                                                       :YLIN "180.00"}}
@@ -42,16 +38,16 @@
                                                      :ssn "301079-900U"
                                                      :oid "1.2.3.4"}}}
 
-   :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
-                                     :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                                      :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                                      :amount {:PERUS "120.00"
-                                                               :KESKI "140.00"
-                                                               :YLIN "180.00"
-                                                               :READING "50.00"
-                                                               :LISTENING "50.00"
-                                                               :WRITING "50.00"
-                                                               :SPEAKING "50.00"}}}
+ :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
+                                   :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+                                                    :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                                    :amount {:PERUS "120.00"
+                                                             :KESKI "140.00"
+                                                             :YLIN "180.00"
+                                                             :READING "50.00"
+                                                             :LISTENING "50.00"
+                                                             :WRITING "50.00"
+                                                             :SPEAKING "50.00"}}}
 
  :yki.job.scheduled-tasks/email-queue-reader {:email-q #ig/ref :yki.job.job-queue/email-q
                                               :disabled true
@@ -81,7 +77,7 @@
 
  ;; Localhost is not acceptable redirect uri for paytrail atm. This is why when developing
  ;; on locahost, random name can be set to resolve to localhost (here example.coom) in the host file
-:yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
+ :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
     :auth #ig/ref :yki.middleware.auth/with-authentication
     :access-log #ig/ref :yki.middleware.access-log/with-logging
     :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
