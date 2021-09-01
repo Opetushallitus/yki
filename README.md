@@ -26,7 +26,7 @@ docker run --name postgres-yki -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin
 Create yki database.
 
 ```sh
-psql -h localhost -U admin -d yki -c 'create database yki'
+psql -h localhost -U admin -c 'create database yki'
 ```
 
 Create local.edn with correct username and password.
