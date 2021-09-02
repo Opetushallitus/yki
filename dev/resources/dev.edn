@@ -53,7 +53,7 @@
                                              :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
                                              :amount {:PERUS "120.00"
                                                       :KESKI "140.00"
-                                                      :YLIN "180.00"}}}}
+                                                      :YLIN "180.00"}}}
 
    :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
                                      :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
