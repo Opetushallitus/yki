@@ -13,11 +13,6 @@
                        :oppija-sub-domain      ""
                        :scheme                 "http"}
 
- :yki.handler/organizer {:db #ig/ref :duct.database/sql
-                         :url-helper #ig/ref :yki.util/url-helper
-                         :file-handler #ig/ref :yki.handler/file
-                         :access-log #ig/ref :yki.middleware.access-log/with-logging
-                         :auth #ig/ref :yki.middleware.no-auth/with-authentication}
 
  :yki.handler/registration {:db #ig/ref :duct.database/sql
                             :auth #ig/ref :yki.middleware.no-auth/with-authentication
