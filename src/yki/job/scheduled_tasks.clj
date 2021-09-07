@@ -80,12 +80,13 @@
        (log/error e "Participant sync handler failed"))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader
-  [_ {:keys [email-q url-helper retry-duration-in-days disabled]}]
-  {:pre [(some? url-helper) (some? email-q) (some? retry-duration-in-days)]}
-  #(take-with-error-handling email-q retry-duration-in-days
-                             (fn [email-req]
-                               (log/info "Email queue reader sending email to:" (:recipients email-req))
-                               (email/send-email url-helper email-req disabled))))
+  [_ {:keys [email-q handle-at-once-at-most url-helper retry-duration-in-days disabled]}]
+  {:pre [(some? url-helper) (pos-int? handle-at-once-at-most) (some? email-q) (some? retry-duration-in-days)]}
+  #(doseq [_ (range (min handle-at-once-at-most (pgq/count email-q)))]
+     (take-with-error-handling email-q retry-duration-in-days
+                               (fn [email-req]
+                                 (log/info "Email queue reader sending email to:" (:recipients email-req))
+                                 (email/send-email url-helper email-req disabled)))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader
   [_ {:keys [data-sync-q url-helper db retry-duration-in-days disabled basic-auth]}]
