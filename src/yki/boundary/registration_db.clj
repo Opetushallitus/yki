@@ -24,7 +24,7 @@
   (complete-registration-and-payment! [db payment-params])
   (exam-session-space-left? [db exam-session-id registration-id])
   (exam-session-quota-left? [db exam-session-id registration-id])
-  (previous-ssn-exists? [db ssn exam-session-id])
+  (previous-ssn-doesnt-exists? [db ssn exam-session-id])
   (exam-session-registration-open? [db exam-session-id])
   (exam-session-post-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
@@ -93,9 +93,9 @@
     [{:keys [spec]} id]
     (let [exists (first (q/select-exam-session-post-registration-open spec {:exam_session_id id}))]
       (:exists exists)))
-  (previous-ssn-exists?
+  (previous-ssn-doesnt-exists?
    [{:keys [spec]} ssn exam-session-id]
-   (let [exists (first (q/select-exists-registered-ssn spec {:exam_session_id exam-session-id :ssn ssn}))]
+   (let [exists (first (q/select-not-exists-registered-ssn spec {:exam_session_id exam-session-id :ssn ssn}))]
      (:exists exists)))
   (update-participant-email!
     [{:keys [spec]} email participant-id]

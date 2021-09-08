@@ -63,9 +63,10 @@
      :user user
      :registration_id registration-id}))
 
-(defn- error-response [space-left? not-registered? exam_session_id]
-  (let [error {:error {:full       (not space-left?)
-                       :registered (not not-registered?)}}]
+(defn- error-response [{:keys [space-left not-registered ssn-doesnt-exists]} exam_session_id]
+  (let [error {:error {:full       (not space-left)
+                       :registered (not not-registered)
+                       :ssn-exists (not ssn-doesnt-exists)}}]
     (log/warn "END: Init exam session" exam_session_id "failed with error" error)
     (conflict error)))
 
@@ -76,6 +77,18 @@
         response        (create-init-response db session exam_session_id registration-id payment-config)]
     (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
     (ok response)))
+
+;; Check if person is eligible to register
+(defn- is-person-eligible [db participant-id exam_session_id ssn spacef]
+  (let [space-left?        (spacef db exam_session_id nil)
+        not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
+        ssn-doenst-exists? (registration-db/previous-ssn-doesnt-exists? db ssn exam_session_id)]
+    (log/info "validity check" space-left? not-registered? ssn-doenst-exists?)
+  {:space-left space-left?
+    :not-registered not-registered?
+    :ssn-doesnt-exists ssn-doenst-exists?}
+  ))
+;; Provides login flow
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
@@ -88,24 +101,18 @@
       (cond
         ; admission open
         (registration-db/exam-session-registration-open? db exam_session_id)
-        (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
-              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
-              ssn-exists?        (registration-db/previous-ssn-exists? db (:ssn reg-identity) exam_session_id)]
-          (if (every?  identity [space-left? not-registered? (not ssn-exists?)])
+        (let [eligible        (is-person-eligible db participant-id exam_session_id (:ssn reg-identity) registration-db/exam-session-space-left?)]
+          (if (every?  identity ( vals eligible))
             ; TODO figure out if ADMISSION or POST_ADMISSION
             (create-registration db exam_session_id participant-id session payment-config)
-            (error-response space-left? not-registered? exam_session_id)))
-
+            (error-response eligible exam_session_id)))
         ;post-admission open
         (registration-db/exam-session-post-registration-open? db exam_session_id)
-        (let [quota-left?        (registration-db/exam-session-quota-left? db exam_session_id nil)
-              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
-              ssn-exists?        (registration-db/previous-ssn-exists? db (:ssn reg-identity) exam_session_id)]
-          (if (every?  identity [quota-left? not-registered? (not ssn-exists?)])
+        (let [eligible        (is-person-eligible db participant-id exam_session_id (:ssn reg-identity) registration-db/exam-session-quota-left?)]
+          (if (every?  identity ( vals eligible))
             ; TODO figure out if ADMISSION or POST_ADMISSION
             (create-registration db exam_session_id participant-id session payment-config)
-            (error-response quota-left? not-registered? exam_session_id)))
-
+            (error-response eligible exam_session_id)))
         :else  ; no registration open
         (conflict {:error {:closed true}})))))
 
