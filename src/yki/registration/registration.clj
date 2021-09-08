@@ -76,11 +76,11 @@
         response        (create-init-response db session exam_session_id registration-id payment-config)]
     (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
     (ok response)))
-
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
-  (let [participant-id (get-or-create-participant db (:identity session))
+  (let [reg-identity (:identity session)
+        participant-id (get-or-create-participant db reg-identity)
         started-registration-id (registration-db/started-registration-id-by-participant db participant-id exam_session_id)]
     (log/warn "started-registration-id" started-registration-id)
     (if started-registration-id
@@ -89,8 +89,9 @@
         ; admission open
         (registration-db/exam-session-registration-open? db exam_session_id)
         (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
-              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
-          (if (and space-left? not-registered?)
+              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
+              ssn-exists?        (registration-db/previous-ssn-exists? db (:ssn reg-identity) exam_session_id)]
+          (if (every?  identity [space-left? not-registered? (not ssn-exists?)])
             ; TODO figure out if ADMISSION or POST_ADMISSION
             (create-registration db exam_session_id participant-id session payment-config)
             (error-response space-left? not-registered? exam_session_id)))
@@ -98,8 +99,9 @@
         ;post-admission open
         (registration-db/exam-session-post-registration-open? db exam_session_id)
         (let [quota-left?        (registration-db/exam-session-quota-left? db exam_session_id nil)
-              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
-          (if (and quota-left? not-registered?)
+              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
+              ssn-exists?        (registration-db/previous-ssn-exists? db (:ssn reg-identity) exam_session_id)]
+          (if (every?  identity [quota-left? not-registered? (not ssn-exists?)])
             ; TODO figure out if ADMISSION or POST_ADMISSION
             (create-registration db exam_session_id participant-id session payment-config)
             (error-response quota-left? not-registered? exam_session_id)))
@@ -117,6 +119,8 @@
                                       (assoc login-link
                                              :code hashed))
     (log/info "Login link created for " email ". Adding to email queue")
+    (log/info "Login link created for " login-url ". Adding to email queue")
+
     (pgq/put email-q
              {:recipients [email]
               :created (System/currentTimeMillis)
@@ -161,6 +165,7 @@
   (if-let [with-participant (registration-db/get-registration-data db registration-id participant-id lang)]
     with-participant
     (registration-db/get-registration-data-by-participant db registration-id participant-id lang)))
+
 
 (defn submit-registration-abstract-flow
   []
@@ -242,7 +247,6 @@
     (cond
       (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
       ((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
-
       (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id)
       ((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
 
