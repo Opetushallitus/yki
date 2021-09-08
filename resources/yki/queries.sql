@@ -518,6 +518,15 @@ SELECT NOT EXISTS (
     AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
 ) as exists;
 
+-- name: select-exists-registered-ssn
+SELECT EXISTS (
+    SELECT * FROM registration
+    WHERE registration.state  IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+    AND exam_session_id = :exam_session_id
+    AND form ->> 'ssn' = :ssn
+    LIMIT 1
+) as exists;
+
 -- name: select-started-registration-id-by-participant
 SELECT re.id
 FROM exam_session es
