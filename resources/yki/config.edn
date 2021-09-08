@@ -45,6 +45,7 @@
   :yki.job.scheduled-tasks/registration-state-handler {:db #ig/ref :duct.database/sql}
 
   :yki.job.scheduled-tasks/email-queue-reader {:email-q #ig/ref :yki.job.job-queue/email-q
+                                               :handle-at-once-at-most 10
                                                :url-helper #ig/ref :yki.util/url-helper
                                                :retry-duration-in-days 14}
 
