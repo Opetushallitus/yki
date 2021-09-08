@@ -31,8 +31,16 @@
   [nationalities]
   (map (fn [n] {:kansalaisuusKoodi n}) nationalities))
 
+;; Selects ssn to use
+(defn- select-ssn [identity-ssn form-ssn]
+  (cond
+    (some? identity-ssn)
+    identity-ssn
+    (some? form-ssn)
+    form-ssn
+    :else ()))
 (defn- extract-person-from-registration
-  [{:keys [email first_name last_name gender exam_lang nationalities birthdate]} ssn]
+  [{:keys [email first_name last_name gender exam_lang nationalities birthdate ssn]} identity-ssn]
   (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
                                         :yhteystietoArvo   email}]
                       :etunimet       first_name
@@ -42,16 +50,18 @@
                       :asiointiKieli  {:kieliKoodi exam_lang}
                       :kansalaisuus   (extract-nationalities nationalities)
                       :henkiloTyyppi  "OPPIJA"}]
-    (if ssn
+    (if
+      (some? (select-ssn identity-ssn ssn))
       (assoc
        basic-fields
-       :hetu (clojure.string/upper-case ssn)
+       :hetu (clojure.string/upper-case (select-ssn identity-ssn ssn))
        :eiSuomalaistaHetua false)
       (assoc
        basic-fields
        :syntymaaika birthdate
        :identifications [{:idpEntityId "oppijaToken" :identifier email}]
-       :eiSuomalaistaHetua true))))
+       :eiSuomalaistaHetua true)
+      )))
 
 (defn- create-init-response
   [db session exam_session_id registration-id payment-config]
@@ -177,6 +187,7 @@
 (defn submit-registration-abstract-flow
   []
   (fn [db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration]
+    (log/info "form data from registration" form)
     (let [identity        (:identity session)
           form-with-email (if (= (:auth-method session) "EMAIL")
                             (assoc form :email (:external-user-id identity))
@@ -250,12 +261,17 @@
 (defn submit-registration
   [db url-helper email-q lang session registration-id form payment-config onr-client]
   (log/info "START: Submitting registration id" registration-id)
-  (let [exam-session-registration (exam-session-db/get-exam-session-registration-by-registration-id db registration-id)]
+  (let [exam-session-registration (exam-session-db/get-exam-session-registration-by-registration-id db registration-id)
+        identity  (:identity session)
+        identity-ssn (:ssn identity)
+        form-ssn (:ssn form)
+        ssn (select-ssn identity-ssn form-ssn)]
     (cond
+      (not (registration-db/previous-ssn-doesnt-exists? db ssn (:id exam-session-registration)))
+      {:error {:ssn-exists true}}
       (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
       ((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
       (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id)
       ((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
-
       :else  ; registration is already full, cannot add new
       {:error {:full true}})))
