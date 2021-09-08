@@ -9,7 +9,8 @@
             [yki.boundary.db-extensions]
             [cheshire.core :as json]
             [clojure.java.jdbc :as jdbc]
-            [duct.database.sql]))
+            [duct.database.sql]
+            [clojure.core.memoize :as memo]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -66,6 +67,15 @@
     ; Delete link if contact fields are null
     (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id exam-session-id})))
 
+(defn- get-exam-sessions-unmemoized [spec oid from]
+  (q/select-exam-sessions spec {:oid oid
+                                :from (string->date from)}))
+
+(defonce ten-seconds (* 1000 10))
+
+(def ^:private _get-exam-sessions-memoized
+  (memo/ttl get-exam-sessions-unmemoized :ttl/threshold ten-seconds))
+
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
   (update-exam-session! [db oid id exam-session])
@@ -84,6 +94,8 @@
   (get-exam-sessions-to-be-synced [db retry-duration])
   (get-exam-sessions [db oid from]
     "Get exam sessions by optional oid and from arguments")
+  (get-exam-sessions-memoized [db oid from]
+    "Get memoized exam sessions by optional oid and from arguments")
   (get-exam-sessions-with-queue [db])
   (get-email-added-to-queue? [db email exam-session-id])
   (add-to-exam-session-queue! [db email lang exam-session-id])
@@ -173,8 +185,9 @@
   (get-completed-exam-session-participants [{:keys [spec]} id]
     (q/select-completed-exam-session-participants spec {:id id}))
   (get-exam-sessions [{:keys [spec]} oid from]
-    (q/select-exam-sessions spec {:oid oid
-                                  :from (string->date from)}))
+    (get-exam-sessions-unmemoized spec oid from))
+  (get-exam-sessions-memoized [{:keys [spec]} oid from]
+    (_get-exam-sessions-memoized spec oid from))
 
   (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
     (int->boolean (:count (first (q/select-email-added-to-queue spec {:email email
