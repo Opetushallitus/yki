@@ -519,13 +519,11 @@ SELECT NOT EXISTS (
 ) as exists;
 
 -- name: select-not-exists-registered-ssn
-SELECT NOT EXISTS (
-    SELECT * FROM registration
-    WHERE registration.state  IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-    AND exam_session_id = :exam_session_id
-    AND form ->> 'ssn' = :ssn
-    LIMIT 1
-) as exists;
+SELECT NOT EXISTS(SELECT id FROM registration WHERE exam_session_id IN (
+    SELECT e.id FROM exam_session AS e
+    INNER JOIN exam_session AS e2
+    ON e.exam_date_id = e2.exam_date_id AND e2.id = :exam_session_id)
+AND form ->> 'ssn' = :ssn ) AS EXISTS;
 
 -- name: select-started-registration-id-by-participant
 SELECT re.id
