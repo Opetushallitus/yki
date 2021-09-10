@@ -464,6 +464,9 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 (defn get-exam-session-id []
   (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))
 
+(defn insert-registration-with-form [user-id exam-session-id form]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration( state, exam_session_id, participant_id, form) values ('STARTED', " exam-session-id ", " user-id ",'" (j/write-value-as-string form) "')")))
+
 (defn insert-post-admission-registration
   [oid count quota]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_start_date, post_admission_end_date) VALUES ('" (two-weeks-from-now) "', '2019-08-01', '2019-10-01','" (two-weeks-ago) "', '" (two-weeks-from-now) "')"))

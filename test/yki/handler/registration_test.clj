@@ -24,6 +24,7 @@
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
 
+
 (defn- create-handlers
   [email-q port]
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
@@ -56,7 +57,9 @@
            :zip "01000"
            :street_address "Ateläniitynpolku 29 G"
            :phone_number "04012345"
-           :email "test@test.com"})
+           :email "test@test.com"
+           :ssn "010101-1111"})
+(def dublicate-ssn-user {:exam-id 2 :user-id 2 :form {:ssn "010101-1111"}})
 
 (deftest registration-create-and-update-test
   (base/insert-base-data)
@@ -93,6 +96,13 @@
                                                       :content-type "application/json"
                                                       :request-method :post))
           registration           (base/select-one (str "SELECT * FROM registration WHERE id = " id))
+          create-conflict        (base/insert-registration-with-form (:user-id dublicate-ssn-user)  (:exam-id dublicate-ssn-user) (:form dublicate-ssn-user))
+          conflict-registration  (-> session
+                                      (peridot/request (str routing/registration-api-root "/" id "/submit" "?lang=fi")
+                                                       :body (j/write-value-as-string form)
+                                                       :content-type "application/json"
+                                                       :request-method :post))
+          remove-conflict        (jdbc/execute! @embedded-db/conn (str"DELETE FROM registration WHERE participant_id = "(:user-id dublicate-ssn-user)))
           submit-response        (-> session
                                      (peridot/request (str routing/registration-api-root "/" id "/submit" "?lang=fi")
                                                       :body (j/write-value-as-string form)
@@ -114,6 +124,10 @@
         (let [create-twice-response-body (base/body-as-json (:response create-twice-response))]
           (is (= (get-in create-twice-response [:response :status]) 200))
           (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))))
+
+      (testing "existing ssn should prevent registration"
+               (is (= (get-in conflict-registration [:response :status]) 500))
+               (is (= (get-in (base/body-as-json (:response conflict-registration)) ["error" "ssn-exists"]) true)))
 
       (testing "post submit endpoint should create payment"
         (is (= (get-in submit-response [:response :status]) 200))
@@ -155,7 +169,6 @@
 
           (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
           (is (= (get-in create-twice-response [:response :status]) 409))))
-
       (testing "when session is full should return conflict with proper error"
         (fill-exam-session 50, "ADMISSION")
         (let [session-full-response (-> session
