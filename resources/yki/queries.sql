@@ -521,9 +521,10 @@ SELECT NOT EXISTS (
 -- name: select-not-exists-registered-ssn
 SELECT NOT EXISTS(SELECT id FROM registration WHERE exam_session_id IN (
     SELECT e.id FROM exam_session AS e
-    INNER JOIN exam_session AS e2
-    ON e.exam_date_id = e2.exam_date_id AND e2.id = :exam_session_id)
-AND form ->> 'ssn' = :ssn ) AS EXISTS;
+    WHERE e.exam_date_id = (SELECT e2.exam_date_id
+                            FROM exam_session as e2
+                            WHERE e2.id = :exam_session_id))
+AND form ->> 'ssn' = :ssn ) AS exists;
 
 -- name: select-started-registration-id-by-participant
 SELECT re.id

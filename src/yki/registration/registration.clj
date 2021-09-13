@@ -39,6 +39,7 @@
     (some? form-ssn)
     form-ssn
     :else ()))
+
 (defn- extract-person-from-registration
   [{:keys [email first_name last_name gender exam_lang nationalities birthdate ssn]} identity-ssn]
   (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
@@ -136,7 +137,6 @@
                                       (assoc login-link
                                              :code hashed))
     (log/info "Login link created for " email ". Adding to email queue")
-    (log/info "Login link created for " login-url ". Adding to email queue")
 
     (pgq/put email-q
              {:recipients [email]
@@ -187,7 +187,6 @@
 (defn submit-registration-abstract-flow
   []
   (fn [db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration]
-    (log/info "form data from registration" form)
     (let [identity        (:identity session)
           form-with-email (if (= (:auth-method session) "EMAIL")
                             (assoc form :email (:external-user-id identity))
