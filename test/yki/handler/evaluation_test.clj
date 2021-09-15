@@ -100,6 +100,7 @@
             order-subtests   (base/select (str "SELECT subtest FROM evaluation_order_subtest WHERE evaluation_order_id=" order-id))
             payment-id       (base/select-one (str "SELECT id FROM evaluation_payment WHERE evaluation_order_id=" order-id))
             order-comparison (map (fn [x] (= (order  x) (mock-evaluation-order  x)))  [:first_names :last_name :email :birthdate])]
+
         (testing "can post a valid evaluation order"
           (is (= (:status response) 200))
           (is (every? true? order-comparison))
