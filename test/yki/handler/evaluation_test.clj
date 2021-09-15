@@ -19,7 +19,8 @@
             [yki.embedded-db :as embedded-db]
             [yki.handler.routing :as routing]
             [yki.handler.auth]
-            [yki.handler.evaluation]))
+            [yki.handler.evaluation]
+            [clojure.tools.logging :as log]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
@@ -93,11 +94,12 @@
       (let [response         (evaluation-order-post open-evaluation-id mock-evaluation-order)
             response-body    (base/body-as-json response)
             order-id         (response-body "evaluation_order_id")
+            _               (log/warn "resp " response-body)
+            _               (log/warn "orderID " order-id)
             order            (base/select-one (str "SELECT * FROM evaluation_order WHERE id=" order-id))
             order-subtests   (base/select (str "SELECT subtest FROM evaluation_order_subtest WHERE evaluation_order_id=" order-id))
             payment-id       (base/select-one (str "SELECT id FROM evaluation_payment WHERE evaluation_order_id=" order-id))
             order-comparison (map (fn [x] (= (order  x) (mock-evaluation-order  x)))  [:first_names :last_name :email :birthdate])]
-
         (testing "can post a valid evaluation order"
           (is (= (:status response) 200))
           (is (every? true? order-comparison))

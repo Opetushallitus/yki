@@ -22,11 +22,11 @@
              {}
              amount-config))
 (defn- sanitize-order [raw-order]
-  (let [ sanitizer (partial (partial common/sanitized-string "_"))
-         text-fields (dissoc raw-order :subtests)
-         tests (common/traverse-map-values (:subtest raw-order) partial)
-        sanitized (common/traverse-map-values text-fields partial)]
-    (assoc sanitized :subtests tests))
+  (let [ sanitizer    (partial (partial common/sanitized-string "_"))
+         text-fields  (dissoc raw-order :subtests)
+         _             (log/warn "subtests" (:subtests raw-order) )
+         sanitized    (common/traverse-map-values text-fields partial)]
+    (assoc sanitized :subtests raw-order))
   )
 
 (defmethod ig/init-key :yki.handler/evaluation [_ {:keys [db payment-config]}]
