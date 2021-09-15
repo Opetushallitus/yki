@@ -55,8 +55,8 @@
         :path-params [id :- ::ys/id]
         :query-params [lang :- ::ys/language-code]
         :return ::ys/evaluation-order-response
-        (let [order = (sanitize-order raw-order)
-               evaluation         (evaluation-db/get-evaluation-period-by-id db id)
+        (let [order (sanitize-order raw-order)
+              evaluation         (evaluation-db/get-evaluation-period-by-id db id)
               price-config       (:amount payment-config)
               missing-config     (fn [subtest] (when (not (contains? price-config (keyword subtest)))
                                                  subtest))
