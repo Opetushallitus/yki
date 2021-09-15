@@ -8,7 +8,8 @@
             [yki.registration.paytrail-payment :as paytrail-payment]
             [ring.util.request]
             [yki.spec :as ys]
-            [integrant.core :as ig]))
+            [integrant.core :as ig]
+            [yki.util.common :as common]))
 
 (defn- evaluation-not-found [evaluation_id]
   (log/info "Evaluation not found with id" evaluation_id)
@@ -20,6 +21,13 @@
                (assoc m k (Double/parseDouble v)))
              {}
              amount-config))
+(defn- sanitize-order [raw-order]
+  (let [ sanitizer (partial (partial common/sanitized-string "_"))
+         text-fields (dissoc raw-order :subtests)
+         tests (common/traverse-map-values (:subtest raw-order) partial)
+        sanitized (common/traverse-map-values text-fields partial)]
+    (assoc sanitized :subtests tests))
+  )
 
 (defmethod ig/init-key :yki.handler/evaluation [_ {:keys [db payment-config]}]
   {:pre [(some? db) (some? payment-config)]}
@@ -43,11 +51,12 @@
           (evaluation-not-found id)))
 
       (POST "/order" []
-        :body [order ::ys/evaluation-order]
+        :body [raw-order ::ys/evaluation-order]
         :path-params [id :- ::ys/id]
         :query-params [lang :- ::ys/language-code]
         :return ::ys/evaluation-order-response
         (let [evaluation         (evaluation-db/get-evaluation-period-by-id db id)
+              order              (sanitize-order raw-order )
               price-config       (:amount payment-config)
               missing-config     (fn [subtest] (when (not (contains? price-config (keyword subtest)))
                                                  subtest))
