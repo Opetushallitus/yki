@@ -94,8 +94,6 @@
       (let [response         (evaluation-order-post open-evaluation-id mock-evaluation-order)
             response-body    (base/body-as-json response)
             order-id         (response-body "evaluation_order_id")
-            _               (log/warn "resp " response-body)
-            _               (log/warn "orderID " order-id)
             order            (base/select-one (str "SELECT * FROM evaluation_order WHERE id=" order-id))
             order-subtests   (base/select (str "SELECT subtest FROM evaluation_order_subtest WHERE evaluation_order_id=" order-id))
             payment-id       (base/select-one (str "SELECT id FROM evaluation_payment WHERE evaluation_order_id=" order-id))
