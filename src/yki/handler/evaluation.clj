@@ -24,9 +24,8 @@
 (defn- sanitize-order [raw-order]
   (let [ sanitizer    (partial (partial common/sanitized-string "_"))
          text-fields  (dissoc raw-order :subtests)
-         _             (log/warn "subtests" (:subtests raw-order) )
          sanitized    (common/traverse-map-values text-fields partial)]
-    (assoc sanitized :subtests raw-order))
+    (merge raw-order sanitized ))
   )
 
 (defmethod ig/init-key :yki.handler/evaluation [_ {:keys [db payment-config]}]
@@ -56,6 +55,7 @@
         :query-params [lang :- ::ys/language-code]
         :return ::ys/evaluation-order-response
         (let [order (sanitize-order raw-order)
+              _ (log/warn "order" raw-order order)
               evaluation         (evaluation-db/get-evaluation-period-by-id db id)
               price-config       (:amount payment-config)
               missing-config     (fn [subtest] (when (not (contains? price-config (keyword subtest)))
