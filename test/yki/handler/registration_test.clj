@@ -20,8 +20,7 @@
             [yki.embedded-db :as embedded-db]
             [yki.handler.auth]
             [yki.handler.routing :as routing]
-            [yki.handler.registration]
-            [clojure.tools.logging :as log]))
+            [yki.handler.registration]))
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
 

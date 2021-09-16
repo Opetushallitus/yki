@@ -22,9 +22,9 @@
              {}
              amount-config))
 (defn- sanitize-order [raw-order]
-  (let [ sanitizer    (partial (partial common/sanitized-string "_"))
-         text-fields  (dissoc raw-order :subtests)
-         sanitized    (common/traverse-map-values text-fields partial)]
+  (let [sanitizer     (partial common/sanitized-string "_")
+        text-fields  (dissoc raw-order :subtests)
+        sanitized    (common/transform-map-values text-fields partial)]
     (merge raw-order sanitized ))
   )
 
@@ -55,7 +55,6 @@
         :query-params [lang :- ::ys/language-code]
         :return ::ys/evaluation-order-response
         (let [order (sanitize-order raw-order)
-              _ (log/warn "order" raw-order order)
               evaluation         (evaluation-db/get-evaluation-period-by-id db id)
               price-config       (:amount payment-config)
               missing-config     (fn [subtest] (when (not (contains? price-config (keyword subtest)))

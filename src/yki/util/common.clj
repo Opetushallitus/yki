@@ -31,10 +31,9 @@
   (format-date-to-finnish-format (c/from-long date-long)))
 
 ;; Allow digits, unicode letters, space and chars '``*+@&.,-_
-;; Implemented to catch solki breaking ";" and might need expanding (card no. 218)
 (defn sanitized-string [replacement input]
   (str/replace (str/trim input) #"[^0-9\-\'\´\`\p{L}\p{M}*+.,_&@ ]" replacement))
 
 ;; iterates over map and applies supplied function to map's values
-(defn traverse-map-values [map fun]
+(defn transform-map-values [map fun]
   (into {} (for [[key val] map] [key (fun val)])))
