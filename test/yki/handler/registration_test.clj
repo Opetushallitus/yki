@@ -52,7 +52,7 @@
            :birthdate "1999-01-01"
            :certificate_lang "fi"
            :exam_lang "fi"
-           :post_office "Helsinki"
+           :post_office "Helsinki;"
            :zip "01000"
            :street_address "Ateläniitynpolku 29 G"
            :phone_number "04012345"
@@ -131,6 +131,9 @@
         (is (= (:state submitted-registration) "SUBMITTED"))
         (is (= true (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
         (is (some? (:started_at submitted-registration))))
+
+      (testing "sanitize registration input"
+               (is (= (get-in submitted-registration [:form :post_office]) "Helsinki_")))
 
       (testing "and delete item from exam session queue"
         (is (= {:count 0}
