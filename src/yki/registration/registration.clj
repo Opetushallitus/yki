@@ -56,7 +56,7 @@
 
 (defn- sanitized-form [form]
   (let [text-fields (dissoc form :nationalities)
-        sanitized  (common/transform-map-values text-fields (partial common/sanitized-string "_"))]
+        sanitized  (common/transform-map-values (partial common/sanitized-string "_") text-fields)]
     (merge form sanitized)
     ))
 

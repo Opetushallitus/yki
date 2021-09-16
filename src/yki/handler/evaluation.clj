@@ -24,7 +24,7 @@
 (defn- sanitize-order [raw-order]
   (let [sanitizer     (partial common/sanitized-string "_")
         text-fields  (dissoc raw-order :subtests)
-        sanitized    (common/transform-map-values text-fields partial)]
+        sanitized    (common/transform-map-values partial text-fields)]
     (merge raw-order sanitized ))
   )
 

@@ -35,5 +35,5 @@
   (str/replace (str/trim input) #"[^0-9\-\'\´\`\p{L}\p{M}*+.,_&@ ]" replacement))
 
 ;; iterates over map and applies supplied function to map's values
-(defn transform-map-values [map fun]
+(defn transform-map-values [fun map]
   (into {} (for [[key val] map] [key (fun val)])))
