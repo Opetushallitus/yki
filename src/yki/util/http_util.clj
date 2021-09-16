@@ -21,7 +21,6 @@
   (let [opts        (headers-and-cookies-settings opts)
         method-name (string/upper-case (name method))
         start       (System/currentTimeMillis)
-        _ (info "do-request, opts:" opts)
         response    @(http/request opts)
         time        (- (System/currentTimeMillis) start)
         status      (:status response 500)
