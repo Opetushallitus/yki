@@ -7,6 +7,9 @@
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/java.jdbc "0.7.12"] ;Development has ended and replaced by next.jdbc
+                 [org.clojure/tools.logging "1.1.0"]
+                 [org.clojure/core.memoize "1.0.250"]
+                 [org.clojure/data.xml "0.0.8"]
                  [clj-time "0.15.2"] ;deprecated
                  [duct/core "0.8.0"]
                  [duct/module.cljs "0.4.1"]
@@ -22,15 +25,12 @@
                  [metosin/spec-tools "0.9.1"]
                  [org.postgresql/postgresql "42.2.5"]
                  [duct/database.sql.hikaricp "0.4.0"]
-                 [buddy/buddy-auth "2.1.0"]
+                 [buddy/buddy-auth "2.1.0"] ; Maitaner mode, no active maintainer
                  [webjure/jeesql "0.4.7"]
-                 [http-kit "2.4.0-alpha3"]
-                 [org.clojure/tools.logging "0.4.1"]
-                 [org.clojure/core.memoize "0.7.1"]
+                 [http-kit "2.5.3"]
                  [ring-logger "1.0.1"]
                  [ch.qos.logback/logback-classic "1.2.3"]
-                 [org.clojure/data.xml "0.0.8"]
-                 ;; these two are necessary for Scala Cas Client
+                 ;; these are necessary for Scala Cas Client
                  [oph/clj-cas "0.6.1-SNAPSHOT"]
                  [fi.vm.sade/scala-cas_2.12 "2.1.0-SNAPSHOT"]
                  [org.http4s/http4s-blaze-client_2.12 "0.16.6a"]
@@ -46,14 +46,14 @@
                   ["vcs" "commit"]
                   ["vcs" "push"]]
   :plugins [[duct/lein-duct "0.12.3"]
-            [lein-cljfmt "0.6.4"]
-            [jonase/eastwood "0.3.3"]
-            [lein-bikeshed "0.5.1"]
-            [lein-ancient "0.6.15"]
-            [com.jakemccrary/lein-test-refresh "0.23.0"]
-            [lein-cloverage "1.0.13"]
+            [lein-cljfmt "0.8.0"]
+            [jonase/eastwood "0.9.9"]
+            [lein-bikeshed "0.5.2"]
+            [lein-ancient "0.7.0"]
+            [com.jakemccrary/lein-test-refresh "0.25.0"]
+            [lein-cloverage "1.2.2"]
             [me.arrdem/lein-git-version "2.0.8"]
-            [lein-kibit "0.1.6"]]
+            [lein-kibit "0.1.8"]]
   :git-version {:version-file      "target/classes/buildversion.edn"
                 :version-file-keys [:ref :version :branch :message]}
   :test-refresh {:changes-only true}
@@ -74,7 +74,7 @@
                   :resource-paths ["dev/resources"]
                   :dependencies   [[integrant/repl "0.3.1"]
                                    [eftest "0.5.7"]
-                                   [cheshire "5.8.1"]
+                                   [cheshire "5.10.0"]
                                    [peridot "0.5.1"]
                                    [se.haleby/stub-http "0.2.7"]
                                    [com.opentable.components/otj-pg-embedded "0.13.1"]
