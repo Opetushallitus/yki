@@ -14,10 +14,10 @@
       "contact": null,
       "location": [
         {
-          "lang": "fi",
+          "lang": "en",
           "extra_information": null,
           "name": "Omenia",
-          "other_location_info": "auditorio A2",
+          "other_location_info": "auditorium A2",
           "street_address": "Jokukatu 4",
           "post_office": "Tampere",
           "zip": "00100"
@@ -32,10 +32,10 @@
           "zip": "00100"
         },
         {
-          "lang": "en",
+          "lang": "fi",
           "extra_information": null,
           "name": "Omenia",
-          "other_location_info": "auditorium A2",
+          "other_location_info": "auditorio A2",
           "street_address": "Jokukatu 4",
           "post_office": "Tampere",
           "zip": "00100"

@@ -18,11 +18,35 @@
         "zip": "12346"
       },
       "original_exam_session_id": null,
-      "order_number": null,
+      "order_number": "order1234",
       "kind": "ADMISSION",
-      "state": "COMPLETED",
-      "registration_id": 1
+      "state": "EXPIRED",
+      "registration_id": 4
     },
+    {
+      "form": {
+        "post_office": "Ankkalinna",
+        "ssn": "301079-083N",
+        "exam_lang": "fi",
+        "phone_number": "+3584012347",
+        "gender": null,
+        "email": "roope@al.fi",
+        "certificate_lang": "fi",
+        "last_name": "Ankka",
+        "first_name": "Roope",
+        "nationalities": [
+          "246"
+        ],
+        "street_address": "Katu 5",
+        "zip": "12346"
+      },
+      "original_exam_session_id": null,
+      "order_number": null,
+      "kind": "POST_ADMISSION",
+      "state": "COMPLETED",
+      "registration_id": 3
+    },
+
     {
       "form": {
         "post_office": "Ankkalinna",
@@ -50,29 +74,6 @@
     {
       "form": {
         "post_office": "Ankkalinna",
-        "ssn": "301079-083N",
-        "exam_lang": "fi",
-        "phone_number": "+3584012347",
-        "gender": null,
-        "email": "roope@al.fi",
-        "certificate_lang": "fi",
-        "last_name": "Ankka",
-        "first_name": "Roope",
-        "nationalities": [
-          "246"
-        ],
-        "street_address": "Katu 5",
-        "zip": "12346"
-      },
-      "original_exam_session_id": null,
-      "order_number": null,
-      "kind": "POST_ADMISSION",
-      "state": "COMPLETED",
-      "registration_id": 3
-    },
-    {
-      "form": {
-        "post_office": "Ankkalinna",
         "ssn": "301079-900U",
         "exam_lang": "fi",
         "phone_number": "+3584012346",
@@ -88,10 +89,10 @@
         "zip": "12346"
       },
       "original_exam_session_id": null,
-      "order_number": "order1234",
+      "order_number": null,
       "kind": "ADMISSION",
-      "state": "EXPIRED",
-      "registration_id": 4
+      "state": "COMPLETED",
+      "registration_id": 1
     }
   ]
 }

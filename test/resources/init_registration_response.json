@@ -24,7 +24,7 @@
     "contact": null,
     "location": [
       {
-        "lang": "fi",
+        "lang": "en",
         "extra_information": null,
         "post_office": "Espoo",
         "name": "Omenia",
@@ -42,7 +42,7 @@
         "zip": "00240"
       },
       {
-        "lang": "en",
+        "lang": "fi",
         "extra_information": null,
         "post_office": "Espoo",
         "name": "Omenia",

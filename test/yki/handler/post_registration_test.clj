@@ -90,7 +90,6 @@
                                                       :request-method :post))
           init-response-body     (base/body-as-json (:response init-response))
 
-          _ (println "init-response-body" init-response-body)
           id                     (init-response-body "registration_id")
           create-twice-response  (-> session
                                      (peridot/request (str routing/registration-api-root "/init")
@@ -103,11 +102,9 @@
                                                       :body (j/write-value-as-string form)
                                                       :content-type "application/json"
                                                       :request-method :post))
-          _ (println "submit-response:" (base/body-as-json (:response submit-response)))
           payment                (base/select-one (str "SELECT * FROM payment WHERE registration_id = " id))
           payment-link           (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " id))
           submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " id))
-          _ (println "submitted-registration:" submitted-registration)
           email-request          (pgq/take email-q)]
 
       (testing "post init endpoint should create registration with status STARTED"
