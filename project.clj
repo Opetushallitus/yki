@@ -15,7 +15,7 @@
                  [duct/module.web "0.7.3"]
                  [duct/scheduler.simple "0.1.0"]
                  [com.layerware/pgqueue "0.5.1"]
-                 [selmer "1.12.12"]
+                 [selmer "1.12.44"]
                  [metosin/compojure-api "2.0.0-alpha25"]
                  [metosin/jsonista "0.2.7"]
                  [metosin/muuntaja "0.6.4"]
