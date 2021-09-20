@@ -9,7 +9,7 @@
     (warn "No authentication in use")
     (wrap-session
      handler
-     {:store (cookie-store {:key (:key session-config)}),
+     {:store (cookie-store {:key (.getBytes (:key session-config))}),
       :cookie-name "yki",
       :cookie-attrs (:cookie-attrs session-config)})))
 

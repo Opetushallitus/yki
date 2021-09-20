@@ -187,7 +187,7 @@
         (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
         (wrap-authentication backend)
         (wrap-authorization backend)
-        (wrap-session {:store (cookie-store {:key (:key session-config)})
+        (wrap-session {:store (cookie-store {:key (.getBytes (:key session-config))})
                        :cookie-name "yki"
                        :cookie-attrs (:cookie-attrs session-config)}))))
 
