@@ -73,9 +73,8 @@
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
                   :dependencies   [[integrant/repl "0.3.1"]
-                                   [eftest "0.5.7"]
+                                   [eftest "0.5.9"]
                                    [cheshire "5.10.0"]
-                                   [peridot "0.5.1"]
-                                   [se.haleby/stub-http "0.2.7"]
-                                   [com.opentable.components/otj-pg-embedded "0.13.1"]
-                                   [kerodon "0.9.0"]]}})
+                                   [se.haleby/stub-http "0.2.10"]
+                                   [com.opentable.components/otj-pg-embedded "0.13.4"]
+                                   [kerodon "0.9.1"]]}})
