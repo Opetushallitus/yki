@@ -30,9 +30,9 @@
                  [http-kit "2.5.3"]
                  [ring-logger "1.0.1"]
                  [ch.qos.logback/logback-classic "1.2.3"]
-                 ;; these are necessary for Scala Cas Client
-                 [oph/clj-cas "0.6.1-SNAPSHOT"]
-                 [fi.vm.sade/scala-cas_2.12 "2.1.0-SNAPSHOT"]
+                 ;; these two are necessary for Scala Cas Client
+                 [oph/clj-cas "0.6.3-SNAPSHOT"]
+                 [fi.vm.sade/scala-cas_2.12 "2.2.2-SNAPSHOT"]
                  [org.http4s/http4s-blaze-client_2.12 "0.16.6a"]
                  [org.http4s/blaze-http_2.12 "0.12.11"]
                  [fi.vm.sade/auditlogger "8.3.0-SNAPSHOT"]
