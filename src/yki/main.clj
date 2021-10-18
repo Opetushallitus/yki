@@ -9,7 +9,6 @@
 (defn- read-external-config! []
   (if (.exists (io/file "./oph-configuration/config.edn"))
     (do
-      (System/setProperty "clojure.tools.logging.factory" "clojure.tools.logging.impl/slf4j-factory")
       (System/setProperty "logback.configurationFile" "./oph-configuration/logback.xml")
       (io/file "./oph-configuration/config.edn"))))
 
