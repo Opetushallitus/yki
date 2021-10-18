@@ -7,7 +7,7 @@
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.10.3"]
                  [org.clojure/java.jdbc "0.7.12"] ;Development has ended and replaced by next.jdbc
-                 [org.clojure/tools.logging "0.4.1"]
+                 [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/core.memoize "1.0.250"]
                  [org.clojure/data.xml "0.0.8"]
                  [clj-time "0.15.2"] ;deprecated
