@@ -560,7 +560,7 @@ AND EXISTS (SELECT id
                                       FROM registration
               	                      WHERE exam_session_id = :exam_session_id
 	                                    AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
-              AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid))
+              AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
 -- submitted registration expires 8 days from payment creation at midnight
 -- name: update-submitted-registrations-to-expired<!

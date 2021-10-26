@@ -9,7 +9,8 @@
             [eftest.runner :as eftest]
             [integrant.core :as ig]
             [integrant.repl :refer [clear halt go init prep reset]]
-            [integrant.repl.state :refer [config system]]))
+            [integrant.repl.state :refer [config system]]
+            [jeesql.autoreload]))
 
 (duct/load-hierarchy)
 
@@ -28,3 +29,5 @@
   (load "local"))
 
 (integrant.repl/set-prep! #(duct/prep-config (read-config) profiles))
+
+(jeesql.autoreload/start-autoreload)

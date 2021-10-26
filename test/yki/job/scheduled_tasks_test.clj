@@ -23,6 +23,7 @@
 (defn create-email-q-reader
   [port retry-duration-in-days]
   (ig/init-key :yki.job.scheduled-tasks/email-queue-reader {:url-helper (base/create-url-helper (str "localhost:" port))
+                                                            :handle-at-once-at-most 1
                                                             :basic-auth {:user "user" :password "pass"}
                                                             :retry-duration-in-days retry-duration-in-days
                                                             :email-q (base/email-q)}))

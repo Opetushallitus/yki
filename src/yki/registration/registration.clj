@@ -8,7 +8,7 @@
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
-            [yki.util.common :as c]
+            [yki.util.common :as common]
             [ring.util.http-response :refer [ok conflict]]
             [buddy.core.hash :as hash]
             [buddy.core.codecs :refer [bytes->hex]]
@@ -52,6 +52,13 @@
        :syntymaaika birthdate
        :identifications [{:idpEntityId "oppijaToken" :identifier email}]
        :eiSuomalaistaHetua true))))
+
+
+(defn- sanitized-form [form]
+  (let [text-fields (dissoc form :nationalities)
+        sanitized  (common/transform-map-values (partial common/sanitized-string "_") text-fields)]
+    (merge form sanitized)
+    ))
 
 (defn- create-init-response
   [db session exam_session_id registration-id payment-config]
@@ -164,8 +171,9 @@
 
 (defn submit-registration-abstract-flow
   []
-  (fn [db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration]
-    (let [identity        (:identity session)
+  (fn [db url-helper email-q lang session registration-id raw-form payment-config onr-client exam-session-registration]
+    (let [form            (sanitized-form raw-form)
+          identity        (:identity session)
           form-with-email (if (= (:auth-method session) "EMAIL")
                             (assoc form :email (:external-user-id identity))
                             (assoc form :ssn (:ssn identity)))
@@ -192,15 +200,15 @@
                                          :form_version   1
                                          :participant_id (or (:participant_id registration-data) participant-id)}
                 registration-kind       (:kind registration-data)
-                registration-end-time   (c/next-start-of-day
+                registration-end-time   (common/next-start-of-day
                                          (f/parse
                                           (if (= registration-kind "POST_ADMISSION")
                                             (:post_admission_end_date registration-data)
                                             (:registration_end_date registration-data))))
                 expiration-date         (t/min-date
                                          (if (= registration-kind "POST_ADMISSION")
-                                           (c/date-from-now 1)
-                                           (c/date-from-now 8))
+                                           (common/date-from-now 1)
+                                           (common/date-from-now 8))
                                          registration-end-time)
                 payment-link            {:participant_id        participant-id
                                          :exam_session_id       nil
@@ -218,7 +226,7 @@
                                                                       :amount amount
                                                                       :language (template-util/get-language url-helper (:language_code registration-data) lang)
                                                                       :level (template-util/get-level url-helper (:level_code registration-data) lang)
-                                                                      :expiration-date (c/format-date-to-finnish-format expiration-date)))
+                                                                      :expiration-date (common/format-date-to-finnish-format expiration-date)))
                 success                 (registration-db/create-payment-and-update-registration! db
                                                                                                  payment
                                                                                                  update-registration
