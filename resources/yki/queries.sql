@@ -756,7 +756,7 @@ SELECT es.id
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 WHERE es.id = :exam_session_id
-  AND (ed.exam_date - interval '14 day') >= current_date
+  AND (ed.exam_date - interval '21 day') >= current_date
   AND (SELECT COUNT(1)
      FROM participant_sync_status pss
      WHERE pss.exam_session_id = es.id
