@@ -1,22 +1,15 @@
 (ns yki.handler.auth-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
-            [stub-http.core :refer :all]
+  (:require [clojure.test :refer [use-fixtures deftest testing is]]
+            [stub-http.core :refer [with-routes!]]
             [clj-time.local :as l]
-            [clj-time.format :as f]
             [clojure.string :as s]
-            [duct.database.sql :as sql]
             [yki.util.url-helper]
             [yki.handler.auth]
             [yki.boundary.onr]
             [yki.embedded-db :as embedded-db]
-            [clojure.java.jdbc :as jdbc]
             [jsonista.core :as json]
-            [yki.handler.login-link :as login-link]
             [yki.middleware.auth]
-            [yki.boundary.cas :as cas]
             [yki.handler.base-test :as base]
-            [muuntaja.middleware :as middleware]
             [peridot.core :as peridot]
             [yki.handler.routing :as routing]))
 
@@ -33,7 +26,6 @@
 (defn- create-routes [port]
   (let [uri (str "localhost:" port)
         url-helper (base/create-url-helper uri)
-        db (sql/->Boundary @embedded-db/conn)
         auth (base/auth url-helper)
         auth-handler (base/auth-handler auth url-helper)]
     auth-handler))

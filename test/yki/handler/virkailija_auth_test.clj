@@ -1,27 +1,18 @@
 (ns yki.handler.virkailija-auth-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
-            [ring.mock.request :as mock]
+  (:require [clojure.test :refer [deftest use-fixtures testing is]]
+            [compojure.core :refer [routes]]
             [duct.database.sql]
-            [yki.util.url-helper]
-            [yki.middleware.auth]
-            [yki.handler.base-test :as base]
+            [integrant.core :as ig]
             [jsonista.core :as j]
-            [compojure.core :refer :all]
             [muuntaja.middleware :as middleware]
-            [ring.mock.request :as mock]
-            [clojure.java.jdbc :as jdbc]
             [peridot.core :as peridot]
-            [stub-http.core :refer :all]
-            [yki.boundary.cas :as cas]
-            [yki.boundary.permissions :as permissions]
+            [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
+            [yki.handler.auth]
+            [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
-            [yki.handler.auth]))
-
-(defn insert-prereq-data [f]
-  (base/insert-cas-ticket)
-  (f))
+            [yki.middleware.auth]
+            [yki.util.url-helper]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)

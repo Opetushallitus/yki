@@ -1,20 +1,16 @@
 (ns yki.handler.file-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
-            [yki.handler.base-test :as base]
+  (:require [clojure.test :refer [deftest use-fixtures testing is]]
+            [clojure.java.io :as io]
             [ring.mock.request :as mock]
             [duct.database.sql]
             [jsonista.core :as j]
-            [clojure.java.io :as io]
-            [yki.boundary.files :as files]
-            [muuntaja.middleware :as middleware]
-            [stub-http.core :refer :all]
-            [muuntaja.core :as m]
-            [clojure.java.jdbc :as jdbc]
+            [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
+            [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
             [yki.handler.file]
-            [yki.handler.organizer]))
+            [yki.handler.organizer])
+  (:import [java.io File]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
@@ -22,9 +18,9 @@
 (defn- create-temp-file [file-path]
   (let [filename-start (inc (.lastIndexOf file-path "/"))
         file-extension-start (.lastIndexOf file-path ".")
-        file-name (.substring file-path filename-start file-extension-start)
-        file-extension (.substring file-path file-extension-start)
-        temp-file (java.io.File/createTempFile file-name file-extension)]
+        file-name (subs file-path filename-start file-extension-start)
+        file-extension (subs file-path file-extension-start)
+        temp-file (File/createTempFile file-name file-extension)]
     (io/copy (io/file file-path) temp-file)
     temp-file))
 

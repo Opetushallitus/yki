@@ -44,11 +44,11 @@
                   ["change" "version" "leiningen.release/bump-version"]
                   ["vcs" "commit"]
                   ["vcs" "push"]]
-  :plugins [[duct/lein-duct "0.11.2"]
+  :plugins [[duct/lein-duct "0.12.3"]
             [lein-cljfmt "0.6.4"]
             [jonase/eastwood "0.3.3"]
             [lein-bikeshed "0.5.1"]
-            [lein-ancient "0.6.15"]
+            [lein-ancient "1.0.0-RC3"]
             [com.jakemccrary/lein-test-refresh "0.23.0"]
             [lein-cloverage "1.0.13"]
             [me.arrdem/lein-git-version "2.0.8"]
@@ -56,25 +56,26 @@
   :git-version {:version-file      "target/classes/buildversion.edn"
                 :version-file-keys [:ref :version :branch :message]}
   :test-refresh {:changes-only true}
-  :middleware     [lein-duct.plugin/middleware lein-git-version.plugin/middleware]
+  :middleware [lein-duct.plugin/middleware lein-git-version.plugin/middleware]
   :main ^:skip-aot yki.main
-  :jvm-opts ["-Duser.timezone=UTC"]
+  :jvm-opts ["-Duser.timezone=UTC"
+             "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
   :resource-paths ["resources" "target/resources"]
-  :prep-tasks     ["javac" "compile" ["run" ":duct/compiler"]]
+  :prep-tasks ["javac" "compile" ["run" ":duct/compiler"]]
   :global-vars {*warn-on-reflection* true}
   :profiles
-  {:dev  [:project/dev :profiles/dev]
-   :test {:jvm-opts ["-Dlogback.configurationFile=test/resources/logback-test.xml"]}
-   :repl {:prep-tasks   ^:replace ["javac" "compile"]
-          :repl-options {:init-ns user}}
-   :uberjar {:aot :all}
+  {:provided     {:dependencies [[hawk "0.2.11" :exclusions [net.java.dev.jna/jna]]]}
+   :dev          [:project/dev :profiles/dev]
+   :test         {:jvm-opts ["-Dlogback.configurationFile=test/resources/logback-test.xml"]}
+   :repl         {:prep-tasks   ^:replace ["javac" "compile"]
+                  :repl-options {:init-ns user}}
+   :uberjar      {:aot :all}
    :profiles/dev {}
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
-                  :dependencies   [[integrant/repl "0.3.1"]
-                                   [eftest "0.5.7"]
-                                   [cheshire "5.8.1"]
-                                   [peridot "0.5.1"]
-                                   [se.haleby/stub-http "0.2.7"]
-                                   [com.opentable.components/otj-pg-embedded "0.13.1"]
-                                   [kerodon "0.9.0"]]}})
+                  :dependencies   [[integrant/repl "0.3.2"]
+                                   [eftest "0.5.9"]
+                                   [peridot "0.5.4"]
+                                   [se.haleby/stub-http "0.2.12"]
+                                   [com.opentable.components/otj-pg-embedded "1.0.0"]
+                                   [kerodon "0.9.1"]]}})

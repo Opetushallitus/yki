@@ -1,11 +1,8 @@
 (ns yki.handler.exam-date-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
+  (:require [clojure.test :refer [use-fixtures join-fixtures deftest testing is]]
             [ring.mock.request :as mock]
             [yki.handler.base-test :as base]
-            [compojure.api.sweet :refer :all]
             [jsonista.core :as j]
-            [clojure.java.jdbc :as jdbc]
             [yki.embedded-db :as embedded-db]
             [yki.handler.routing :as routing]
             [yki.handler.exam-date-public]))
@@ -40,6 +37,15 @@
   (let [request (-> (mock/request :delete (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id))))]
     (base/send-request-with-tx request)))
 
+(defn- mock-delete-with-body [uri body]
+  ; Updating to [ring/ring-mock "0.4.0"] contains a version of
+  ; ring.mock.request/request that strips the request body for (among others)
+  ; a DELETE request.
+  ; This simple workaround just mocks a POST request instead and then replaces
+  ; the request method to DELETE as desired.
+  (-> (mock/request :post uri body)
+      (assoc :request-method :delete)))
+
 (deftest get-exam-dates-test
   (testing "can get exam dates"
     (let [request (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-date"))
@@ -69,9 +75,9 @@
       (is (= (:status response) 409))))
 
   (testing "cannot create a new exam date when registration end date is before registration start date"
-    (let [new-dates {:exam_date "2041-06-08"
+    (let [new-dates {:exam_date               "2041-06-08"
                      :registration_start_date "2041-03-07"
-                     :registration_end_date "2041-03-01"}
+                     :registration_end_date   "2041-03-01"}
           exam-date-entry (create-exam-date-entry new-dates)
           response (post-exam-date exam-date-entry)
           response-body (base/body-as-json response)]
@@ -79,9 +85,9 @@
       (is (= (:status response) 409))))
 
   (testing "cannot create a new exam date when registration end date is not before exam date"
-    (let [new-dates {:exam_date "2041-06-09"
+    (let [new-dates {:exam_date               "2041-06-09"
                      :registration_start_date "2041-06-01"
-                     :registration_end_date "2041-06-11"}
+                     :registration_end_date   "2041-06-11"}
           exam-date-entry (create-exam-date-entry new-dates)
           response (post-exam-date exam-date-entry)
           response-body (base/body-as-json response)]
@@ -163,15 +169,17 @@
         (is (= 2 (count (base/select (base/select-exam-date-languages-by-date-id exam-date-id))))))))
 
   (let [delete-exam-date-languages (fn [id exam-date-languages]
-                                     (let [request (-> (mock/request :delete (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id "/languages")) exam-date-languages)
+                                     (let [exam-languages-endpoint (str routing/organizer-api-root "/1.2.3.4/exam-date/" id "/languages")
+                                           request (-> (mock-delete-with-body exam-languages-endpoint exam-date-languages)
                                                        (mock/content-type "application/json; charset=UTF-8"))]
                                        (base/send-request-with-tx request)))]
     (testing "can delete a language from an existing exam date"
       (let [language (slurp "test/resources/language_fin.json")
             exam-date-id (get-exam-date-id-by-date "2039-10-12")
-            response (delete-exam-date-languages exam-date-id language)]
+            response (delete-exam-date-languages exam-date-id language)
+            exam-date-languages (base/select (base/select-exam-date-languages-by-date-id exam-date-id))]
         (is (= (:status response) 200))
-        (is (= 1 (count (base/select (base/select-exam-date-languages-by-date-id exam-date-id)))))))
+        (is (= 1 (count exam-date-languages)))))
 
     (testing "cannot delete a language from an exam date that has exam sessions assigned to it"
       (let [exam-date-id (get-exam-date-id-by-date "2039-10-12")
@@ -184,7 +192,6 @@
         (is (= 1 (count (base/select (base/select-exam-date-languages-by-date-id exam-date-id)))))))))
 
 (deftest exam-date-post-admission-configure-test
-
   (base/insert-custom-exam-date "2042-06-01" "2042-01-01" "2042-01-30")
   (let [configure-post-admission (fn [id configuration]
                                    (let [request (-> (mock/request :post (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id "/post-admission")) configuration)
@@ -194,8 +201,8 @@
 
     (testing "can configure post admission for the exam date"
       (let [post-admission {:post_admission_start_date "2042-02-01"
-                            :post_admission_end_date "2042-02-28"
-                            :post_admission_enabled false}
+                            :post_admission_end_date   "2042-02-28"
+                            :post_admission_enabled    false}
             configuration (create-new-entry "{}" post-admission)
             response (configure-post-admission exam-date-id configuration)
             exam-date (base/select-one (base/select-exam-date exam-date-id))]
@@ -206,8 +213,8 @@
 
     (testing "cannot add a post admission start date that is before it's end date"
       (let [post-admission {:post_admission_start_date "2042-02-28"
-                            :post_admission_end_date "2042-02-01"
-                            :post_admission_enabled false}
+                            :post_admission_end_date   "2042-02-01"
+                            :post_admission_enabled    false}
             configuration (create-new-entry "{}" post-admission)
             response (configure-post-admission exam-date-id configuration)
             response-body (base/body-as-json response)]
@@ -216,8 +223,8 @@
 
     (testing "cannot add a post admission start date that is before registration end"
       (let [post-admission {:post_admission_start_date "2042-01-28"
-                            :post_admission_end_date "2042-02-28"
-                            :post_admission_enabled false}
+                            :post_admission_end_date   "2042-02-28"
+                            :post_admission_enabled    false}
             configuration (create-new-entry "{}" post-admission)
             response (configure-post-admission exam-date-id configuration)
             response-body (base/body-as-json response)]
@@ -226,8 +233,8 @@
 
     (testing "cannot add a post admission end date that is after exam date"
       (let [post-admission {:post_admission_start_date "2042-02-28"
-                            :post_admission_end_date "2042-06-28"
-                            :post_admission_enabled false}
+                            :post_admission_end_date   "2042-06-28"
+                            :post_admission_enabled    false}
             configuration (create-new-entry "{}" post-admission)
             response (configure-post-admission exam-date-id configuration)
             response-body (base/body-as-json response)]
@@ -259,3 +266,4 @@
             exam-date (base/select-one (base/select-exam-date new-exam-date-id))]
         (is (= (:status response) 409))
         (is (= (:post_admission_enabled exam-date) false))))))
+

@@ -29,16 +29,16 @@
 
 (def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
 
-(def organizer {:oid "1.2.3.4"
+(def organizer {:oid                  "1.2.3.4"
                 :agreement_start_date "2018-01-01T00:00:00Z"
-                :agreement_end_date "2049-01-01T00:00:00Z"
-                :contact_email "fuu@bar.com"
-                :contact_name "fuu"
+                :agreement_end_date   "2049-01-01T00:00:00Z"
+                :contact_email        "fuu@bar.com"
+                :contact_name         "fuu"
                 :contact_phone_number "123456"
-                :extra "shared@oph.fi"
-                :merchant {:merchant_id 123456 :merchant_secret "SECRET"}
-                :languages [{:language_code "fin" :level_code "PERUS"}
-                            {:language_code "eng" :level_code "PERUS"}]})
+                :extra                "shared@oph.fi"
+                :merchant             {:merchant_id 123456 :merchant_secret "SECRET"}
+                :languages            [{:language_code "fin" :level_code "PERUS"}
+                                       {:language_code "eng" :level_code "PERUS"}]})
 
 (defn- read-json-from-file [path]
   (j/read-value (slurp path)))
@@ -100,26 +100,26 @@
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
 
-(def payment-config {:paytrail-host "https://payment.paytrail.com/e2"
+(def payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
                      :yki-payment-uri "http://localhost:8080/yki/payment"
-                     :amount {:PERUS "100.00"
-                              :KESKI "123.00"
-                              :YLIN "160.00"}
-                     :msg {:fi "msg_fi"
-                           :sv "msg_sv"}})
+                     :amount          {:PERUS "100.00"
+                                       :KESKI "123.00"
+                                       :YLIN  "160.00"}
+                     :msg             {:fi "msg_fi"
+                                       :sv "msg_sv"}})
 
 (defn cas-mock-routes [port]
-  {"/cas/v1/tickets" {:status 201
-                      :method :post
-                      :headers {"Location" (str "http://localhost:" port "/cas/v1/tickets/TGT-1-FFDFHDSJK")}
-                      :caller-id {"Caller-Id" "1.2.246.562.10.00000000001.yki"}
-                      :body "ST-1-FFDFHDSJK2"}
-   "/oppijanumerorekisteri-service/j_spring_cas_security_check" {:status 200
-                                                                 :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}
+  {"/cas/v1/tickets"                                            {:status    201
+                                                                 :method    :post
+                                                                 :headers   {"Location" (str "http://localhost:" port "/cas/v1/tickets/TGT-1-FFDFHDSJK")}
+                                                                 :caller-id {"Caller-Id" "1.2.246.562.10.00000000001.yki"}
+                                                                 :body      "ST-1-FFDFHDSJK2"}
+   "/oppijanumerorekisteri-service/j_spring_cas_security_check" {:status    200
+                                                                 :headers   {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"}
                                                                  :caller-id {"Caller-Id" "1.2.246.562.10.00000000001.yki"}}
-   "/cas/v1/tickets/TGT-1-FFDFHDSJK" {:status 200
-                                      :method :post
-                                      :body "ST-1-FFDFHDSJK2"}})
+   "/cas/v1/tickets/TGT-1-FFDFHDSJK"                            {:status 200
+                                                                 :method :post
+                                                                 :body   "ST-1-FFDFHDSJK2"}})
 
 (defn body [response]
   (slurp (:body response) :encoding "UTF-8"))
@@ -132,85 +132,85 @@
 
 (defn auth [url-helper]
   (ig/init-key :yki.middleware.auth/with-authentication
-               {:url-helper url-helper
-                :db (db)
-                :session-config {:key "ad7tbRZIG839gDo2"
-                                 :cookie-attrs {:max-age 28800
+               {:url-helper     url-helper
+                :db             (db)
+                :session-config {:key          "ad7tbRZIG839gDo2"
+                                 :cookie-attrs {:max-age   28800
                                                 :http-only true
-                                                :secure false
-                                                :domain "localhost"
-                                                :path "/yki"}}}))
+                                                :secure    false
+                                                :domain    "localhost"
+                                                :path      "/yki"}}}))
 (defn cas-client [url-helper]
-  (ig/init-key  :yki.boundary.cas/cas-client {:url-helper url-helper
-                                              :cas-creds {:username "username"
+  (ig/init-key :yki.boundary.cas/cas-client {:url-helper url-helper
+                                             :cas-creds  {:username "username"
                                                           :password "password"}}))
 (defn onr-client [url-helper]
   onr-client (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
                                                         :cas-client (cas-client url-helper)}))
 (defn permissions-client [url-helper]
-  (ig/init-key  :yki.boundary.permissions/permissions-client
-                {:url-helper url-helper
-                 :cas-client (cas-client url-helper)}))
+  (ig/init-key :yki.boundary.permissions/permissions-client
+               {:url-helper url-helper
+                :cas-client (cas-client url-helper)}))
 
 (defn auth-handler
   [auth url-helper]
-  (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth auth
-                                                          :db (db)
-                                                          :onr-client (onr-client url-helper)
-                                                          :url-helper url-helper
-                                                          :access-log (access-log)
+  (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth               auth
+                                                          :db                 (db)
+                                                          :onr-client         (onr-client url-helper)
+                                                          :url-helper         url-helper
+                                                          :access-log         (access-log)
                                                           :permissions-client (permissions-client url-helper)
-                                                          :cas-client (cas-client url-helper)})))
+                                                          :cas-client         (cas-client url-helper)})))
 (defn email-q []
-  (ig/init-key :yki.job.job-queue/init {:db-config {:db embedded-db/db-spec}})
+  (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
   (ig/init-key :yki.job.job-queue/email-q {}))
 
-(defn data-sync-q  []
-  (ig/init-key :yki.job.job-queue/init {:db-config {:db embedded-db/db-spec}})
-  (ig/init-key :yki.job.job-queue/data-sync-q  {}))
+(defn data-sync-q []
+  (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
+  (ig/init-key :yki.job.job-queue/data-sync-q {}))
 
 (defn body-as-json [response]
   (j/read-value (body response)))
 
-(def registration-form {:first_name  "Aku"
-                        :last_name  "Ankka"
-                        :gender "1"
-                        :nationalities ["180"]
-                        :birthdate "1999-01-01"
-                        :ssn "201190-9012"
+(def registration-form {:first_name       "Aku"
+                        :last_name        "Ankka"
+                        :gender           "1"
+                        :nationalities    ["180"]
+                        :birthdate        "1999-01-01"
+                        :ssn              "201190-9012"
                         :certificate_lang "fi"
-                        :exam_lang "fi"
-                        :post_office "Ankkalinna"
-                        :zip "12345"
-                        :email "aa@al.fi"
-                        :street_address "Katu 3"
-                        :phone_number "+3584012345"})
+                        :exam_lang        "fi"
+                        :post_office      "Ankkalinna"
+                        :zip              "12345"
+                        :email            "aa@al.fi"
+                        :street_address   "Katu 3"
+                        :phone_number     "+3584012345"})
 
-(def registration-form-2 {:first_name  "Iines"
-                          :last_name  "Ankka"
-                          :gender nil
-                          :nationalities ["246"]
-                          :ssn "301079-900U"
+(def registration-form-2 {:first_name       "Iines"
+                          :last_name        "Ankka"
+                          :gender           nil
+                          :nationalities    ["246"]
+                          :ssn              "301079-900U"
                           :certificate_lang "fi"
-                          :exam_lang "fi"
-                          :post_office "Ankkalinna"
-                          :zip "12346"
-                          :email "aa@al.fi"
-                          :street_address "Katu 4"
-                          :phone_number "+3584012346"})
+                          :exam_lang        "fi"
+                          :post_office      "Ankkalinna"
+                          :zip              "12346"
+                          :email            "aa@al.fi"
+                          :street_address   "Katu 4"
+                          :phone_number     "+3584012346"})
 
-(def post-admission-registration-form {:first_name  "Roope"
-                                       :last_name  "Ankka"
-                                       :gender nil
-                                       :nationalities ["246"]
-                                       :ssn "301079-083N"
+(def post-admission-registration-form {:first_name       "Roope"
+                                       :last_name        "Ankka"
+                                       :gender           nil
+                                       :nationalities    ["246"]
+                                       :ssn              "301079-083N"
                                        :certificate_lang "fi"
-                                       :exam_lang "fi"
-                                       :post_office "Ankkalinna"
-                                       :zip "12346"
-                                       :email "roope@al.fi"
-                                       :street_address "Katu 5"
-                                       :phone_number "+3584012347"})
+                                       :exam_lang        "fi"
+                                       :post_office      "Ankkalinna"
+                                       :zip              "12346"
+                                       :email            "roope@al.fi"
+                                       :street_address   "Katu 5"
+                                       :phone_number     "+3584012347"})
 (defn select [query]
   (jdbc/query @embedded-db/conn query))
 
@@ -342,12 +342,12 @@
                  "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2019-05-02', '2019-01-01', '2019-03-01')")
   (jdbc/execute! @embedded-db/conn
                  (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" (two-weeks-ago) "', '" (days-ago 30) "', '" (days-ago 25) "')"))
-  (let [exam-date-id          (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))
-        exam-date-language-id (fn [id]       (:id (select-one (select-exam-date-languages-by-date-id id))))
-        first-date-id         (exam-date-id "2039-05-02")
-        second-date-id        (exam-date-id "2039-05-10")
-        third-date-id         (exam-date-id (two-weeks-ago))
-        fourth-date-id        (exam-date-id "2019-05-02")]
+  (let [exam-date-id (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))
+        exam-date-language-id (fn [id] (:id (select-one (select-exam-date-languages-by-date-id id))))
+        first-date-id (exam-date-id "2039-05-02")
+        second-date-id (exam-date-id "2039-05-10")
+        third-date-id (exam-date-id (two-weeks-ago))
+        fourth-date-id (exam-date-id "2019-05-02")]
     (jdbc/execute! @embedded-db/conn
                    (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" first-date-id ", 'fin', 'PERUS')"))
     (jdbc/execute! @embedded-db/conn
@@ -369,7 +369,7 @@
 (defn insert-evaluation-payment-data [{:keys [first_names last_name email birthdate]}]
   (jdbc/execute! @embedded-db/conn (str "UPDATE evaluation_payment_config SET merchant_id=12345, merchant_secret='6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ', email='kirjaamo@testi.fi' "))
 
-  (let [evaluation-id (:id  (select-evaluation-by-date (two-weeks-ago)))]
+  (let [evaluation-id (:id (select-evaluation-by-date (two-weeks-ago)))]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order (evaluation_id, first_names, last_name, email, birthdate)
                                     VALUES (" evaluation-id ", '" first_names "', '" last_name "', '" email "', '" birthdate "')"))
     (let [evaluation-order-id (:id (select-one (str "SELECT id FROM evaluation_order WHERE email = '" email "'")))]
@@ -409,7 +409,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 
 (defn get-evaluation-payment-status-by-order-id [order-id]
   (select-one
-   (str "SELECT ep.state, ep.amount
+    (str "SELECT ep.state, ep.amount
          FROM evaluation_order eo
          INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
          WHERE eo.id = " order-id " AND deleted_at IS NULL")))
@@ -430,28 +430,28 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 
 (defn insert-payment []
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', " select-exam-session ", " select-participant ")"))
+                                     "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', " select-exam-session ", " select-participant ")"))
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
+                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
 
 (defn insert-registrations [state]
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-    ('5.4.3.2.2', '" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
+                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
+     ('5.4.3.2.2', '" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                    ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')"))
+                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
+                                     ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')"))
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form, kind) values
-                                    ('5.4.3.2.4','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string post-admission-registration-form) "', 'POST_ADMISSION')")))
+                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form, kind) values
+                                     ('5.4.3.2.4','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string post-admission-registration-form) "', 'POST_ADMISSION')")))
 
 (defn insert-unpaid-expired-registration []
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                    ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
+                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
+                                     ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
   (jdbc/execute! @embedded-db/conn (str
-                                    "INSERT INTO payment(state, registration_id, amount, lang, order_number) values
-                        ('UNPAID', (SELECT id FROM registration where person_oid = '5.4.3.2.3'), 100.00, 'fi', 'order1234')")))
+                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values
+                         ('UNPAID', (SELECT id FROM registration where person_oid = '5.4.3.2.3'), 100.00, 'fi', 'order1234')")))
 
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
@@ -480,7 +480,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
           post_admission_active)
             VALUES (
               (SELECT id FROM organizer where oid = " oid "),'fin', 'PERUS', '" office-oid "', " exam-date-id ", " count ", null, " quota ", true)"))
-        exam-session-id  (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
+        exam-session-id (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
         user-id (:id (select-one (str "SELECT id from participant WHERE external_user_id = 'thirdtest@user.com';")))
         insert-registration (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
     (doall insert-exam)
@@ -497,32 +497,32 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
   (let [uri (str "localhost:" port)
         db (duct.database.sql/->Boundary @embedded-db/conn)
         url-helper (create-url-helper uri)
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db
-                                                                     :url-helper url-helper
-                                                                     :email-q (email-q)
-                                                                     :data-sync-q  (data-sync-q)})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db          db
+                                                                     :url-helper  url-helper
+                                                                     :email-q     (email-q)
+                                                                     :data-sync-q (data-sync-q)})
 
         exam-date-handler (ig/init-key :yki.handler/exam-date {:db db})
 
         file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
-        auth (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper url-helper
-                                                                       :db db
-                                                                       :session-config {:key "ad7tbRZIG839gDo2"
-                                                                                        :cookie-attrs {:max-age 28800
+        auth (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper     url-helper
+                                                                       :db             db
+                                                                       :session-config {:key          "ad7tbRZIG839gDo2"
+                                                                                        :cookie-attrs {:max-age   28800
                                                                                                        :http-only true
-                                                                                                       :domain "localhost"
-                                                                                                       :secure false
-                                                                                                       :path "/yki"}}})
+                                                                                                       :domain    "localhost"
+                                                                                                       :secure    false
+                                                                                                       :path      "/yki"}}})
         auth-handler (auth-handler auth url-helper)
         file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
-        organizer-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
-                                                                                       :auth auth
-                                                                                       :data-sync-q (data-sync-q)
-                                                                                       :access-log (access-log)
-                                                                                       :url-helper url-helper
+        organizer-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
+                                                                                       :auth                 auth
+                                                                                       :data-sync-q          (data-sync-q)
+                                                                                       :access-log           (access-log)
+                                                                                       :url-helper           url-helper
                                                                                        :exam-session-handler exam-session-handler
-                                                                                       :exam-date-handler exam-date-handler
-                                                                                       :file-handler file-handler}))]
+                                                                                       :exam-date-handler    exam-date-handler
+                                                                                       :file-handler         file-handler}))]
     (routes organizer-handler auth-handler)))
 
 (defn send-request-with-tx

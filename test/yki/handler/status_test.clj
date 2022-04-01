@@ -1,12 +1,11 @@
 (ns yki.handler.status-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
-            [ring.mock.request :as mock]
+  (:require [clojure.test :refer [deftest use-fixtures join-fixtures testing is]]
             [duct.database.sql]
-            [yki.handler.base-test :as base]
+            [integrant.core :as ig]
             [muuntaja.middleware :as middleware]
-            [clojure.java.jdbc :as jdbc]
+            [ring.mock.request :as mock]
             [yki.embedded-db :as embedded-db]
+            [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
             [yki.handler.status]))
 
