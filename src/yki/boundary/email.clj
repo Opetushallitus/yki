@@ -1,16 +1,17 @@
 (ns yki.boundary.email
-  (:require [yki.util.http-util :as http-util]
-            [clojure.tools.logging :as log]
-            [clojure.string :as string]
-            [jsonista.core :as json]))
+  (:require
+    [clojure.string :as str]
+    [clojure.tools.logging :as log]
+    [jsonista.core :as json]
+    [yki.util.http-util :as http-util]))
 
 (defn- log-disabled-email [recipients subject body]
   (log/info
-   (string/join "\r\n"
-                ["Email sending is disabled, logging instead:"
-                 (str "Recipients: " recipients)
-                 (str "Subject: " subject)
-                 (str "Body: " body)]))
+    (str/join "\r\n"
+              ["Email sending is disabled, logging instead:"
+                  (str "Recipients: " recipients)
+                  (str "Subject: " subject)
+                  (str "Body: " body)]))
   {:status 200})
 
 (defn send-email
@@ -27,4 +28,4 @@
                                                                                                             :charset "UTF-8"}
                                                                                                 :recipient wrapped-recipients})}))]
     (when (not= 200 (:status response))
-      (throw (Exception. (str "Could not send email to " (string/join recipients)))))))
+      (throw (Exception. (str "Could not send email to " (str/join recipients)))))))

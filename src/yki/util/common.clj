@@ -30,11 +30,11 @@
 (defn finnish-date-from-long [date-long]
   (format-date-to-finnish-format (c/from-long date-long)))
 
+(defn string->date [datestr]
+  (some-> datestr (f/parse)))
+
 ;; Allow digits, unicode letters, space and chars '``*+@&.,-_
 (defn sanitized-string [replacement input]
   (when input
     (str/replace (str/trim input) #"[^0-9\-\'\´\`\p{L}\p{M}*+.,_&@ ]" replacement)))
 
-;; iterates over map and applies supplied function to map's values
-(defn transform-map-values [fun map]
-  (into {} (for [[key val] map] [key (fun val)])))

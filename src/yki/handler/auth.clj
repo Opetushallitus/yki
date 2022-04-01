@@ -1,15 +1,12 @@
-
 (ns yki.handler.auth
   (:require [compojure.api.sweet :refer [api context GET POST]]
             [integrant.core :as ig]
-            [clojure.tools.logging :as log]
-            [yki.handler.routing :as routing]
-            [yki.middleware.access-log]
-            [yki.spec :as ys]
             [ring.util.http-response :refer [ok found]]
             [yki.auth.cas-auth :as cas-auth]
             [yki.auth.code-auth :as code-auth]
-            [yki.auth.header-auth :as header-auth]))
+            [yki.auth.header-auth :as header-auth]
+            [yki.handler.routing :as routing]
+            [yki.middleware.access-log]))
 
 (defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client onr-client permissions-client access-log db]}]
   {:pre [(some? auth) (some? url-helper) (some? cas-client) (some? onr-client) (some? permissions-client) (some? access-log) (some? db)]}

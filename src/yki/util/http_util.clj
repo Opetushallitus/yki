@@ -17,7 +17,6 @@
 
 (defn do-request
   [{:keys [url method] :as opts}]
-
   (let [opts        (headers-and-cookies-settings opts)
         method-name (string/upper-case (name method))
         start       (System/currentTimeMillis)

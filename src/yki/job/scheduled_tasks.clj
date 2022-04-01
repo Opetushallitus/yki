@@ -1,16 +1,15 @@
 (ns yki.job.scheduled-tasks
   (:require [integrant.core :as ig]
-            [clojure.string :as str]
-            [pgqueue.core :as pgq]
+            [clj-time.coerce :as c]
+            [clj-time.core :as t]
             [clojure.tools.logging :as log]
+            [pgqueue.core :as pgq]
             [yki.boundary.email :as email]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.yki-register :as yki-register]
             [yki.util.template-util :as template-util]
             [yki.job.job-queue]
-            [clj-time.coerce :as c]
-            [clj-time.core :as t]
             [yki.boundary.job-db :as job-db])
   (:import [java.util UUID]))
 

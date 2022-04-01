@@ -6,7 +6,7 @@
            [org.ietf.jgss Oid]
            [com.google.gson JsonParser]
            [com.fasterxml.jackson.datatype.joda JodaModule]
-           [fi.vm.sade.auditlog Audit ApplicationType User Operation Target$Builder Changes Changes$Builder]))
+           [fi.vm.sade.auditlog Audit ApplicationType Logger Operation User Target$Builder Changes Changes$Builder]))
 
 (def mapper
   (json/object-mapper
@@ -24,24 +24,26 @@
 (def exam-session "exam-session")
 (def exam-date "exam-date")
 
-(defonce jsonParser (JsonParser.))
+(defonce ^JsonParser jsonParser (JsonParser.))
 
-(defonce ^fi.vm.sade.auditlog.Logger logger-proxy
-  (reify fi.vm.sade.auditlog.Logger
-    (log [this msg]
+(defonce ^Logger logger-proxy
+  (reify Logger
+    (log [_ msg]
       (log/info msg))))
 
-(defn ^fi.vm.sade.auditlog.Operation op [operation]
-  (reify fi.vm.sade.auditlog.Operation
-    (name [this]
+(defn ^Operation op [operation]
+  (reify Operation
+    (name [_]
       operation)))
 
-(defn- ->json-string [value]
+
+(defn- ^String ->json-string [value]
   (json/write-value-as-string value mapper))
 
-(defonce ^:private virkailija-logger (Audit. logger-proxy "yki" ApplicationType/VIRKAILIJA))
 
-(defonce ^:private oppija-logger (Audit. logger-proxy "yki" ApplicationType/OPPIJA))
+(defonce ^:private ^Audit virkailija-logger (Audit. logger-proxy "yki" ApplicationType/VIRKAILIJA))
+
+(defonce ^:private ^Audit oppija-logger (Audit. logger-proxy "yki" ApplicationType/OPPIJA))
 
 (defn- create-changes [change]
   (case (:type change)
@@ -53,8 +55,8 @@
     "create" (let [new  (.getAsJsonObject (.parse jsonParser (->json-string (:new change))))]
                (Changes/addedDto new))))
 
-(defn- oid-or-nil [oid]
-  (if oid
+(defn- oid-or-nil [^String oid]
+  (when oid
     (Oid. oid)))
 
 (defn log

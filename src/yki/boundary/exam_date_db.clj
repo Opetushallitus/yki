@@ -1,10 +1,12 @@
 (ns yki.boundary.exam-date-db
   (:require
-   [jeesql.core :refer [require-sql]]
-   [clojure.java.jdbc :as jdbc]
    [clj-time.format :as f]
-   [clojure.tools.logging :as log]
-   [duct.database.sql]))
+   [clojure.java.jdbc :as jdbc]
+   [duct.database.sql]
+   [jeesql.core :refer [require-sql]]
+   [yki.util.common :refer [string->date]]
+   [yki.util.db :refer [rollback-on-exception]])
+  (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -12,17 +14,6 @@
   (reduce #(update-in %1 [%2] f/parse) exam-date [:exam_date
                                                   :registration_start_date
                                                   :registration_end_date]))
-(defn- string->date [date]
-  (if (some? date)
-    (f/parse date)))
-
-(defn rollback-on-exception [tx f]
-  (try
-    (f)
-    (catch Exception e
-      (.rollback (:connection tx))
-      (log/error e "Execution failed. Rolling back transaction.")
-      (throw e))))
 
 (defprotocol ExamDate
   (create-exam-date! [db exam-date])
@@ -41,7 +32,7 @@
   (toggle-post-admission! [db id enabled]))
 
 (extend-protocol ExamDate
-  duct.database.sql.Boundary
+  Boundary
   (create-exam-date!
     [{:keys [spec]} exam-date]
     (jdbc/with-db-transaction [tx spec]
@@ -93,6 +84,7 @@
                                           :level_code (:level_code lang)
                                           :language_code (:language_code lang)}))
       true))
+
   (create-exam-date-languages!
     [{:keys [spec]} exam-date-id languages]
     (jdbc/with-db-transaction [tx spec]

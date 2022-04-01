@@ -1,14 +1,12 @@
 (ns yki.boundary.organizer-db
-  (:require [jeesql.core :refer [require-sql]]
-            [clj-time.coerce :as c]
-            [clj-time.local :as l]
-            [clj-time.format :as f]
+  (:require [clj-time.format :as f]
             [clj-time.jdbc]
-            [yki.boundary.db-extensions]
-            [clojure.tools.logging :as log]
-            [cheshire.core :as json]
             [clojure.java.jdbc :as jdbc]
-            [duct.database.sql]))
+            [duct.database.sql]
+            [jeesql.core :refer [require-sql]]
+            [yki.boundary.db-extensions]
+            [yki.util.db :refer [rollback-on-exception]])
+  (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -29,7 +27,7 @@
   (create-attachment-metadata! [db oid attachment-type external-id]))
 
 (extend-protocol Organizers
-  duct.database.sql.Boundary
+  Boundary
   (create-organizer!
     [{:keys [spec]} organizer]
     (jdbc/with-db-transaction [tx spec]
@@ -46,16 +44,13 @@
   (delete-organizer!
     [{:keys [spec]} oid send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
-      (try
-        (let [deleted (q/delete-organizer! tx {:oid oid})
-              oids (map :office_oid (q/select-exam-session-office-oids tx {:oid oid}))]
-          (when (= deleted 1)
-            (send-to-queue-fn (conj oids oid))
-            deleted))
-        (catch Exception e
-          (.rollback (:connection tx))
-          (log/error e "Execution failed. Rolling back transaction.")
-          (throw e)))))
+      (rollback-on-exception
+        tx
+        #(let [deleted (q/delete-organizer! tx {:oid oid})
+               oids    (map :office_oid (q/select-exam-session-office-oids tx {:oid oid}))]
+           (when (= deleted 1)
+             (send-to-queue-fn (conj oids oid))
+             deleted)))))
   (update-organizer!
     [{:keys [spec]} oid organizer]
     (jdbc/with-db-transaction [tx spec]
