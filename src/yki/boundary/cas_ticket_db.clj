@@ -1,8 +1,10 @@
 (ns yki.boundary.cas-ticket-db
-  (:require [jeesql.core :refer [require-sql]]
-            [yki.boundary.db-extensions]
-            [clojure.java.jdbc :as jdbc]
-            [duct.database.sql]))
+  (:require
+    [clojure.java.jdbc :as jdbc]
+    [duct.database.sql]
+    [jeesql.core :refer [require-sql]]
+    [yki.boundary.db-extensions])
+  (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -12,7 +14,7 @@
   (get-ticket [db ticket]))
 
 (extend-protocol CasTickets
-  duct.database.sql.Boundary
+  Boundary
   (create-ticket! [{:keys [spec]} ticket]
     (jdbc/with-db-transaction [tx spec]
       (q/insert-ticket! tx {:ticket ticket})))

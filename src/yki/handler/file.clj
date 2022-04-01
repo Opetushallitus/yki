@@ -1,16 +1,15 @@
 (ns yki.handler.file
-  (:require [compojure.api.sweet :refer [context GET POST]]
-            [yki.boundary.organizer-db :as organizer-db]
-            [yki.boundary.files :as files]
-            [yki.spec :as ys]
-            [clojure.java.io :as io]
-            [clojure.tools.logging :refer [info error]]
+  (:require [clojure.java.io :as io]
+            [clojure.tools.logging :refer [error]]
+            [compojure.api.sweet :refer [context GET POST]]
+            [integrant.core :as ig]
+            [ring.middleware.multipart-params :as mp]
             [ring.util.http-response :refer [ok bad-request not-found]]
             [ring.util.request]
             [ring.util.response :refer [header]]
-            [clojure.spec.alpha :as s]
-            [ring.middleware.multipart-params :as mp]
-            [integrant.core :as ig]))
+            [yki.boundary.files :as files]
+            [yki.boundary.organizer-db :as organizer-db]
+            [yki.spec :as ys]))
 
 (defmethod ig/init-key :yki.handler/file [_ {:keys [db file-store]}]
   (fn [oid]

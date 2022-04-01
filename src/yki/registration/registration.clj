@@ -25,7 +25,7 @@
 (defn get-or-create-participant
   [db identity]
   (:id (registration-db/get-or-create-participant! db {:external_user_id (:external-user-id identity)
-                                                       :email nil})))
+                                                       :email            nil})))
 
 (defn- extract-nationalities
   [nationalities]
@@ -33,32 +33,32 @@
 
 (defn- extract-person-from-registration
   [{:keys [email first_name last_name gender exam_lang nationalities birthdate]} ssn]
-  (let [basic-fields {:yhteystieto    [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
-                                        :yhteystietoArvo   email}]
-                      :etunimet       first_name
-                      :kutsumanimi    (first (str/split first_name #" "))
-                      :sukunimi       last_name
-                      :sukupuoli      (if (str/blank? gender) nil gender)
-                      :asiointiKieli  {:kieliKoodi exam_lang}
-                      :kansalaisuus   (extract-nationalities nationalities)
-                      :henkiloTyyppi  "OPPIJA"}]
+  (let [basic-fields {:yhteystieto   [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
+                                       :yhteystietoArvo   email}]
+                      :etunimet      first_name
+                      :kutsumanimi   (first (str/split first_name #" "))
+                      :sukunimi      last_name
+                      :sukupuoli     (if (str/blank? gender) nil gender)
+                      :asiointiKieli {:kieliKoodi exam_lang}
+                      :kansalaisuus  (extract-nationalities nationalities)
+                      :henkiloTyyppi "OPPIJA"}]
     (if ssn
       (assoc
-       basic-fields
-       :hetu (clojure.string/upper-case ssn)
-       :eiSuomalaistaHetua false)
+        basic-fields
+        :hetu (clojure.string/upper-case ssn)
+        :eiSuomalaistaHetua false)
       (assoc
-       basic-fields
-       :syntymaaika birthdate
-       :identifications [{:idpEntityId "oppijaToken" :identifier email}]
-       :eiSuomalaistaHetua true))))
+        basic-fields
+        :syntymaaika birthdate
+        :identifications [{:idpEntityId "oppijaToken" :identifier email}]
+        :eiSuomalaistaHetua true))))
 
 
 (defn- sanitized-form [form]
   (let [text-fields (dissoc form :nationalities)
-        sanitized  (common/transform-map-values (partial common/sanitized-string "_") text-fields)]
-    (merge form sanitized)
-    ))
+        sanitizer   (partial common/sanitized-string "_")
+        sanitized   (update-vals text-fields sanitizer)]
+    (merge form sanitized)))
 
 (defn- create-init-response
   [db session exam_session_id registration-id payment-config]
@@ -66,8 +66,8 @@
         email        (when (= (:auth-method session) "EMAIL") (:external-user-id (:identity session)))
         user         (assoc (:identity session) :email email)
         exam_fee     (get-in payment-config [:amount (keyword (:level_code exam-session))])]
-    {:exam_session (assoc exam-session :exam_fee exam_fee)
-     :user user
+    {:exam_session    (assoc exam-session :exam_fee exam_fee)
+     :user            user
      :registration_id registration-id}))
 
 (defn- error-response [space-left? not-registered? exam_session_id]
@@ -87,7 +87,7 @@
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
-  (let [participant-id (get-or-create-participant db (:identity session))
+  (let [participant-id          (get-or-create-participant db (:identity session))
         started-registration-id (registration-db/started-registration-id-by-participant db participant-id exam_session_id)]
     (log/warn "started-registration-id" started-registration-id)
     (if started-registration-id
@@ -95,8 +95,8 @@
       (cond
         ; admission open
         (registration-db/exam-session-registration-open? db exam_session_id)
-        (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
-              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
+        (let [space-left?     (registration-db/exam-session-space-left? db exam_session_id nil)
+              not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
           (if (and space-left? not-registered?)
             ; TODO figure out if ADMISSION or POST_ADMISSION
             (create-registration db exam_session_id participant-id session payment-config)
@@ -104,31 +104,31 @@
 
         ;post-admission open
         (registration-db/exam-session-post-registration-open? db exam_session_id)
-        (let [quota-left?        (registration-db/exam-session-quota-left? db exam_session_id nil)
-              not-registered?    (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
+        (let [quota-left?     (registration-db/exam-session-quota-left? db exam_session_id nil)
+              not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
           (if (and quota-left? not-registered?)
             ; TODO figure out if ADMISSION or POST_ADMISSION
             (create-registration db exam_session_id participant-id session payment-config)
             (error-response quota-left? not-registered? exam_session_id)))
 
-        :else  ; no registration open
+        :else                                               ; no registration open
         (conflict {:error {:closed true}})))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
-  (let [code          (str (UUID/randomUUID))
-        login-url     (url-helper :yki.login-link.url code)
-        email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
-        link-type     (:type login-link)
-        hashed        (sha256-hash code)]
+  (let [code      (str (UUID/randomUUID))
+        login-url (url-helper :yki.login-link.url code)
+        email     (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
+        link-type (:type login-link)
+        hashed    (sha256-hash code)]
     (login-link-db/create-login-link! db
                                       (assoc login-link
-                                             :code hashed))
+                                        :code hashed))
     (log/info "Login link created for " email ". Adding to email queue")
     (pgq/put email-q
              {:recipients [email]
-              :created (System/currentTimeMillis)
-              :subject (template-util/subject url-helper link-type lang template-data)
-              :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
+              :created    (System/currentTimeMillis)
+              :subject    (template-util/subject url-helper link-type lang template-data)
+              :body       (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
 ; FINISH ME. needs to create a new login link, cant reuse old because of hash
 ; (defn resend-link [db url-helper email-q lang exam-session-id registration-id]
@@ -184,12 +184,12 @@
       (when email
         (registration-db/update-participant-email! db email participant-id))
       (if-let [registration-data (when started? (get-registration-data db registration-id participant-id lang))]
-        (if-let [oid                 (or (:oid identity)
-                                         (onr/get-or-create-person
-                                          onr-client
-                                          (extract-person-from-registration
-                                           form-with-email
-                                           (:ssn identity))))]
+        (if-let [oid (or (:oid identity)
+                         (onr/get-or-create-person
+                           onr-client
+                           (extract-person-from-registration
+                             form-with-email
+                             (:ssn identity))))]
           (let [amount                  (bigdec (get-in payment-config [:amount (keyword (:level_code exam-session-registration))]))
                 payment                 {:registration_id registration-id
                                          :lang            lang
@@ -201,15 +201,15 @@
                                          :participant_id (or (:participant_id registration-data) participant-id)}
                 registration-kind       (:kind registration-data)
                 registration-end-time   (common/next-start-of-day
-                                         (f/parse
-                                          (if (= registration-kind "POST_ADMISSION")
-                                            (:post_admission_end_date registration-data)
-                                            (:registration_end_date registration-data))))
+                                          (f/parse
+                                            (if (= registration-kind "POST_ADMISSION")
+                                              (:post_admission_end_date registration-data)
+                                              (:registration_end_date registration-data))))
                 expiration-date         (t/min-date
-                                         (if (= registration-kind "POST_ADMISSION")
-                                           (common/date-from-now 1)
-                                           (common/date-from-now 8))
-                                         registration-end-time)
+                                          (if (= registration-kind "POST_ADMISSION")
+                                            (common/date-from-now 1)
+                                            (common/date-from-now 8))
+                                          registration-end-time)
                 payment-link            {:participant_id        participant-id
                                          :exam_session_id       nil
                                          :registration_id       registration-id
@@ -223,10 +223,10 @@
                                                                lang
                                                                payment-link
                                                                (assoc registration-data
-                                                                      :amount amount
-                                                                      :language (template-util/get-language url-helper (:language_code registration-data) lang)
-                                                                      :level (template-util/get-level url-helper (:level_code registration-data) lang)
-                                                                      :expiration-date (common/format-date-to-finnish-format expiration-date)))
+                                                                 :amount amount
+                                                                 :language (template-util/get-language url-helper (:language_code registration-data) lang)
+                                                                 :level (template-util/get-level url-helper (:level_code registration-data) lang)
+                                                                 :expiration-date (common/format-date-to-finnish-format expiration-date)))
                 success                 (registration-db/create-payment-and-update-registration! db
                                                                                                  payment
                                                                                                  update-registration
@@ -254,5 +254,5 @@
       (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id)
       ((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
 
-      :else  ; registration is already full, cannot add new
+      :else                                                 ; registration is already full, cannot add new
       {:error {:full true}})))

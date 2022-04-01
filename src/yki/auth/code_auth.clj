@@ -1,11 +1,10 @@
 (ns yki.auth.code-auth
-  (:require [ring.util.http-response :refer [found]]
-            [yki.boundary.login-link-db :as login-link-db]
-            [clojure.tools.logging :refer [info error]]
-            [yki.handler.login-link :as login-link]
-            [clj-time.core :as t]
+  (:require [clj-time.core :as t]
             [clj-time.local :as l]
-            [clojure.string :as str])
+            [clojure.tools.logging :refer [error]]
+            [ring.util.http-response :refer [found]]
+            [yki.boundary.login-link-db :as login-link-db]
+            [yki.handler.login-link :as login-link])
   (:import [java.util UUID]))
 
 (def unauthorized {:status 401
@@ -15,7 +14,7 @@
 (defn- link-valid? [expires]
   (t/after? expires (l/local-now)))
 
-(defn login [db code lang url-helper]
+(defn login [db code _lang _url-helper]
   (try
     (if-let [login-link (login-link-db/get-login-link-by-code db (login-link/sha256-hash code))]
       (if (link-valid? (:expires_at login-link))

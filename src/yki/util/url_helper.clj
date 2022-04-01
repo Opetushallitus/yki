@@ -2,7 +2,11 @@
   (:require [integrant.core :as ig])
   (:import [fi.vm.sade.properties OphProperties]))
 
-(defonce ^fi.vm.sade.properties.OphProperties url-properties (atom nil))
+(defonce url-properties (atom nil))
+
+(defn resolve-url
+  [key & params]
+  (.url ^OphProperties @url-properties (name key) (to-array (or params []))))
 
 (defmethod ig/init-key
   :yki.util/url-helper
@@ -18,7 +22,4 @@
             (.addDefault "host-alb" alb-host)
             (.addDefault "host-yki-register" yki-register-host)
             (.addDefault "host-yki-virkailija" yki-host-virkailija)))
-
-  (defn resolve-url
-    [key & params]
-    (.url @url-properties (name key) (to-array (or params [])))))
+  resolve-url)
