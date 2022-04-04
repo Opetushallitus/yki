@@ -1,7 +1,7 @@
 (ns yki.boundary.localisation
   (:require [clojure.core.memoize :as memo]
-            [yki.util.http-util :as http-util]
-            [jsonista.core :as json]))
+            [jsonista.core :as json]
+            [yki.util.http-util :as http-util]))
 
 (defn- get-localisation
   "Converts response returned from localisation service to simple map."
@@ -29,4 +29,3 @@
 
 (defn get-translation [url-helper key lang]
   (get (get-translations url-helper "yki" key lang) key))
-

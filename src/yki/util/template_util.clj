@@ -77,4 +77,3 @@
 (defn render
   [url-helper template lang params]
   (parser/render-file (str "yki/templates/" (template-name template)) (assoc params :url-helper url-helper :lang lang)))
-

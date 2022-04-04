@@ -1,9 +1,9 @@
 (ns yki.boundary.registration-db
-  (:require [jeesql.core :refer [require-sql]]
-            [yki.boundary.db-extensions]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [duct.database.sql]
+            [jeesql.core :refer [require-sql]]
+            [yki.boundary.db-extensions]
             [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 

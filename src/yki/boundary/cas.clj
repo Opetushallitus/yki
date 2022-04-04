@@ -1,10 +1,10 @@
 (ns yki.boundary.cas
   (:require
-    [integrant.core :as ig]
-    [yki.util.http-util :as http-util]
-    [org.httpkit.client :as http]
+    [clj-cas.cas :as cas]
     [clojure.data.json :as json]
-    [clj-cas.cas :as cas]))
+    [integrant.core :as ig]
+    [org.httpkit.client :as http]
+    [yki.util.http-util :as http-util]))
 
 (defprotocol CasAccess
   (validate-ticket [this ticket])
