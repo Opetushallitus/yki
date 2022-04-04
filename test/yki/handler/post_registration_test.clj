@@ -12,11 +12,8 @@
             [stub-http.core :refer [with-routes!]]
             [yki.handler.base-test :as base]
             [yki.embedded-db :as embedded-db]
-            [yki.handler.auth]
             [yki.handler.routing :as routing]
-            [yki.handler.registration]
-            [yki.middleware.auth]
-            [yki.util.url-helper]))
+            [yki.handler.registration]))
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
 

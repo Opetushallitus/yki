@@ -4,8 +4,7 @@
             [yki.handler.base-test :as base]
             [jsonista.core :as j]
             [yki.embedded-db :as embedded-db]
-            [yki.handler.routing :as routing]
-            [yki.handler.exam-date-public]))
+            [yki.handler.routing :as routing]))
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction]))
 
@@ -266,4 +265,3 @@
             exam-date (base/select-one (base/select-exam-date new-exam-date-id))]
         (is (= (:status response) 409))
         (is (= (:post_admission_enabled exam-date) false))))))
-

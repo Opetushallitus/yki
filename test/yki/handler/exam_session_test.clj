@@ -1,12 +1,10 @@
 (ns yki.handler.exam-session-test
   (:require [clojure.test :refer [deftest use-fixtures testing is]]
-            [duct.database.sql]
             [pgqueue.core :as pgq]
             [ring.mock.request :as mock]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [yki.util.url-helper]))
+            [yki.handler.routing :as routing]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
