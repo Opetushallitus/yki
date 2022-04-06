@@ -1,13 +1,13 @@
 (ns yki.handler.evaluation
-  (:require [compojure.api.sweet :refer [context GET POST]]
-            [yki.boundary.evaluation-db :as evaluation-db]
-            [yki.handler.routing :as routing]
-            [clojure.tools.logging :as log]
+  (:require [clojure.tools.logging :as log]
+            [compojure.api.sweet :refer [context GET POST]]
+            [integrant.core :as ig]
             [ring.util.http-response :refer [internal-server-error ok unprocessable-entity conflict]]
             [ring.util.response :refer [not-found]]
             [ring.util.request]
+            [yki.boundary.evaluation-db :as evaluation-db]
+            [yki.handler.routing :as routing]
             [yki.spec :as ys]
-            [integrant.core :as ig]
             [yki.util.common :as common]))
 
 (defn- evaluation-not-found [evaluation_id]
@@ -22,8 +22,8 @@
              amount-config))
 
 (defn- sanitize-order [raw-order]
-  (let [sanitizer   (partial common/sanitized-string "_")
-        text-fields (dissoc raw-order :subtests)
+  (let [text-fields (dissoc raw-order :subtests)
+        sanitizer   (partial common/sanitized-string "_")
         sanitized   (update-vals text-fields sanitizer)]
     (merge raw-order sanitized)))
 
@@ -86,4 +86,3 @@
                 (ok {:evaluation_order_id order-id}))
               (internal-server-error {:success false
                                       :error   "Failed to create a new evaluation order"}))))))))
-
