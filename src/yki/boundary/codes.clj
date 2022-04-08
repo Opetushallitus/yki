@@ -44,4 +44,3 @@
   (let [codes      (get-codes-memoized url-helper collection)
         code-value (first (filter #(= (:koodiArvo %) code) codes))]
     code-value))
-

@@ -1,11 +1,11 @@
 (ns yki.handler.localisation
-  (:require [compojure.api.sweet :refer [context GET]]
-            [yki.handler.routing :as routing]
-            [yki.boundary.localisation :as localisation]
-            [ring.util.response :refer [response]]
-            [yki.spec :as ys]
-            [ring.util.request]
-            [integrant.core :as ig]))
+  (:require
+    [compojure.api.sweet :refer [context GET]]
+    [integrant.core :as ig]
+    [ring.util.response :refer [response]]
+    [yki.boundary.localisation :as localisation]
+    [yki.handler.routing :as routing]
+    [yki.spec :as ys]))
 
 (defmethod ig/init-key :yki.handler/localisation [_ {:keys [url-helper access-log]}]
   (context routing/localisation-api-root []

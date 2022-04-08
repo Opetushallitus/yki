@@ -1,14 +1,14 @@
 (ns yki.registration.paytrail-payment
-  (:require [yki.util.common :as common]
-            [clj-time.coerce :as c]
+  (:require [clj-time.coerce :as c]
+            [clojure.tools.logging :refer [info error]]
             [pgqueue.core :as pgq]
-            [yki.util.template-util :as template-util]
-            [yki.boundary.registration-db :as registration-db]
             [yki.boundary.evaluation-db :as evaluation-db]
             [yki.boundary.localisation :as localisation]
             [yki.boundary.organizer-db :as organizer-db]
+            [yki.boundary.registration-db :as registration-db]
             [yki.registration.payment-util :as payment-util]
-            [clojure.tools.logging :refer [info error]]))
+            [yki.util.common :as common]
+            [yki.util.template-util :as template-util]))
 
 (defn handle-payment-success [db email-q url-helper payment-params]
   (let [participant-data (registration-db/get-participant-data-by-order-number db (:order-number payment-params))
@@ -130,5 +130,3 @@
 (defn get-evaluation-payment
   [db {:keys [ORDER_NUMBER]}]
   (evaluation-db/get-payment-by-order-number db ORDER_NUMBER))
-
-

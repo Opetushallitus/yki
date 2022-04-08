@@ -1,18 +1,18 @@
 (ns yki.registration.registration
-  (:require [pgqueue.core :as pgq]
+  (:require [buddy.core.codecs :refer [bytes->hex]]
+            [buddy.core.hash :as hash]
             [clj-time.core :as t]
             [clj-time.format :as f]
             [clojure.string :as str]
-            [yki.util.template-util :as template-util]
-            [yki.boundary.registration-db :as registration-db]
+            [clojure.tools.logging :as log]
+            [pgqueue.core :as pgq]
+            [ring.util.http-response :refer [ok conflict]]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
+            [yki.boundary.registration-db :as registration-db]
             [yki.util.common :as common]
-            [ring.util.http-response :refer [ok conflict]]
-            [buddy.core.hash :as hash]
-            [buddy.core.codecs :refer [bytes->hex]]
-            [clojure.tools.logging :as log])
+            [yki.util.template-util :as template-util])
   (:import [java.util UUID]))
 
 (defn sha256-hash [code]
@@ -45,7 +45,7 @@
     (if ssn
       (assoc
         basic-fields
-        :hetu (clojure.string/upper-case ssn)
+        :hetu (str/upper-case ssn)
         :eiSuomalaistaHetua false)
       (assoc
         basic-fields
@@ -111,7 +111,8 @@
             (create-registration db exam_session_id participant-id session payment-config)
             (error-response quota-left? not-registered? exam_session_id)))
 
-        :else                                               ; no registration open
+        ; no registration open
+        :else
         (conflict {:error {:closed true}})))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
@@ -254,5 +255,6 @@
       (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id)
       ((submit-registration-abstract-flow) db url-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
 
-      :else                                                 ; registration is already full, cannot add new
+      ; registration is already full, cannot add new
+      :else
       {:error {:full true}})))

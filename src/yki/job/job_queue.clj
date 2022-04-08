@@ -12,6 +12,3 @@
 
 (defmethod ig/init-key :yki.job.job-queue/data-sync-q [_ _]
   (pgq/queue :data-sync-v1 @queue-config))
-
-
-

@@ -188,4 +188,3 @@
         (wrap-session {:store        (cookie-store {:key (.getBytes ^String (:key session-config))})
                        :cookie-name  "yki"
                        :cookie-attrs (:cookie-attrs session-config)}))))
-

@@ -128,4 +128,3 @@
                (log/error e "Failed to send notifications for" exam-session))))))
      (catch Exception e
        (log/error e "Exam session queue handler failed"))))
-

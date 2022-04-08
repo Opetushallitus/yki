@@ -1,10 +1,10 @@
 (ns yki.boundary.cas
   (:require
-    [integrant.core :as ig]
-    [yki.util.http-util :as http-util]
-    [org.httpkit.client :as http]
+    [clj-cas.cas :as cas]
     [clojure.data.json :as json]
-    [clj-cas.cas :as cas]))
+    [integrant.core :as ig]
+    [org.httpkit.client :as http]
+    [yki.util.http-util :as http-util]))
 
 (defprotocol CasAccess
   (validate-ticket [this ticket])
@@ -28,13 +28,13 @@
 (defn- cas-http [^fi.vm.sade.utils.cas.CasClient cas-client cas-params method url & [body]]
   (let [cas-session    (.fetchCasSession cas-client cas-params "JSESSIONID")
         cas-session-id (.run cas-session)
-        resp           (http-util/do-request (merge {:url url :method method}
-                                                    (create-params cas-session-id body)))]
+        request!       (fn [session-id]
+                         (http-util/do-request (merge {:url url :method method}
+                                                      (create-params session-id body))))
+        resp           (request! cas-session-id)]
     (if (= 302 (:status resp))
-      (let [new-cas-session-id (.run (.fetchCasSession cas-client cas-params "JSESSIONID"))
-            new-resp           (http-util/do-request (merge {:url url :method method}
-                                                            (create-params new-cas-session-id body)))]
-        new-resp)
+      (let [new-cas-session-id (.run (.fetchCasSession cas-client cas-params "JSESSIONID"))]
+        (request! new-cas-session-id))
       resp)))
 
 (defn- cas-oppija-ticket-validation [ticket validate-service-url callback-url]

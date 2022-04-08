@@ -62,9 +62,8 @@
            (doseq [edl exam-date-languages]
              (q/insert-evaluation! tx {:exam_date_id          (:exam_date_id edl)
                                        :exam_date_language_id (:id edl)
-                                       :evaluation_start_date (string->date (:evaluation_start_date evaluation))
-                                       :evaluation_end_date   (string->date (:evaluation_end_date evaluation))}))
-
+                                       :evaluation_start_date start-date
+                                       :evaluation_end_date   end-date}))
            true))))
   (create-evaluation-order!
     [{:keys [spec]} evaluation-id evaluation-order]

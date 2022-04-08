@@ -36,10 +36,8 @@
     (name [_]
       operation)))
 
-
 (defn- ^String ->json-string [value]
   (json/write-value-as-string value mapper))
-
 
 (defonce ^:private ^Audit virkailija-logger (Audit. logger-proxy "yki" ApplicationType/VIRKAILIJA))
 

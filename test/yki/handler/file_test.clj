@@ -2,14 +2,11 @@
   (:require [clojure.test :refer [deftest use-fixtures testing is]]
             [clojure.java.io :as io]
             [ring.mock.request :as mock]
-            [duct.database.sql]
             [jsonista.core :as j]
             [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [yki.handler.file]
-            [yki.handler.organizer])
+            [yki.handler.routing :as routing])
   (:import [java.io File]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)

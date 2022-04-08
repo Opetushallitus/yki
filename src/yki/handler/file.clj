@@ -5,7 +5,6 @@
             [integrant.core :as ig]
             [ring.middleware.multipart-params :as mp]
             [ring.util.http-response :refer [ok bad-request not-found]]
-            [ring.util.request]
             [ring.util.response :refer [header]]
             [yki.boundary.files :as files]
             [yki.boundary.organizer-db :as organizer-db]
@@ -17,7 +16,7 @@
       :middleware [mp/wrap-multipart-params]
       (POST "/" {multipart-params :multipart-params}
         :return ::ys/external-id-type
-        (let [file (multipart-params "file")
+        (let [file     (multipart-params "file")
               tempfile (:tempfile file)
               filename (:filename file)]
           (try

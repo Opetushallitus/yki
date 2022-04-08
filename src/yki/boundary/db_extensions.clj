@@ -19,20 +19,20 @@
       (.setType "jsonb")
       (.setValue (json/write-str value)))))
 
-(defn- date-time->str [^DateTime date-time]
-  (.toString date-time ^String c/date-format))
+(defn- date-time->str [^DateTime date-time ^String format]
+  (.toString date-time format))
 
 (extend-protocol jdbc/IResultSetReadColumn
   Date
   (result-set-read-column [^Date val _ _]
     (-> val
         (l/to-local-date-time)
-        (date-time->str)))
+        (date-time->str c/date-format)))
   Time
   (result-set-read-column [^Time val _ _]
     (-> val
         (l/to-local-date-time)
-        (date-time->str)))
+        (date-time->str c/time-format)))
   PgArray
   (result-set-read-column [pgobj _ _]
     (remove nil? (vec (.getArray pgobj))))

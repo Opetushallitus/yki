@@ -1,16 +1,16 @@
 (ns yki.handler.organizer
-  (:require [clojure.tools.logging :as log]
-            [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
-            [integrant.core :as ig]
-            [pgqueue.core :as pgq]
-            [ring.util.response :refer [response not-found]]
-            [ring.util.request]
-            [yki.boundary.organizer-db :as organizer-db]
-            [yki.handler.routing :as routing]
-            [yki.middleware.access-log]
-            [yki.middleware.auth :as auth]
-            [yki.spec :as ys]
-            [yki.util.audit-log :as audit-log]))
+  (:require
+    [clojure.tools.logging :as log]
+    [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
+    [integrant.core :as ig]
+    [pgqueue.core :as pgq]
+    [ring.util.response :refer [response not-found]]
+    [yki.boundary.organizer-db :as organizer-db]
+    [yki.handler.routing :as routing]
+    [yki.middleware.access-log]
+    [yki.middleware.auth :as auth]
+    [yki.spec :as ys]
+    [yki.util.audit-log :as audit-log]))
 
 (defn- get-oids [session]
   (map :oid (auth/get-organizations-from-session session)))

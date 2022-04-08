@@ -1,13 +1,11 @@
 (ns yki.handler.evaluation-test
   (:require [clojure.test :refer [deftest use-fixtures testing is]]
             [compojure.api.sweet :refer [api]]
-            [duct.database.sql]
             [integrant.core :as ig]
             [jsonista.core :as j]
             [ring.mock.request :as mock]
             [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
-            [yki.handler.auth]
             [yki.handler.evaluation]
             [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]))

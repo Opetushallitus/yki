@@ -141,8 +141,6 @@
           :return ::ys/response
           (let [exam-date (exam-date-db/get-exam-date-by-id db id)
                 session-count (:count (exam-date-db/get-exam-date-session-count db id))]
-            (clojure.pprint/pprint {:delete-languages-data {:id        id
-                                                            :languages languages}})
             (cond
               (= exam-date nil) (not-found {:success false :error "Exam date not found"})
               (> session-count 0) (conflict {:success false :error "Cannot delete languages from exam date with assigned exam sessions"})

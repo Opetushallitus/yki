@@ -1,12 +1,13 @@
 (ns yki.handler.exam-session-public
-  (:require [compojure.api.sweet :refer [context GET POST]]
-            [yki.boundary.exam-session-db :as exam-session-db]
-            [yki.handler.routing :as routing]
-            [ring.util.http-response :refer [ok not-found conflict]]
-            [ring.util.request]
-            [yki.spec :as ys]
-            [clojure.tools.logging :as log]
-            [integrant.core :as ig]))
+  (:require
+    [clojure.tools.logging :as log]
+    [compojure.api.sweet :refer [context GET POST]]
+    [integrant.core :as ig]
+    [ring.util.http-response :refer [ok not-found conflict]]
+    [yki.boundary.exam-session-db :as exam-session-db]
+    [yki.handler.routing :as routing]
+    [yki.spec :as ys]))
+
 
 (defn- get-exam-fee
   [payment-config exam-session]
@@ -20,7 +21,7 @@
       :query-params [{from :- ::ys/date-type nil}]
       :return ::ys/exam-sessions-response
       (let [exam-sessions (exam-session-db/get-exam-sessions db nil from)
-            with-fee (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
+            with-fee      (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
         (ok {:exam_sessions with-fee})))
 
     (GET "/pricing" []

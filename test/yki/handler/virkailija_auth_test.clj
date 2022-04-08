@@ -8,11 +8,8 @@
             [peridot.core :as peridot]
             [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
-            [yki.handler.auth]
             [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [yki.middleware.auth]
-            [yki.util.url-helper]))
+            [yki.handler.routing :as routing]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)

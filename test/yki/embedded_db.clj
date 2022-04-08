@@ -1,7 +1,7 @@
 (ns yki.embedded-db
   (:require [clojure.java.jdbc :as jdbc]
-            [ragtime.jdbc]
-            [ragtime.core :as core])
+            [ragtime.core :as core]
+            [ragtime.jdbc])
   (:import (com.opentable.db.postgres.embedded EmbeddedPostgres)))
 
 (defonce conn (atom nil))
