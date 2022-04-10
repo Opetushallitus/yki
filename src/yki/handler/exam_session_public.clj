@@ -8,7 +8,6 @@
     [yki.handler.routing :as routing]
     [yki.spec :as ys]))
 
-
 (defn- get-exam-fee
   [payment-config exam-session]
   (get-in payment-config [:amount (keyword (:level_code exam-session))]))

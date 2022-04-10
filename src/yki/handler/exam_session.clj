@@ -7,7 +7,7 @@
     [compojure.api.sweet :refer [context GET POST PUT DELETE]]
     [integrant.core :as ig]
     [pgqueue.core :as pgq]
-    [ring.util.http-response :refer [conflict internal-server-error ok]]
+    [ring.util.http-response :refer [conflict internal-server-error]]
     [ring.util.response :refer [response not-found]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.registration-db :as registration-db]
@@ -81,17 +81,17 @@
           (let [exam-session   (exam-session-db/get-exam-session-by-id db id)
                 participants   (when exam-session (:participants exam-session))
                 reg-start-date (when exam-session (c/from-long (:registration_start_date exam-session)))]
-            (log/info "Deleting exam session: " id)
+            (log/info "Deleting exam session:" id)
             (cond
-              (nil? exam-session) (do (log/error "Could not find exam session " id)
+              (nil? exam-session) (do (log/error "Could not find exam session" id)
                                       (not-found {:success false
                                                   :error   "Exam session not found"}))
-              (> participants 0) (do (log/error "Cannot delete exam session with participants " id)
+              (> participants 0) (do (log/error "Cannot delete exam session with participants" id)
                                      (conflict {:success false
                                                 :error   "Cannot delete exam session with participants"}))
-              (t/after? (t/minus (t/now) (t/days 1)) reg-start-date) (do (log/error "Cannot delete exam session after registration start date " id)
+              (t/after? (t/minus (t/now) (t/days 1)) reg-start-date) (do (log/error "Cannot delete exam session after registration start date" id)
                                                                          (conflict {:success false
-                                                                                    :error   "Cannot delete exam session after registration start date "}))
+                                                                                    :error   "Cannot delete exam session after registration start date"}))
               :else (if (exam-session-db/delete-exam-session! db id oid (send-to-queue
                                                                           data-sync-q
                                                                           (assoc exam-session :organizer_oid oid)
@@ -102,7 +102,7 @@
                                                     :v id}
                                         :change    {:type audit-log/delete-op}})
                         (response {:success true}))
-                      (do (log/error "Error occured when deleting exam session " id)
+                      (do (log/error "Error occurred when deleting exam session" id)
                           (not-found {:success false
                                       :error   "Exam session not found"}))))))
 
@@ -116,13 +116,13 @@
                                        (not-found {:success false :error "Exam session not found"}))
               (= (:post_admission_enabled exam-session) false) (do (log/error "Post admissions are not enabled for exam session" id "with an exam date" (:session_date exam-session))
                                                                    (conflict {:success false :error "Post admissions are not enabled for this exam date"}))
-              (< (:post_admission_quota activation) 1) (do (log/error "Attempting to set too small quota of" (:post_admission_quota activation) "for exam session " id)
+              (< (:post_admission_quota activation) 1) (do (log/error "Attempting to set too small quota of" (:post_admission_quota activation) "for exam session" id)
                                                            (conflict {:success false :error "Minimum quota for post admission is 1"}))
               :else
               (if (exam-session-db/set-post-admission-active! db id (:post_admission_quota activation))
                 (response {:success true})
                 (do
-                  (log/error "Error occured when attempting to activate post admission for exam session" id)
+                  (log/error "Error occurred when attempting to activate post admission for exam session" id)
                   (internal-server-error {:success false
                                           :error   "Could not activate post admission"}))))))
 
@@ -134,12 +134,12 @@
               (if (exam-session-db/set-post-admission-deactive! db id)
                 (response {:success true})
                 (do
-                  (log/error "Error occured when attempting to deactivate post admission for exam session" id)
+                  (log/error "Error occurred when attempting to deactivate post admission for exam session" id)
                   (internal-server-error {:success false
                                           :error   "Could not deactivate post admission"})))
-
               (do (log/error "Could not find exam session with id" id)
-                  (not-found {:success false :error "Exam session not found"})))))
+                  (not-found {:success false
+                              :error   "Exam session not found"})))))
 
         (context routing/registration-uri []
           (GET "/" {session :session}
