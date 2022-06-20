@@ -1,19 +1,11 @@
 (ns yki.handler.organizer-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
-            [ring.mock.request :as mock]
-            [duct.database.sql]
+  (:require [clojure.test :refer [deftest use-fixtures testing is]]
             [jsonista.core :as j]
-            [clojure.java.io :as io]
-            [muuntaja.middleware :as middleware]
-            [muuntaja.core :as m]
-            [clojure.java.jdbc :as jdbc]
             [pgqueue.core :as pgq]
+            [ring.mock.request :as mock]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [yki.handler.file]
-            [yki.handler.organizer]))
+            [yki.handler.routing :as routing]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)

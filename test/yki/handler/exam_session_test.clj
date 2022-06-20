@@ -1,17 +1,10 @@
 (ns yki.handler.exam-session-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
-            [ring.mock.request :as mock]
-            [duct.database.sql]
-            [jsonista.core :as j]
-            [clojure.java.io :as io]
+  (:require [clojure.test :refer [deftest use-fixtures testing is]]
             [pgqueue.core :as pgq]
-            [muuntaja.middleware :as middleware]
-            [clojure.java.jdbc :as jdbc]
+            [ring.mock.request :as mock]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [yki.util.url-helper]))
+            [yki.handler.routing :as routing]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 

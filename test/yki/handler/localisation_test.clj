@@ -1,10 +1,9 @@
 (ns yki.handler.localisation-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
+            [compojure.api.sweet :refer [api]]
             [integrant.core :as ig]
-            [compojure.api.sweet :refer :all]
             [ring.mock.request :as mock]
-            [jsonista.core :as j]
-            [stub-http.core :refer :all]
+            [stub-http.core :refer [with-routes!]]
             [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
             [yki.util.url-helper]

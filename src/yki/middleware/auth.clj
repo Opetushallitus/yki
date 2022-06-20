@@ -1,17 +1,15 @@
 (ns yki.middleware.auth
   (:require
-   [yki.handler.routing :as routing]
-   [yki.boundary.cas-ticket-db :as cas-ticket-db]
-   [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
-   [ring.middleware.session :refer [wrap-session]]
-   [ring.middleware.session.cookie :refer [cookie-store]]
-   [buddy.auth.accessrules :refer [wrap-access-rules success error]]
-   [buddy.auth.backends.session :refer [session-backend]]
-   [clojure.tools.logging :as log]
-   [integrant.core :as ig]
-   [clout.core :as clout]
-   [ring.util.request :refer [request-url]]
-   [ring.util.http-response :refer [unauthorized forbidden found see-other]]))
+    [buddy.auth.accessrules :refer [wrap-access-rules error]]
+    [buddy.auth.backends.session :refer [session-backend]]
+    [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
+    [clojure.tools.logging :as log]
+    [clout.core :as clout]
+    [integrant.core :as ig]
+    [ring.middleware.session :refer [wrap-session]]
+    [ring.middleware.session.cookie :refer [cookie-store]]
+    [ring.util.http-response :refer [found see-other]]
+    [yki.boundary.cas-ticket-db :as cas-ticket-db]))
 
 (def backend (session-backend))
 
@@ -33,7 +31,7 @@
   false)
 
 (defn- participant-authenticated [request]
-  (if-let [identity (-> request :session :identity)]
+  (if (-> request :session :identity)
     true
     (do
       (log/info "Participant not authenticated request uri:" (:uri request))
@@ -41,7 +39,7 @@
 
 (defn- virkailija-authenticated
   [db request]
-  (if-let [ticket (cas-ticket-db/get-ticket db (-> request :session :identity :ticket))]
+  (if (cas-ticket-db/get-ticket db (-> request :session :identity :ticket))
     true
     (error {:status 401 :body "Unauthorized"})))
 
@@ -56,9 +54,9 @@
 
 (defn- allowed-organization-for-role?
   [organizations oid role]
-  (if-let [organization (first (filter #(= (:oid %) oid) organizations))]
+  (when-let [organization (first (filter #(= (:oid %) oid) organizations))]
     (let [permissions (:permissions organization)
-          allowed (some #(= (:oikeus %) role) permissions)]
+          allowed     (some #(= (:oikeus %) role) permissions)]
       allowed)))
 
 (defn- permission-to-organization
@@ -73,9 +71,9 @@
 (defn- redirect-to-cas
   [request url-helper]
   (assoc
-   (found (url-helper :cas.login))
-   :session
-   {:success-redirect ((:query-params request) "success-redirect")}))
+    (found (url-helper :cas.login))
+    :session
+    {:success-redirect ((:query-params request) "success-redirect")}))
 
 (defn oph-admin?
   [organizations]
@@ -96,9 +94,9 @@
         success-url     (url-helper (str "cas-oppija.login-success." lang) exam-session-id)
         login-url       (str (url-helper :cas-oppija.login lang) success-url)]
     (assoc
-     (see-other login-url)
-     :session
-     {:success-redirect (url-helper :exam-session.redirect exam-session-id lang)})))
+      (see-other login-url)
+      :session
+      {:success-redirect (url-helper :exam-session.redirect exam-session-id lang)})))
 
 (defn- rules
   "OPH users with admin role are allowed to call all endpoints without restrictions to organizer.
@@ -116,48 +114,48 @@
     :handler any-access}
    {:pattern #".*/auth/callback"
     :handler any-access}
-   {:pattern #".*/auth/callback.*"
-    :handler any-access
+   {:pattern        #".*/auth/callback.*"
+    :handler        any-access
     :request-method :get}
-   {:pattern #".*/api/exam-session"
-    :handler any-access
+   {:pattern        #".*/api/exam-session"
+    :handler        any-access
     :request-method :get}
    {:pattern #".*/api/evaluation.*"
     :handler any-access}
-   {:pattern #".*/evaluation-payment/formdata"
-    :handler any-access
+   {:pattern        #".*/evaluation-payment/formdata"
+    :handler        any-access
     :request-method :get}
-   {:pattern #".*/evaluation-payment/success"
-    :handler any-access
+   {:pattern        #".*/evaluation-payment/success"
+    :handler        any-access
     :request-method :get}
-   {:pattern #".*/evaluation-payment/cancel"
-    :handler any-access
+   {:pattern        #".*/evaluation-payment/cancel"
+    :handler        any-access
     :request-method :get}
-   {:pattern #".*/evaluation-payment/notify"
-    :handler any-access
+   {:pattern        #".*/evaluation-payment/notify"
+    :handler        any-access
     :request-method :get}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
    {:pattern #".*/api/virkailija/organizer/.*/exam-date.*"
     :handler (partial virkailija-authenticated db)}
-   {:pattern #".*/api/virkailija/organizer"
-    :handler (partial virkailija-authenticated db) ; authorized on database level
+   {:pattern        #".*/api/virkailija/organizer"
+    :handler        (partial virkailija-authenticated db)   ; authorized on database level
     :request-method :get}
-   {:pattern #".*/api/virkailija/organizer.*"
-    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}
+   {:pattern        #".*/api/virkailija/organizer.*"
+    :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
     :request-method #{:post :put :delete}}
-   {:pattern #".*/api/virkailija/organizer/.*/file.*"
-    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}
+   {:pattern        #".*/api/virkailija/organizer/.*/file.*"
+    :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
     :request-method :get}
-   {:pattern #".*/auth/cas.*"
-    :handler (partial virkailija-authenticated db)
-    :on-error (fn [req _] (redirect-to-cas req url-helper))
+   {:pattern        #".*/auth/cas.*"
+    :handler        (partial virkailija-authenticated db)
+    :on-error       (fn [req _] (redirect-to-cas req url-helper))
     :request-method :get}
-   {:pattern #".*/auth/cas"
-    :handler any-access
+   {:pattern        #".*/auth/cas"
+    :handler        any-access
     :request-method :post}
-   {:pattern #".*/auth.*"
-    :handler no-access
+   {:pattern  #".*/auth.*"
+    :handler  no-access
     :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
    {:pattern #".*/api/registration.*"
     :handler participant-authenticated}
@@ -177,7 +175,7 @@
     :handler no-access}])
 
 (defn on-error
-  [request value]
+  [_request value]
   (or value {:headers {}, :status 403, :body "Forbidden"}))
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
@@ -187,7 +185,6 @@
         (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
         (wrap-authentication backend)
         (wrap-authorization backend)
-        (wrap-session {:store (cookie-store {:key (:key session-config)})
-                       :cookie-name "yki"
+        (wrap-session {:store        (cookie-store {:key (.getBytes ^String (:key session-config))})
+                       :cookie-name  "yki"
                        :cookie-attrs (:cookie-attrs session-config)}))))
-

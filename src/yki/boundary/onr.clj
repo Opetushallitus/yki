@@ -1,9 +1,9 @@
 (ns yki.boundary.onr
   (:require
-   [integrant.core :as ig]
-   [clojure.tools.logging :as log]
-   [yki.boundary.cas :as cas]
-   [jsonista.core :as json]))
+    [clojure.tools.logging :as log]
+    [integrant.core :as ig]
+    [jsonista.core :as json]
+    [yki.boundary.cas :as cas]))
 
 (defprotocol Onr
   (get-or-create-person [this person])

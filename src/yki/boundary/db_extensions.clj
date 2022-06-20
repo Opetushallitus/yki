@@ -1,35 +1,45 @@
 (ns yki.boundary.db-extensions
   (:require
-   [yki.util.common :as c]
-   [clj-time.local :as l]
-   [clj-time.format :as f]
-   [clj-time.jdbc]
-   [clojure.string :as str]
-   [cheshire.core :as json]
-   [clojure.java.jdbc :as jdbc])
+    [clj-time.jdbc]
+    [clj-time.local :as l]
+    [clojure.data.json :as json]
+    [clojure.java.jdbc :as jdbc]
+    [yki.util.common :as c])
   (:import
-   (org.postgresql.util PGobject)))
+    (clojure.lang IPersistentCollection)
+    (java.sql Date Time)
+    (org.joda.time DateTime)
+    (org.postgresql.jdbc PgArray)
+    (org.postgresql.util PGobject)))
 
 (extend-protocol jdbc/ISQLValue
-  clojure.lang.IPersistentCollection
+  IPersistentCollection
   (sql-value [value]
     (doto (PGobject.)
       (.setType "jsonb")
-      (.setValue (json/generate-string value)))))
+      (.setValue (json/write-str value)))))
+
+(defn- date-time->str [^DateTime date-time ^String format]
+  (.toString date-time format))
 
 (extend-protocol jdbc/IResultSetReadColumn
-  java.sql.Date
-  (result-set-read-column [d _ _] (.toString (l/to-local-date-time d) c/date-format))
-  java.sql.Time
-  (result-set-read-column [d _ _] (.toString (l/to-local-date-time d) c/time-format))
-  org.postgresql.jdbc.PgArray
+  Date
+  (result-set-read-column [^Date val _ _]
+    (-> val
+        (l/to-local-date-time)
+        (date-time->str c/date-format)))
+  Time
+  (result-set-read-column [^Time val _ _]
+    (-> val
+        (l/to-local-date-time)
+        (date-time->str c/time-format)))
+  PgArray
   (result-set-read-column [pgobj _ _]
     (remove nil? (vec (.getArray pgobj))))
-  org.postgresql.util.PGobject
+  PGobject
   (result-set-read-column [pgobj _ _]
     (let [type  (.getType pgobj)
           value (.getValue pgobj)]
       (case type
-        "json" (json/parse-string value true)
-        "jsonb" (json/parse-string value true)
+        ("json" "jsonb") (json/read-str value {:key-fn keyword})
         :else value))))

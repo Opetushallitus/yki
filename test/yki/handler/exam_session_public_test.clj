@@ -1,18 +1,15 @@
 (ns yki.handler.exam-session-public-test
-  (:require [clojure.test :refer :all]
-            [compojure.api.sweet :refer :all]
-            [integrant.core :as ig]
-            [ring.mock.request :as mock]
+  (:require [clojure.test :refer [deftest use-fixtures join-fixtures testing is]]
+            [compojure.api.sweet :refer [api]]
             [duct.database.sql]
+            [integrant.core :as ig]
             [jsonista.core :as j]
-            [yki.handler.base-test :as base]
-            [muuntaja.middleware :as middleware]
-            [yki.handler.base-test :as base]
-            [clojure.java.jdbc :as jdbc]
-            [yki.embedded-db :as embedded-db]
-            [yki.handler.routing :as routing]
+            [ring.mock.request :as mock]
             [yki.boundary.exam-session-db]
-            [yki.handler.exam-session-public]))
+            [yki.embedded-db :as embedded-db]
+            [yki.handler.base-test :as base]
+            [yki.handler.exam-session-public]
+            [yki.handler.routing :as routing]))
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
 (use-fixtures :each embedded-db/with-transaction)

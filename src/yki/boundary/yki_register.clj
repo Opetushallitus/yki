@@ -1,13 +1,11 @@
 (ns yki.boundary.yki-register
-  (:require [clojure.tools.logging :refer [info]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [yki.util.http-util :as http-util]
-            [clj-time.format :as f]
             [yki.boundary.organizer-db :as organizer-db]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.organization :as organization]
             [yki.boundary.codes :as codes]
-            [clojure.tools.logging :as log]
             [jsonista.core :as json]))
 
 ; HOTFIX change: if nationality null or empty, its labeled as missing and thus marked as "xxx".
@@ -112,7 +110,7 @@
        day
        month
        (subs year 2 4)
-       (if (< (Integer/valueOf year) 2000) "-" "A")))))
+       (if (< (Integer/valueOf ^String year) 2000) "-" "A")))))
 
 (defn- convert-gender
   [gender ssn]
@@ -169,12 +167,11 @@
         url (str (url-helper :yki-register.participants)
                  (create-url-params exam-session))
         request (str/join (System/lineSeparator) (create-participants-csv url-helper participants))]
-    (do
-      (exam-session-db/init-participants-sync-status! db exam-session-id)
-      (if disabled
-        (log/info "Sending disabled. Logging request" request)
-        (do-post url request basic-auth "text/csv; charset=UTF-8"))
-      (exam-session-db/set-participants-sync-to-success! db exam-session-id))))
+    (exam-session-db/init-participants-sync-status! db exam-session-id)
+    (if disabled
+      (log/info "Sending disabled. Logging request" request)
+      (do-post url request basic-auth "text/csv; charset=UTF-8"))
+    (exam-session-db/set-participants-sync-to-success! db exam-session-id)))
 
 (defn sync-exam-session-and-organizer
   "When exam session is synced to YKI register then also organizer data is synced."
