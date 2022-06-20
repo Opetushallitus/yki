@@ -1,14 +1,12 @@
 (ns yki.handler.exam-date-public-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest use-fixtures join-fixtures testing is]]
+            [compojure.api.sweet :refer [api]]
             [integrant.core :as ig]
             [ring.mock.request :as mock]
-            [yki.handler.base-test :as base]
-            [compojure.api.sweet :refer :all]
-            [jsonista.core :as j]
-            [clojure.java.jdbc :as jdbc]
             [yki.embedded-db :as embedded-db]
-            [yki.handler.routing :as routing]
-            [yki.handler.exam-date-public]))
+            [yki.handler.base-test :as base]
+            [yki.handler.exam-date-public]
+            [yki.handler.routing :as routing]))
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction]))
 

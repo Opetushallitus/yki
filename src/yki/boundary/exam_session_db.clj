@@ -1,15 +1,14 @@
 (ns yki.boundary.exam-session-db
-  (:require [jeesql.core :refer [require-sql]]
-            [clj-time.core :as t]
-            [clj-time.coerce :as c]
-            [clj-time.local :as l]
-            [clj-time.format :as f]
+  (:require [clj-time.format :as f]
             [clj-time.jdbc]
-            [clojure.tools.logging :as log]
-            [yki.boundary.db-extensions]
-            [cheshire.core :as json]
             [clojure.java.jdbc :as jdbc]
-            [duct.database.sql]))
+            [clojure.tools.logging :as log]
+            [duct.database.sql]
+            [jeesql.core :refer [require-sql]]
+            [yki.boundary.db-extensions]
+            [yki.util.common :refer [string->date]]
+            [yki.util.db :refer [rollback-on-exception]])
+  (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -17,20 +16,8 @@
   (reduce #(update-in %1 [%2] f/parse) exam-session [:session_date
                                                      :published_at]))
 
-(defn- string->date [date]
-  (if (some? date)
-    (f/parse date)))
-
 (defn- int->boolean [value]
   (= value 1))
-
-(defn rollback-on-exception [tx f]
-  (try
-    (f)
-    (catch Exception e
-      (.rollback (:connection tx))
-      (log/error e "Execution failed. Rolling back transaction.")
-      (throw e))))
 
 (defn add-and-link-contact
   "Takes the first contact on the list and adds a new contact to org if does not exist yet.
@@ -93,7 +80,7 @@
   (set-post-admission-deactive! [db id]))
 
 (extend-protocol ExamSessions
-  duct.database.sql.Boundary
+  Boundary
   (create-exam-session!
     [{:keys [spec]} oid exam-session send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
@@ -154,8 +141,8 @@
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
        tx
-       #(let [deleted-queue (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
-              deleted-contact (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id id})
+       #(let [_ (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
+              _ (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id id})
               deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
           (when deleted
             (send-to-queue-fn))

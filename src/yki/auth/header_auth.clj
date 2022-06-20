@@ -1,16 +1,15 @@
 (ns yki.auth.header-auth
-  (:require [ring.util.http-response :refer [found ok see-other]]
-            [yki.boundary.onr :as onr]
-            [clojure.tools.logging :as log]
-            [clojure.string :as str])
+  (:require [clojure.tools.logging :as log]
+            [ring.util.http-response :refer [found ok see-other]]
+            [yki.boundary.onr :as onr])
   (:import [java.util UUID]))
 
 (defn- iso-8859-1->utf-8
   "Shibboleth encodes headers in UTF-8. Servlet container handles them as ISO-8859-1,
   so we need to convert values back to UTF-8.
   See https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPAttributeAccess"
-  [s]
-  (if s
+  [^String s]
+  (when s
     (String. (.getBytes s "ISO-8859-1") "UTF-8")))
 
 (def unauthorized {:status 401
@@ -50,6 +49,7 @@
         :yki-session-id (str (UUID/randomUUID))})
       unauthorized)))
 
-(defn logout [url-helper lang]
+; TODO Unused - remove!
+(defn logout [url-helper _lang]
   (let [redirect-url (url-helper :tunnistus.logout (url-helper :yki.default.logout.redirect "fi"))]
     (assoc (see-other redirect-url) :session nil)))

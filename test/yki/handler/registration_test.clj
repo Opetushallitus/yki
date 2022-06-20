@@ -1,26 +1,19 @@
 (ns yki.handler.registration-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]
-            [ring.mock.request :as mock]
-            [duct.database.sql]
-            [yki.util.url-helper]
-            [yki.middleware.auth]
-            [yki.handler.base-test :as base]
-            [clojure.string :as s]
-            [jsonista.core :as j]
-            [compojure.core :as core]
-            [muuntaja.middleware :as middleware]
-            [pgqueue.core :as pgq]
+  (:require [clojure.test :refer [deftest use-fixtures testing is]]
             [clojure.java.jdbc :as jdbc]
             [clojure.string :as s]
+            [compojure.core :as core]
+            [duct.database.sql]
+            [integrant.core :as ig]
+            [jsonista.core :as j]
+            [muuntaja.middleware :as middleware]
+            [pgqueue.core :as pgq]
             [peridot.core :as peridot]
-            [stub-http.core :refer :all]
-            [yki.boundary.cas :as cas]
-            [yki.boundary.permissions :as permissions]
+            [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
-            [yki.handler.auth]
-            [yki.handler.routing :as routing]
-            [yki.handler.registration]))
+            [yki.handler.base-test :as base]
+            [yki.handler.registration]
+            [yki.handler.routing :as routing]))
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
 

@@ -1,8 +1,7 @@
 (ns yki.boundary.organization
   (:require
-   [yki.util.http-util :as http-util]
-   [clojure.tools.logging :refer [error info]]
-   [jsonista.core :as json]))
+    [jsonista.core :as json]
+    [yki.util.http-util :as http-util]))
 
 (defn get-organization-by-oid
   [url-helper oid]

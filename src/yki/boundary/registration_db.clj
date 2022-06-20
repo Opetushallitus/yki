@@ -1,10 +1,11 @@
 (ns yki.boundary.registration-db
-  (:require [jeesql.core :refer [require-sql]]
-            [yki.boundary.db-extensions]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
-            [clojure.tools.logging :refer [error]]
-            [duct.database.sql]))
+            [duct.database.sql]
+            [jeesql.core :refer [require-sql]]
+            [yki.boundary.db-extensions]
+            [yki.util.db :refer [rollback-on-exception]])
+  (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -37,7 +38,7 @@
   (pos? value))
 
 (extend-protocol Registration
-  duct.database.sql.Boundary
+  Boundary
   (get-payment-by-registration-id [{:keys [spec]} registration-id oid]
     (first (q/select-payment-by-registration-id spec {:registration_id registration-id :oid oid})))
   (get-payment-by-order-number
@@ -46,12 +47,12 @@
   (complete-registration-and-payment!
     [{:keys [spec]} {:keys [order-number payment-id payment-method timestamp reference-number]}]
     (jdbc/with-db-transaction [tx spec]
-      (q/update-payment! tx {:order_number order-number
+      (q/update-payment! tx {:order_number        order-number
                              :external_payment_id payment-id
-                             :payment_method payment-method
-                             :payed_at timestamp
-                             :reference_number reference-number
-                             :state "PAID"})
+                             :payment_method      payment-method
+                             :payed_at            timestamp
+                             :reference_number    reference-number
+                             :state               "PAID"})
       (int->boolean (q/update-registration-to-completed! tx {:order_number order-number}))))
   (get-participant-by-id
     [{:keys [spec]} id]
@@ -64,12 +65,12 @@
     (first (q/select-participant-by-external-id spec {:external_user_id external-id})))
   (not-registered-to-exam-session?
     [{:keys [spec]} participant-id exam-session-id]
-    (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id participant-id
+    (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id  participant-id
                                                                        :exam_session_id exam-session-id}))]
       (:exists exists)))
   (started-registration-id-by-participant
     [{:keys [spec]} participant-id exam-session-id]
-    (:id (first (q/select-started-registration-id-by-participant spec {:participant_id participant-id
+    (:id (first (q/select-started-registration-id-by-participant spec {:participant_id  participant-id
                                                                        :exam_session_id exam-session-id}))))
   (get-next-order-number-suffix!
     [{:keys [spec]}]
@@ -100,19 +101,16 @@
   (create-payment-and-update-registration!
     [{:keys [spec]} payment registration after-fn]
     (jdbc/with-db-transaction [tx spec]
-      (try
-        (let [order-number-seq (:nextval (first (q/select-next-order-number-suffix tx)))
-              oid-last-part (last (str/split (:oid registration) #"\."))
-              order-number (str "YKI" oid-last-part (format "%09d" order-number-seq))
-              update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
-          (when update-success
-            (q/insert-payment<! tx (assoc payment :order_number order-number))
-            (after-fn))
-          update-success)
-        (catch Exception e
-          (.rollback (:connection tx))
-          (error e "Create payment and update registration failed. Rolling back transaction")
-          (throw e)))))
+      (rollback-on-exception
+        tx
+        #(let [order-number-seq (:nextval (first (q/select-next-order-number-suffix tx)))
+               oid-last-part    (last (str/split (:oid registration) #"\."))
+               order-number     (str "YKI" oid-last-part (format "%09d" order-number-seq))
+               update-success   (int->boolean (q/update-registration-to-submitted! tx registration))]
+           (when update-success
+             (q/insert-payment<! tx (assoc payment :order_number order-number))
+             (after-fn))
+           update-success))))
   (create-registration!
     [{:keys [spec]} registration]
     (jdbc/with-db-transaction [tx spec]

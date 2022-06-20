@@ -1,7 +1,7 @@
 (ns yki.handler.code-test
-  (:require [clojure.test :refer :all]
-            [compojure.api.sweet :refer :all]
-            [stub-http.core :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
+            [compojure.api.sweet :refer [api]]
+            [stub-http.core :refer [with-routes!]]
             [integrant.core :as ig]
             [ring.mock.request :as mock]
             [yki.handler.base-test :as base]

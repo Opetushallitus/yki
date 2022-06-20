@@ -1,7 +1,7 @@
 (ns yki.handler.participant-test
-  (:require [clojure.test :refer :all]
-            [ring.mock.request :as mock]
+  (:require [clojure.test :refer [deftest use-fixtures testing is]]
             [jsonista.core :as j]
+            [ring.mock.request :as mock]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]))

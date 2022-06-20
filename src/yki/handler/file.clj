@@ -1,16 +1,14 @@
 (ns yki.handler.file
-  (:require [compojure.api.sweet :refer [context GET POST]]
-            [yki.boundary.organizer-db :as organizer-db]
-            [yki.boundary.files :as files]
-            [yki.spec :as ys]
-            [clojure.java.io :as io]
-            [clojure.tools.logging :refer [info error]]
-            [ring.util.http-response :refer [ok bad-request not-found]]
-            [ring.util.request]
-            [ring.util.response :refer [header]]
-            [clojure.spec.alpha :as s]
+  (:require [clojure.java.io :as io]
+            [clojure.tools.logging :refer [error]]
+            [compojure.api.sweet :refer [context GET POST]]
+            [integrant.core :as ig]
             [ring.middleware.multipart-params :as mp]
-            [integrant.core :as ig]))
+            [ring.util.http-response :refer [ok bad-request not-found]]
+            [ring.util.response :refer [header]]
+            [yki.boundary.files :as files]
+            [yki.boundary.organizer-db :as organizer-db]
+            [yki.spec :as ys]))
 
 (defmethod ig/init-key :yki.handler/file [_ {:keys [db file-store]}]
   (fn [oid]
@@ -18,7 +16,7 @@
       :middleware [mp/wrap-multipart-params]
       (POST "/" {multipart-params :multipart-params}
         :return ::ys/external-id-type
-        (let [file (multipart-params "file")
+        (let [file     (multipart-params "file")
               tempfile (:tempfile file)
               filename (:filename file)]
           (try
@@ -41,4 +39,3 @@
                       (:content-disposition file-response))
               (not-found))
             (not-found)))))))
-

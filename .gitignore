@@ -36,6 +36,9 @@ scratch.*
 # macOS meta files
 .DS_Store
 
+# Jenv
+.java-version
+
 # default configuration, do not commit or use actual credentials!
 local.edn
 

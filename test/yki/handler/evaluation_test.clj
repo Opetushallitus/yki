@@ -1,25 +1,14 @@
 (ns yki.handler.evaluation-test
-  (:require [clojure.test :refer :all]
-            [compojure.api.sweet :refer :all]
+  (:require [clojure.test :refer [deftest use-fixtures testing is]]
+            [compojure.api.sweet :refer [api]]
             [integrant.core :as ig]
-            [ring.mock.request :as mock]
-            [peridot.core :as peridot]
-            [duct.database.sql]
-            [stub-http.core :refer :all]
             [jsonista.core :as j]
-            [pgqueue.core :as pgq]
-            [muuntaja.middleware :as middleware]
-            [compojure.core :as core]
-            [clojure.java.jdbc :as jdbc]
-            [clojure.string :as s]
-            [clj-time.core :as t]
-            [clj-time.local :as l]
-            [clj-time.format :as f]
-            [yki.handler.base-test :as base]
+            [ring.mock.request :as mock]
+            [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
-            [yki.handler.routing :as routing]
-            [yki.handler.auth]
-            [yki.handler.evaluation]))
+            [yki.handler.evaluation]
+            [yki.handler.base-test :as base]
+            [yki.handler.routing :as routing]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
