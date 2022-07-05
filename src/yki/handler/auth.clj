@@ -1,5 +1,6 @@
 (ns yki.handler.auth
-  (:require [compojure.api.sweet :refer [api context GET POST]]
+  (:require [clojure.tools.logging :as log]
+            [compojure.api.sweet :refer [api context GET POST]]
             [integrant.core :as ig]
             [ring.util.http-response :refer [ok found]]
             [yki.auth.cas-auth :as cas-auth]

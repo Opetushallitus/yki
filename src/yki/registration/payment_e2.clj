@@ -1,4 +1,4 @@
-(ns yki.registration.paytrail-payment
+(ns yki.registration.payment-e2
   (:require [clj-time.coerce :as c]
             [clojure.tools.logging :refer [info error]]
             [pgqueue.core :as pgq]
@@ -6,7 +6,7 @@
             [yki.boundary.localisation :as localisation]
             [yki.boundary.organizer-db :as organizer-db]
             [yki.boundary.registration-db :as registration-db]
-            [yki.registration.payment-util :as payment-util]
+            [yki.registration.payment-e2-util :as payment-util]
             [yki.util.common :as common]
             [yki.util.template-util :as template-util]))
 

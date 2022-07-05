@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [yki.spec :as ys]
             [jsonista.core :as j]
-            [yki.registration.payment-util :as payment]))
+            [yki.registration.payment-e2-util :as payment]))
 
 (def payment-form-data {:uri "https://paytrail.com",
                         :params {:MERCHANT_ID 12345

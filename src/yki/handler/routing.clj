@@ -30,6 +30,8 @@
 
 (def payment-root (str app-root "/payment"))
 
+(def paytrail-payment-root (str api-root "/payment-paytrail"))
+
 (def evaluation-payment-root (str app-root "/evaluation-payment"))
 
 (def registration-api-root (str api-root "/registration"))

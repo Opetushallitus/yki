@@ -12,7 +12,7 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
-    [yki.registration.paytrail-payment :as paytrail-payment]
+    [yki.registration.payment-e2 :as paytrail-payment]
     [yki.util.audit-log :as audit-log]
     [yki.spec :as ys]))
 

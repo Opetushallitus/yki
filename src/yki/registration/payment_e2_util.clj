@@ -1,4 +1,4 @@
-(ns yki.registration.payment-util
+(ns yki.registration.payment-e2-util
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [yki.util.template-util :as template-util])
@@ -37,15 +37,25 @@
 ;; :ITEM_TITLE[0] "Kirjoittaminen"
 ;; :ITEM_QUANTITY[0] "1"
 ;; :ITEM_PRICE[0] "50.00"
+
+(defn- param+idx->str [param idx]
+  (str param "[" idx "]"))
+
 (defn- subtest-form-rows [subtests amount url-helper lang]
-  (let [get-param-keyword (fn [index param] (keyword (str param "[" index "]")))]
-    (into {} (map-indexed #(assoc {}
-                             (get-param-keyword % "ITEM_TITLE") (template-util/get-subtest url-helper %2 lang)
-                             (get-param-keyword % "ITEM_UNIT_PRICE") ((keyword %2) amount)
-                             (get-param-keyword % "ITEM_QUANTITY") 1) subtests))))
+  (into {} (map-indexed (fn [idx val]
+                          (assoc {}
+                            (param+idx->str "ITEM_TITLE" idx) (template-util/get-subtest url-helper val lang)
+                            (param+idx->str "ITEM_UNIT_PRICE" idx) ((keyword val) amount)
+                            (param+idx->str "ITEM_QUANTITY" idx) 1)) subtests)))
 
 (defn- subtest-params [subtests]
-  (str/join "" (map-indexed (fn [index _] (str ",ITEM_TITLE[" index "],ITEM_QUANTITY[" index "],ITEM_UNIT_PRICE[" index "]")) subtests)))
+  (->> (range (count subtests))
+       (map (fn [index] (str ",ITEM_TITLE[" index "],ITEM_QUANTITY[" index "],ITEM_UNIT_PRICE[" index "]")))
+       (str/join "")))
+
+(comment
+  (subtest-params [:abc :def :gh]))
+
 
 (defn- subtest-values [subtests amount url-helper lang]
   (reduce #(conj % (template-util/get-subtest url-helper %2 lang) "1" ((keyword %2) amount)) [] subtests))
@@ -79,11 +89,11 @@
 
 (defn valid-return-params? [merchant_secret query-params]
   (if-let [return-authcode (:RETURN_AUTHCODE query-params)]
-    (let [plaintext           (str (->> response-keys
-                                        (map #(% query-params))
-                                        (remove nil?)
-                                        (str/join "|"))
-                                   "|" merchant_secret)
-          calculated-authcode (-> plaintext DigestUtils/sha256Hex str/upper-case)]
+    (let [auth-code-parts     (-> (keep query-params response-keys)
+                                  (conj merchant_secret))
+          calculated-authcode (->> auth-code-parts
+                                   (str/join "|")
+                                   DigestUtils/sha256Hex
+                                   str/upper-case)]
       (= return-authcode calculated-authcode))
     (log/error "Tried to authenticate message, but the map contained no :RETURN_AUTHCODE key. Data:" query-params)))

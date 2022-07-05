@@ -12,7 +12,7 @@
             [yki.handler.base-test :as base]
             [yki.embedded-db :as embedded-db]
             [yki.handler.routing :as routing]
-            [yki.handler.payment]))
+            [yki.handler.payment-e2]))
 
 (defn insert-prereq-data [f]
   (base/insert-base-data)
