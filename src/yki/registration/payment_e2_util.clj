@@ -90,7 +90,7 @@
 (defn valid-return-params? [merchant_secret query-params]
   (if-let [return-authcode (:RETURN_AUTHCODE query-params)]
     (let [auth-code-parts     (-> (keep query-params response-keys)
-                                  (conj merchant_secret))
+                                  (concat [merchant_secret]))
           calculated-authcode (->> auth-code-parts
                                    (str/join "|")
                                    DigestUtils/sha256Hex
