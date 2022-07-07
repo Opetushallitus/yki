@@ -8,8 +8,9 @@
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
     [ring.middleware.file]
-    [ring.util.http-response :refer [ok internal-server-error found]]
+    [ring.util.http-response :refer [ok internal-server-error found unauthorized]]
     [yki.handler.routing :as routing]
+    [yki.util.payments-api :refer [valid-request?]]
     [yki.spec :as ys])
   (:import (java.io FileOutputStream InputStream)))
 
@@ -39,12 +40,19 @@
         ; -> try to just spit it.
         (spit fos report-contents)))))
 
+(defn- with-request-validation [handler]
+  (fn
+    ([request]
+     (if (valid-request? request)
+       (handler request)
+       (unauthorized {:reason "Signature is not valid for request!"})))))
+
 (defmethod ig/init-key :yki.handler/payment-paytrail [_ {:keys [db]}]
   (api
     (context routing/paytrail-payment-root []
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params]
+      :middleware [wrap-params with-request-validation]
       (GET "/success" {query-params :query-params}
         :return ::ys/payment-paytrail-response
         (log/info "SUCCESS callback invoked with query-params:" query-params)
