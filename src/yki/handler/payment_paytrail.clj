@@ -43,8 +43,8 @@
 (defn- with-request-validation [handler]
   (fn
     ([request]
-     (if (valid-request? request)
-       (handler request)
+     (if-let [{body :body} (valid-request? request)]
+       (handler (assoc request :body body))
        (unauthorized {:reason "Signature is not valid for request!"})))))
 
 (defmethod ig/init-key :yki.handler/payment-paytrail [_ {:keys [db]}]
@@ -62,11 +62,10 @@
         (ok {:rab :oof}))
       ; Report generation callback
       (POST "/report" req
-        (let [body-params  (:body-params req)
-              body         (:body req)
+        (let [body         (:body req)
               headers      (:headers req)
               content-type (infer-content-type headers)]
           (log/info "REPORT callback invoked with headers:" headers)
-          (store-report! content-type (or body-params body))
+          (store-report! content-type body)
           (ok "report received"))))))
 

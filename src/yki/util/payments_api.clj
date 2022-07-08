@@ -35,8 +35,18 @@
       (.toString baos))
     body))
 
-(defn valid-request? [{:keys [headers query-params]
-                       :as   request}]
-  (let [authentication-headers (merge headers query-params)]
-    (= (sign-request authentication-headers (request->body request))
-       (authentication-headers "signature"))))
+(defn valid-request?
+  "Checks whether the request signature matches the request body and authentication headers.
+   Handles authentication headers passed as both actual HTTP headers or as part of query parameters.
+
+   If signature is valid, returns a map containing the (now exhausted) request body as a string.
+   Returns nil if signature is invalid."
+  [{:keys [headers query-params]
+    :as   request}]
+  (let [authentication-headers (merge headers query-params)
+        body                   (request->body request)]
+    (when
+      (= (sign-request authentication-headers body)
+         (authentication-headers "signature"))
+      {:authentication-headers authentication-headers
+       :body                   body})))
