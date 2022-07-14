@@ -21,11 +21,13 @@
   [email-q port]
   (let [db (duct.database.sql/->Boundary @embedded-db/conn)
         url-helper (base/create-url-helper (str "localhost:" port))
+        payment-helper (base/create-payment-helper db url-helper false)
         auth (base/auth url-helper)
         access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler (base/auth-handler auth url-helper)
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db db
                                                                                              :url-helper url-helper
+                                                                                             :payment-helper payment-helper
                                                                                              :email-q email-q
                                                                                              :access-log access-log
                                                                                              :payment-config base/payment-config

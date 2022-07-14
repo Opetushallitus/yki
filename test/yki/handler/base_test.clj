@@ -337,12 +337,12 @@
                  "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2019-05-02', '2019-01-01', '2019-03-01')")
   (jdbc/execute! @embedded-db/conn
                  (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" (two-weeks-ago) "', '" (days-ago 30) "', '" (days-ago 25) "')"))
-  (let [exam-date-id (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))
+  (let [exam-date-id          (fn [str-date] (:id (select-one (select-exam-date-id-by-date str-date))))
         exam-date-language-id (fn [id] (:id (select-one (select-exam-date-languages-by-date-id id))))
-        first-date-id (exam-date-id "2039-05-02")
-        second-date-id (exam-date-id "2039-05-10")
-        third-date-id (exam-date-id (two-weeks-ago))
-        fourth-date-id (exam-date-id "2019-05-02")]
+        first-date-id         (exam-date-id "2039-05-02")
+        second-date-id        (exam-date-id "2039-05-10")
+        third-date-id         (exam-date-id (two-weeks-ago))
+        fourth-date-id        (exam-date-id "2019-05-02")]
     (jdbc/execute! @embedded-db/conn
                    (str "INSERT INTO exam_date_language(exam_date_id, language_code, level_code) VALUES (" first-date-id ", 'fin', 'PERUS')"))
     (jdbc/execute! @embedded-db/conn
@@ -462,9 +462,9 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 (defn insert-post-admission-registration
   [oid count quota]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_start_date, post_admission_end_date) VALUES ('" (two-weeks-from-now) "', '2019-08-01', '2019-10-01','" (two-weeks-ago) "', '" (two-weeks-from-now) "')"))
-  (let [exam-date-id (:id (select-one (select-exam-date-id-by-date (two-weeks-from-now))))
-        office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))
-        insert-exam (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
+  (let [exam-date-id        (:id (select-one (select-exam-date-id-by-date (two-weeks-from-now))))
+        office-oid          (-> oid (clojure.string/replace #"'" "") (str ".5"))
+        insert-exam         (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
           language_code,
           level_code,
           office_oid,
@@ -475,8 +475,8 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
           post_admission_active)
             VALUES (
               (SELECT id FROM organizer where oid = " oid "),'fin', 'PERUS', '" office-oid "', " exam-date-id ", " count ", null, " quota ", true)"))
-        exam-session-id (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
-        user-id (:id (select-one (str "SELECT id from participant WHERE external_user_id = 'thirdtest@user.com';")))
+        exam-session-id     (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
+        user-id             (:id (select-one (str "SELECT id from participant WHERE external_user_id = 'thirdtest@user.com';")))
         insert-registration (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
     (doall insert-exam)
     (doall insert-registration)))
@@ -488,36 +488,43 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 (defn create-url-helper [uri]
   (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http" :oppija-sub-domain "yki."}))
 
+(defn create-payment-helper [db url-helper use-new-payments-api?]
+  (ig/init-key
+    :yki.util/payment-helper
+    {:db db
+     :url-helper url-helper
+     :payment-config {:use-new-payments-api? use-new-payments-api?}}))
+
 (defn create-routes [port]
-  (let [uri (str "localhost:" port)
-        db (duct.database.sql/->Boundary @embedded-db/conn)
-        url-helper (create-url-helper uri)
+  (let [uri                  (str "localhost:" port)
+        db                   (duct.database.sql/->Boundary @embedded-db/conn)
+        url-helper           (create-url-helper uri)
         exam-session-handler (ig/init-key :yki.handler/exam-session {:db          db
                                                                      :url-helper  url-helper
                                                                      :email-q     (email-q)
                                                                      :data-sync-q (data-sync-q)})
 
-        exam-date-handler (ig/init-key :yki.handler/exam-date {:db db})
+        exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
 
-        file-store (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
-        auth (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper     url-helper
-                                                                       :db             db
-                                                                       :session-config {:key          "ad7tbRZIG839gDo2"
-                                                                                        :cookie-attrs {:max-age   28800
-                                                                                                       :http-only true
-                                                                                                       :domain    "localhost"
-                                                                                                       :secure    false
-                                                                                                       :path      "/yki"}}})
-        auth-handler (auth-handler auth url-helper)
-        file-handler (ig/init-key :yki.handler/file {:db db :file-store file-store})
-        organizer-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
-                                                                                       :auth                 auth
-                                                                                       :data-sync-q          (data-sync-q)
-                                                                                       :access-log           (access-log)
-                                                                                       :url-helper           url-helper
-                                                                                       :exam-session-handler exam-session-handler
-                                                                                       :exam-date-handler    exam-date-handler
-                                                                                       :file-handler         file-handler}))]
+        file-store           (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
+        auth                 (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper     url-helper
+                                                                                       :db             db
+                                                                                       :session-config {:key          "ad7tbRZIG839gDo2"
+                                                                                                        :cookie-attrs {:max-age   28800
+                                                                                                                       :http-only true
+                                                                                                                       :domain    "localhost"
+                                                                                                                       :secure    false
+                                                                                                                       :path      "/yki"}}})
+        auth-handler         (auth-handler auth url-helper)
+        file-handler         (ig/init-key :yki.handler/file {:db db :file-store file-store})
+        organizer-handler    (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
+                                                                                          :auth                 auth
+                                                                                          :data-sync-q          (data-sync-q)
+                                                                                          :access-log           (access-log)
+                                                                                          :url-helper           url-helper
+                                                                                          :exam-session-handler exam-session-handler
+                                                                                          :exam-date-handler    exam-date-handler
+                                                                                          :file-handler         file-handler}))]
     (routes organizer-handler auth-handler)))
 
 (defn send-request-with-tx
