@@ -15,7 +15,7 @@
         lang (:lang participant-data)
         level (template-util/get-level url-helper (:level_code participant-data) lang)
         language (template-util/get-language url-helper (:language_code participant-data) lang)
-        success (registration-db/complete-registration-and-payment! db payment-params)]
+        success (registration-db/complete-registration-and-legacy-payment! db payment-params)]
     (when success
       (pgq/put email-q
                {:recipients [(:email participant-data)]
@@ -74,7 +74,7 @@
 (defn create-payment-form-data
   [db url-helper payment-config registration-id external-user-id lang]
   (if-let [registration (registration-db/get-registration db registration-id external-user-id)]
-    (if-let [payment (registration-db/get-payment-by-registration-id db registration-id nil)]
+    (if-let [payment (registration-db/get-legacy-payment-by-registration-id db registration-id nil)]
       (let [exam-date (common/format-date-string-to-finnish-format (:exam_date registration))
             payment-data {:language-code lang
                           :order-number  (:order_number payment)
@@ -96,7 +96,7 @@
     form-data))
 
 (defn valid-return-params? [db params]
-  (let [{:keys [merchant_secret]} (registration-db/get-payment-config-by-order-number db (:ORDER_NUMBER params))]
+  (let [{:keys [merchant_secret]} (registration-db/get-legacy-payment-config-by-order-number db (:ORDER_NUMBER params))]
     (payment-util/valid-return-params? merchant_secret params)))
 
 (defn valid-evaluation-return-params? [params payment-config]
@@ -125,7 +125,7 @@
 
 (defn get-payment
   [db {:keys [ORDER_NUMBER]}]
-  (registration-db/get-payment-by-order-number db ORDER_NUMBER))
+  (registration-db/get-legacy-payment-by-order-number db ORDER_NUMBER))
 
 (defn get-evaluation-payment
   [db {:keys [ORDER_NUMBER]}]

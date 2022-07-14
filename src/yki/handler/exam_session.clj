@@ -194,7 +194,7 @@
             (POST "/confirm-payment" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response
-              (let [payment (registration-db/get-payment-by-registration-id db registration-id oid)]
+              (let [payment (registration-db/get-legacy-payment-by-registration-id db registration-id oid)]
                 (if payment
                   (do
                     (paytrail-payment/handle-payment-success db email-q url-helper {:order-number (:order_number payment)})

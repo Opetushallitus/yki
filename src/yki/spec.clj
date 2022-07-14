@@ -3,7 +3,6 @@
     [clj-time.format :as f]
     [clojure.spec.alpha :as s]
     [clojure.string :as str]
-    [spec-tools.spec :as spec]
     [spec-tools.core :as st])
 
   (:import [org.joda.time DateTime]))
@@ -210,10 +209,6 @@
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
                             :opt-un [::user_data]))
-
-(defn- parse-int [int-str]
-  (try (Integer/parseInt int-str)
-       (catch Throwable _)))
 
 ;; payment
 (def pt-order-number-regex #"/^[0-9a-zA-Z()\[\]{}*+\-_,. ]{1,64}$/")

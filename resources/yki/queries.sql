@@ -638,7 +638,7 @@ WHERE
  id = (SELECT registration_id FROM payment WHERE order_number = :order_number) AND
  state != 'COMPLETED';
 
--- name: insert-payment<!
+-- name: insert-legacy-payment<!
 INSERT INTO payment(
   state,
   registration_id,

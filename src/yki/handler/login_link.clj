@@ -1,21 +1,17 @@
 (ns yki.handler.login-link
-  (:require [compojure.api.sweet :refer [api context POST]]
-            [yki.handler.routing :as routing]
-            [yki.boundary.registration-db :as registration-db]
+  (:require [buddy.core.codecs :refer [bytes->hex]]
+            [buddy.core.hash :as hash]
+            [clojure.tools.logging :as log]
+            [compojure.api.sweet :refer [api context POST]]
+            [integrant.core :as ig]
+            [ring.util.http-response :refer [ok]]
             [yki.boundary.exam-session-db :as exam-session-db]
-            [yki.boundary.login-link-db :as login-link-db]
+            [yki.boundary.registration-db :as registration-db]
+            [yki.handler.routing :as routing]
+            [yki.job.job-queue]
             [yki.registration.registration :as registration]
             [yki.spec :as ys]
-            [yki.util.common :as c]
-            [pgqueue.core :as pgq]
-            [clj-time.core :as t]
-            [clojure.tools.logging :as log]
-            [yki.job.job-queue]
-            [ring.util.http-response :refer [ok]]
-            [buddy.core.hash :as hash]
-            [buddy.core.codecs :refer [bytes->hex]]
-            [integrant.core :as ig])
-  (:import [java.util UUID]))
+            [yki.util.common :as c]))
 
 (defn sha256-hash [code]
   (bytes->hex (hash/sha256 code)))
@@ -26,6 +22,8 @@
    (context routing/login-link-api-root []
      :coercion :spec
      :middleware [access-log]
+     ; Handler only called when ordering registration link
+     ; to email, as an alternative to Suomi.fi-authentication.
      (POST "/" request
        :body [login-link ::ys/login-link]
        :query-params [lang :- ::ys/language-code]

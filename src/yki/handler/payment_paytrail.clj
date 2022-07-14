@@ -49,6 +49,15 @@
 
 (defmethod ig/init-key :yki.handler/payment-paytrail [_ {:keys [db]}]
   (api
+    (context routing/payment-v2-root []
+      :coercion :spec
+      :no-doc true
+      ; TODO Initialize handler with auth middleware and use for redirect handler!
+      :middleware [wrap-params]
+      (GET "/redirect" {query-params :query-params}
+        (let [registration-id (query-params "registration-id")]
+          (log/info "REDIRECT called for registration-id:" registration-id)
+          (found "https://pay.paytrail.com/pay/f9a48756-fe91-11ec-bbb2-075fb18c6d6d"))))
     (context routing/paytrail-payment-root []
       :coercion :spec
       :no-doc true
