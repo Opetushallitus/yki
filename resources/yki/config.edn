@@ -37,6 +37,10 @@
 
   :yki.util/url-helper                                {}
 
+  :yki.util/payment-helper                            {:db             #ig/ref :duct.database/sql
+                                                       :url-helper     #ig/ref :yki.util/url-helper
+                                                       :payment-config {:use-new-payments-api? false}}
+
   :yki.job.job-queue/init                             {}
 
   :yki.job.job-queue/email-q                          {:init #ig/ref :yki.job.job-queue/init}
@@ -114,6 +118,7 @@
   :yki.handler/registration                           {:db             #ig/ref :duct.database/sql
                                                        :auth           #ig/ref :yki.middleware.auth/with-authentication
                                                        :url-helper     #ig/ref :yki.util/url-helper
+                                                       :payment-helper #ig/ref :yki.util/payment-helper
                                                        :email-q        #ig/ref :yki.job.job-queue/email-q
                                                        :onr-client     #ig/ref :yki.boundary.onr/onr-client
                                                        :access-log     #ig/ref :yki.middleware.access-log/with-logging

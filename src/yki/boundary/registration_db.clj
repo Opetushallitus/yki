@@ -96,7 +96,7 @@
     [{:keys [spec]} email participant-id]
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-email! tx {:email email :id participant-id})))
-  (create-legacy-payment-and-update-registration!
+  (update-registration-details!
     [{:keys [spec]} payment-helper registration language amount after-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
