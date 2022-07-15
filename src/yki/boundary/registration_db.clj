@@ -1,6 +1,5 @@
 (ns yki.boundary.registration-db
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
@@ -17,6 +16,7 @@
   (get-legacy-payment-config-by-order-number [db order-number])
   (complete-registration-and-legacy-payment! [db payment-params])
   (update-registration-details! [db payment-helper registration language amount after-fn])
+  (get-registration-data-for-new-payment [db registration-id participant-id])
   ; Other methods
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
@@ -130,6 +130,9 @@
   (get-registration-data-by-participant
     [{:keys [spec]} registration-id participant-id lang]
     (first (q/select-registration-data-by-participant spec {:id registration-id :participant_id participant-id :lang lang})))
+  (get-registration-data-for-new-payment
+    [{:keys [spec]} registration-id external-user-id]
+    (first (q/select-registration-details-for-new-payment spec {:id registration-id :external_user_id external-user-id})))
   (get-or-create-participant!
     [{:keys [spec]} participant]
     (jdbc/with-db-transaction [tx spec]

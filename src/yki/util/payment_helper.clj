@@ -1,7 +1,11 @@
 (ns yki.util.payment-helper
-  (:require [clojure.string :as str]
+  (:require [clj-time.core :as t]
+            [clojure.data.json :as json]
+            [clojure.string :as str]
             [integrant.core :as ig]
-            [jeesql.core :refer [require-sql]]))
+            [jeesql.core :refer [require-sql]]
+            [org.httpkit.client :as http]
+            [yki.util.payments-api :refer [sign-request]]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -34,8 +38,100 @@
           ]
       (q/insert-legacy-payment<! tx payment)))
   (initialise-payment-on-registration? [_]
-    true)
+    true))
+
+(comment
+  {
+   ; Merchant unique identifier for order.
+   ; Cannot be used twice for a create payment payload for same order!
+   ;"stamp"        "YKI-1357902468-5"
+   "stamp"        (random-uuid)
+   ; Order reference
+   "reference"    "YKI-1357902468"
+   ; Total amount in EUR cents
+   "amount"       1337
+   ; Currency, only EUR is supported for now
+   "currency"     "EUR"
+   ; Language: one of FI/SV/EN
+   "language"     "FI"
+   ; Customer information
+   "customer"     {"email" "pyry.koivisto+paytrail-payments-test@mavericks.fi"}
+   ; Where to redirect browser after payment is paid or cancelled
+   "redirectUrls" {"success" "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/success"
+                   "cancel"  "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/error"}}
+
+  " -- name: select-registration-details-for-new-payment
+  SELECT re.exam_session_id,
+  re.participant_id,
+  re.kind,
+  re.form,
+  p.email,
+  p.external_user_id,
+  esl.name,
+  es.language_code,
+  es.level_code,
+  ed.exam_date
+  FROM registration re
+  INNER JOIN exam_session es ON es.id = re.exam_session_id
+  INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+  INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+  INNER JOIN participant p ON p.id = re.participant_id
+  WHERE re.id = :id
+  AND re.participant_id = :participant_id"
   )
+
+(def test-merchant-id "375917")
+(def payments-API-URI "https://services.paytrail.com/payments")
+
+(defn authentication-headers [method merchant-id transaction-id]
+  (cond-> {"checkout-account"   merchant-id
+           "checkout-algorithm" "sha512"
+           "checkout-method"    method
+           "checkout-nonce"     (str (random-uuid))
+           "checkout-timestamp" (str (t/now))}
+          (some? transaction-id)
+          (assoc "checkout-transaction-id" transaction-id)))
+
+(defn create-payment-data [registration language amount]
+  (let [{registration-id            :id
+         exam-session-location-name :name
+         exam-session-id            :exam_session_id
+         email                      :email
+         registration-form          :form} registration]
+    {"stamp"        (random-uuid)
+     ; Order reference
+     "reference"    (str/join "_"
+                              ["YKI"
+                               ; TODO Y-tunnus instead of organizer name
+                               exam-session-location-name
+                               exam-session-id
+                               registration-id])
+     ; Total amount in EUR cents
+     "amount"       amount
+     "currency"     "EUR"
+     "language"     (str/upper-case language)
+     "customer"     {"email"     email
+                     "firstName" (:first_name registration-form)
+                     "lastName"  (:last_name registration-form)}
+     ; TODO Fix redirectUrls
+     "redirectUrls" {"success" "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/success"
+                     "cancel"  "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/error"}
+     ; TODO Add also callbackUrls
+     ; TODO Add items so that we can have descriptions in receipts?
+     }))
+
+(defn create-paytrail-payment! [payment-data]
+  (let [authentication-headers (authentication-headers "POST" test-merchant-id nil)
+        body                   (json/write-str payment-data)
+        signature              (sign-request authentication-headers body)
+        headers                (assoc authentication-headers
+                                 "content-type" "application/json; charset=utf-8"
+                                 "signature" signature)]
+
+    @(http/post
+       payments-API-URI
+       {:headers headers
+        :body    body})))
 
 (defrecord NewPaymentHelper [db url-helper]
   PaymentHelper
@@ -47,6 +143,12 @@
   (get-payment-by-order-number [_ order-number]
     ; TODO
     nil)
+  (create-payment-for-registration! [_ tx registration language amount]
+    (let [payment-data (create-payment-data registration language amount)
+          paytrail-response (-> (create-paytrail-payment! payment-data)
+                                (:body)
+                                (json/read-str))]
+      (select-keys paytrail-response ["transactionId" "href"])))
   (initialise-payment-on-registration? [this]
     false))
 

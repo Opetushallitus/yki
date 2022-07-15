@@ -131,7 +131,10 @@
                                                        :access-log #ig/ref :yki.middleware.access-log/with-logging
                                                        :url-helper #ig/ref :yki.util/url-helper}
 
-  :yki.handler/payment-paytrail                       {:db #ig/ref :duct.database/sql}
+  :yki.handler/payment-paytrail                       {:db             #ig/ref :duct.database/sql
+                                                       :auth           #ig/ref :yki.middleware.auth/with-authentication
+                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging
+                                                       :payment-helper #ig/ref :yki.util/payment-helper}
 
   :yki.handler/evaluation-payment                     {:db             #ig/ref :duct.database/sql
                                                        :auth           #ig/ref :yki.middleware.auth/with-authentication

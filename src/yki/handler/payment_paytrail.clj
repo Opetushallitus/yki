@@ -9,7 +9,9 @@
     [ring.middleware.params :refer [wrap-params]]
     [ring.middleware.file]
     [ring.util.http-response :refer [ok internal-server-error found unauthorized]]
+    [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
+    [yki.util.payment-helper :refer [create-payment-for-registration!]]
     [yki.util.payments-api :refer [valid-request?]]
     [yki.spec :as ys])
   (:import (java.io FileOutputStream InputStream)))
@@ -47,27 +49,43 @@
        (handler (assoc request :body body))
        (unauthorized {:reason "Signature is not valid for request!"})))))
 
-(defmethod ig/init-key :yki.handler/payment-paytrail [_ {:keys [db]}]
+
+(defmethod ig/init-key :yki.handler/payment-paytrail [_ {:keys [auth access-log db payment-helper]}]
   (api
     (context routing/payment-v2-root []
       :coercion :spec
       :no-doc true
-      ; TODO Initialize handler with auth middleware and use for redirect handler!
-      :middleware [wrap-params]
-      (GET "/redirect" {query-params :query-params}
-        (let [registration-id (query-params "registration-id")]
-          (log/info "REDIRECT called for registration-id:" registration-id)
-          (found "https://pay.paytrail.com/pay/f9a48756-fe91-11ec-bbb2-075fb18c6d6d"))))
+      :middleware [auth access-log wrap-params]
+      (GET "/:id/redirect" {session :session}
+        :path-params [id :- ::ys/registration_id]
+        :query-params [lang :- ::ys/language-code]
+        (let [external-user-id     (get-in session [:identity :external-user-id])
+              external-user-id     "local_test@testi.fi"
+              registration-details (registration-db/get-registration-data-for-new-payment db id external-user-id)]
+          (log/info "REDIRECT called for registration-id:" id)
+          (log/info "Got lang:" lang)
+          (log/info registration-details)
+          (if registration-details
+            (let [; TODO Get proper payment amount from registration details and payment config!
+                  paytrail-response (create-payment-for-registration! payment-helper nil registration-details lang 100)
+                  ; TODO store transaction data on db
+                  redirect-url      (paytrail-response "href")]
+              (log/info "payment-data" paytrail-response)
+              (found redirect-url))
+            ; TODO Error redirect, see yki.handler.payment/error-redirect
+            (found "https://www.google.com")))))
     (context routing/paytrail-payment-root []
       :coercion :spec
       :no-doc true
       :middleware [wrap-params with-request-validation]
-      (GET "/success" {query-params :query-params}
+      (GET "/:id/success" {query-params :query-params}
+        :path-params [id :- ::ys/registration_id]
         :return ::ys/payment-paytrail-response
-        (log/info "SUCCESS callback invoked with query-params:" query-params)
+        (log/info "SUCCESS callback for registration" id "invoked with query-params:" query-params)
         (ok {:foo "moiccu"}))
-      (GET "/error" {query-params :query-params}
-        (log/warn "ERROR callback invoked with query-params:" query-params)
+      (GET "/:id/error" {query-params :query-params}
+        :path-params [id :- ::ys/registration_id]
+        (log/warn "ERROR callback for registration" id "invoked with query-params:" query-params)
         (ok {:rab :oof}))
       ; Report generation callback
       (POST "/report" req

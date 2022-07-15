@@ -600,6 +600,26 @@ WHERE re.id = :id
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
+-- name: select-registration-details-for-new-payment
+SELECT re.id,
+       re.exam_session_id,
+       re.participant_id,
+       re.kind,
+       re.form,
+       p.email,
+       p.external_user_id,
+       esl.name,
+       es.language_code,
+       es.level_code,
+       ed.exam_date
+FROM registration re
+INNER JOIN participant p ON p.id = re.participant_id
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+WHERE re.id = :id
+  AND p.external_user_id = :external_user_id;
+
 -- name: select-registration-data-by-participant
 SELECT re.state,
        re.exam_session_id,

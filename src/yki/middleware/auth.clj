@@ -179,8 +179,7 @@
   (or value {:headers {}, :status 403, :body "Forbidden"}))
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
-
-  (defn with-authentication [handler]
+  (fn with-authentication [handler]
     (-> handler
         (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
         (wrap-authentication backend)
