@@ -493,7 +493,8 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
     :yki.util/payment-helper
     {:db db
      :url-helper url-helper
-     :payment-config {:use-new-payments-api? use-new-payments-api?}}))
+     :payment-config {:use-new-payments-api? use-new-payments-api?
+                      :amount (:amount payment-config)}}))
 
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)

@@ -12,7 +12,7 @@
             [yki.boundary.onr :as onr]
             [yki.boundary.registration-db :as registration-db]
             [yki.util.common :as common]
-            [yki.util.payment-helper :refer [get-payment-redirect-url]]
+            [yki.util.payment-helper :refer [get-payment-amount-for-registration get-payment-redirect-url]]
             [yki.util.template-util :as template-util])
   (:import [java.util UUID]))
 
@@ -189,7 +189,7 @@
 
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id
-   raw-form payment-config onr-client exam-session-registration]
+   raw-form onr-client exam-session-registration]
   (let [form            (sanitized-form raw-form)
         identity        (:identity session)
         form-with-email (if (= (:auth-method session) "EMAIL")
@@ -208,15 +208,13 @@
                          (extract-person-from-registration
                            form-with-email
                            (:ssn identity))))]
-        (let [amount                  (bigdec (get-in payment-config [:amount (keyword (:level_code exam-session-registration))]))
+        (let [amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
               update-registration     {:id             registration-id
                                        :form           form-with-email
                                        :oid            oid
                                        :form_version   1
                                        :participant_id (or (:participant_id registration-data) participant-id)}
               expiration-date         (registration->expiration-date registration-data)
-              ; TODO If using new Paytrail Payments API (check feature flag / Integrant config value),
-              ; TODO need to create a new kind of payment link!
               payment-link            {:participant_id        participant-id
                                        :exam_session_id       nil
                                        :registration_id       registration-id
@@ -253,13 +251,13 @@
       {:error (if started? {:closed true} {:expired true})})))
 
 (defn submit-registration
-  [db url-helper payment-helper email-q lang session registration-id form payment-config onr-client]
+  [db url-helper payment-helper email-q lang session registration-id form onr-client]
   (log/info "START: Submitting registration id" registration-id)
   (let [exam-session-registration (exam-session-db/get-exam-session-registration-by-registration-id db registration-id)]
     (if
       (or
         (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
         (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id))
-      (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form payment-config onr-client exam-session-registration)
+      (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration)
       ; registration is already full, cannot add new
       {:error {:full true}})))

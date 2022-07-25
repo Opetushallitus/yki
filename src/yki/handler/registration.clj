@@ -40,7 +40,6 @@
                                                                      (or user-config (:session request))
                                                                      id
                                                                      registration
-                                                                     payment-config
                                                                      onr-client)]
            (if oid
              (do

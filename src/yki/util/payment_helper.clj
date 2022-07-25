@@ -9,15 +9,21 @@
 
 (require-sql ["yki/queries.sql" :as q])
 
+(defn- registration->payment-amount [payment-config registration-details]
+  (let [level-code (keyword (:level_code registration-details))]
+    (->> [:amount level-code]
+         (get-in payment-config)
+         (bigdec))))
+
 (defprotocol PaymentHelper
   (get-payment-redirect-url [this registration-id lang])
   (get-payment [this registration-id oid])
+  (get-payment-amount-for-registration [this registration-details])
   (get-payment-by-order-number [this order-number])
   (create-payment-for-registration! [this tx registration language amount])
   (initialise-payment-on-registration? [this]))
 
 (defrecord LegacyPaymentHelper [db url-helper payment-config]
-  ; TODO payment-config might not be needed?
   PaymentHelper
   (get-payment-redirect-url [_ registration-id lang]
     (url-helper :payment-link.old.redirect registration-id lang))
@@ -25,6 +31,8 @@
     (first (q/select-payment-by-registration-id
              (:spec db)
              {:registration_id registration-id :oid oid})))
+  (get-payment-amount-for-registration [_ registration-details]
+    (registration->payment-amount payment-config registration-details))
   (get-payment-by-order-number [_ order-number]
     (first (q/select-payment-by-order-number (:spec db) {:order_number order-number})))
   (create-payment-for-registration! [_ tx registration language amount]
@@ -133,26 +141,30 @@
        {:headers headers
         :body    body})))
 
-(defrecord NewPaymentHelper [db url-helper]
+(defrecord NewPaymentHelper [db url-helper payment-config]
   PaymentHelper
   (get-payment-redirect-url [_ registration-id lang]
     (url-helper :payment-link.new.redirect registration-id lang))
   (get-payment [_ registration-id oid]
     ; TODO
     nil)
+  (get-payment-amount-for-registration [_ registration-details]
+    ; Unit of returned amount is EUR. Return corresponding amount in minor unit, ie. cents.
+    (* 100 (int (registration->payment-amount payment-config registration-details))))
   (get-payment-by-order-number [_ order-number]
     ; TODO
     nil)
   (create-payment-for-registration! [_ tx registration language amount]
-    (let [payment-data (create-payment-data registration language amount)
+    (let [payment-data      (create-payment-data registration language amount)
           paytrail-response (-> (create-paytrail-payment! payment-data)
                                 (:body)
                                 (json/read-str))]
       (select-keys paytrail-response ["transactionId" "href"])))
-  (initialise-payment-on-registration? [this]
+  (initialise-payment-on-registration? [_]
     false))
 
 (defmethod ig/init-key :yki.util/payment-helper [_ {:keys [db url-helper payment-config]}]
   (if (:use-new-payments-api? payment-config)
-    (->NewPaymentHelper db url-helper)
+    (->NewPaymentHelper db url-helper payment-config)
     (->LegacyPaymentHelper db url-helper payment-config)))
+

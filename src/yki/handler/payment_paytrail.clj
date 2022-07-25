@@ -8,10 +8,10 @@
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
     [ring.middleware.file]
-    [ring.util.http-response :refer [ok internal-server-error found unauthorized]]
+    [ring.util.http-response :refer [ok found unauthorized]]
     [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
-    [yki.util.payment-helper :refer [create-payment-for-registration!]]
+    [yki.util.payment-helper :refer [create-payment-for-registration! get-payment-amount-for-registration]]
     [yki.util.payments-api :refer [valid-request?]]
     [yki.spec :as ys])
   (:import (java.io FileOutputStream InputStream)))
@@ -66,8 +66,8 @@
           (log/info "Got lang:" lang)
           (log/info registration-details)
           (if registration-details
-            (let [; TODO Get proper payment amount from registration details and payment config!
-                  paytrail-response (create-payment-for-registration! payment-helper nil registration-details lang 100)
+            (let [amount            (get-payment-amount-for-registration payment-helper registration-details)
+                  paytrail-response (create-payment-for-registration! payment-helper nil registration-details lang amount)
                   ; TODO store transaction data on db
                   redirect-url      (paytrail-response "href")]
               (log/info "payment-data" paytrail-response)
