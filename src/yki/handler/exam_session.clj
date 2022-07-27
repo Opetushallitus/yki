@@ -197,7 +197,7 @@
               (let [payment (registration-db/get-legacy-payment-by-registration-id db registration-id oid)]
                 (if payment
                   (do
-                    (paytrail-payment/handle-payment-success db email-q url-helper {:order-number (:order_number payment)})
+                    (paytrail-payment/handle-legacy-exam-payment-success db email-q url-helper {:order-number (:order_number payment)})
                     (audit-log/log {:request   request
                                     :target-kv {:k audit-log/registration
                                                 :v registration-id}

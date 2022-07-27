@@ -620,6 +620,21 @@ INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
   AND p.external_user_id = :external_user_id;
 
+-- name: select-completed-new-payments-for-registration
+SELECT p.id
+FROM exam_payment_new p
+WHERE p.registration_id = :id
+  AND p.state = 'PAID';
+
+-- name: select-new-exam-payment-details
+SELECT p.id,
+       p.amount,
+       p.registration_id,
+       r.exam_session_id
+FROM exam_payment_new p
+INNER JOIN registration r ON r.id = p.registration_id
+WHERE p.transaction_id = :transaction_id;
+
 -- name: select-registration-data-by-participant
 SELECT re.state,
        re.exam_session_id,
@@ -673,6 +688,34 @@ INSERT INTO payment(
   :order_number
 );
 
+-- name: insert-new-exam-payment<!
+INSERT INTO exam_payment_new(
+  state,
+  registration_id,
+  amount,
+  reference,
+  transaction_id,
+  href) VALUES (
+  'UNPAID',
+  :registration_id,
+  :amount,
+  :reference,
+  :transaction_id,
+  :href);
+
+-- name: update-new-exam-payment-to-paid<!
+UPDATE exam_payment_new
+SET state = 'PAID',
+    paid_at = current_timestamp,
+    updated = current_timestamp
+WHERE id = :id AND state != 'PAID';
+
+-- name: update-exam-registration-status-to-completed<!
+UPDATE registration
+SET state = 'COMPLETED',
+    modified = current_timestamp
+WHERE id = :id AND state != 'COMPLETED';
+
 -- name: select-payment-by-registration-id
 SELECT
   pa.state,
@@ -717,6 +760,22 @@ INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 WHERE pay.order_number = :order_number
   AND esl.lang = pay.lang;
+
+-- name: select-participant-data-by-registration-id
+SELECT p.email,
+       es.language_code,
+       es.level_code,
+       esl.name,
+       esl.street_address,
+       esl.zip,
+       esl.post_office,
+       ed.exam_date
+FROM registration re
+INNER JOIN participant p ON p.id = re.participant_id
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+WHERE re.id = :id;
 
 -- name: select-payment-by-order-number
 SELECT

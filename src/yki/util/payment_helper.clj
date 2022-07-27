@@ -100,20 +100,21 @@
           (some? transaction-id)
           (assoc "checkout-transaction-id" transaction-id)))
 
-(defn create-payment-data [registration language amount]
-  (let [{registration-id            :id
-         exam-session-location-name :name
-         exam-session-id            :exam_session_id
-         email                      :email
-         registration-form          :form} registration]
+(defn create-payment-data [url-helper registration language amount]
+  (let [{registration-id   :id
+         ;exam-session-location-name :name
+         exam-session-id   :exam_session_id
+         email             :email
+         registration-form :form} registration]
     {"stamp"        (random-uuid)
      ; Order reference
-     "reference"    (str/join "_"
+     "reference"    (str/join "-"
                               ["YKI"
-                               ; TODO Y-tunnus instead of organizer name
-                               exam-session-location-name
+                               "EXAM"
+                               ; TODO Y-tunnus?
                                exam-session-id
-                               registration-id])
+                               registration-id
+                               (random-uuid)])
      ; Total amount in EUR cents
      "amount"       amount
      "currency"     "EUR"
@@ -121,9 +122,8 @@
      "customer"     {"email"     email
                      "firstName" (:first_name registration-form)
                      "lastName"  (:last_name registration-form)}
-     ; TODO Fix redirectUrls
-     "redirectUrls" {"success" "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/success"
-                     "cancel"  "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/error"}
+     "redirectUrls" {"success" (url-helper :exam-payment-new.success-callback language)
+                     "cancel"  (url-helper :exam-payment-new.error-callback language)}
      ; TODO Add also callbackUrls
      ; TODO Add items so that we can have descriptions in receipts?
      }))
@@ -155,11 +155,17 @@
     ; TODO
     nil)
   (create-payment-for-registration! [_ tx registration language amount]
-    (let [payment-data      (create-payment-data registration language amount)
+    (let [payment-data      (create-payment-data url-helper registration language amount)
           paytrail-response (-> (create-paytrail-payment! payment-data)
                                 (:body)
-                                (json/read-str))]
-      (select-keys paytrail-response ["transactionId" "href"])))
+                                (json/read-str))
+          exam-payment-data {:registration_id (:id registration)
+                             :amount          amount
+                             :reference       (payment-data "reference")
+                             :transaction_id  (paytrail-response "transactionId")
+                             :href            (paytrail-response "href")}]
+      (q/insert-new-exam-payment<! tx exam-payment-data)
+      paytrail-response))
   (initialise-payment-on-registration? [_]
     false))
 

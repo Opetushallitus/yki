@@ -17,6 +17,9 @@
   (complete-registration-and-legacy-payment! [db payment-params])
   (update-registration-details! [db payment-helper registration language amount after-fn])
   (get-registration-data-for-new-payment [db registration-id participant-id])
+  (get-completed-new-payments-for-registration [db registration-id])
+  (get-new-payment-details [db transaction-id])
+  (complete-new-payment-and-exam-registration! [db registration-id payment-id after-fn])
   ; Other methods
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
@@ -31,6 +34,7 @@
   (exam-session-post-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
   (get-participant-data-by-order-number [db order-number])
+  (get-participant-data-by-registration-id [db registration-id])
   (get-registration [db registration-id external-user-id])
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
@@ -121,6 +125,9 @@
   (get-participant-data-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-participant-data-by-order-number spec {:order_number order-number})))
+  (get-participant-data-by-registration-id
+    [{:keys [spec]} registration-id]
+    (first (q/select-participant-data-by-registration-id spec {:id registration-id})))
   (get-registration
     [{:keys [spec]} registration-id external-user-id]
     (first (q/select-registration spec {:id registration-id :external_user_id external-user-id})))
@@ -138,4 +145,17 @@
     (jdbc/with-db-transaction [tx spec]
       (if-let [existing (first (q/select-participant-by-external-id tx participant))]
         existing
-        (q/insert-participant<! tx participant)))))
+        (q/insert-participant<! tx participant))))
+  (get-completed-new-payments-for-registration [{:keys [spec]} registration-id]
+    (q/select-completed-new-payments-for-registration spec {:id registration-id}))
+  (get-new-payment-details [{:keys [spec]} transaction-id]
+    (first (q/select-new-exam-payment-details spec {:transaction_id transaction-id})))
+  (complete-new-payment-and-exam-registration! [{:keys [spec]} registration-id payment-id after-fn]
+    (jdbc/with-db-transaction [tx spec]
+      (rollback-on-exception
+        tx
+        (fn update-payment-and-registration-states! []
+          (q/update-new-exam-payment-to-paid<! tx {:id payment-id})
+          (when (q/update-exam-registration-status-to-completed<! tx {:id registration-id})
+            (after-fn)
+            true))))))
