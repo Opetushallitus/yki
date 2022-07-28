@@ -17,7 +17,6 @@
   (complete-registration-and-legacy-payment! [db payment-params])
   (update-registration-details! [db payment-helper registration language amount after-fn])
   (get-registration-data-for-new-payment [db registration-id participant-id])
-  (get-completed-new-payments-for-registration [db registration-id])
   (get-new-payment-details [db transaction-id])
   (complete-new-payment-and-exam-registration! [db registration-id payment-id after-fn])
   ; Other methods
@@ -146,8 +145,6 @@
       (if-let [existing (first (q/select-participant-by-external-id tx participant))]
         existing
         (q/insert-participant<! tx participant))))
-  (get-completed-new-payments-for-registration [{:keys [spec]} registration-id]
-    (q/select-completed-new-payments-for-registration spec {:id registration-id}))
   (get-new-payment-details [{:keys [spec]} transaction-id]
     (first (q/select-new-exam-payment-details spec {:transaction_id transaction-id})))
   (complete-new-payment-and-exam-registration! [{:keys [spec]} registration-id payment-id after-fn]

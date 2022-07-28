@@ -52,6 +52,23 @@
        (handler (assoc request :body body))
        (unauthorized {:reason "Signature is not valid for request!"})))))
 
+(defn- registration-redirect [db payment-helper url-helper lang registration]
+  (case (:state registration)
+    ; Possible values are..
+    ; 'COMPLETED', 'SUBMITTED', 'STARTED', 'EXPIRED', 'CANCELLED', 'PAID_AND_CANCELLED'
+    "COMPLETED"
+    (url-helper :payment.success-redirect lang (:exam_session_id registration))
+    "SUBMITTED"
+    (jdbc/with-db-transaction [tx (:spec db)]
+      (rollback-on-exception
+        tx
+        #(let [amount            (get-payment-amount-for-registration payment-helper registration)
+               paytrail-response (create-payment-for-registration! payment-helper tx registration lang amount)
+               redirect-url      (paytrail-response "href")]
+           redirect-url)))
+    ; Other values are unexpected. Redirect to error page.
+    (url-helper :payment.error-redirect lang (:exam_session_id registration))))
+
 (defmethod ig/init-key :yki.handler/payment-paytrail [_ {:keys [auth access-log db payment-helper url-helper email-q]}]
   {:pre [(some? auth) (some? access-log) (some? db) (some? email-q) (some? payment-helper) (some? url-helper)]}
   (api
@@ -66,23 +83,11 @@
               ;external-user-id     "local_test@testi.fi"
               registration-details (registration-db/get-registration-data-for-new-payment db id external-user-id)]
           (if registration-details
-            ; Registration details found.
-            ; TODO Can instead check if registration status is COMPLETED
-            ; => Then get-completed-new-payments-for-registration can be removed.
-            (if (seq (registration-db/get-completed-new-payments-for-registration db id))
-              ; Registration already paid -> redirect to payment success page.
-              (found (url-helper :payment.success-redirect lang (:exam_session_id registration-details)))
-              ; No payment completed corresponding to registration.
-              ; => Redirect to Paytrail.
-              (jdbc/with-db-transaction [tx (:spec db)]
-                (rollback-on-exception
-                  tx
-                  #(let [amount            (get-payment-amount-for-registration payment-helper registration-details)
-                         paytrail-response (create-payment-for-registration! payment-helper tx registration-details lang amount)
-                         redirect-url      (paytrail-response "href")]
-                     (found redirect-url)))))
-            ; TODO Error redirect, see yki.handler.payment/error-redirect
-            (found "https://www.google.com")))))
+            ; Registration details found, redirect based on registration state.
+            (found (registration-redirect db payment-helper url-helper lang registration-details))
+            ; No registration matching given id and external-user-id from session.
+            ; TODO Generic error redirect?
+            (bad-request {:reason :registration-not-found})))))
     (context routing/paytrail-payment-root []
       :coercion :spec
       :no-doc true

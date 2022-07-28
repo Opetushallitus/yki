@@ -12,9 +12,4 @@ CREATE TABLE IF NOT EXISTS exam_payment_new
     updated         TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
--- TODO Remove index? Should not be needed as we can always check if
---  a registration needs payment by relying on registration.state.
-CREATE INDEX IF NOT EXISTS exam_payment_new_registration_id ON exam_payment_new(registration_id);
-
 -- TODO Create a table as well for evaluation payments.
--- TODO Create also a index on evaluation_payment_new.evaluation_id.

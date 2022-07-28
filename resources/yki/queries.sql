@@ -562,6 +562,7 @@ AND EXISTS (SELECT id
 	                                    AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
+-- TODO Take new payments from table exam_payment_new also into account!
 -- submitted registration expires 8 days from payment creation at midnight
 -- name: update-submitted-registrations-to-expired<!
 UPDATE registration
@@ -606,6 +607,7 @@ SELECT re.id,
        re.participant_id,
        re.kind,
        re.form,
+       re.state,
        p.email,
        p.external_user_id,
        esl.name,
@@ -619,12 +621,6 @@ INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
   AND p.external_user_id = :external_user_id;
-
--- name: select-completed-new-payments-for-registration
-SELECT p.id
-FROM exam_payment_new p
-WHERE p.registration_id = :id
-  AND p.state = 'PAID';
 
 -- name: select-new-exam-payment-details
 SELECT p.id,
@@ -894,6 +890,7 @@ FROM registration
 WHERE exam_session_id = :id
 AND state = 'COMPLETED';
 
+-- TODO Modify query to work also with exam_payment_new
 -- name: select-exam-session-participants
 SELECT
   r.form,
