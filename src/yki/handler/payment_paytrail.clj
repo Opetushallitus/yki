@@ -65,12 +65,10 @@
         (let [external-user-id     (get-in session [:identity :external-user-id])
               ;external-user-id     "local_test@testi.fi"
               registration-details (registration-db/get-registration-data-for-new-payment db id external-user-id)]
-          (log/info "REDIRECT called for registration-id:" id)
-          (log/info registration-details)
           (if registration-details
             ; Registration details found.
             ; TODO Can instead check if registration status is COMPLETED
-            ; TODO => Then get-completed-new-payments-for-registration can be rmeoved.
+            ; => Then get-completed-new-payments-for-registration can be removed.
             (if (seq (registration-db/get-completed-new-payments-for-registration db id))
               ; Registration already paid -> redirect to payment success page.
               (found (url-helper :payment.success-redirect lang (:exam_session_id registration-details)))

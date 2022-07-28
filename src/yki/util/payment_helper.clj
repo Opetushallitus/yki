@@ -17,9 +17,7 @@
 
 (defprotocol PaymentHelper
   (get-payment-redirect-url [this registration-id lang])
-  (get-payment [this registration-id oid])
   (get-payment-amount-for-registration [this registration-details])
-  (get-payment-by-order-number [this order-number])
   (create-payment-for-registration! [this tx registration language amount])
   (initialise-payment-on-registration? [this]))
 
@@ -27,14 +25,8 @@
   PaymentHelper
   (get-payment-redirect-url [_ registration-id lang]
     (url-helper :payment-link.old.redirect registration-id lang))
-  (get-payment [_ registration-id oid]
-    (first (q/select-payment-by-registration-id
-             (:spec db)
-             {:registration_id registration-id :oid oid})))
   (get-payment-amount-for-registration [_ registration-details]
     (registration->payment-amount payment-config registration-details))
-  (get-payment-by-order-number [_ order-number]
-    (first (q/select-payment-by-order-number (:spec db) {:order_number order-number})))
   (create-payment-for-registration! [_ tx registration language amount]
     (let [order-number-seq (:nextval (first (q/select-next-order-number-suffix tx)))
           oid-last-part    (last (str/split (:oid registration) #"\."))
@@ -68,24 +60,6 @@
    "redirectUrls" {"success" "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/success"
                    "cancel"  "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/error"}}
 
-  " -- name: select-registration-details-for-new-payment
-  SELECT re.exam_session_id,
-  re.participant_id,
-  re.kind,
-  re.form,
-  p.email,
-  p.external_user_id,
-  esl.name,
-  es.language_code,
-  es.level_code,
-  ed.exam_date
-  FROM registration re
-  INNER JOIN exam_session es ON es.id = re.exam_session_id
-  INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-  INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
-  INNER JOIN participant p ON p.id = re.participant_id
-  WHERE re.id = :id
-  AND re.participant_id = :participant_id"
   )
 
 (def test-merchant-id "375917")
@@ -145,15 +119,9 @@
   PaymentHelper
   (get-payment-redirect-url [_ registration-id lang]
     (url-helper :payment-link.new.redirect registration-id lang))
-  (get-payment [_ registration-id oid]
-    ; TODO
-    nil)
   (get-payment-amount-for-registration [_ registration-details]
     ; Unit of returned amount is EUR. Return corresponding amount in minor unit, ie. cents.
     (* 100 (int (registration->payment-amount payment-config registration-details))))
-  (get-payment-by-order-number [_ order-number]
-    ; TODO
-    nil)
   (create-payment-for-registration! [_ tx registration language amount]
     (let [payment-data      (create-payment-data url-helper registration language amount)
           paytrail-response (-> (create-paytrail-payment! payment-data)
@@ -173,4 +141,3 @@
   (if (:use-new-payments-api? payment-config)
     (->NewPaymentHelper db url-helper payment-config)
     (->LegacyPaymentHelper db url-helper payment-config)))
-
