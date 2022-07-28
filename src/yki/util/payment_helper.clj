@@ -5,6 +5,7 @@
             [integrant.core :as ig]
             [jeesql.core :refer [require-sql]]
             [org.httpkit.client :as http]
+            [yki.util.template-util :as template-util]
             [yki.util.payments-api :refer [sign-request]]))
 
 (require-sql ["yki/queries.sql" :as q])
@@ -74,9 +75,24 @@
           (some? transaction-id)
           (assoc "checkout-transaction-id" transaction-id)))
 
+(defn registration->payment-description [url-helper registration]
+  ; TODO i18n based on selected language?
+  ; (clojure.tools.logging/info registration)
+  (let [sb (StringBuilder.)]
+    (.append sb "YKI-tutkintomaksu: ")
+    (.append sb (:exam_date registration))
+    (.append sb " ")
+    (.append sb (template-util/get-language url-helper (:language_code registration) "fi"))
+    (.append sb ", ")
+    (.append sb (template-util/get-level url-helper (:level_code registration) "fi"))
+    (.append sb "\n")
+    ;(.append sb "Osallistuja: ")
+    ;(.append sb )
+    (.toString sb)))
+
 (defn create-payment-data [url-helper registration language amount]
   (let [{registration-id   :id
-         ;exam-session-location-name :name
+         location-name     :name
          exam-session-id   :exam_session_id
          email             :email
          registration-form :form} registration]
@@ -98,8 +114,12 @@
                      "lastName"  (:last_name registration-form)}
      "redirectUrls" {"success" (url-helper :exam-payment-new.success-callback language)
                      "cancel"  (url-helper :exam-payment-new.error-callback language)}
+     "items"        [{"unitPrice"     amount
+                      "units"         1
+                      "vatPercentage" 0
+                      "productCode"   (str exam-session-id)
+                      "description"   (registration->payment-description url-helper registration)}]
      ; TODO Add also callbackUrls
-     ; TODO Add items so that we can have descriptions in receipts?
      }))
 
 (defn create-paytrail-payment! [payment-data]
