@@ -17,7 +17,7 @@
   :yki.util/payment-helper {:payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"
                                                       :KESKI "{{yki_exam_session_fee_intermediate}}"
                                                       :YLIN  "{{yki_exam_session_fee_advanced}}"}
-                                             :use-new-payments-api? false}}
+                                             :use-new-payments-api? true}}
   :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
 
   :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
