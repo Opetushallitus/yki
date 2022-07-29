@@ -60,7 +60,7 @@
     (jdbc/with-db-transaction [tx (:spec db)]
       (rollback-on-exception
         tx
-        #(let [amount            (get-payment-amount-for-registration payment-helper registration)
+        #(let [amount            (:paytrail (get-payment-amount-for-registration payment-helper registration))
                paytrail-response (create-payment-for-registration! payment-helper tx registration lang amount)
                redirect-url      (paytrail-response "href")]
            redirect-url)))

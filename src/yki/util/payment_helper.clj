@@ -27,7 +27,9 @@
   (get-payment-redirect-url [_ registration-id lang]
     (url-helper :payment-link.old.redirect registration-id lang))
   (get-payment-amount-for-registration [_ registration-details]
-    (registration->payment-amount payment-config registration-details))
+    (let [amount (registration->payment-amount payment-config registration-details)]
+      {:email-template amount
+       :paytrail       amount}))
   (create-payment-for-registration! [_ tx registration language amount]
     (let [order-number-seq (:nextval (first (q/select-next-order-number-suffix tx)))
           oid-last-part    (last (str/split (:oid registration) #"\."))
@@ -140,8 +142,11 @@
   (get-payment-redirect-url [_ registration-id lang]
     (url-helper :payment-link.new.redirect registration-id lang))
   (get-payment-amount-for-registration [_ registration-details]
-    ; Unit of returned amount is EUR. Return corresponding amount in minor unit, ie. cents.
-    (* 100 (int (registration->payment-amount payment-config registration-details))))
+    (let [amount (registration->payment-amount payment-config registration-details)]
+      {:email-template amount
+       ; Unit of returned amount is EUR.
+       ; Return corresponding amount in minor unit, ie. cents.
+       :paytrail       (* 100 (int amount))}))
   (create-payment-for-registration! [_ tx registration language amount]
     (let [payment-data      (create-payment-data url-helper registration language amount)
           paytrail-response (-> (create-paytrail-payment! payment-data)
