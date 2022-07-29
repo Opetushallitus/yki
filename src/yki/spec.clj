@@ -414,6 +414,3 @@
 (s/def ::evaluation-payment-form-data (s/keys :req-un [::uri
                                                        ::params]))
 
-; Paytrail Payments handler
-(s/def ::foo string?)
-(s/def ::payment-paytrail-response (s/keys :opt-un [::foo]))

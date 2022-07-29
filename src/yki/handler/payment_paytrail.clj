@@ -94,7 +94,6 @@
       :middleware [wrap-params with-request-validation]
       (GET "/:lang/success" {query-params :query-params}
         :path-params [lang :- ::ys/language-code]
-        :return ::ys/payment-paytrail-response
         (let [{transaction-id "checkout-transaction-id"
                amount         "checkout-amount"
                payment-status "checkout-status"} query-params
@@ -125,7 +124,7 @@
         (let [{transaction-id "checkout-transaction-id"
                payment-status "checkout-status"} query-params]
           (log/info "Error callback invoked for transaction-id" transaction-id "with payment-status" payment-status)
-          (ok {:rab :oof})))
+          (ok {})))
       ; Report generation callback
       (POST "/report" req
         (let [body         (:body req)
@@ -133,5 +132,5 @@
               content-type (infer-content-type headers)]
           (log/info "REPORT callback invoked with headers:" headers)
           (store-report! content-type body)
-          (ok "report received"))))))
+          (ok {}))))))
 
