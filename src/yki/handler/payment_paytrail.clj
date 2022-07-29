@@ -54,8 +54,6 @@
 
 (defn- registration-redirect [db payment-helper url-helper lang registration]
   (case (:state registration)
-    ; Possible values are..
-    ; 'COMPLETED', 'SUBMITTED', 'STARTED', 'EXPIRED', 'CANCELLED', 'PAID_AND_CANCELLED'
     "COMPLETED"
     (url-helper :payment.success-redirect lang (:exam_session_id registration))
     "SUBMITTED"
