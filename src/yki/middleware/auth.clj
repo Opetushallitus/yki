@@ -169,6 +169,10 @@
     :handler participant-authenticated}
    {:pattern #".*/payment/notify"
     :handler any-access}
+   {:pattern #".*/api/payment/v2/paytrail/.*"
+    :handler any-access}
+   {:pattern #".*/api/payment/v2/.*/redirect"
+    :handler participant-authenticated}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"
