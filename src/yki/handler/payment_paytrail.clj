@@ -82,7 +82,7 @@
               registration-details (registration-db/get-registration-data-for-new-payment db id external-user-id)]
           (if registration-details
             ; Registration details found, redirect based on registration state.
-            (found (registration-redirect db payment-helper url-helper lang registration-details))
+            (ok {:redirect (registration-redirect db payment-helper url-helper lang registration-details)})
             ; No registration matching given id and external-user-id from session.
             ; TODO Generic error redirect?
             (bad-request {:reason :registration-not-found})))))
