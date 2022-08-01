@@ -12,4 +12,7 @@ CREATE TABLE IF NOT EXISTS exam_payment_new
     updated         TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
+CREATE INDEX IF NOT EXISTS exam_payment_new_state ON exam_payment_new (state);
+
 -- TODO Create a table as well for evaluation payments.
+-- TODO Index too.

@@ -562,19 +562,31 @@ AND EXISTS (SELECT id
 	                                    AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
--- TODO Take new payments from table exam_payment_new also into account!
--- submitted registration expires 8 days from payment creation at midnight
--- name: update-submitted-registrations-to-expired<!
+-- submitted registration expires 8 days from payment creation at midnight,
+-- name: update-submitted-registrations-with-unpaid-legacy-payments-to-expired<!
 UPDATE registration
    SET state = 'EXPIRED',
     modified = current_timestamp
  WHERE state = 'SUBMITTED'
    AND id IN (SELECT r.id FROM payment p
-               INNER JOIN registration r ON r.id = p.registration_id
-               WHERE p.state = 'UNPAID'
-                 AND ((r.kind = 'ADMISSION' AND ts_older_than(p.created, interval '9 days'))
-                      OR (r.kind = 'POST_ADMISSION' AND ts_older_than(p.created, interval '2 days'))))
+              INNER JOIN registration r ON r.id = p.registration_id
+              WHERE p.state = 'UNPAID'
+                AND ((r.kind = 'ADMISSION' AND ts_older_than(p.created, interval '9 days'))
+                     OR (r.kind = 'POST_ADMISSION' AND ts_older_than(p.created, interval '2 days'))))
 RETURNING id as updated;
+
+-- submitted registration expires 8 days from creation at midnight
+-- name: update-submitted-registrations-without-paid-new-payments-to-expired<!
+UPDATE registration
+SET state = 'EXPIRED',
+    modified = current_timestamp
+WHERE state = 'SUBMITTED'
+  AND id IN
+      ((SELECT DISTINCT epn.registration_id FROM exam_payment_new epn WHERE epn.state != 'PAID')
+       EXCEPT
+       (SELECT DISTINCT epn.registration_id FROM exam_payment_new epn WHERE epn.state = 'PAID'))
+  AND ((kind = 'ADMISSION' AND ts_older_than(created, interval '9 days'))
+       OR (kind = 'POST_ADMISSION' AND ts_older_than(created, interval '2 days')));
 
 -- name: select-registration-data
 SELECT re.state,
@@ -890,7 +902,9 @@ FROM registration
 WHERE exam_session_id = :id
 AND state = 'COMPLETED';
 
--- TODO Modify query to work also with exam_payment_new
+-- TODO Support also payments from exam_payment_new (multiple possible payments per registration)
+--  OR  accept that reference number(s) won't be included per completed registration
+--      for registrations with payment by the new payment integration.
 -- name: select-exam-session-participants
 SELECT
   r.form,
@@ -898,8 +912,7 @@ SELECT
   r.id as registration_id,
   r.kind,
   r.original_exam_session_id,
-  pa.order_number,
-  pa.created
+  pa.order_number
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 LEFT JOIN payment pa ON pa.registration_id = r.id

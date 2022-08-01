@@ -316,10 +316,8 @@
 (s/def ::kind ::registration-kind)
 (s/def ::original_exam_session_id (s/nilable ::id))
 (s/def :participant/order_number (s/nilable ::order-number))
-(s/def :participant/created (s/nilable ::created))
 (s/def ::exam-session-participant (s/keys :req-un [::form
                                                    ::registration_id
-                                                   :participant/created
                                                    :participant/order_number
                                                    ::original_exam_session_id
                                                    ::kind

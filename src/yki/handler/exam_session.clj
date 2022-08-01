@@ -194,6 +194,8 @@
             (POST "/confirm-payment" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response
+              ; Handler for marking a payment as paid through the organizer UI.
+              ; Nothing corresponding to this for registrations with payments through the new payment integration.
               (let [payment (registration-db/get-legacy-payment-by-registration-id db registration-id oid)]
                 (if payment
                   (do
