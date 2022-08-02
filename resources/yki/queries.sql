@@ -902,9 +902,6 @@ FROM registration
 WHERE exam_session_id = :id
 AND state = 'COMPLETED';
 
--- TODO Support also payments from exam_payment_new (multiple possible payments per registration)
---  OR  accept that reference number(s) won't be included per completed registration
---      for registrations with payment by the new payment integration.
 -- name: select-exam-session-participants
 SELECT
   r.form,
@@ -912,16 +909,19 @@ SELECT
   r.id as registration_id,
   r.kind,
   r.original_exam_session_id,
-  pa.order_number
+  pa.order_number,
+  epn.reference
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 LEFT JOIN payment pa ON pa.registration_id = r.id
+LEFT JOIN exam_payment_new epn on epn.registration_id = r.id
 WHERE es.id = :id
 AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
 AND (r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
-    OR (r.state = 'EXPIRED' AND EXISTS (SELECT id
-                                        FROM payment
-                                        WHERE registration_id = r.id)))
+     OR (r.state = 'EXPIRED' AND EXISTS (SELECT id
+                                         FROM payment
+                                         WHERE registration_id = r.id))
+     OR (r.state = 'EXPIRED' AND epn.state = 'PAID'))
 ORDER BY r.created ASC;
 
 --name: update-registration-status-to-cancelled!

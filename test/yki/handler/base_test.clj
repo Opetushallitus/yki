@@ -491,10 +491,10 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 (defn create-payment-helper [db url-helper use-new-payments-api?]
   (ig/init-key
     :yki.util/payment-helper
-    {:db db
-     :url-helper url-helper
+    {:db             db
+     :url-helper     url-helper
      :payment-config {:use-new-payments-api? use-new-payments-api?
-                      :amount (:amount payment-config)}}))
+                      :amount                (:amount payment-config)}}))
 
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)
