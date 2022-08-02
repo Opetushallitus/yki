@@ -19,7 +19,6 @@
       },
       "original_exam_session_id": null,
       "order_number": null,
-      "reference": null,
       "kind": "ADMISSION",
       "state": "COMPLETED",
       "registration_id": 1
@@ -44,7 +43,6 @@
       },
       "original_exam_session_id": null,
       "order_number": null,
-      "reference": null,
       "kind": "ADMISSION",
       "state": "COMPLETED",
       "registration_id": 2
@@ -68,7 +66,6 @@
       },
       "original_exam_session_id": null,
       "order_number": null,
-      "reference": null,
       "kind": "POST_ADMISSION",
       "state": "COMPLETED",
       "registration_id": 3
@@ -92,7 +89,6 @@
       },
       "original_exam_session_id": null,
       "order_number": "order1234",
-      "reference": null,
       "kind": "ADMISSION",
       "state": "EXPIRED",
       "registration_id": 4

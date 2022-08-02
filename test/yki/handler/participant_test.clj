@@ -20,12 +20,8 @@
           participants-response (base/body-as-json response)]
       (is (= "application/json; charset=utf-8" (get (:headers response) "Content-Type")))
       (is (= 200 (:status response)))
-      ; Compare participants as sets, as the returned ordering is somewhat nonsensical given the current test setup.
-      ; The inserted registrations are given the same r.created timestamp, possibly due to wrapping the whole test
-      ; in a transaction. As the exam-session handler returns rows sorted by r.created, the returned order
-      ; of participants is effectively random from this test's point-of-view.
-      (is (= (update (j/read-value (slurp "test/resources/participants.json")) "participants" set)
-             (update participants-response "participants" set)))
+      (is (= (j/read-value (slurp "test/resources/participants.json"))
+             participants-response))
 
       (base/insert-exam-session 2 "'1.2.3.4'" 5)
       (testing "participant registration is changed to another exam session"

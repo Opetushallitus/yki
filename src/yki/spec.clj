@@ -326,7 +326,7 @@
 (s/def ::exam-session-participant (s/keys :req-un [::form
                                                    ::registration_id
                                                    :participant/order_number
-                                                   :participant/reference
+                                                   ;:participant/reference
                                                    ::original_exam_session_id
                                                    ::kind
                                                    ::state]))
