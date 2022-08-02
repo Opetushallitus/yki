@@ -4,7 +4,6 @@
     [clojure.spec.alpha :as s]
     [clojure.string :as str]
     [spec-tools.core :as st])
-
   (:import [org.joda.time DateTime]))
 
 ;; common
@@ -12,7 +11,6 @@
 (def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
-(def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
 (def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,30}|0)){3,13}$")
 
 (defn- empty-or-match [value regexp]
@@ -211,7 +209,6 @@
                             :opt-un [::user_data]))
 
 ;; payment
-(def pt-order-number-regex #"/^[0-9a-zA-Z()\[\]{}*+\-_,. ]{1,64}$/")
 (def pt-locale-regexp #"^[a-z]{1,2}[_][A-Z]{1,2}$")
 
 (s/def ::timestamp date?)
@@ -252,10 +249,11 @@
                                                ::params]))
 
 ;; new Paytrail Payment API integration
-(def exam-payment-new-reference-regex #"^YKI-EXAM-")
-(def eval-payment-new-reference-regex #"^YKI-EVAL-")
+(def exam-payment-new-reference-regex #"^YKI-EXAM-.*")
+(def eval-payment-new-reference-regex #"^YKI-EVAL-.*")
 (s/def ::reference (s/and ::non-blank-string (s/or :exam-payment-new-reference #(re-matches exam-payment-new-reference-regex %)
                                                    :eval-payment-new-reference #(re-matches eval-payment-new-reference-regex %))))
+
 
 ;; registration
 
