@@ -16,16 +16,17 @@
 (use-fixtures :each embedded-db/with-transaction)
 
 (deftest registration-create-and-update-test
-  (base/insert-base-data)
-  (base/insert-organizer "'1.2.3.5'")
-  (base/insert-payment-config "'1.2.3.5'")
-  (base/insert-languages "'1.2.3.5'")
-  (base/insert-exam-session 1 "'1.2.3.5'" 50)
-  (base/insert-exam-session-location "'1.2.3.5'" "fi")
-  (base/insert-exam-session-location "'1.2.3.5'" "sv")
-  (base/insert-exam-session-location "'1.2.3.5'" "en")
-  (base/insert-login-link base/code-ok "2038-01-01")
-  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")
+  (let [organizer-oid "1.2.3.5"]
+    (base/insert-base-data)
+    (base/insert-organizer organizer-oid)
+    (base/insert-payment-config organizer-oid)
+    (base/insert-languages organizer-oid)
+    (base/insert-exam-session 1 organizer-oid 50)
+    (base/insert-exam-session-location organizer-oid "fi")
+    (base/insert-exam-session-location organizer-oid "sv")
+    (base/insert-exam-session-location organizer-oid "en")
+    (base/insert-login-link base/code-ok "2038-01-01")
+    (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)"))
 
   (with-routes!
     (fn [server]

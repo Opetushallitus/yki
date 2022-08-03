@@ -4,18 +4,22 @@
             [ring.mock.request :as mock]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]))
+            [yki.handler.routing :as routing]
+            [clojure.string :as str]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
+
+(defn- get-exam-session-route []
+  (str/join "/" [routing/organizer-api-root (:oid base/organizer) "exam-session" (base/get-exam-session-id)]))
 
 (deftest exam-session-participants-test
   (testing "get exam session participants endpoint should return participant registration form and state"
     (base/insert-base-data)
     (base/insert-registrations "COMPLETED")
     (base/insert-unpaid-expired-registration)
-    (let [exam-session-id       (base/get-exam-session-id)
-          request               (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration"))
+    (let [exam-session-route    (get-exam-session-route)
+          request               (mock/request :get (str exam-session-route "/registration"))
           response              (base/send-request-with-tx request)
           participants-response (base/body-as-json response)]
       (is (= "application/json; charset=utf-8" (get (:headers response) "Content-Type")))
@@ -23,13 +27,13 @@
       (is (= (j/read-value (slurp "test/resources/participants.json"))
              participants-response))
 
-      (base/insert-exam-session 2 "'1.2.3.4'" 5)
+      (base/insert-exam-session 2 (:oid base/organizer) 5)
       (testing "participant registration is changed to another exam session"
         (let [registration-id     (:id (base/select-one "SELECT id from registration"))
-              relocate-request    (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id "/relocate")
+              relocate-request    (-> (mock/request :post (str exam-session-route "/registration/" registration-id "/relocate")
                                                     (j/write-value-as-string {:to_exam_session_id 2}))
                                       (mock/content-type "application/json; charset=UTF-8"))
-              not-found-request   (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id "/relocate")
+              not-found-request   (-> (mock/request :post (str exam-session-route "/registration/" registration-id "/relocate")
                                                     (j/write-value-as-string {:to_exam_session_id 3}))
                                       (mock/content-type "application/json; charset=UTF-8"))
               relocate-response   (base/send-request-with-tx relocate-request)
@@ -46,9 +50,9 @@
   (testing "delete exam session participant should set registration state to CANCELLED when registration is not paid"
     (base/insert-base-data)
     (base/insert-registrations "SUBMITTED")
-    (let [exam-session-id    (base/get-exam-session-id)
-          registration-id    (:id (base/select-one "SELECT id from registration"))
-          request            (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id))
+    (let [registration-id    (:id (base/select-one "SELECT id from registration"))
+          exam-session-route (get-exam-session-route)
+          request            (mock/request :delete (str exam-session-route "/registration/" registration-id))
           response           (base/send-request-with-tx request)
           registration-state (:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
       (is (= (:status response) 200))
@@ -58,9 +62,9 @@
   (testing "delete exam session participant should set registration state to PAID_AND_CANCELLED when registration is paid"
     (base/insert-base-data)
     (base/insert-registrations "COMPLETED")
-    (let [exam-session-id    (base/get-exam-session-id)
-          registration-id    (:id (base/select-one "SELECT id from registration"))
-          request            (mock/request :delete (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id))
+    (let [registration-id    (:id (base/select-one "SELECT id from registration"))
+          exam-session-route (get-exam-session-route)
+          request            (mock/request :delete (str exam-session-route "/registration/" registration-id))
           response           (base/send-request-with-tx request)
           registration-state (:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
       (is (= (:status response) 200))

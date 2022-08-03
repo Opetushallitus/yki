@@ -1,8 +1,7 @@
 (ns yki.handler.base-test
   (:require [integrant.core :as ig]
-            [duct.database.sql]
+            [duct.database.sql :as sql]
             [jsonista.core :as j]
-            [yki.boundary.files :as files]
             [muuntaja.middleware :as middleware]
             [compojure.core :refer :all]
             [peridot.core :as peridot]
@@ -38,14 +37,8 @@
 (defn- read-json-from-file [path]
   (j/read-value (slurp path)))
 
-(def organizers-json
-  (read-json-from-file "test/resources/organizers.json"))
-
 (def exam-sessions-json
   (read-json-from-file "test/resources/exam_sessions.json"))
-
-(def logout-request
-  (slurp "test/resources/logoutRequest.xml"))
 
 (def exam-session
   (slurp "test/resources/exam_session.json"))
@@ -64,17 +57,6 @@
 
 (def post-admission
   (slurp "test/resources/post_admission.json"))
-
-(def post-admission-updated
-  (slurp "test/resources/post_admission_updated.json"))
-
-(def post-admission-activation
-  (slurp "test/resources/post_admission_activation.json"))
-
-(def post-admission-deactivation
-  (slurp "test/resources/post_admission_deactivation.json"))
-
-(def date-formatter (f/formatter c/date-format))
 
 (defn days-ago [days]
   (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days days))))
@@ -123,7 +105,7 @@
   (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"}))
 
 (defn db []
-  (duct.database.sql/->Boundary @embedded-db/conn))
+  (sql/->Boundary @embedded-db/conn))
 
 (defn auth [url-helper]
   (ig/init-key :yki.middleware.auth/with-authentication
@@ -212,20 +194,25 @@
 (defn select-one [query]
   (first (select query)))
 
-(defn insert-organizer [oid]
+(defn insert-organizer [organizer-oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
-        VALUES (" oid ", '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi') ON CONFLICT DO NOTHING")))
+        VALUES ('" organizer-oid "', '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi') ON CONFLICT DO NOTHING")))
 
-(defn insert-payment-config [oid]
+(defn insert-payment-config [organizer-oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO payment_config (organizer_id, merchant_id, merchant_secret)
-        VALUES ((SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL), 12345, 'SECRET_KEY')")))
+        VALUES ((SELECT id FROM organizer WHERE oid = '" organizer-oid "' AND deleted_at IS NULL), 12345, 'SECRET_KEY')")))
 
-(defn insert-languages [oid]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('fin', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))"))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('swe', 'PERUS', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
+(defn insert-languages [organizer-oid]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('fin', 'PERUS', (SELECT id FROM organizer WHERE oid = '" organizer-oid "' AND deleted_at IS NULL))"))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('swe', 'PERUS', (SELECT id FROM organizer WHERE oid = '" organizer-oid "' AND deleted_at IS NULL))")))
 
-(defn insert-attachment-metadata [oid]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO attachment_metadata (external_id, organizer_id) values ('a0d5dfc2', (SELECT id FROM organizer WHERE oid = " oid " AND deleted_at IS NULL))")))
+(defn insert-attachment-metadata [organizer-oid external-id]
+  (jdbc/execute! @embedded-db/conn
+                 (str "INSERT INTO attachment_metadata (external_id, organizer_id) values ('"
+                      external-id
+                      "', (SELECT id FROM organizer WHERE oid = '"
+                      organizer-oid
+                      "' AND deleted_at IS NULL))")))
 
 (defn insert-exam-dates []
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-01-01', '2039-03-01')")
@@ -250,10 +237,6 @@
 (defn select-exam-date-id-by-date [exam-date]
   (str "(SELECT id from exam_date WHERE exam_date='" exam-date "')"))
 
-(defn select-exam-date-language-by-exam-date [exam-date]
-  (str "(SELECT id FROM exam_date_language edl
-        INNER JOIN exam_date ed WHERE ed.id = edl.exam_date_id)"))
-
 (defn select-exam-session-by-date [exam-date]
   (str "(SELECT * from exam_session WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")"))
 
@@ -264,10 +247,8 @@
   (select-one (str "(SELECT * from evaluation WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")")))
 
 (defn insert-exam-session
-  [exam-date-id oid count]
-  ; this replacement is done because every single oid comes in prequoted and it'd be too much effort right now to fix those
-  ; feel free to do so if you have time
-  (let [office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))]
+  [exam-date-id organizer-oid count]
+  (let [office-oid (str organizer-oid ".5")]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
           language_code,
           level_code,
@@ -276,13 +257,12 @@
           max_participants,
           published_at)
             VALUES (
-              (SELECT id FROM organizer where oid = " oid "),
+              (SELECT id FROM organizer where oid = '" organizer-oid "'),
               'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null)"))))
 
 (defn insert-exam-session-with-post-admission
-  [exam-date-id oid count quota]
-  ; see above
-  (let [office-oid (-> oid (clojure.string/replace #"'" "") (str ".5"))]
+  [exam-date-id organizer-oid count quota]
+  (let [office-oid (str organizer-oid ".5")]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
           language_code,
           level_code,
@@ -293,11 +273,11 @@
           post_admission_quota,
           post_admission_active)
             VALUES (
-              (SELECT id FROM organizer where oid = " oid "),
+              (SELECT id FROM organizer where oid = '" organizer-oid "'),
               'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null, " quota ", true)"))))
 
 (defn insert-exam-session-location
-  [oid lang]
+  [organizer-oid lang]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session_location (name,
     street_address,
     post_office,
@@ -312,7 +292,7 @@
         '00240',
         'Other info',
         '" lang "',
-        (SELECT id FROM exam_session where organizer_id =  (SELECT id FROM organizer where oid = " oid ") ))")))
+        (SELECT id FROM exam_session where organizer_id =  (SELECT id FROM organizer where oid = '" organizer-oid "') ))")))
 
 (defn insert-exam-session-location-by-date
   [exam-date lang]
@@ -410,15 +390,16 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
          WHERE eo.id = " order-id " AND deleted_at IS NULL")))
 
 (defn insert-base-data []
-  (insert-organizer "'1.2.3.4'")
-  (insert-payment-config "'1.2.3.4'")
-  (insert-languages "'1.2.3.4'")
-  (insert-exam-dates)
-  (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
-  (insert-exam-session 1 "'1.2.3.4'" 5)
-  (insert-exam-session-location "'1.2.3.4'" "fi")
-  (insert-exam-session-location "'1.2.3.4'" "sv")
-  (insert-exam-session-location "'1.2.3.4'" "en")
+  (let [organizer-oid (:oid organizer)]
+    (insert-organizer organizer-oid)
+    (insert-payment-config organizer-oid)
+    (insert-languages organizer-oid)
+    (insert-exam-dates)
+    (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
+    (insert-exam-session 1 organizer-oid 5)
+    (insert-exam-session-location organizer-oid "fi")
+    (insert-exam-session-location organizer-oid "sv")
+    (insert-exam-session-location organizer-oid "en"))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') "))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('anothertest@user.com', 'anothertest@user.com') "))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('thirdtest@user.com', 'thirdtest@user.com') ")))
@@ -460,10 +441,10 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
   (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))
 
 (defn insert-post-admission-registration
-  [oid count quota]
+  [organizer-oid count quota]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_start_date, post_admission_end_date) VALUES ('" (two-weeks-from-now) "', '2019-08-01', '2019-10-01','" (two-weeks-ago) "', '" (two-weeks-from-now) "')"))
   (let [exam-date-id        (:id (select-one (select-exam-date-id-by-date (two-weeks-from-now))))
-        office-oid          (-> oid (clojure.string/replace #"'" "") (str ".5"))
+        office-oid          (str organizer-oid ".5")
         insert-exam         (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
           language_code,
           level_code,
@@ -474,7 +455,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
           post_admission_quota,
           post_admission_active)
             VALUES (
-              (SELECT id FROM organizer where oid = " oid "),'fin', 'PERUS', '" office-oid "', " exam-date-id ", " count ", null, " quota ", true)"))
+              (SELECT id FROM organizer where oid = '" organizer-oid "'),'fin', 'PERUS', '" office-oid "', " exam-date-id ", " count ", null, " quota ", true)"))
         exam-session-id     (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
         user-id             (:id (select-one (str "SELECT id from participant WHERE external_user_id = 'thirdtest@user.com';")))
         insert-registration (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
@@ -532,5 +513,4 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
   ([request]
    (send-request-with-tx request 8080))
   ([request port]
-   (clojure.pprint/pprint request)
    ((create-routes port) request)))

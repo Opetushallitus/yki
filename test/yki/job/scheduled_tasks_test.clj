@@ -10,7 +10,7 @@
             [yki.handler.base-test :as base]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.embedded-db :as embedded-db]
-            [yki.job.scheduled-tasks :as st]))
+            [yki.job.scheduled-tasks]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
@@ -132,7 +132,7 @@
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (base/yesterday) "'"))
-  (base/insert-post-admission-registration "'1.2.3.4'" 50 20)
+  (base/insert-post-admission-registration (:oid base/organizer) 50 20)
   (with-routes!
     {"/osallistujat" {:status 200
                       :body "{}"}
