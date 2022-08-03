@@ -2,56 +2,18 @@
   (:require [clojure.test :refer [deftest use-fixtures testing is]]
             [clojure.java.jdbc :as jdbc]
             [clojure.string :as s]
-            [compojure.core :as core]
-            [duct.database.sql]
-            [integrant.core :as ig]
             [jsonista.core :as j]
-            [muuntaja.middleware :as middleware]
             [peridot.core :as peridot]
             [pgqueue.core :as pgq]
             [stub-http.core :refer [with-routes!]]
             [yki.handler.base-test :as base]
             [yki.embedded-db :as embedded-db]
             [yki.handler.routing :as routing]
-            [yki.handler.registration]))
+            [yki.handler.registration]
+            [yki.handler.registration-commons :refer [create-handlers fill-exam-session registration-form-data]]))
+
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
-
-(defn- create-handlers
-  [email-q port]
-  (let [db (duct.database.sql/->Boundary @embedded-db/conn)
-        url-helper (base/create-url-helper (str "localhost:" port))
-        payment-helper (base/create-payment-helper db url-helper false)
-        auth (base/auth url-helper)
-        access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
-        auth-handler (base/auth-handler auth url-helper)
-        registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db db
-                                                                                             :url-helper url-helper
-                                                                                             :payment-helper payment-helper
-                                                                                             :email-q email-q
-                                                                                             :access-log access-log
-                                                                                             :payment-config base/payment-config
-                                                                                             :onr-client (base/onr-client url-helper)
-                                                                                             :auth auth}))]
-    (core/routes registration-handler auth-handler)))
-
-(defn- fill-exam-session [registrations kind]
-  (dotimes [_ registrations]
-    (jdbc/execute! @embedded-db/conn
-                   (str "INSERT INTO registration(state, exam_session_id, participant_id, kind) values ('SUBMITTED', 2, 2, '" kind "')"))))
-
-(def form {:first_name "Fuu"
-           :last_name "Bar"
-           :gender "1"
-           :nationalities []
-           :birthdate "1999-01-01"
-           :certificate_lang "fi"
-           :exam_lang "fi"
-           :post_office "Helsinki"
-           :zip "01000"
-           :street_address "Ateläniitynpolku 29 G"
-           :phone_number "04012345"
-           :email "test@test.com"})
 
 (deftest registration-post-admission-create-and-update-test
   (base/insert-base-data)
@@ -76,7 +38,7 @@
              {"/oppijanumerorekisteri-service/s2s/findOrCreateHenkiloPerustieto" {:status 200 :content-type "application/json"
                                                                                   :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}}))
     (let [email-q                (base/email-q)
-          handlers               (create-handlers email-q (:port server))
+          handlers               (create-handlers email-q (:port server) false)
           session                (base/login-with-login-link (peridot/session handlers))
           init-response          (-> session
                                      (peridot/request (str routing/registration-api-root "/init")
@@ -95,7 +57,7 @@
           registration           (base/select-one (str "SELECT * FROM registration WHERE id = " id))
           submit-response        (-> session
                                      (peridot/request (str routing/registration-api-root "/" id "/submit" "?lang=fi")
-                                                      :body (j/write-value-as-string form)
+                                                      :body (j/write-value-as-string registration-form-data)
                                                       :content-type "application/json"
                                                       :request-method :post))
           _ (println "submit-response:" (base/body-as-json (:response submit-response)))
@@ -130,7 +92,7 @@
 
       (testing "and set registration status to SUBMITTED"
         (is (= (:state submitted-registration) "SUBMITTED"))
-        (is (= true (instance? clojure.lang.PersistentHashMap (:form submitted-registration))))
+        (is (map? (:form submitted-registration)))
         (is (some? (:started_at submitted-registration))))
 
       (testing "and delete item from exam session queue"
