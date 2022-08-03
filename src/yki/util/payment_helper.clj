@@ -79,7 +79,6 @@
 
 (defn registration->payment-description [url-helper registration]
   ; TODO i18n based on selected language?
-  ; (clojure.tools.logging/info registration)
   (let [sb (StringBuilder.)]
     (.append sb "YKI-tutkintomaksu: ")
     (.append sb (:exam_date registration))
@@ -97,7 +96,9 @@
          location-name     :name
          exam-session-id   :exam_session_id
          email             :email
-         registration-form :form} registration]
+         registration-form :form} registration
+        callback-urls {"success" (url-helper :exam-payment-new.success-callback language)
+                       "cancel"  (url-helper :exam-payment-new.error-callback language)}]
     {"stamp"        (random-uuid)
      ; Order reference
      "reference"    (str/join "-"
@@ -114,15 +115,13 @@
      "customer"     {"email"     email
                      "firstName" (:first_name registration-form)
                      "lastName"  (:last_name registration-form)}
-     "redirectUrls" {"success" (url-helper :exam-payment-new.success-callback language)
-                     "cancel"  (url-helper :exam-payment-new.error-callback language)}
+     "redirectUrls" callback-urls
+     "callbackUrls" callback-urls
      "items"        [{"unitPrice"     amount
                       "units"         1
                       "vatPercentage" 0
                       "productCode"   (str exam-session-id)
-                      "description"   (registration->payment-description url-helper registration)}]
-     ; TODO Add also callbackUrls
-     }))
+                      "description"   (registration->payment-description url-helper registration)}]}))
 
 (defn create-paytrail-payment! [payment-data]
   (let [authentication-headers (authentication-headers "POST" test-merchant-id nil)
