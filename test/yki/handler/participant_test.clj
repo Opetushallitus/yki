@@ -74,9 +74,9 @@
   (testing "confirm payment should set payment status to PAID and registration state to COMPLETED"
     (base/insert-base-data)
     (base/insert-payment)
-    (let [exam-session-id          (base/get-exam-session-id)
-          registration-id          (:id (base/select-one "SELECT id from registration"))
-          confirm-payment-request  (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-session/" exam-session-id "/registration/" registration-id "/confirm-payment"))
+    (let [registration-id          (:id (base/select-one "SELECT id from registration"))
+          exam-session-route       (get-exam-session-route)
+          confirm-payment-request  (-> (mock/request :post (str exam-session-route "/registration/" registration-id "/confirm-payment"))
                                        (mock/content-type "application/json; charset=UTF-8"))
           confirm-payment-response (base/send-request-with-tx confirm-payment-request)
           payment                  (base/select-one "SELECT * from payment")
