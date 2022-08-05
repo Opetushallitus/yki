@@ -1,165 +1,178 @@
 {:duct.profile/base
- {:duct.core/project-ns  yki
+ {:duct.core/project-ns                               yki
 
-  :duct.logger/timbre {:level     :error
-                       :appenders {:println #ig/ref :duct.logger.timbre/println}}
+  :duct.logger/timbre                                 {:level     :error
+                                                       :appenders {:println #ig/ref :duct.logger.timbre/println}}
 
-  :duct.logger.timbre/println {}
-  :duct.module.web/api {}
+  :duct.logger.timbre/println                         {}
+  :duct.module.web/api                                {}
 
-  :duct.module/sql {}
-  :duct.migrator/ragtime  {:database   #ig/ref :duct.database/sql
-                           :logger     #ig/ref :duct/logger
-                           :strategy   :rebase
-                           :migrations #ig/ref :yki/migrations}
+  :duct.module/sql                                    {}
+  :duct.migrator/ragtime                              {:database   #ig/ref :duct.database/sql
+                                                       :logger     #ig/ref :duct/logger
+                                                       :strategy   :rebase
+                                                       :migrations #ig/ref :yki/migrations}
 
-  :duct.server.http/jetty {:port 8080
-                           :handler #ig/ref :yki/api-handler}
+  :duct.server.http/jetty                             {:port    8080
+                                                       :handler #ig/ref :yki/api-handler}
 
   [:duct.handler/root :yki/api-handler]
-  {:router     #ig/ref :yki/api}
+  {:router #ig/ref :yki/api}
 
-  :yki/api [#ig/ref :yki.handler/status
-            #ig/ref :yki.handler/code
-            #ig/ref :yki.handler/exam-date-public
-            #ig/ref :yki.handler/auth
-            #ig/ref :yki.handler/payment
-            #ig/ref :yki.handler/login-link
-            #ig/ref :yki.handler/exam-session-public
-            #ig/ref :yki.handler/localisation
-            #ig/ref :yki.handler/registration
-            #ig/ref :yki.handler/organizer
-            #ig/ref :yki.handler/evaluation
-            #ig/ref :yki.handler/evaluation-payment]
+  :yki/api                                            [#ig/ref :yki.handler/status
+                                                       #ig/ref :yki.handler/code
+                                                       #ig/ref :yki.handler/exam-date-public
+                                                       #ig/ref :yki.handler/auth
+                                                       #ig/ref :yki.handler/payment
+                                                       #ig/ref :yki.handler/login-link
+                                                       #ig/ref :yki.handler/exam-session-public
+                                                       #ig/ref :yki.handler/localisation
+                                                       #ig/ref :yki.handler/registration
+                                                       #ig/ref :yki.handler/organizer
+                                                       #ig/ref :yki.handler/evaluation
+                                                       #ig/ref :yki.handler/evaluation-payment
+                                                       #ig/ref :yki.handler/payment-paytrail]
 
-  :yki/migrations {}
+  :yki/migrations                                     {}
 
-  :yki.util/url-helper {}
+  :yki.util/url-helper                                {}
 
-  :yki.job.job-queue/init {}
+  :yki.util/payment-helper                            {:db             #ig/ref :duct.database/sql
+                                                       :url-helper     #ig/ref :yki.util/url-helper
+                                                       :payment-config {:use-new-payments-api? false}}
 
-  :yki.job.job-queue/email-q {:init #ig/ref :yki.job.job-queue/init}
+  :yki.job.job-queue/init                             {}
 
-  :yki.job.job-queue/data-sync-q  {:init #ig/ref :yki.job.job-queue/init}
+  :yki.job.job-queue/email-q                          {:init #ig/ref :yki.job.job-queue/init}
+
+  :yki.job.job-queue/data-sync-q                      {:init #ig/ref :yki.job.job-queue/init}
 
   :yki.job.scheduled-tasks/registration-state-handler {:db #ig/ref :duct.database/sql}
 
-  :yki.job.scheduled-tasks/email-queue-reader {:email-q #ig/ref :yki.job.job-queue/email-q
-                                               :handle-at-once-at-most 10
-                                               :url-helper #ig/ref :yki.util/url-helper
-                                               :retry-duration-in-days 14}
+  :yki.job.scheduled-tasks/email-queue-reader         {:email-q                #ig/ref :yki.job.job-queue/email-q
+                                                       :handle-at-once-at-most 10
+                                                       :url-helper             #ig/ref :yki.util/url-helper
+                                                       :retry-duration-in-days 14}
 
-  :yki.job.scheduled-tasks/participants-sync-handler {:db #ig/ref :duct.database/sql
-                                                      :disabled true
-                                                      :basic-auth {:user "user" :password "pass"}
-                                                      :url-helper #ig/ref :yki.util/url-helper
-                                                      :retry-duration-in-days 14}
+  :yki.job.scheduled-tasks/participants-sync-handler  {:db                     #ig/ref :duct.database/sql
+                                                       :disabled               true
+                                                       :basic-auth             {:user "user" :password "pass"}
+                                                       :url-helper             #ig/ref :yki.util/url-helper
+                                                       :retry-duration-in-days 14}
 
-  :yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                                                   :db #ig/ref :duct.database/sql
-                                                   :disabled true
-                                                   :basic-auth {:user "user" :password "pass"}
-                                                   :url-helper #ig/ref :yki.util/url-helper
-                                                   :retry-duration-in-days 0}
+  :yki.job.scheduled-tasks/data-sync-queue-reader     {:data-sync-q            #ig/ref :yki.job.job-queue/data-sync-q
+                                                       :db                     #ig/ref :duct.database/sql
+                                                       :disabled               true
+                                                       :basic-auth             {:user "user" :password "pass"}
+                                                       :url-helper             #ig/ref :yki.util/url-helper
+                                                       :retry-duration-in-days 0}
 
-  :yki.job.scheduled-tasks/exam-session-queue-handler {:db #ig/ref :duct.database/sql
+  :yki.job.scheduled-tasks/exam-session-queue-handler {:db         #ig/ref :duct.database/sql
                                                        :url-helper #ig/ref :yki.util/url-helper
-                                                       :email-q #ig/ref :yki.job.job-queue/email-q}
+                                                       :email-q    #ig/ref :yki.job.job-queue/email-q}
 
   :duct.scheduler/simple
   {:thread-pool-size 10
-   :jobs [{:interval 60    :delay 60 :run #ig/ref :yki.job.scheduled-tasks/registration-state-handler}
-          {:interval 28800 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/participants-sync-handler}
-          {:interval 1     :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}
-          {:interval 60    :delay 60 :run #ig/ref :yki.job.scheduled-tasks/data-sync-queue-reader}
-          {:interval 600   :delay 60 :run #ig/ref :yki.job.scheduled-tasks/exam-session-queue-handler}]}
+   :jobs             [{:interval 60 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/registration-state-handler}
+                      {:interval 28800 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/participants-sync-handler}
+                      {:interval 1 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}
+                      {:interval 60 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/data-sync-queue-reader}
+                      {:interval 600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/exam-session-queue-handler}]}
 
-  :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
-                                :cas-creds {}}
+  :yki.boundary.cas/cas-client                        {:url-helper #ig/ref :yki.util/url-helper
+                                                       :cas-creds  {}}
 
-  :yki.boundary.onr/onr-client {:url-helper #ig/ref :yki.util/url-helper
-                                :cas-client #ig/ref  :yki.boundary.cas/cas-client}
+  :yki.boundary.onr/onr-client                        {:url-helper #ig/ref :yki.util/url-helper
+                                                       :cas-client #ig/ref :yki.boundary.cas/cas-client}
 
-  :yki.boundary.permissions/permissions-client {:url-helper #ig/ref :yki.util/url-helper
-                                                :cas-client #ig/ref  :yki.boundary.cas/cas-client}
+  :yki.boundary.permissions/permissions-client        {:url-helper #ig/ref :yki.util/url-helper
+                                                       :cas-client #ig/ref :yki.boundary.cas/cas-client}
 
-  :yki.boundary.files/liiteri-file-store {:url-helper #ig/ref :yki.util/url-helper}
+  :yki.boundary.files/liiteri-file-store              {:url-helper #ig/ref :yki.util/url-helper}
 
-  :yki.middleware.auth/with-authentication {:url-helper #ig/ref :yki.util/url-helper
-                                            :db #ig/ref :duct.database/sql
-                                            :session-config {}}
+  :yki.middleware.auth/with-authentication            {:url-helper     #ig/ref :yki.util/url-helper
+                                                       :db             #ig/ref :duct.database/sql
+                                                       :session-config {}}
 
-  :yki.middleware.access-log/with-logging {}
+  :yki.middleware.access-log/with-logging             {}
 
-  :yki.handler/auth {:auth #ig/ref :yki.middleware.auth/with-authentication
-                     :cas-client #ig/ref  :yki.boundary.cas/cas-client
-                     :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
-                     :onr-client #ig/ref :yki.boundary.onr/onr-client
-                     :access-log #ig/ref :yki.middleware.access-log/with-logging
-                     :db #ig/ref :duct.database/sql
-                     :url-helper #ig/ref :yki.util/url-helper}
+  :yki.handler/auth                                   {:auth               #ig/ref :yki.middleware.auth/with-authentication
+                                                       :cas-client         #ig/ref :yki.boundary.cas/cas-client
+                                                       :permissions-client #ig/ref :yki.boundary.permissions/permissions-client
+                                                       :onr-client         #ig/ref :yki.boundary.onr/onr-client
+                                                       :access-log         #ig/ref :yki.middleware.access-log/with-logging
+                                                       :db                 #ig/ref :duct.database/sql
+                                                       :url-helper         #ig/ref :yki.util/url-helper}
 
-  :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
-                                    :payment-config {}}
+  :yki.handler/exam-session-public                    {:db             #ig/ref :duct.database/sql
+                                                       :payment-config {}}
 
-  :yki.handler/code {:url-helper #ig/ref :yki.util/url-helper}
+  :yki.handler/code                                   {:url-helper #ig/ref :yki.util/url-helper}
 
-  :yki.handler/status {:db #ig/ref :duct.database/sql}
+  :yki.handler/status                                 {:db #ig/ref :duct.database/sql}
 
-  :yki.handler/exam-date-public {:db #ig/ref :duct.database/sql}
+  :yki.handler/exam-date-public                       {:db #ig/ref :duct.database/sql}
 
-  :yki.handler/exam-date {:db #ig/ref :duct.database/sql}
+  :yki.handler/exam-date                              {:db #ig/ref :duct.database/sql}
 
-  :yki.handler/registration {:db #ig/ref :duct.database/sql
-                             :auth #ig/ref :yki.middleware.auth/with-authentication
-                             :url-helper #ig/ref :yki.util/url-helper
-                             :email-q #ig/ref :yki.job.job-queue/email-q
-                             :onr-client #ig/ref :yki.boundary.onr/onr-client
-                             :access-log #ig/ref :yki.middleware.access-log/with-logging
-                             :payment-config {}}
+  :yki.handler/registration                           {:db             #ig/ref :duct.database/sql
+                                                       :auth           #ig/ref :yki.middleware.auth/with-authentication
+                                                       :url-helper     #ig/ref :yki.util/url-helper
+                                                       :payment-helper #ig/ref :yki.util/payment-helper
+                                                       :email-q        #ig/ref :yki.job.job-queue/email-q
+                                                       :onr-client     #ig/ref :yki.boundary.onr/onr-client
+                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging
+                                                       :payment-config {}}
 
-  :yki.handler/payment {:db #ig/ref :duct.database/sql
-                        :auth #ig/ref :yki.middleware.auth/with-authentication
-                        :onr-client #ig/ref :yki.boundary.onr/onr-client
-                        :email-q #ig/ref :yki.job.job-queue/email-q
-                        :access-log #ig/ref :yki.middleware.access-log/with-logging
-                        :url-helper #ig/ref :yki.util/url-helper}
+  :yki.handler/payment                                {:db         #ig/ref :duct.database/sql
+                                                       :auth       #ig/ref :yki.middleware.auth/with-authentication
+                                                       :onr-client #ig/ref :yki.boundary.onr/onr-client
+                                                       :email-q    #ig/ref :yki.job.job-queue/email-q
+                                                       :access-log #ig/ref :yki.middleware.access-log/with-logging
+                                                       :url-helper #ig/ref :yki.util/url-helper}
 
-  :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
-                                   :auth #ig/ref :yki.middleware.auth/with-authentication
-                                   :access-log #ig/ref :yki.middleware.access-log/with-logging
-                                   :email-q #ig/ref :yki.job.job-queue/email-q
-                                   :url-helper #ig/ref :yki.util/url-helper
-                                   :payment-config {}}
+  :yki.handler/payment-paytrail                       {:db             #ig/ref :duct.database/sql
+                                                       :auth           #ig/ref :yki.middleware.auth/with-authentication
+                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging
+                                                       :email-q        #ig/ref :yki.job.job-queue/email-q
+                                                       :payment-helper #ig/ref :yki.util/payment-helper
+                                                       :url-helper     #ig/ref :yki.util/url-helper}
 
-  :yki.handler/localisation {:url-helper #ig/ref :yki.util/url-helper
-                             :access-log #ig/ref :yki.middleware.access-log/with-logging}
+  :yki.handler/evaluation-payment                     {:db             #ig/ref :duct.database/sql
+                                                       :auth           #ig/ref :yki.middleware.auth/with-authentication
+                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging
+                                                       :email-q        #ig/ref :yki.job.job-queue/email-q
+                                                       :url-helper     #ig/ref :yki.util/url-helper
+                                                       :payment-config {}}
 
-  :yki.handler/exam-session {:db #ig/ref :duct.database/sql
-                             :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                             :email-q #ig/ref :yki.job.job-queue/email-q
-                             :url-helper #ig/ref :yki.util/url-helper}
+  :yki.handler/localisation                           {:url-helper #ig/ref :yki.util/url-helper
+                                                       :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
-  :yki.handler/login-link {:db #ig/ref :duct.database/sql
-                           :url-helper #ig/ref :yki.util/url-helper
-                           :access-log #ig/ref :yki.middleware.access-log/with-logging
-                           :email-q #ig/ref :yki.job.job-queue/email-q}
+  :yki.handler/exam-session                           {:db          #ig/ref :duct.database/sql
+                                                       :data-sync-q #ig/ref :yki.job.job-queue/data-sync-q
+                                                       :email-q     #ig/ref :yki.job.job-queue/email-q
+                                                       :url-helper  #ig/ref :yki.util/url-helper}
 
-  :yki.handler/file {:db #ig/ref :duct.database/sql
-                     :access-log #ig/ref :yki.middleware.access-log/with-logging
-                     :file-store #ig/ref :yki.boundary.files/liiteri-file-store}
+  :yki.handler/login-link                             {:db         #ig/ref :duct.database/sql
+                                                       :url-helper #ig/ref :yki.util/url-helper
+                                                       :access-log #ig/ref :yki.middleware.access-log/with-logging
+                                                       :email-q    #ig/ref :yki.job.job-queue/email-q}
 
-  :yki.handler/organizer {:db #ig/ref :duct.database/sql
-                          :url-helper #ig/ref :yki.util/url-helper
-                          :file-handler #ig/ref  :yki.handler/file
-                          :access-log #ig/ref :yki.middleware.access-log/with-logging
-                          :exam-session-handler #ig/ref :yki.handler/exam-session
-                          :exam-date-handler #ig/ref :yki.handler/exam-date
-                          :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
-                          :auth #ig/ref :yki.middleware.auth/with-authentication}
+  :yki.handler/file                                   {:db         #ig/ref :duct.database/sql
+                                                       :access-log #ig/ref :yki.middleware.access-log/with-logging
+                                                       :file-store #ig/ref :yki.boundary.files/liiteri-file-store}
 
-  :yki.handler/evaluation {:db #ig/ref :duct.database/sql
-                           :payment-config {}}}
+  :yki.handler/organizer                              {:db                   #ig/ref :duct.database/sql
+                                                       :url-helper           #ig/ref :yki.util/url-helper
+                                                       :file-handler         #ig/ref :yki.handler/file
+                                                       :access-log           #ig/ref :yki.middleware.access-log/with-logging
+                                                       :exam-session-handler #ig/ref :yki.handler/exam-session
+                                                       :exam-date-handler    #ig/ref :yki.handler/exam-date
+                                                       :data-sync-q          #ig/ref :yki.job.job-queue/data-sync-q
+                                                       :auth                 #ig/ref :yki.middleware.auth/with-authentication}
+
+  :yki.handler/evaluation                             {:db             #ig/ref :duct.database/sql
+                                                       :payment-config {}}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"
