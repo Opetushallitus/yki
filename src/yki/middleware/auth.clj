@@ -169,6 +169,10 @@
     :handler participant-authenticated}
    {:pattern #".*/payment/notify"
     :handler any-access}
+   {:pattern #".*/api/payment/v2/paytrail/.*"
+    :handler any-access}
+   {:pattern #".*/api/payment/v2/.*/redirect"
+    :handler participant-authenticated}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"
@@ -179,8 +183,7 @@
   (or value {:headers {}, :status 403, :body "Forbidden"}))
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
-
-  (defn with-authentication [handler]
+  (fn with-authentication [handler]
     (-> handler
         (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
         (wrap-authentication backend)
