@@ -248,13 +248,6 @@
 (s/def ::pt-payment-form-data (s/keys :req-un [::uri
                                                ::params]))
 
-;; new Paytrail Payment API integration
-(def exam-payment-new-reference-regex #"^YKI-EXAM-.*")
-(def eval-payment-new-reference-regex #"^YKI-EVAL-.*")
-(s/def ::reference (s/and ::non-blank-string (s/or :exam-payment-new-reference #(re-matches exam-payment-new-reference-regex %)
-                                                   :eval-payment-new-reference #(re-matches eval-payment-new-reference-regex %))))
-
-
 ;; registration
 
 (s/def ::first_name ::non-blank-string)
@@ -322,11 +315,9 @@
 (s/def ::kind ::registration-kind)
 (s/def ::original_exam_session_id (s/nilable ::id))
 (s/def :participant/order_number (s/nilable ::order-number))
-(s/def :participant/reference (s/nilable ::reference))
 (s/def ::exam-session-participant (s/keys :req-un [::form
                                                    ::registration_id
                                                    :participant/order_number
-                                                   ;:participant/reference
                                                    ::original_exam_session_id
                                                    ::kind
                                                    ::state]))
