@@ -19,7 +19,8 @@
             [yki.util.common :as c]
             [clj-time.format :as f]
             [clj-time.core :as t]
-            [yki.handler.organizer]))
+            [yki.handler.organizer]
+            [clojure.string :as str]))
 
 (def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
 
@@ -409,6 +410,17 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                                      "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', " select-exam-session ", " select-participant ")"))
   (jdbc/execute! @embedded-db/conn (str
                                      "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
+
+(defn insert-exam-payment-new [registration-id amount reference transaction-id href]
+  (let [quote-strings #(if (string? %)
+                         (str "'" % "'")
+                         (str %))
+        values-str    (->> ["UNPAID" registration-id amount reference transaction-id href]
+                           (map quote-strings)
+                           (str/join ","))]
+    (jdbc/execute! @embedded-db/conn
+                   (str "INSERT INTO exam_payment_new(state, registration_id, amount, reference, transaction_id, href)
+                 VALUES (" values-str ");"))))
 
 (defn insert-registrations [state]
   (jdbc/execute! @embedded-db/conn (str
