@@ -53,10 +53,6 @@
        (map (fn [index] (str ",ITEM_TITLE[" index "],ITEM_QUANTITY[" index "],ITEM_UNIT_PRICE[" index "]")))
        (str/join "")))
 
-(comment
-  (subtest-params [:abc :def :gh]))
-
-
 (defn- subtest-values [subtests amount url-helper lang]
   (reduce #(conj % (template-util/get-subtest url-helper %2 lang) "1" ((keyword %2) amount)) [] subtests))
 

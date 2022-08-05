@@ -43,28 +43,6 @@
   (initialise-payment-on-registration? [_]
     true))
 
-(comment
-  {
-   ; Merchant unique identifier for order.
-   ; Cannot be used twice for a create payment payload for same order!
-   ;"stamp"        "YKI-1357902468-5"
-   "stamp"        (random-uuid)
-   ; Order reference
-   "reference"    "YKI-1357902468"
-   ; Total amount in EUR cents
-   "amount"       1337
-   ; Currency, only EUR is supported for now
-   "currency"     "EUR"
-   ; Language: one of FI/SV/EN
-   "language"     "FI"
-   ; Customer information
-   "customer"     {"email" "pyry.koivisto+paytrail-payments-test@mavericks.fi"}
-   ; Where to redirect browser after payment is paid or cancelled
-   "redirectUrls" {"success" "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/success"
-                   "cancel"  "https://yki.untuvaopintopolku.fi/yki/api/payment/v2/paytrail/error"}}
-
-  )
-
 (def test-merchant-id "375917")
 (def payments-API-URI "https://services.paytrail.com/payments")
 
@@ -93,7 +71,7 @@
 
 (defn create-payment-data [url-helper registration language amount]
   (let [{registration-id   :id
-         location-name     :name
+         ;location-name     :name
          exam-session-id   :exam_session_id
          email             :email
          registration-form :form} registration
