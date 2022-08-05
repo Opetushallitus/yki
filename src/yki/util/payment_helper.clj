@@ -65,8 +65,10 @@
     (.append sb ", ")
     (.append sb (template-util/get-level url-helper (:level_code registration) "fi"))
     (.append sb "\n")
+    ; TODO Add participant details?
     ;(.append sb "Osallistuja: ")
     ;(.append sb )
+    ; TODO Add further organizer details?
     (.toString sb)))
 
 (defn create-payment-data [url-helper registration language amount]
@@ -82,7 +84,7 @@
      "reference"    (str/join "-"
                               ["YKI"
                                "EXAM"
-                               ; TODO Y-tunnus?
+                               ; TODO Y-tunnus? Some other code uniquely identifying organizer?
                                exam-session-id
                                registration-id
                                (random-uuid)])
