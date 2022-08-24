@@ -170,7 +170,7 @@
         url          (str (url-helper :yki-register.participants)
                           (create-url-params exam-session))
         request      (create-participants-csv url-helper participants)]
-    (exam-session-db/init-participants-sync-status! db exam-session-id)
+   (exam-session-db/init-participants-sync-status! db exam-session-id)
     (if disabled
       (log/info "Sending disabled. Logging request" request)
       (do-post url request basic-auth "text/csv; charset=UTF-8"))
@@ -188,3 +188,8 @@
         (sync-organizer db url-helper basic-auth disabled organizer_oid office_oid)
         (sync-exam-session url-helper basic-auth disabled exam-session))
       (sync-organizer db url-helper basic-auth disabled organizer-oid nil))))
+
+(defn return-exam-session-participants-csv [db url-helper exam-session-id]
+  (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
+        csv          (create-participants-csv url-helper participants)]
+    csv))
