@@ -45,10 +45,10 @@
         ; -> try to just spit it.
         (spit fos report-contents)))))
 
-(defn- with-request-validation [handler]
+(defn- with-request-validation [payment-config handler]
   (fn
     ([request]
-     (if-let [{body :body} (valid-request? request)]
+     (if-let [{body :body} (valid-request? payment-config request)]
        (handler (assoc request :body body))
        (unauthorized {:reason "Signature is not valid for request!"})))))
 
@@ -89,7 +89,7 @@
     (context routing/paytrail-payment-root []
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params with-request-validation]
+      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" {query-params :query-params}
         :path-params [lang :- ::ys/language-code]
         (let [{transaction-id "checkout-transaction-id"

@@ -43,7 +43,6 @@
   (initialise-payment-on-registration? [_]
     true))
 
-(def test-merchant-id "375917")
 (def payments-API-URI "https://services.paytrail.com/payments")
 
 (defn authentication-headers [method merchant-id transaction-id]
@@ -103,10 +102,10 @@
                       "productCode"   (str exam-session-id)
                       "description"   (registration->payment-description url-helper registration)}]}))
 
-(defn create-paytrail-payment! [payment-data]
-  (let [authentication-headers (authentication-headers "POST" test-merchant-id nil)
+(defn create-paytrail-payment! [payment-config payment-data]
+  (let [authentication-headers (authentication-headers "POST" (:merchant-id payment-config) nil)
         body                   (json/write-str payment-data)
-        signature              (sign-request authentication-headers body)
+        signature              (sign-request payment-config authentication-headers body)
         headers                (assoc authentication-headers
                                  "content-type" "application/json; charset=utf-8"
                                  "signature" signature)]
@@ -128,7 +127,7 @@
        :paytrail       (* 100 (int amount))}))
   (create-payment-for-registration! [_ tx registration language amount]
     (let [payment-data      (create-payment-data url-helper registration language amount)
-          paytrail-response (-> (create-paytrail-payment! payment-data)
+          paytrail-response (-> (create-paytrail-payment! payment-config payment-data)
                                 (:body)
                                 (json/read-str))
           exam-payment-data {:registration_id (:id registration)

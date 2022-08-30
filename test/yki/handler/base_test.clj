@@ -487,7 +487,9 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
     {:db             db
      :url-helper     url-helper
      :payment-config {:use-new-payments-api? use-new-payments-api?
-                      :amount                (:amount payment-config)}}))
+                      :amount                (:amount payment-config)
+                      :merchant-id           "375917"
+                      :merchant-secret       "SAIPPUAKAUPPIAS"}}))
 
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)

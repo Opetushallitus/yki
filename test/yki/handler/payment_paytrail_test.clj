@@ -1,6 +1,6 @@
 (ns yki.handler.payment-paytrail-test
   (:require [clojure.test :refer [deftest is use-fixtures testing]]
-            [clojure.data.json :refer [read-json]]
+            [clojure.data.json :refer [read-str]]
             [compojure.core :as core]
             [duct.database.sql :as sql]
             [integrant.core :as ig]
@@ -45,13 +45,13 @@
   (->> (str routing/payment-v2-root "/" registration-id "/redirect?lang=" lang)
        (peridot/request session)))
 
-(defn- response->status+body [response]
-  (let [response (:response response)
-        status   (:status response)
-        body     (-> (base/body response)
-                     (read-json))]
-    {:body   body
-     :status status}))
+(defn- response->status [response]
+  (:status (:response response)))
+
+(defn- response->body [response]
+  (-> (:response response)
+      (base/body)
+      (read-str {:key-fn keyword})))
 
 (defn- select-payments-for-registration [registration-id]
   (base/select (str "SELECT * from exam_payment_new WHERE registration_id = " registration-id ";")))
@@ -67,9 +67,8 @@
       (testing "Calling redirect url without correct session details yields an error"
         (let [session           (peridot/session handler)
               redirect-response (-> session
-                                    (redirect registration-id lang))
-              {status :status} (response->status+body redirect-response)]
-          (is (= 400 status))))
+                                    (redirect registration-id lang))]
+          (is (= 401 (response->status redirect-response)))))
       ; TODO The block below will attempt to create a new payment on Paytrail each time this test is run. Reconsider?
       (testing "Calling redirect url with correct session initiates payment and returns correct redirect URL"
         (is (empty? (select-payments-for-registration registration-id)))
@@ -77,13 +76,11 @@
                                         (base/login-with-login-link))
               redirect-response     (-> session
                                         (redirect registration-id lang))
-              {status :status
-               body   :body} (response->status+body redirect-response)
               payments              (select-payments-for-registration registration-id)
               expected-redirect-url (-> payments first :href)]
-          (is (= 200 status))
+          (is (= 200 (response->status redirect-response)))
           (is (= 1 (count payments)))
-          (is (= {:redirect expected-redirect-url} body)))))))
+          (is (= {:redirect expected-redirect-url} (response->body redirect-response))))))))
 
 (defn- success [session lang query-params]
   (let [success-endpoint-url (str routing/paytrail-payment-root "/" lang "/success")
@@ -106,7 +103,7 @@
           lang                "fi"
           session             (peridot/session handlers)
           with-signature      (fn [headers]
-                                (->> (sign-request headers nil)
+                                (->> (sign-request {:merchant-secret "SAIPPUAKAUPPIAS"} headers nil)
                                      (assoc headers "signature")))
           select-registration #(base/select-one (str "SELECT * FROM registration WHERE id = " registration-id ";"))
           select-payment      #(first (select-payments-for-registration registration-id))

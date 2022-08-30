@@ -5,14 +5,12 @@
     [clojure.string :as str])
   (:import (java.io InputStream ByteArrayOutputStream)))
 
-(def test-merchant-secret-key "SAIPPUAKAUPPIAS")
-
 (defn- headers->signature-keys-order [headers]
   (->> (keys headers)
        (filter #(str/starts-with? % "checkout-"))
        (sort)))
 
-(defn sign-request [headers body]
+(defn sign-request [{:keys [merchant-secret]} headers body]
   (let [sb (StringBuilder.)]
     (doseq [header (headers->signature-keys-order headers)]
       (when-let [data (headers header)]
@@ -23,7 +21,7 @@
     (when body
       (.append sb body))
     (-> (.toString sb)
-        (mac/hash {:key test-merchant-secret-key
+        (mac/hash {:key merchant-secret
                    :alg :hmac+sha512})
         (codecs/bytes->hex))))
 
@@ -41,12 +39,13 @@
 
    If signature is valid, returns a map containing the (now exhausted) request body as a string.
    Returns nil if signature is invalid."
-  [{:keys [headers query-params]
-    :as   request}]
-  (let [authentication-headers (merge headers query-params)
+  [payment-config request]
+  (let [{headers      :headers
+         query-params :query-params} request
+        authentication-headers (merge headers query-params)
         body                   (request->body request)]
     (when
-      (= (sign-request authentication-headers body)
+      (= (sign-request payment-config authentication-headers body)
          (authentication-headers "signature"))
       {:authentication-headers authentication-headers
        :body                   body})))
