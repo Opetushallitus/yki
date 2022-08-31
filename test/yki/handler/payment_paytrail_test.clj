@@ -20,8 +20,7 @@
   (base/insert-login-link base/code-ok "2038-01-01")
   (f))
 
-(use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
-(use-fixtures :each embedded-db/with-transaction insert-prereq-data)
+(use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction insert-prereq-data)
 
 (defn create-handlers
   [port]
