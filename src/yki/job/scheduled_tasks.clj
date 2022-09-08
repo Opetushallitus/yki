@@ -81,11 +81,14 @@
 (defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader
   [_ {:keys [email-q handle-at-once-at-most url-helper retry-duration-in-days disabled]}]
   {:pre [(some? url-helper) (pos-int? handle-at-once-at-most) (some? email-q) (some? retry-duration-in-days)]}
-  #(doseq [_ (range (min handle-at-once-at-most (pgq/count email-q)))]
-     (take-with-error-handling email-q retry-duration-in-days
-                               (fn [email-req]
-                                 (log/info "Email queue reader sending email to:" (:recipients email-req))
-                                 (email/send-email url-helper email-req disabled)))))
+  #(try
+     (doseq [_ (range (min handle-at-once-at-most (pgq/count email-q)))]
+       (take-with-error-handling email-q retry-duration-in-days
+                                 (fn [email-req]
+                                   (log/info "Email queue reader sending email to:" (:recipients email-req))
+                                   (email/send-email url-helper email-req disabled))))
+     (catch Exception e
+       (log/error e "Email queue reader failed"))))
 
 (defmethod ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader
   [_ {:keys [data-sync-q url-helper db retry-duration-in-days disabled basic-auth]}]
