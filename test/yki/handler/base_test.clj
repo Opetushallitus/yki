@@ -481,9 +481,9 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 (defn create-url-helper [uri]
   (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http" :oppija-sub-domain "yki."}))
 
-(defn create-payment-helper [db url-helper use-new-payments-api?]
+(defn create-examination-payment-helper [db url-helper use-new-payments-api?]
   (ig/init-key
-    :yki.util/payment-helper
+    :yki.util/examination-payment-helper
     {:db             db
      :url-helper     url-helper
      :payment-config {:use-new-payments-api? use-new-payments-api?

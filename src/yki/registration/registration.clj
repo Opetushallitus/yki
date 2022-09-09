@@ -12,7 +12,7 @@
             [yki.boundary.onr :as onr]
             [yki.boundary.registration-db :as registration-db]
             [yki.util.common :as common]
-            [yki.util.payment-helper :refer [get-payment-amount-for-registration get-payment-redirect-url]]
+            [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration get-payment-redirect-url]]
             [yki.util.template-util :as template-util])
   (:import [java.util UUID]))
 

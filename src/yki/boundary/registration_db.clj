@@ -4,7 +4,7 @@
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
             [yki.util.db :refer [rollback-on-exception]]
-            [yki.util.payment-helper :refer [create-payment-for-registration! initialise-payment-on-registration?]])
+            [yki.util.exam-payment-helper :refer [create-payment-for-registration! initialise-payment-on-registration?]])
   (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])

@@ -14,9 +14,9 @@
                         :oppija-sub-domain   "yki."
                         :yki-register-host   "{{yki_register_host}}"
                         :yki-host-virkailija "{{host_ilb}}"}
-  :yki.util/payment-helper {:payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"
-                                                      :KESKI "{{yki_exam_session_fee_intermediate}}"
-                                                      :YLIN  "{{yki_exam_session_fee_advanced}}"}
+  :yki.util/exam-payment-helper {:payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"
+                                                           :KESKI "{{yki_exam_session_fee_intermediate}}"
+                                                           :YLIN  "{{yki_exam_session_fee_advanced}}"}
                                              :merchant-id "{{yki_examination_paytrail_merchant_id | default('placeholder')}}"
                                              :merchant-secret "{{yki_examination_paytrail_merchant_secret | default('placeholder')}}"
                                              :use-new-payments-api? {{yki_examination_use_new_payments | default('false')}}}}

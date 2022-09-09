@@ -1,4 +1,4 @@
-(ns yki.util.payment-helper
+(ns yki.util.exam-payment-helper
   (:require [clj-time.core :as t]
             [clojure.data.json :as json]
             [clojure.string :as str]

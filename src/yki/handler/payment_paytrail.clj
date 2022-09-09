@@ -15,7 +15,7 @@
     [yki.spec :as ys]
     [yki.registration.email :as registration-email]
     [yki.util.db :refer [rollback-on-exception]]
-    [yki.util.payment-helper :refer [create-payment-for-registration! get-payment-amount-for-registration]]
+    [yki.util.exam-payment-helper :refer [create-payment-for-registration! get-payment-amount-for-registration]]
     [yki.util.payments-api :refer [valid-request?]])
   (:import (java.io FileOutputStream InputStream)))
 

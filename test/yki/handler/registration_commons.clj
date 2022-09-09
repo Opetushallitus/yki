@@ -16,7 +16,7 @@
   [email-q port use-new-payments-api?]
   (let [db                   (sql/->Boundary @embedded-db/conn)
         url-helper           (base/create-url-helper (str "localhost:" port))
-        payment-helper       (base/create-payment-helper db url-helper use-new-payments-api?)
+        payment-helper       (base/create-examination-payment-helper db url-helper use-new-payments-api?)
         auth                 (base/auth url-helper)
         access-log           (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler         (base/auth-handler auth url-helper)
