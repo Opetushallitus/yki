@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS exam_payment_new
+CREATE TABLE IF NOT EXISTS evaluation_payment_new
 (
     id              BIGSERIAL PRIMARY KEY,
     state           payment_state                          NOT NULL,
@@ -12,4 +12,4 @@ CREATE TABLE IF NOT EXISTS exam_payment_new
     updated         TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
-CREATE INDEX IF NOT EXISTS exam_payment_new_state ON exam_payment_new (state);
+CREATE INDEX IF NOT EXISTS evaluation_payment_new_state ON evaluation_payment_new (state);

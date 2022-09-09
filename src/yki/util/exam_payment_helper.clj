@@ -140,7 +140,7 @@
   (initialise-payment-on-registration? [_]
     false))
 
-(defmethod ig/init-key :yki.util/payment-helper [_ {:keys [db url-helper payment-config]}]
+(defmethod ig/init-key :yki.util/exam-payment-helper [_ {:keys [db url-helper payment-config]}]
   (if (:use-new-payments-api? payment-config)
     (->NewPaymentHelper db url-helper payment-config)
     (->LegacyPaymentHelper db url-helper payment-config)))
