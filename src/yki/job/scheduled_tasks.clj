@@ -46,7 +46,7 @@
     (catch Exception e
       (log/error e "Queue reader failed"))))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/registration-state-handler
+(defmethod ig/init-key ::registration-state-handler
   [_ {:keys [db]}]
   {:pre [(some? db)]}
   #(try
@@ -60,7 +60,7 @@
      (catch Exception e
        (log/error e "Registration state handler failed"))))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/participants-sync-handler
+(defmethod ig/init-key ::participants-sync-handler
   [_ {:keys [db url-helper basic-auth disabled retry-duration-in-days]}]
   {:pre [(some? db) (some? url-helper) (some? basic-auth) (some? retry-duration-in-days)]}
   #(try
@@ -78,7 +78,7 @@
      (catch Exception e
        (log/error e "Participant sync handler failed"))))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/email-queue-reader
+(defmethod ig/init-key ::email-queue-reader
   [_ {:keys [email-q handle-at-once-at-most url-helper retry-duration-in-days disabled]}]
   {:pre [(some? url-helper) (pos-int? handle-at-once-at-most) (some? email-q) (some? retry-duration-in-days)]}
   #(try
@@ -90,7 +90,7 @@
      (catch Exception e
        (log/error e "Email queue reader failed"))))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/data-sync-queue-reader
+(defmethod ig/init-key ::data-sync-queue-reader
   [_ {:keys [data-sync-q url-helper db retry-duration-in-days disabled basic-auth]}]
   {:pre [(some? url-helper) (some? data-sync-q) (some? db) (some? retry-duration-in-days) (some? basic-auth)]}
   #(take-with-error-handling data-sync-q retry-duration-in-days
@@ -98,7 +98,7 @@
                                (log/info "Received request to sync data to yki register" data-sync-req)
                                (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled data-sync-req))))
 
-(defmethod ig/init-key :yki.job.scheduled-tasks/exam-session-queue-handler
+(defmethod ig/init-key ::exam-session-queue-handler
   [_ {:keys [db email-q url-helper]}]
   {:pre [(some? db) (some? email-q) (some? url-helper)]}
   #(try
