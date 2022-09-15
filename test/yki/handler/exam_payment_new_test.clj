@@ -1,4 +1,4 @@
-(ns yki.handler.payment-paytrail-test
+(ns yki.handler.exam-payment-new-test
   (:require [clojure.test :refer [deftest is use-fixtures testing]]
             [clojure.data.json :refer [read-str]]
             [compojure.core :as core]
@@ -9,7 +9,7 @@
             [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
-            [yki.handler.payment-paytrail]
+            [yki.handler.exam-payment-new]
             [yki.handler.routing :as routing]
             [yki.util.payments-api :refer [sign-request]]
             [clojure.string :as str]))
@@ -31,14 +31,14 @@
         auth                     (base/auth url-helper)
         access-log               (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler             (base/auth-handler auth url-helper)
-        payment-paytrail-handler (middleware/wrap-format
-                                   (ig/init-key :yki.handler/payment-paytrail {:access-log     access-log
+        exam-payment-new-handler (middleware/wrap-format
+                                   (ig/init-key :yki.handler/exam-payment-new {:access-log     access-log
                                                                                :auth           auth
                                                                                :db             db
                                                                                :email-q        (base/email-q)
                                                                                :url-helper     url-helper
                                                                                :payment-helper payment-helper}))]
-    (core/routes payment-paytrail-handler auth-handler)))
+    (core/routes exam-payment-new-handler auth-handler)))
 
 (defn- redirect [session registration-id lang]
   (->> (str routing/payment-v2-root "/" registration-id "/redirect?lang=" lang)

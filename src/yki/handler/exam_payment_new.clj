@@ -1,4 +1,4 @@
-(ns yki.handler.payment-paytrail
+(ns yki.handler.exam-payment-new
   (:require
     [clj-time.core :as t]
     [clojure.java.io :as jio]
@@ -67,7 +67,7 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :payment.error-redirect lang (:exam_session_id registration))))
 
-(defmethod ig/init-key :yki.handler/payment-paytrail [_ {:keys [auth access-log db payment-helper url-helper email-q]}]
+(defmethod ig/init-key :yki.handler/exam-payment-new [_ {:keys [auth access-log db payment-helper url-helper email-q]}]
   {:pre [(some? auth) (some? access-log) (some? db) (some? email-q) (some? payment-helper) (some? url-helper)]}
   (api
     (context routing/payment-v2-root []
