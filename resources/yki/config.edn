@@ -31,15 +31,18 @@
                                                        #ig/ref :yki.handler/organizer
                                                        #ig/ref :yki.handler/evaluation
                                                        #ig/ref :yki.handler/evaluation-payment
-                                                       #ig/ref :yki.handler/exam-payment-new]
+                                                       #ig/ref :yki.handler/exam-payment-new
+                                                       #ig/ref :yki.handler/evaluation-payment-new]
 
   :yki/migrations                                     {}
 
   :yki.util/url-helper                                {}
 
-  :yki.util/exam-payment-helper                       {:db             #ig/ref :duct.database/sql
-                                                       :url-helper     #ig/ref :yki.util/url-helper
-                                                       :payment-config {:use-new-payments-api? false}}
+  :yki.util/exam-payment-helper                       {:db         #ig/ref :duct.database/sql
+                                                       :url-helper #ig/ref :yki.util/url-helper}
+
+  :yki.util/evaluation-payment-helper                 {:db         #ig/ref :duct.database/sql
+                                                       :url-helper #ig/ref :yki.util/url-helper}
 
   :yki.job.job-queue/init                             {}
 
@@ -172,7 +175,14 @@
                                                        :auth                 #ig/ref :yki.middleware.auth/with-authentication}
 
   :yki.handler/evaluation                             {:db             #ig/ref :duct.database/sql
-                                                       :payment-config {}}}
+                                                       :payment-helper #ig/ref :yki.util/evaluation-payment-helper}
+
+  :yki.handler/evaluation-payment-new                 {:db             #ig/ref :duct.database/sql
+                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging
+                                                       :auth           #ig/ref :yki.middleware.auth/with-authentication
+                                                       :payment-helper #ig/ref :yki.util/evaluation-payment-helper
+                                                       :url-helper     #ig/ref :yki.util/url-helper
+                                                       :email-q        #ig/ref :yki.job.job-queue/email-q}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"

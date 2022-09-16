@@ -483,11 +483,24 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 
 (defn create-examination-payment-helper [db url-helper use-new-payments-api?]
   (ig/init-key
-    :yki.util/examination-payment-helper
+    :yki.util/exam-payment-helper
     {:db             db
      :url-helper     url-helper
      :payment-config {:use-new-payments-api? use-new-payments-api?
                       :amount                (:amount payment-config)
+                      :merchant-id           "375917"
+                      :merchant-secret       "SAIPPUAKAUPPIAS"}}))
+
+(defn create-evaluation-payment-helper [db url-helper use-new-payments-api?]
+  (ig/init-key
+    :yki.util/evaluation-payment-helper
+    {:db             db
+     :url-helper     url-helper
+     :payment-config {:use-new-payments-api? use-new-payments-api?
+                      :amount                {:READING   "50.00"
+                                              :LISTENING "50.00"
+                                              :WRITING   "50.00"
+                                              :SPEAKING  "50.00"}
                       :merchant-id           "375917"
                       :merchant-secret       "SAIPPUAKAUPPIAS"}}))
 

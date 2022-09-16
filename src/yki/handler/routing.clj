@@ -36,6 +36,8 @@
 
 (def evaluation-payment-root (str app-root "/evaluation-payment"))
 
+(def evaluation-payment-new-root (str api-root "/evaluation-payment/v2"))
+
 (def registration-api-root (str api-root "/registration"))
 
 (def exam-session-public-api-root (str api-root "/exam-session"))

@@ -21,20 +21,20 @@
    :subtests ["WRITING"
               "READING"]})
 
-(defn- send-request [request]
-  (let [handler (api (ig/init-key :yki.handler/evaluation {:db (base/db)
-                                                           :payment-config {:amount {:READING "50.00"
-                                                                                     :LISTENING "50.00"
-                                                                                     :WRITING "50.00"
-                                                                                     :SPEAKING "50.00"}}}))]
+(defn- send-request [request port]
+  (let [db (base/db)
+        url-helper (base/create-url-helper (str "localhost:" port))
+        payment-helper (base/create-evaluation-payment-helper db url-helper false)
+        handler (api (ig/init-key :yki.handler/evaluation {:db db
+                                                           :payment-helper payment-helper}))]
     (handler request)))
 
-(defn- evaluation-order-post [evaluation-id order]
+(defn- evaluation-order-post [evaluation-id order port]
   (let [request          (-> (mock/request :post (str routing/evaluation-root "/" evaluation-id "/order?lang=fi")
                                            (j/write-value-as-string  order))
                              (mock/content-type "application/json; charset=UTF-8"))]
 
-    (send-request request)))
+    (send-request request port)))
 
 (deftest handle-evaluation-periods
   (base/insert-base-data)
@@ -44,7 +44,7 @@
                                                :content-type "application/json"
                                                :body         (slurp "test/resources/localisation.json")}}
     (let [request            (mock/request :get (str routing/evaluation-root))
-          response           (send-request request)
+          response           (send-request request port)
           response-body      (base/body-as-json response)
           evaluation-periods (response-body "evaluation_periods")
           open-evaluations   (filter (fn [x] (= (x "open") true)) evaluation-periods)]
@@ -61,7 +61,7 @@
 
     (let [evaluation-id (:id (base/select-evaluation-by-date (base/two-weeks-ago)))
           request       (mock/request :get (str routing/evaluation-root "/" evaluation-id))
-          response      (send-request request)
+          response      (send-request request port)
           response-body (base/body-as-json response)]
 
       (testing "evaluation/:id GET should return 200"
@@ -79,7 +79,7 @@
     (let [open-evaluation-id   (:id (base/select-evaluation-by-date (base/two-weeks-ago)))
           closed-evaluation-id (:id (base/select-evaluation-by-date "2019-05-02"))]
 
-      (let [response         (evaluation-order-post open-evaluation-id mock-evaluation-order)
+      (let [response         (evaluation-order-post open-evaluation-id mock-evaluation-order port)
             response-body    (base/body-as-json response)
             order-id         (response-body "evaluation_order_id")
             order            (base/select-one (str "SELECT * FROM evaluation_order WHERE id=" order-id))
@@ -93,21 +93,21 @@
           (is (= (count (:subtests mock-evaluation-order)) (count order-subtests)))
           (is (some? payment-id))))
 
-      (let [response         (evaluation-order-post closed-evaluation-id mock-evaluation-order)
+      (let [response         (evaluation-order-post closed-evaluation-id mock-evaluation-order port)
             response-body    (base/body-as-json response)]
 
         (testing "cannot post evaluation order when evaluation period has closed"
           (is (= (:status response) 409))
           (is (= (response-body "success") false))))
 
-      (let [response         (evaluation-order-post open-evaluation-id (assoc mock-evaluation-order :subtests []))
+      (let [response         (evaluation-order-post open-evaluation-id (assoc mock-evaluation-order :subtests []) port)
             response-body    (base/body-as-json response)]
 
         (testing "cannot post evaluation order with no subtests"
           (is (= (:status response) 422))
           (is (= (response-body "success") false))))
 
-      (let [response         (evaluation-order-post open-evaluation-id (assoc mock-evaluation-order :subtests ["READING" "LISTENING" "LISTENING"]))
+      (let [response         (evaluation-order-post open-evaluation-id (assoc mock-evaluation-order :subtests ["READING" "LISTENING" "LISTENING"]) port)
             response-body    (base/body-as-json response)]
 
         (testing "cannot post evaluation order with duplicate subtests"

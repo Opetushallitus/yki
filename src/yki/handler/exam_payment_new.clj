@@ -9,14 +9,14 @@
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
     [ring.middleware.file]
-    [ring.util.http-response :refer [bad-request ok found unauthorized]]
+    [ring.util.http-response :refer [bad-request ok found]]
     [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
+    [yki.middleware.payment :refer [with-request-validation]]
     [yki.spec :as ys]
     [yki.registration.email :as registration-email]
     [yki.util.db :refer [rollback-on-exception]]
-    [yki.util.exam-payment-helper :refer [create-payment-for-registration! get-payment-amount-for-registration]]
-    [yki.util.payments-api :refer [valid-request?]])
+    [yki.util.exam-payment-helper :refer [create-payment-for-registration! get-payment-amount-for-registration]])
   (:import (java.io FileOutputStream InputStream)))
 
 (defn- infer-content-type [headers]
@@ -44,13 +44,6 @@
         ; Else report-contents is likely a map or string
         ; -> try to just spit it.
         (spit fos report-contents)))))
-
-(defn- with-request-validation [payment-config handler]
-  (fn
-    ([request]
-     (if-let [{body :body} (valid-request? payment-config request)]
-       (handler (assoc request :body body))
-       (unauthorized {:reason "Signature is not valid for request!"})))))
 
 (defn- registration-redirect [db payment-helper url-helper lang registration]
   (case (:state registration)

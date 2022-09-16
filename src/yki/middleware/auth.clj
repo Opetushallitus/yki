@@ -173,6 +173,8 @@
     :handler any-access}
    {:pattern #".*/api/payment/v2/.*/redirect"
     :handler participant-authenticated}
+   {:pattern #".*/api/evaluation-payment/v2/.*"
+    :handler any-access}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"

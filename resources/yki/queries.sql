@@ -1395,9 +1395,6 @@ INSERT INTO evaluation_order_subtest (
   :subtest
 );
 
---name: select-subtests
-SELECT code from subtest;
-
 -- name: select-next-evaluation-order-number-suffix
 SELECT nextval('payment_order_number_seq');
 
@@ -1422,9 +1419,9 @@ SELECT
   edl.language_code,
   edl.level_code,
   ed.exam_date,
-  ep.amount,
-  ep.lang,
-  ep.state,
+  --ep.amount,
+  --ep.lang,
+  --ep.state,
   (
     SELECT array_to_json(array_agg(subtest))
     FROM (
@@ -1436,9 +1433,24 @@ SELECT
 FROM evaluation_order eo
 INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
 INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
-INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
+--INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE eo.id = :evaluation_order_id;
+
+--name: select-old-evaluation-payment-by-order-id
+SELECT
+  ep.amount,
+  ep.state
+FROM evaluation_payment ep
+WHERE ep.evaluation_order_id = :evaluation_order_id;
+
+--name: select-new-evaluation-payment-by-order-id
+SELECT
+  epn.amount,
+  epn.state,
+  epn.href
+FROM evaluation_payment_new epn
+WHERE epn.evaluation_order_id = :evaluation_order_id;
 
 --name: select-evaluation-order-with-payment
 SELECT
@@ -1512,6 +1524,28 @@ INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
 INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE order_number = :order_number;
+
+-- name: select-evaluation-order-with-subtests-by-order-id
+SELECT
+  eo.first_names,
+  eo.last_name,
+  eo.email,
+  edl.language_code,
+  edl.level_code,
+  ed.exam_date,
+  (
+      SELECT array_to_json(array_agg(subtest))
+      FROM (
+               SELECT subtest
+               FROM evaluation_order_subtest
+               WHERE evaluation_order_id= eo.id
+           ) subtest
+  ) AS subtests
+FROM evaluation_order eo
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
+INNER JOIN exam_date ed on edl.exam_date_id = ed.id
+WHERE eo.id = :evaluation_order_id;
 
 -- name: update-evaluation-payment!
  UPDATE evaluation_payment

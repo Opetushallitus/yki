@@ -1,12 +1,10 @@
 (ns yki.util.exam-payment-helper
-  (:require [clj-time.core :as t]
-            [clojure.data.json :as json]
+  (:require [clojure.data.json :as json]
             [clojure.string :as str]
             [integrant.core :as ig]
             [jeesql.core :refer [require-sql]]
-            [org.httpkit.client :as http]
-            [yki.util.template-util :as template-util]
-            [yki.util.payments-api :refer [sign-request]]))
+            [yki.util.paytrail-payments :refer [create-paytrail-payment!]]
+            [yki.util.template-util :as template-util]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -37,22 +35,10 @@
           payment          {:registration_id (:id registration)
                             :amount          amount
                             :lang            language
-                            :order_number    order-number}
-          ]
+                            :order_number    order-number}]
       (q/insert-legacy-payment<! tx payment)))
   (initialise-payment-on-registration? [_]
     true))
-
-(def payments-API-URI "https://services.paytrail.com/payments")
-
-(defn authentication-headers [method merchant-id transaction-id]
-  (cond-> {"checkout-account"   merchant-id
-           "checkout-algorithm" "sha512"
-           "checkout-method"    method
-           "checkout-nonce"     (str (random-uuid))
-           "checkout-timestamp" (str (t/now))}
-          (some? transaction-id)
-          (assoc "checkout-transaction-id" transaction-id)))
 
 (defn registration->payment-description [url-helper registration]
   ; TODO i18n based on selected language?
@@ -101,19 +87,6 @@
                       "vatPercentage" 0
                       "productCode"   (str exam-session-id)
                       "description"   (registration->payment-description url-helper registration)}]}))
-
-(defn create-paytrail-payment! [payment-config payment-data]
-  (let [authentication-headers (authentication-headers "POST" (:merchant-id payment-config) nil)
-        body                   (json/write-str payment-data)
-        signature              (sign-request payment-config authentication-headers body)
-        headers                (assoc authentication-headers
-                                 "content-type" "application/json; charset=utf-8"
-                                 "signature" signature)]
-
-    @(http/post
-       payments-API-URI
-       {:headers headers
-        :body    body})))
 
 (defrecord NewPaymentHelper [db url-helper payment-config]
   PaymentHelper

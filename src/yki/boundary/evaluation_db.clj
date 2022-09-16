@@ -6,7 +6,8 @@
     [jeesql.core :refer [require-sql]]
     [yki.boundary.db-extensions]
     [yki.util.common :refer [string->date]]
-    [yki.util.db :refer [rollback-on-exception]])
+    [yki.util.db :refer [rollback-on-exception]]
+    [yki.util.evaluation-payment-helper :refer [insert-initial-payment-data!]])
   (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
@@ -17,13 +18,12 @@
   (get-evaluation-periods-by-exam-date-id [db exam-date-id])
   (get-evaluation-order-by-id [db id])
   (get-evaluation-order-with-payment [db id])
-  (get-subtests [db])
   (get-payment-by-order-number [db order-number])
   (get-payment-config [db])
   (get-order-data-by-order-number [db order-number])
   (create-evaluation-order! [db evaluation-id evaluation-order])
   (create-evaluation! [db exam-date-languages evaluation])
-  (create-evaluation-payment! [db payment])
+  (create-evaluation-payment! [db payment-helper payment])
   (complete-payment! [db payment-params]))
 
 (defn- int->boolean [value]
@@ -41,8 +41,6 @@
     (first (q/select-evaluation-order-by-id spec {:evaluation_order_id id})))
   (get-evaluation-order-with-payment [{:keys [spec]} id]
     (first (q/select-evaluation-order-with-payment spec {:evaluation_order_id id})))
-  (get-subtests [{:keys [spec]}]
-    (q/select-subtests spec))
   (get-payment-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-evaluation-payment-by-order-number spec {:order_number order-number})))
@@ -77,7 +75,7 @@
                                                      :evaluation_order_id evaluation-order-id}))
            evaluation-order-id))))
   (create-evaluation-payment!
-    [{:keys [spec]} payment]
+    [{:keys [spec]} payment-helper payment]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
         tx
@@ -87,7 +85,7 @@
                                     (str)
                                     (subs 4))
                order-number     (str "YKI-EVAL" unix-ts-substr (format "%09d" order-number-seq))]
-           (q/insert-initial-evaluation-payment<! tx (assoc payment :order_number order-number))))))
+           (insert-initial-payment-data! payment-helper tx (assoc payment :order_number order-number))))))
   (complete-payment!
     [{:keys [spec]} {:keys [order-number payment-id payment-method timestamp reference-number]}]
     (jdbc/with-db-transaction [tx spec]
