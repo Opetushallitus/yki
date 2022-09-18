@@ -20,11 +20,16 @@
       :middleware [auth access-log wrap-params]
       (GET "/:id/redirect" _
         :path-params [id :- ::ys/registration_id]
-        ; TODO By this point, the payment transaction should already be created and all that's left is to redirect to Paytrail!
-        (if-let [payment-data (order-id->payment-data payment-helper id)]
-          (if (= "UNPAID" (:state payment-data))
-            (ok {:redirect (:href payment-data)})
-            (do (log/error "Payment not in unpaid state. Order id:" id "state:" (:state payment-data))
+        ; TODO As this is an unauthenticated endpoint, the redirect URL
+        ;  could be called by interested third parties to collect personal
+        ;  data along with information regarding evaluation request,
+        ;  which could potentially be abused for eg. phishing campaigns.
+        ;  Attempt to secure by requiring user to provide a signature?
+        (if-let [{state :state
+                  href  :href} (order-id->payment-data payment-helper id)]
+          (if (= "UNPAID" state)
+            (ok {:redirect href})
+            (do (log/error "Payment not in unpaid state. Order id:" id "state:" state)
                 (bad-request {:error "Payment not unpaid."})))
           (do (log/error "Could not find payment data corresponding to evaluation order with id" id)
               (bad-request {:error "Could not find payment data for order"})))))))

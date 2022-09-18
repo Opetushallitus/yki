@@ -1413,15 +1413,29 @@ INSERT INTO evaluation_payment(
   :order_number
 );
 
+--name: insert-initial-evaluation-payment-new<!
+INSERT INTO evaluation_payment_new(
+  state,
+  evaluation_order_id,
+  amount,
+  reference,
+  transaction_id,
+  href
+) VALUES (
+  'UNPAID',
+  :evaluation_order_id,
+  :amount,
+  :reference,
+  :transaction_id,
+  :href
+);
+
 --name: select-evaluation-order-by-id
 SELECT
   eo.id,
   edl.language_code,
   edl.level_code,
   ed.exam_date,
-  --ep.amount,
-  --ep.lang,
-  --ep.state,
   (
     SELECT array_to_json(array_agg(subtest))
     FROM (
@@ -1433,7 +1447,6 @@ SELECT
 FROM evaluation_order eo
 INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
 INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
---INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE eo.id = :evaluation_order_id;
 

@@ -1,6 +1,7 @@
 (ns yki.util.paytrail-payments
   (:require [clj-time.core :as t]
             [clojure.data.json :as json]
+            [clojure.tools.logging :as log]
             [org.httpkit.client :as http]
             [yki.util.payments-api :refer [sign-request]]))
 
@@ -21,9 +22,18 @@
         signature              (sign-request payment-config authentication-headers body)
         headers                (assoc authentication-headers
                                  "content-type" "application/json; charset=utf-8"
-                                 "signature" signature)]
-
-    @(http/post
-       payments-API-URI
-       {:headers headers
-        :body    body})))
+                                 "signature" signature)
+        response               @(http/post
+                                  payments-API-URI
+                                  {:headers headers
+                                   :body    body})
+        response-status        (:status response)
+        response-body          (-> response
+                                   (:body)
+                                   (json/read-str))]
+    (if (<= 200 response-status 299)
+      {:status response-status
+       :body   response-body}
+      (do
+        (log/error "Caught unexpected HTTP return code from Paytrail API. Status:" response-status ", response body:" response-body)
+        (throw (ex-info "Unexpected status code returned from Paytrail." {:status response-status}))))))

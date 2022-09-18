@@ -62,16 +62,18 @@
   (order-id->payment-data [_ id]
     (first (q/select-new-evaluation-payment-by-order-id (:spec db) {:evaluation_order_id id})))
   (insert-initial-payment-data! [_ tx payment-data]
-    (let [id                    (:evaluation_order_id payment-data)
-          evaluation-order-data (first (q/select-evaluation-order-with-subtests-by-order-id tx {:evaluation_order_id id}))
-          paytrail-request-data (create-payment-data url-helper evaluation-order-data payment-data)
-          paytrail-response     (-> (create-paytrail-payment! payment-config paytrail-request-data)
-                                    (:body)
-                                    (json/read-str))]
-      ; TODO Save response to backend.
-      (log/info payment-data)
-      (log/info paytrail-request-data)
-      (log/info paytrail-response)))
+    (let [id                      (:evaluation_order_id payment-data)
+          evaluation-order-data   (first (q/select-evaluation-order-with-subtests-by-order-id tx {:evaluation_order_id id}))
+          paytrail-request-data   (create-payment-data url-helper evaluation-order-data payment-data)
+          paytrail-response       (create-paytrail-payment! payment-config paytrail-request-data)
+          response-body           (-> paytrail-response
+                                      (:body))
+          evaluation-payment-data {:evaluation_order_id id
+                                   :amount              (:amount payment-data)
+                                   :reference           (paytrail-request-data "reference")
+                                   :transaction_id      (response-body "transactionId")
+                                   :href                (response-body "href")}]
+      (q/insert-initial-evaluation-payment-new<! tx evaluation-payment-data)))
   (use-new-payments-api? [_]
     true))
 

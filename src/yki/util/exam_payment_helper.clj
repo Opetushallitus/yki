@@ -100,16 +100,15 @@
        :paytrail       (* 100 (int amount))}))
   (create-payment-for-registration! [_ tx registration language amount]
     (let [payment-data      (create-payment-data url-helper registration language amount)
-          paytrail-response (-> (create-paytrail-payment! payment-config payment-data)
-                                (:body)
-                                (json/read-str))
+          paytrail-response (create-paytrail-payment! payment-config payment-data)
+          response-body     (:body paytrail-response)
           exam-payment-data {:registration_id (:id registration)
                              :amount          amount
                              :reference       (payment-data "reference")
-                             :transaction_id  (paytrail-response "transactionId")
-                             :href            (paytrail-response "href")}]
+                             :transaction_id  (response-body "transactionId")
+                             :href            (response-body "href")}]
       (q/insert-new-exam-payment<! tx exam-payment-data)
-      paytrail-response))
+      response-body))
   (initialise-payment-on-registration? [_]
     false))
 
