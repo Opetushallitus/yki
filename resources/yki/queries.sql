@@ -630,6 +630,7 @@ WHERE re.id = :id
 SELECT p.id,
        p.amount,
        p.registration_id,
+       p.reference,
        r.exam_session_id
 FROM exam_payment_new p
 INNER JOIN registration r ON r.id = p.registration_id
@@ -705,6 +706,13 @@ INSERT INTO exam_payment_new(
 
 -- name: update-new-exam-payment-to-paid<!
 UPDATE exam_payment_new
+SET state = 'PAID',
+    paid_at = current_timestamp,
+    updated = current_timestamp
+WHERE id = :id AND state != 'PAID';
+
+-- name: update-new-evaluation-payment-to-paid<!
+UPDATE evaluation_payment_new
 SET state = 'PAID',
     paid_at = current_timestamp,
     updated = current_timestamp
@@ -1505,6 +1513,16 @@ FROM evaluation_payment ep
 INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
 WHERE order_number = :order_number;
 
+-- name: select-evaluation-payment-new-by-transaction-id
+SELECT
+  epn.id,
+  epn.amount,
+  epn.state,
+  epn.evaluation_order_id,
+  epn.reference
+FROM evaluation_payment_new epn
+WHERE epn.transaction_id = :transaction_id;
+
 -- name: select-evaluation-order-data-by-order-number
 SELECT
   ep.state,
@@ -1543,6 +1561,7 @@ SELECT
   eo.first_names,
   eo.last_name,
   eo.email,
+  eo.created,
   edl.language_code,
   edl.level_code,
   ed.exam_date,

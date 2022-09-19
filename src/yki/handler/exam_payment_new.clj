@@ -9,14 +9,16 @@
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
     [ring.middleware.file]
-    [ring.util.http-response :refer [bad-request ok found]]
+    [ring.util.http-response :refer [bad-request ok]]
     [yki.boundary.registration-db :as registration-db]
+    [yki.handler.payment :refer [cancel-redirect error-redirect success-redirect]]
     [yki.handler.routing :as routing]
     [yki.middleware.payment :refer [with-request-validation]]
     [yki.spec :as ys]
     [yki.registration.email :as registration-email]
     [yki.util.db :refer [rollback-on-exception]]
-    [yki.util.exam-payment-helper :refer [create-payment-for-registration! get-payment-amount-for-registration]])
+    [yki.util.exam-payment-helper :refer [create-payment-for-registration! get-payment-amount-for-registration]]
+    [yki.util.audit-log :as audit])
   (:import (java.io FileOutputStream InputStream)))
 
 (defn- infer-content-type [headers]
@@ -77,21 +79,20 @@
             ; Registration details found, redirect based on registration state.
             (ok {:redirect (registration-redirect db payment-helper url-helper lang registration-details)})
             ; No registration matching given id and external-user-id from session.
-            ; TODO Generic error redirect?
             (bad-request {:reason :registration-not-found})))))
     (context routing/paytrail-payment-root []
       :coercion :spec
       :no-doc true
       :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
-      (GET "/:lang/success" {query-params :query-params}
+      (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (let [{transaction-id "checkout-transaction-id"
                amount         "checkout-amount"
-               payment-status "checkout-status"} query-params
+               payment-status "checkout-status"} (:query-params request)
               payment-details     (registration-db/get-new-payment-details db transaction-id)
               registration-id     (:registration_id payment-details)
-              participant-details (registration-db/get-participant-data-by-registration-id db registration-id)]
-          ; TODO Reconsider if it's necessary to validate payment details below.
+              participant-details (registration-db/get-participant-data-by-registration-id db registration-id)
+              exam-session-id (:exam_session_id payment-details)]
           (if (and payment-details
                    (= (int (:amount payment-details))
                       (Integer/parseInt amount))
@@ -103,19 +104,27 @@
                                                        lang
                                                        participant-details)]
               (if (registration-db/complete-new-payment-and-exam-registration! db registration-id payment-id send-registration-complete-email!)
-                (log/info "Completed payment with transaction-id" transaction-id ", updating registration with id" registration-id "to COMPLETED.")
+                (do (audit/log-participant {:request   request
+                                            :target-kv {:k audit/payment
+                                                        :v (:reference payment-details)}
+                                            :change    {:type audit/create-op
+                                                        :new  (:params request)}})
+                    (log/info "Completed payment with transaction-id" transaction-id ", updating registration with id" registration-id "to COMPLETED."))
                 (log/info "Success callback invoked for transaction-id" transaction-id "corresponding to already completed registration with id" registration-id "; this is a no-op."))
-              (found (url-helper :payment.success-redirect lang (:exam_session_id payment-details))))
+              (success-redirect url-helper lang exam-session-id))
             (do
               (log/error "Success callback invoked with unexpected parameters for transaction-id" transaction-id "corresponding to registration with id" registration-id
                          "; amount:" amount "; payment-status:" payment-status)
-              (bad-request {:reason "Payment details didn't match expectation."})))))
+              (error-redirect url-helper lang exam-session-id)))))
       (GET "/:lang/error" {query-params :query-params}
         :path-params [lang :- ::ys/language-code]
         (let [{transaction-id "checkout-transaction-id"
-               payment-status "checkout-status"} query-params]
+               payment-status "checkout-status"} query-params
+              payment-details (registration-db/get-new-payment-details db transaction-id)]
           (log/info "Error callback invoked for transaction-id" transaction-id "with payment-status" payment-status)
-          (ok {})))
+          (if-let [exam-session-id (:exam_session_id payment-details)]
+            (cancel-redirect url-helper lang exam-session-id)
+            (error-redirect url-helper lang nil))))
       ; Report generation callback
       (POST "/report" req
         (let [body         (:body req)

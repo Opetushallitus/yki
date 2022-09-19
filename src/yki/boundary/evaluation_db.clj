@@ -20,11 +20,13 @@
   (get-evaluation-order-with-payment [db id])
   (get-payment-by-order-number [db order-number])
   (get-payment-config [db])
+  (get-new-payment-by-transaction-id [db transaction-id])
   (get-order-data-by-order-number [db order-number])
   (create-evaluation-order! [db evaluation-id evaluation-order])
   (create-evaluation! [db exam-date-languages evaluation])
   (create-evaluation-payment! [db payment-helper payment])
-  (complete-payment! [db payment-params]))
+  (complete-payment! [db payment-params])
+  (complete-new-payment! [db payment-id]))
 
 (defn- int->boolean [value]
   (pos? value))
@@ -47,6 +49,9 @@
   (get-payment-config
     [{:keys [spec]}]
     (first (q/select-evaluation-payment-config spec)))
+  (get-new-payment-by-transaction-id
+    [{:keys [spec]} transaction-id]
+    (first (q/select-evaluation-payment-new-by-transaction-id spec {:transaction_id transaction-id})))
   (get-order-data-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-evaluation-order-data-by-order-number spec {:order_number order-number})))
@@ -94,4 +99,11 @@
                                                       :payment_method      payment-method
                                                       :payed_at            timestamp
                                                       :reference_number    reference-number
-                                                      :state               "PAID"})))))
+                                                      :state               "PAID"}))))
+  (complete-new-payment!
+    [{:keys [spec]} payment-id]
+    (jdbc/with-db-transaction [tx spec]
+      (int->boolean
+        (q/update-new-evaluation-payment-to-paid<!
+          tx
+          {:id payment-id})))))

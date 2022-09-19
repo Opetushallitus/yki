@@ -68,7 +68,6 @@
               redirect-response (-> session
                                     (redirect registration-id lang))]
           (is (= 401 (response->status redirect-response)))))
-      ; TODO The block below will attempt to create a new payment on Paytrail each time this test is run. Reconsider?
       (testing "Calling redirect url with correct session initiates payment and returns correct redirect URL"
         (is (empty? (select-payments-for-registration registration-id)))
         (let [session               (-> (peridot/session handler)
@@ -93,74 +92,80 @@
   (with-routes!
     {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
                                                :body   (slurp "test/resources/localisation.json")}}
-    (let [handlers            (create-handlers port)
-          registration-id     1
-          amount              1337
-          reference           "YKI-EXAM-testitesti123"
-          transaction-id      "fake-paytrail-transaction-id"
-          href                (str "https://pay.paytrail.com/pay/" transaction-id)
-          lang                "fi"
-          session             (peridot/session handlers)
-          with-signature      (fn [headers]
-                                (->> (sign-request {:merchant-secret "SAIPPUAKAUPPIAS"} headers nil)
-                                     (assoc headers "signature")))
-          select-registration #(base/select-one (str "SELECT * FROM registration WHERE id = " registration-id ";"))
-          select-payment      #(first (select-payments-for-registration registration-id))
-          request->status     (fn [request-headers]
-                                (-> (success session lang request-headers)
-                                    (:response)
-                                    (:status)))]
+    (let [handlers             (create-handlers port)
+          registration-id      1
+          amount               1337
+          reference            "YKI-EXAM-testitesti123"
+          transaction-id       "fake-paytrail-transaction-id"
+          href                 (str "https://pay.paytrail.com/pay/" transaction-id)
+          lang                 "fi"
+          session              (peridot/session handlers)
+          with-signature       (fn [headers]
+                                 (->> (sign-request {:merchant-secret "SAIPPUAKAUPPIAS"} headers nil)
+                                      (assoc headers "signature")))
+          select-registration  #(base/select-one (str "SELECT * FROM registration WHERE id = " registration-id ";"))
+          select-payment       #(first (select-payments-for-registration registration-id))
+          request-with-headers (fn [request-headers]
+                                 (success session lang request-headers))
+          unauthorized?        (fn [{:keys [response]}]
+                                 (= 401 (:status response)))
+          error-redirect?      (fn [{:keys [response]}]
+                                 (and (= 302 (:status response))
+                                      (re-matches #".*status=payment-error.*" (get-in response [:headers "Location"]))))
+          success-redirect?    (fn [{:keys [response]}]
+                                 (and (= 302 (:status response))
+                                      (str/ends-with? (get-in response [:headers "Location"]) "status=payment-success&lang=fi&id=1")))]
       (base/insert-exam-payment-new registration-id amount reference transaction-id href)
       (testing "Invoking success callback with missing or incorrect signature yields 401 Unauthorized"
-        (is (= 401 (request->status {})))
-        (is (= 401 (request->status {"signature" "incorrect-signature"}))))
+        (is (unauthorized? (request-with-headers {})))
+        (is (unauthorized? (request-with-headers {"signature" "incorrect-signature"}))))
       (let [correct-headers {"checkout-amount"         amount
                              "checkout-transaction-id" transaction-id
                              "checkout-status"         "ok"}]
         (testing "When success callback is invoked with incorrect parameters, the payment and registration states remain unchanged."
           ; Only signature passed in headers -> status code 400 expected
-          (is (= 400 (request->status (with-signature {}))))
+          (is (error-redirect? (request-with-headers (with-signature {}))))
           (is (= "SUBMITTED" (:state (select-registration))))
           (is (= "UNPAID" (:state (select-payment))))
           ; Mismatching amount -> error
-          (is (= 400 (->> (update correct-headers "checkout-amount" inc)
-                          (with-signature)
-                          (request->status))))
+          (is (error-redirect? (->> (update correct-headers "checkout-amount" inc)
+                                    (with-signature)
+                                    (request-with-headers))))
           (is (= "SUBMITTED" (:state (select-registration))))
           (is (= "UNPAID" (:state (select-payment))))
           ; Mismatching transaction-id -> error
-          (is (= 400 (->> (assoc correct-headers "checkout-transaction-id" inc)
-                          (with-signature)
-                          (request->status))))
+          (is (error-redirect? (->> (assoc correct-headers "checkout-transaction-id" inc)
+                                    (with-signature)
+                                    (request-with-headers))))
           (is (= "SUBMITTED" (:state (select-registration))))
           (is (= "UNPAID" (:state (select-payment))))
           ; Mismatching status -> error
-          (is (= 400 (->> (assoc correct-headers "checkout-status" "error")
-                          (with-signature)
-                          (request->status))))
+          (is (error-redirect? (->> (assoc correct-headers "checkout-status" "error")
+                                    (with-signature)
+                                    (request-with-headers))))
           (is (= "SUBMITTED" (:state (select-registration))))
           (is (= "UNPAID" (:state (select-payment)))))
 
         (testing "Payment and registration status are updated when callback is invoked with correct parameters"
-          (is (= 302 (->> correct-headers
-                          (with-signature)
-                          (request->status))))
+          (is (success-redirect? (->> correct-headers
+                                      (with-signature)
+                                      (request-with-headers))))
           (is (= "COMPLETED" (:state (select-registration))))
           (is (= "PAID" (:state (select-payment)))))
 
         (testing "Further calls to success callback do not change payment or registration status"
           ; Endpoint called with unexpected value for checkout-status header
           ; => error, but registration and payment statuses are unchanged
-          (is (= 400 (->> (assoc correct-headers "checkout-status" "error")
-                          (with-signature)
-                          (request->status))))
+          (is (error-redirect? (->> (assoc correct-headers "checkout-status" "error")
+                                    (with-signature)
+                                    (request-with-headers))))
           (is (= "COMPLETED" (:state (select-registration))))
           (is (= "PAID" (:state (select-payment)))))
         ; Endpoint called again with correct parameters
         ; => redirect, registration and payment status remain unchanged
-        (is (= 302 (->> correct-headers
-                        (with-signature)
-                        (request->status))))
+        (is (success-redirect? (->> correct-headers
+                                    (with-signature)
+                                    (request-with-headers))))
         (is (= "COMPLETED" (:state (select-registration))))
         (is (= "PAID" (:state (select-payment))))))))
 

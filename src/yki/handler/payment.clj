@@ -9,13 +9,13 @@
             [ring.util.http-response :refer [ok internal-server-error found]]
             [integrant.core :as ig]))
 
-(defn- success-redirect [url-helper lang exam-session-id]
+(defn success-redirect [url-helper lang exam-session-id]
   (found (url-helper :payment.success-redirect lang exam-session-id)))
 
-(defn- error-redirect [url-helper lang exam-session-id]
+(defn error-redirect [url-helper lang exam-session-id]
   (found (url-helper :payment.error-redirect lang exam-session-id)))
 
-(defn- cancel-redirect [url-helper lang exam-session-id]
+(defn cancel-redirect [url-helper lang exam-session-id]
   (found (url-helper :payment.cancel-redirect lang exam-session-id)))
 
 (defn- handle-exceptions

@@ -10,17 +10,27 @@
             [ring.util.http-response :refer [ok internal-server-error found conflict]]
             [integrant.core :as ig]))
 
-(defn- success-redirect [url-helper lang order-id]
-  (log/info "Evaluation payment success, redirecting to: " (url-helper :evaluation-payment.success-redirect lang order-id))
-  (found (url-helper :evaluation-payment.success-redirect lang order-id)))
+(defn success-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :evaluation-payment.success-redirect lang order-id)]
+    (log/info "Evaluation payment success, redirecting to:" redirect-url)
+    (found redirect-url)))
 
-(defn- error-redirect [url-helper lang order-id]
-  (log/info "Evaluation payment error, redirecting to: " (url-helper :evaluation-payment.error-redirect lang order-id))
-  (found (url-helper :evaluation-payment.error-redirect lang order-id)))
+(defn error-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :evaluation-payment.error-redirect lang order-id)]
+    (log/info "Evaluation payment error, redirecting to:" redirect-url)
+    (found redirect-url)))
 
-(defn- cancel-redirect [url-helper lang order-id]
-  (log/info "Evaluation payment cancelled, redirecting to: " (url-helper :evaluation-payment.cancel-redirect lang order-id))
-  (found (url-helper :evaluation-payment.cancel-redirect lang order-id)))
+(defn cancel-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :evaluation-payment.cancel-redirect lang order-id)]
+    (log/info "Evaluation payment cancelled, redirecting to:" redirect-url)
+    (found redirect-url)))
+
+(defn handle-exceptions [url-helper f lang order-id]
+  (try
+    (f)
+    (catch Exception e
+      (log/error e "Payment handling failed")
+      (error-redirect url-helper lang order-id))))
 
 (defn- evaluation-payment-config [db base-config]
   (let [eval-config (->> db
@@ -29,13 +39,6 @@
     (if (:test_mode eval-config)
       (assoc eval-config :amount {:READING "1.00" :LISTENING "1.00" :WRITING "1.00" :SPEAKING "1.00"})
       eval-config)))
-
-(defn- handle-exceptions [url-helper f lang order-id]
-  (try
-    (f)
-    (catch Exception e
-      (log/error e "Payment handling failed")
-      (error-redirect url-helper lang order-id))))
 
 (defmethod ig/init-key :yki.handler/evaluation-payment [_ {:keys [db auth access-log payment-config url-helper email-q]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? payment-config) (some? url-helper) (some? email-q)]}
