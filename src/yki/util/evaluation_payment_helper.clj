@@ -1,13 +1,10 @@
 (ns yki.util.evaluation-payment-helper
   (:require
-    [clojure.data.json :as json]
     [clojure.string :as str]
-    [clojure.tools.logging :as log]
     [integrant.core :as ig]
     [jeesql.core :refer [require-sql]]
-    [yki.boundary.localisation :as localisation]
-    [yki.registration.payment-e2-util :as payment-util]
-    [yki.util.paytrail-payments :refer [create-paytrail-payment!]]))
+    [yki.util.paytrail-payments :refer [create-paytrail-payment!]]
+    [yki.util.template-util :as template-util]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -26,14 +23,29 @@
   (use-new-payments-api? [_]
     false))
 
-(defn create-payment-data [url-helper evaluation-order-data payment-data]
+(defn- amount->paytrail-price [price-in-eur]
+  (int (* 100 price-in-eur)))
+
+(defn- subtests->items [url-helper payment-config lang subtests]
+  (let [subtest->amount (-> (:amount payment-config)
+                            (update-keys name)
+                            (update-vals #(amount->paytrail-price (Double/parseDouble %))))]
+    (for [subtest subtests]
+      {"unitPrice"     (subtest->amount subtest)
+       "units"         1
+       "productCode"   subtest
+       "description"   (template-util/get-subtest url-helper subtest lang)
+       "vatPercentage" 0})))
+
+(defn create-payment-data [url-helper payment-config evaluation-order-data payment-data]
   (let [{email       :email
          first-names :first_names
-         last-name   :last_name} evaluation-order-data
+         last-name   :last_name
+         subtests    :subtests} evaluation-order-data
         {order-number :order_number
          amount       :amount
          language     :lang} payment-data
-
+        items         (subtests->items url-helper payment-config language subtests)
         callback-urls {"success" (url-helper :evaluation-payment-new.success-callback language)
                        "cancel"  (url-helper :evaluation-payment-new.error-callback language)}]
     {"stamp"        (random-uuid)
@@ -48,13 +60,7 @@
                      "lastName"  last-name}
      "redirectUrls" callback-urls
      "callbackUrls" callback-urls
-     ; TODO
-     ; items: an item per subtest
-     #_"items"        #_[{"unitPrice"     amount
-                          "units"         1
-                          "vatPercentage" 0
-                          "productCode"   (str exam-session-id)
-                          "description"   (registration->payment-description url-helper evaluation-order)}]}))
+     "items"        items}))
 
 (defrecord NewEvaluationPaymentHelper
   [db payment-config url-helper]
@@ -64,7 +70,7 @@
   (insert-initial-payment-data! [_ tx payment-data]
     (let [id                      (:evaluation_order_id payment-data)
           evaluation-order-data   (first (q/select-evaluation-order-with-subtests-by-order-id tx {:evaluation_order_id id}))
-          paytrail-request-data   (create-payment-data url-helper evaluation-order-data payment-data)
+          paytrail-request-data   (create-payment-data url-helper payment-config evaluation-order-data payment-data)
           paytrail-response       (create-paytrail-payment! payment-config paytrail-request-data)
           response-body           (-> paytrail-response
                                       (:body))
