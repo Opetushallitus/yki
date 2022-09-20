@@ -68,7 +68,7 @@
               payment-details     (evaluation-db/get-new-payment-by-transaction-id db transaction-id)
               evaluation-order-id (:evaluation_order_id payment-details)]
           (if (and payment-details
-                   (= (int (:amount payment-details))
+                   (= (* 100 (int (:amount payment-details)))
                       (Integer/parseInt amount))
                    (= "ok" payment-status))
             (let [payment-id     (:id payment-details)
