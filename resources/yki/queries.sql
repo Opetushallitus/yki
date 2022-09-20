@@ -1561,6 +1561,7 @@ SELECT
   eo.first_names,
   eo.last_name,
   eo.email,
+  eo.birthdate,
   eo.created,
   edl.language_code,
   edl.level_code,
