@@ -704,14 +704,14 @@ INSERT INTO exam_payment_new(
   :transaction_id,
   :href);
 
--- name: update-new-exam-payment-to-paid<!
+-- name: update-new-exam-payment-to-paid!
 UPDATE exam_payment_new
 SET state = 'PAID',
     paid_at = current_timestamp,
     updated = current_timestamp
 WHERE id = :id AND state != 'PAID';
 
--- name: update-new-evaluation-payment-to-paid<!
+-- name: update-new-evaluation-payment-to-paid!
 UPDATE evaluation_payment_new
 SET state = 'PAID',
     paid_at = current_timestamp,
