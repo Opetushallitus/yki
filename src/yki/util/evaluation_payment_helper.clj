@@ -3,7 +3,7 @@
     [clojure.string :as str]
     [integrant.core :as ig]
     [jeesql.core :refer [require-sql]]
-    [yki.util.paytrail-payments :refer [create-paytrail-payment!]]
+    [yki.util.paytrail-payments :refer [amount->paytrail-amount create-paytrail-payment!]]
     [yki.util.template-util :as template-util]))
 
 (require-sql ["yki/queries.sql" :as q])
@@ -23,13 +23,10 @@
   (use-new-payments-api? [_]
     false))
 
-(defn- amount->paytrail-price [price-in-eur]
-  (int (* 100 price-in-eur)))
-
 (defn- subtests->items [url-helper payment-config lang subtests]
   (let [subtest->amount (-> (:amount payment-config)
                             (update-keys name)
-                            (update-vals #(amount->paytrail-price (Double/parseDouble %))))]
+                            (update-vals #(amount->paytrail-amount (Double/parseDouble %))))]
     (for [subtest subtests]
       {"unitPrice"     (subtest->amount subtest)
        "units"         1

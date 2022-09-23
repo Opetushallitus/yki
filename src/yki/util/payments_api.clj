@@ -10,7 +10,14 @@
        (filter #(str/starts-with? % "checkout-"))
        (sort)))
 
-(defn sign-request [{:keys [merchant-secret]} headers body]
+(defn sign-string [{:keys [merchant-secret]} data]
+  {:pre [(string? merchant-secret) (string? data)]}
+  (-> data
+      (mac/hash {:key merchant-secret
+                 :alg :hmac+sha512})
+      (codecs/bytes->hex)))
+
+(defn sign-request [payment-config headers body]
   (let [sb (StringBuilder.)]
     (doseq [header (headers->signature-keys-order headers)]
       (when-let [data (headers header)]
@@ -20,11 +27,7 @@
         (.append sb "\n")))
     (when body
       (.append sb body))
-    (-> (.toString sb)
-        (mac/hash {:key merchant-secret
-                   :alg :hmac+sha512})
-        (codecs/bytes->hex))))
-
+    (sign-string payment-config (.toString sb))))
 
 (defn- request->body [{:keys [body]}]
   (if (instance? InputStream body)

@@ -8,7 +8,8 @@
             [yki.handler.routing :as routing]
             [yki.spec :as ys]
             [yki.util.common :as common]
-            [yki.util.evaluation-payment-helper :refer [order-id->payment-data use-new-payments-api?]]))
+            [yki.util.evaluation-payment-helper :refer [order-id->payment-data use-new-payments-api?]]
+            [yki.util.payments-api :refer [sign-string]]))
 
 (defn- evaluation-not-found [evaluation_id]
   (log/info "Evaluation not found with id" evaluation_id)
@@ -93,7 +94,10 @@
                                        :lang                (or lang "fi")
                                        :amount              final-price}]
                 (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data)
-                (ok {:evaluation_order_id          order-id
-                     :use_new_payments_integration (use-new-payments-api? payment-helper)}))
+                (if (use-new-payments-api? payment-helper)
+                  (ok {:evaluation_order_id          order-id
+                       :use_new_payments_integration (use-new-payments-api? payment-helper)
+                       :signature                    (sign-string (:payment-config payment-helper) (str order-id))})
+                  (ok {:evaluation_order_id          order-id})))
               (internal-server-error {:success false
                                       :error   "Failed to create a new evaluation order"}))))))))

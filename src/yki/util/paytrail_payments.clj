@@ -37,3 +37,6 @@
       (do
         (log/error "Caught unexpected HTTP return code from Paytrail API. Status:" response-status ", response body:" response-body)
         (throw (ex-info "Unexpected status code returned from Paytrail." {:status response-status}))))))
+
+(defn amount->paytrail-amount [price-in-eur]
+  (int (* 100 price-in-eur)))

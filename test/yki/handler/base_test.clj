@@ -342,9 +342,7 @@
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation (exam_date_id, evaluation_start_date, evaluation_end_date, exam_date_language_id)
                                     VALUES (" fourth-date-id ", '2019-08-01', '2019-08-15', " (exam-date-language-id fourth-date-id) ")"))))
 
-(defn insert-evaluation-payment-data [{:keys [first_names last_name email birthdate]}]
-  (jdbc/execute! @embedded-db/conn (str "UPDATE evaluation_payment_config SET merchant_id=12345, merchant_secret='6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ', email='kirjaamo@testi.fi' "))
-
+(defn insert-evaluation-order-data [{:keys [first_names last_name email birthdate]}]
   (let [evaluation-id (:id (select-evaluation-by-date (two-weeks-ago)))]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order (evaluation_id, first_names, last_name, email, birthdate)
                                     VALUES (" evaluation-id ", '" first_names "', '" last_name "', '" email "', '" birthdate "')"))
@@ -353,9 +351,19 @@
                                    VALUES (" evaluation-order-id ", 'READING')"))
       (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_order_subtest (evaluation_order_id, subtest)
                                VALUES (" evaluation-order-id ", 'LISTENING')"))
-      (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment
+      {:evaluation-order-id evaluation-order-id})))
+
+(defn insert-evaluation-payment-data [evaluation-order-id]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE evaluation_payment_config SET merchant_id=12345, merchant_secret='6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ', email='kirjaamo@testi.fi' "))
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment
                                                (state, evaluation_order_id, amount, lang, order_number) VALUES
-                                               ('UNPAID'," evaluation-order-id ", 100, 'fi', 'YKI-EVA-TEST')")))))
+                                               ('UNPAID'," evaluation-order-id ", 100, 'fi', 'YKI-EVA-TEST')")))
+
+(defn insert-evaluation-payment-new-data [evaluation-order-id]
+  (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment_new
+                                               (state, evaluation_order_id, amount, reference, transaction_id, href) VALUES
+                                               ('UNPAID'," evaluation-order-id ", 100, 'fake-reference', 'fake-transaction-id',
+                                               'https://pay.paytrail.com/pay/fake-transaction-id')")))
 
 (defn get-evaluation-order-and-status [{:keys [first_names last_name email birthdate]}]
   (select-one (str "SELECT
@@ -491,18 +499,27 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                       :merchant-id           "375917"
                       :merchant-secret       "SAIPPUAKAUPPIAS"}}))
 
+(def old-evaluation-payment-config {:use-new-payments-api? false
+                                    :amount                {:READING   "50.00"
+                                                            :LISTENING "50.00"
+                                                            :WRITING   "50.00"
+                                                            :SPEAKING  "50.00"}})
+(def new-evaluation-payment-config {:use-new-payments-api? true
+                                    :amount                {:READING   "50.00"
+                                                            :LISTENING "50.00"
+                                                            :WRITING   "50.00"
+                                                            :SPEAKING  "50.00"}
+                                    :merchant-id           "375917"
+                                    :merchant-secret       "SAIPPUAKAUPPIAS"})
+
 (defn create-evaluation-payment-helper [db url-helper use-new-payments-api?]
   (ig/init-key
     :yki.util/evaluation-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config {:use-new-payments-api? use-new-payments-api?
-                      :amount                {:READING   "50.00"
-                                              :LISTENING "50.00"
-                                              :WRITING   "50.00"
-                                              :SPEAKING  "50.00"}
-                      :merchant-id           "375917"
-                      :merchant-secret       "SAIPPUAKAUPPIAS"}}))
+     :payment-config (if use-new-payments-api?
+                       new-evaluation-payment-config
+                       old-evaluation-payment-config)}))
 
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)

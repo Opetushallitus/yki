@@ -14,42 +14,45 @@
             [yki.handler.evaluation-payment]))
 
 (def test-order {:first_names "Anne Marie"
-                 :last_name "Jones"
-                 :email "anne-marie.jones@testi.fi"
-                 :birthdate "2000-02-14"})
+                 :last_name   "Jones"
+                 :email       "anne-marie.jones@testi.fi"
+                 :birthdate   "2000-02-14"})
 
 (defn insert-prereq-data [f]
   (base/insert-base-data)
   (base/insert-evaluation-data)
-  (base/insert-evaluation-payment-data test-order)
+  (let [{evaluation-order-id :evaluation-order-id} (base/insert-evaluation-order-data test-order)]
+    (base/insert-evaluation-payment-data evaluation-order-id))
   (f))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction insert-prereq-data)
 
-(defn- send-request [request port]
-  (let [url-helper (base/create-url-helper (str "localhost:" port))
-        handler (api (ig/init-key :yki.handler/evaluation-payment {:db (base/db)
-                                                                   :auth (base/auth url-helper)
-                                                                   :access-log (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
-                                                                   :payment-config   {:paytrail-host  "https://payment.paytrail.com/e2"
-                                                                                      :yki-payment-uri "http://localhost:8080/yki/evaluation-payment"
-                                                                                      :amount {:READING "50.00"
-                                                                                               :LISTENING "50.00"
-                                                                                               :WRITING "50.00"
-                                                                                               :SPEAKING "50.00"}}
-                                                                   :url-helper (base/create-url-helper (str "localhost:" port))
-                                                                   :email-q (base/email-q)}))]
-    (handler request)))
+(defn- create-handler [port]
+  (let [url-helper (base/create-url-helper (str "localhost:" port))]
+    (api (ig/init-key
+           :yki.handler/evaluation-payment
+           {:db             (base/db)
+            :auth           (base/auth url-helper)
+            :access-log     (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
+            :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
+                             :yki-payment-uri "http://localhost:8080/yki/evaluation-payment"
+                             :amount          {:READING   "50.00"
+                                               :LISTENING "50.00"
+                                               :WRITING   "50.00"
+                                               :SPEAKING  "50.00"}}
+            :url-helper     url-helper
+            :email-q        (base/email-q)}))))
 
 (deftest handle-evaluation-payment-test
   (with-routes!
     {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
-                                               :body (slurp "test/resources/localisation.json")}}
+                                               :body   (slurp "test/resources/localisation.json")}}
     (let [evaluation-order    (base/get-evaluation-order-and-status test-order)
           evaluation-order-id (:id evaluation-order)
           request             (mock/request :get (str routing/evaluation-payment-root "/formdata?evaluation-order-id=" evaluation-order-id))
-          response            (send-request request port)
+          handler             (create-handler port)
+          response            (handler request)
           response-body       (base/body-as-json response)]
       (testing "evaluation payment form data endpoint should return payment url and formdata "
         (is (= (get-in response [:status]) 200))
@@ -64,10 +67,11 @@
 (deftest handle-evaluation-payment-success-test
   (with-routes!
     {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
-                                               :body (slurp "test/resources/localisation.json")}}
+                                               :body   (slurp "test/resources/localisation.json")}}
     (let [evaluation-order (base/get-evaluation-order-and-status test-order)
+          handler          (create-handler port)
           request          (mock/request :get (str routing/evaluation-payment-root "/success" success-params))
-          response         (send-request request port)
+          response         (handler request)
           location         (get-in response [:headers "Location"])
           customer-email   (pgq/take (base/email-q))
           kirjaamo-email   (pgq/take (base/email-q))

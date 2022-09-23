@@ -5,7 +5,7 @@
     [integrant.core :as ig]
     [jeesql.core :refer [require-sql]]
     [ring.middleware.params :refer [wrap-params]]
-    [ring.util.http-response :refer [bad-request ok]]
+    [ring.util.http-response :refer [bad-request ok unauthorized]]
     [yki.handler.evaluation-payment :refer [cancel-redirect error-redirect success-redirect handle-exceptions]]
     [yki.handler.routing :as routing]
     [yki.boundary.evaluation-db :as evaluation-db]
@@ -13,9 +13,10 @@
     [yki.middleware.payment :refer [with-request-validation]]
     [yki.registration.email :as registration-email]
     [yki.spec :as ys]
+    [yki.util.audit-log :as audit]
     [yki.util.evaluation-payment-helper :refer [order-id->payment-data]]
-    [yki.util.template-util :as template-util]
-    [yki.util.audit-log :as audit]))
+    [yki.util.payments-api :refer [sign-string]]
+    [yki.util.template-util :as template-util]))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -44,19 +45,17 @@
       :middleware [auth access-log wrap-params]
       (GET "/:id/redirect" _
         :path-params [id :- ::ys/registration_id]
-        ; TODO As this is an unauthenticated endpoint, the redirect URL
-        ;  could be called by interested third parties to collect personal
-        ;  data along with information regarding evaluation request,
-        ;  which could potentially be abused for eg. phishing campaigns.
-        ;  Attempt to secure by requiring user to provide a signature?
-        (if-let [{state :state
-                  href  :href} (order-id->payment-data payment-helper id)]
-          (if (= "UNPAID" state)
-            (ok {:redirect href})
-            (do (log/error "Payment not in unpaid state. Order id:" id "state:" state)
-                (bad-request {:error "Payment not unpaid."})))
-          (do (log/error "Could not find payment data corresponding to evaluation order with id" id)
-              (bad-request {:error "Could not find payment data for order"})))))
+        :query-params [signature :- ::ys/non-blank-string]
+        (if (= signature (sign-string (:payment-config payment-helper) (str id)))
+          (if-let [{state :state
+                    href  :href} (order-id->payment-data payment-helper id)]
+            (if (= "UNPAID" state)
+              (ok {:redirect href})
+              (do (log/error "Payment not in unpaid state. Order id:" id "state:" state)
+                  (bad-request {:error "Payment not unpaid."})))
+            (do (log/error "Could not find payment data corresponding to evaluation order with id" id)
+                (bad-request {:error "Could not find payment data for order"})))
+          (unauthorized {:reason "Signature is not valid for request!"}))))
     (context routing/evaluation-payment-new-paytrail-callback-root []
       :coercion :spec
       :no-doc true
