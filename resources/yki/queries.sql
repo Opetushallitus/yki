@@ -547,19 +547,11 @@ RETURNING id as updated;
 UPDATE registration
 SET exam_session_id = :exam_session_id,
     kind = 'ADMISSION',
-    original_exam_session_id = (SELECT exam_session_id
-                                FROM registration
-                                WHERE id = :registration_id)
-WHERE id = (SELECT re.id
-            FROM registration re
-            WHERE re.id = :registration_id)
+    original_exam_session_id = exam_session_id
+WHERE id = :registration_id
 AND EXISTS (SELECT id
             FROM exam_session
             WHERE id = :exam_session_id
-              AND max_participants > (SELECT COUNT(1)
-                                      FROM registration
-              	                      WHERE exam_session_id = :exam_session_id
-	                                    AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
 -- submitted registration expires 8 days from payment creation at midnight
