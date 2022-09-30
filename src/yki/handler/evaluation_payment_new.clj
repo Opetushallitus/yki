@@ -15,7 +15,7 @@
     [yki.spec :as ys]
     [yki.util.audit-log :as audit]
     [yki.util.evaluation-payment-helper :refer [order-id->payment-data]]
-    [yki.util.payments-api :refer [sign-string]]
+    [yki.util.paytrail-payments :refer [sign-string]]
     [yki.util.template-util :as template-util]))
 
 (require-sql ["yki/queries.sql" :as q])

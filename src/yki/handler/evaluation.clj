@@ -9,7 +9,7 @@
             [yki.spec :as ys]
             [yki.util.common :as common]
             [yki.util.evaluation-payment-helper :refer [order-id->payment-data use-new-payments-api?]]
-            [yki.util.payments-api :refer [sign-string]]))
+            [yki.util.paytrail-payments :refer [sign-string]]))
 
 (defn- evaluation-not-found [evaluation_id]
   (log/info "Evaluation not found with id" evaluation_id)

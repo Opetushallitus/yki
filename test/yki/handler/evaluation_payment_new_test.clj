@@ -9,8 +9,7 @@
             [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
             [yki.handler.evaluation-payment-new]
-            [yki.util.payments-api :refer [sign-request sign-string]]
-            [yki.util.paytrail-payments :refer [amount->paytrail-amount]]
+            [yki.util.paytrail-payments :refer [amount->paytrail-amount sign-request sign-string]]
             [clojure.string :as str]))
 
 (def test-order {:first_names "Anne Marie"

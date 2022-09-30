@@ -9,7 +9,7 @@
             [yki.handler.evaluation]
             [yki.handler.base-test :as base]
             [yki.handler.routing :as routing]
-            [yki.util.payments-api :refer [sign-string]]))
+            [yki.util.paytrail-payments :refer [sign-string]]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)

@@ -1,18 +1,19 @@
 (ns yki.handler.exam-payment-new-test
-  (:require [clojure.test :refer [deftest is use-fixtures testing]]
-            [clojure.data.json :refer [read-str]]
-            [compojure.core :as core]
-            [duct.database.sql :as sql]
-            [integrant.core :as ig]
-            [muuntaja.middleware :as middleware]
-            [peridot.core :as peridot]
-            [stub-http.core :refer [with-routes!]]
-            [yki.embedded-db :as embedded-db]
-            [yki.handler.base-test :as base]
-            [yki.handler.exam-payment-new]
-            [yki.handler.routing :as routing]
-            [yki.util.payments-api :refer [sign-request]]
-            [clojure.string :as str]))
+  (:require
+    [clojure.data.json :refer [read-str]]
+    [clojure.string :as str]
+    [clojure.test :refer [deftest is use-fixtures testing]]
+    [compojure.core :as core]
+    [duct.database.sql :as sql]
+    [integrant.core :as ig]
+    [muuntaja.middleware :as middleware]
+    [peridot.core :as peridot]
+    [stub-http.core :refer [with-routes!]]
+    [yki.embedded-db :as embedded-db]
+    [yki.handler.base-test :as base]
+    [yki.handler.exam-payment-new]
+    [yki.handler.routing :as routing]
+    [yki.util.paytrail-payments :refer [sign-request]]))
 
 (defn insert-prereq-data [f]
   (base/insert-base-data)
