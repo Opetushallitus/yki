@@ -16,7 +16,7 @@
   (get-legacy-payment-config-by-order-number [db order-number])
   (complete-registration-and-legacy-payment! [db payment-params])
   (update-registration-details! [db payment-helper registration language amount after-fn])
-  (get-registration-data-for-new-payment [db registration-id participant-id])
+  (get-registration-data-for-new-payment [db registration-id external-user-id])
   (get-new-payment-details [db transaction-id])
   (complete-new-payment-and-exam-registration! [db registration-id payment-id after-fn])
   ; Other methods

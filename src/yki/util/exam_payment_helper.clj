@@ -40,26 +40,33 @@
   (initialise-payment-on-registration? [_]
     true))
 
-(defn registration->payment-description [url-helper registration]
-  ; TODO i18n based on selected language?
-  (let [sb (StringBuilder.)]
-    (.append sb "YKI-tutkintomaksu: ")
-    (.append sb (:exam_date registration))
-    (.append sb " ")
-    (.append sb (template-util/get-language url-helper (:language_code registration) "fi"))
-    (.append sb ", ")
-    (.append sb (template-util/get-level url-helper (:level_code registration) "fi"))
-    (.append sb "\n")
-    ; TODO Add participant details?
-    ;(.append sb "Osallistuja: ")
-    ;(.append sb )
-    ; TODO Add further organizer details?
+(defn- registration->payment-description
+  [url-helper registration]
+  (let [sb          (StringBuilder.)
+        {language-code           :language_code
+         level-code              :level_code
+         location-name           :name
+         exam-date               :exam_date
+         {first-name :first_name
+          last-name  :last_name} :form} registration
+        append-line (fn [& line-items]
+                      (.append sb (str/join ", " line-items))
+                      (.append sb "\n"))]
+    (append-line "Yleinen kielitutkinto (YKI): Tutkintomaksu")
+    ; Exam language and level
+    (append-line
+      (template-util/get-language url-helper language-code "fi")
+      (template-util/get-level url-helper level-code "fi"))
+    ; Exam location and date
+    (append-line location-name exam-date)
+   ; Participant name
+    (append-line last-name first-name)
     (.toString sb)))
 
-(defn create-payment-data [url-helper registration language amount]
+(defn- create-payment-data [url-helper registration language amount]
   (let [{registration-id   :id
-         ;location-name     :name
          exam-session-id   :exam_session_id
+         organizer-id      :organizer_id
          email             :email
          registration-form :form} registration
         callback-urls {"success" (url-helper :exam-payment-new.success-callback language)
@@ -69,7 +76,7 @@
      "reference"    (str/join "-"
                               ["YKI"
                                "EXAM"
-                               ; TODO Y-tunnus? Some other code uniquely identifying organizer?
+                               organizer-id
                                exam-session-id
                                registration-id
                                (random-uuid)])

@@ -617,6 +617,7 @@ SELECT re.id,
        esl.name,
        es.language_code,
        es.level_code,
+       es.organizer_id,
        ed.exam_date
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
