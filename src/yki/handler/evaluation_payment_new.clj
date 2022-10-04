@@ -75,16 +75,19 @@
                   order-data     (first (q/select-evaluation-order-with-subtests-by-order-id (:spec db) {:evaluation_order_id evaluation-order-id}))
                   template-data  (merge payment-details order-data)
                   updated?       (evaluation-db/complete-new-payment! db payment-id)
-                  handle-payment #(if updated?
-                                    (do
-                                      (audit/log {:request   request
-                                                  :target-kv {:k audit/evaluation-payment
-                                                              :v (:reference payment-details)}
-                                                  :change    {:type audit/create-op
-                                                              :new  (:params request)}})
-                                      (send-evaluation-order-completed-emails! email-q url-helper template-data lang)
-                                      (success-redirect url-helper lang evaluation-order-id))
-                                    (error-redirect url-helper lang evaluation-order-id))]
+                  handle-payment #(do
+                                    (audit/log {:request   request
+                                                :target-kv {:k audit/evaluation-payment
+                                                            :v (:reference payment-details)}
+                                                :change    {:type audit/create-op
+                                                            :new  (:params request)}})
+                                    ; Paytrail may call success endpoint multiple times.
+                                    ; Only send email on the first invocation.
+                                    ; Always redirect to payment success page, as otherwise the user
+                                    ; might be redirected to an error page even though the payment went through!
+                                    (when updated?
+                                      (send-evaluation-order-completed-emails! email-q url-helper template-data lang))
+                                    (success-redirect url-helper lang evaluation-order-id))]
               (handle-exceptions url-helper handle-payment lang evaluation-order-id))
             (do
               (log/error "Success callback invoked with unexpected parameters for transaction-id" transaction-id
