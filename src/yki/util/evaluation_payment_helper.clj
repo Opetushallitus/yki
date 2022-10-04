@@ -23,26 +23,49 @@
   (use-new-payments-api? [_]
     false))
 
-(defn- subtests->items [url-helper payment-config lang subtests]
+(defn- subtest->description
+  [url-helper evaluation-order subtest]
+  (let [sb          (StringBuilder.)
+        {language-code :language_code
+         level-code    :level_code
+         exam-date     :exam_date
+         first-names   :first_names
+         last-name     :last_name} evaluation-order
+        append-line (fn [& line-items]
+                      (.append sb (str/join ", " line-items))
+                      (.append sb "\n"))]
+    (append-line "Yleinen kielitutkinto (YKI): Tarkistusarviointi")
+    ; Exam language, level and subtest
+    (append-line
+      (template-util/get-language url-helper language-code "fi")
+      (template-util/get-level url-helper level-code "fi")
+      (template-util/get-subtest url-helper subtest "fi"))
+    ; Exam date
+    (append-line (str "Tutkintopäivä: " exam-date))
+    ; Participant name
+    (append-line last-name first-names)
+    (.toString sb)))
+
+(defn- subtests->items [url-helper payment-config evaluation-order-data]
   (let [subtest->amount (-> (:amount payment-config)
                             (update-keys name)
                             (update-vals #(amount->paytrail-amount (Double/parseDouble %))))]
-    (for [subtest subtests]
-      {"unitPrice"     (subtest->amount subtest)
-       "units"         1
-       "productCode"   subtest
-       "description"   (template-util/get-subtest url-helper subtest lang)
-       "vatPercentage" 0})))
+    (->> (for [subtest (:subtests evaluation-order-data)]
+           {"unitPrice"     (subtest->amount subtest)
+            "units"         1
+            "productCode"   subtest
+            "description"   (subtest->description url-helper evaluation-order-data subtest)
+            "vatPercentage" 0})
+         (into []))))
 
 (defn create-payment-data [url-helper payment-config evaluation-order-data payment-data]
   (let [{email       :email
          first-names :first_names
-         last-name   :last_name
-         subtests    :subtests} evaluation-order-data
+         last-name   :last_name} evaluation-order-data
         {order-number :order_number
          amount       :amount
          language     :lang} payment-data
-        items         (subtests->items url-helper payment-config language subtests)
+        items         (subtests->items url-helper payment-config evaluation-order-data)
         callback-urls {"success" (url-helper :evaluation-payment-new.success-callback language)
                        "cancel"  (url-helper :evaluation-payment-new.error-callback language)}]
     {"stamp"        (random-uuid)
