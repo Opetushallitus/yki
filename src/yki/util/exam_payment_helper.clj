@@ -59,11 +59,11 @@
       (template-util/get-level url-helper level-code "fi"))
     ; Exam location and date
     (append-line location-name exam-date)
-   ; Participant name
+    ; Participant name
     (append-line last-name first-name)
     (.toString sb)))
 
-(defn- create-payment-data [url-helper registration language amount]
+(defn create-payment-data [url-helper registration language amount]
   (let [{registration-id   :id
          exam-session-id   :exam_session_id
          organizer-id      :organizer_id

@@ -9,11 +9,14 @@
     [muuntaja.middleware :as middleware]
     [peridot.core :as peridot]
     [stub-http.core :refer [with-routes!]]
+    [yki.boundary.registration-db :as registration-db]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.handler.exam-payment-new]
     [yki.handler.routing :as routing]
-    [yki.util.paytrail-payments :refer [sign-request]]))
+    [yki.util.paytrail-payments :refer [sign-request]]
+    [yki.util.exam-payment-helper :refer [create-payment-data]]
+    [yki.util.template-util :as template-util]))
 
 (defn insert-prereq-data [f]
   (base/insert-base-data)
@@ -170,3 +173,45 @@
         (is (= "COMPLETED" (:state (select-registration))))
         (is (= "PAID" (:state (select-payment))))))))
 
+(deftest paytrail-payment-contents-test
+  (with-routes!
+    {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
+                                               :body   (slurp "test/resources/localisation.json")}}
+    (let [db                    (sql/->Boundary @embedded-db/conn)
+          url-helper            (base/create-url-helper (str "localhost:" port))
+          language              "fi"
+          amount                100
+          registration-id       1
+          participant-email     "test@user.com"
+          registration-data     (registration-db/get-registration-data-for-new-payment db registration-id participant-email)
+          paytrail-payment-data (create-payment-data url-helper registration-data language amount)
+          callback-urls         {"success" (url-helper :exam-payment-new.success-callback language)
+                                 "cancel"  (url-helper :exam-payment-new.error-callback language)}
+          customer-data         {"email"     (:email registration-data)
+                                 "firstName" (:first_name (:form registration-data))
+                                 "lastName"  (:last_name (:form registration-data))}
+          description-lines     ["Yleinen kielitutkinto (YKI): Tutkintomaksu"
+                                 (str/join ", " [(template-util/get-language url-helper (:language_code registration-data) language)
+                                                 (template-util/get-level url-helper (:level_code registration-data) language)])
+                                 (str/join ", " [(:name registration-data) (:exam_date registration-data)])
+                                 (str/join ", " [(:last_name (:form registration-data)) (:first_name (:form registration-data))])]
+          description           (-> (str/join "\n" description-lines)
+                                    (str "\n"))
+          items                 [{"description"   description
+                                  "productCode"   (str registration-id)
+                                  "unitPrice"     amount
+                                  "units"         1
+                                  "vatPercentage" 0}]]
+      (is (= {"amount"       amount
+              "currency"     "EUR"
+              "callbackUrls" callback-urls
+              "redirectUrls" callback-urls
+              "customer"     customer-data
+              "items"        items
+              "language"     (str/upper-case language)} (dissoc paytrail-payment-data "reference" "stamp")))
+      (is (str/starts-with? (paytrail-payment-data "reference")
+                            (str/join "-" ["YKI-EXAM"
+                                           (:organizer_id registration-data)
+                                           (:exam_session_id registration-data)
+                                           (:registration_id registration-data)])))
+      (is (uuid? (paytrail-payment-data "stamp"))))))
