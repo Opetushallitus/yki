@@ -1602,3 +1602,20 @@ SELECT
   test_mode
 FROM evaluation_payment_config WHERE id = 1;
 
+-- name: select-completed-new-exam-payments-for-timerange
+SELECT
+  epn.reference,
+  epn.amount,
+  epn.paid_at,
+  r.form,
+  es.language_code,
+  es.level_code,
+  ed.exam_date,
+  o.oid
+FROM exam_payment_new epn
+INNER JOIN registration r ON epn.registration_id = r.id
+INNER JOIN exam_session es ON r.exam_session_id = es.id
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+INNER JOIN organizer o on es.organizer_id = o.id
+WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= epn.paid_at AND
+      epn.paid_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;

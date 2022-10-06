@@ -169,6 +169,8 @@
     :handler participant-authenticated}
    {:pattern #".*/payment/notify"
     :handler any-access}
+   {:pattern #".*/api/payment/v2/report"
+    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
    {:pattern #".*/api/payment/v2/paytrail/.*"
     :handler any-access}
    {:pattern #".*/api/payment/v2/.*/redirect"

@@ -1,6 +1,7 @@
 (ns yki.handler.exam-payment-new
   (:require
     [clj-time.core :as t]
+    [clojure.data.csv :refer [write-csv]]
     [clojure.java.io :as jio]
     [clojure.java.jdbc :as jdbc]
     [clojure.string :as str]
@@ -9,8 +10,10 @@
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
     [ring.middleware.file]
-    [ring.util.http-response :refer [bad-request ok]]
+    [ring.util.http-response :refer [bad-request internal-server-error ok]]
     [yki.boundary.registration-db :as registration-db]
+    [yki.boundary.exam-payment-new-db :as payment-db]
+    [yki.boundary.organization :as organization]
     [yki.handler.payment :refer [cancel-redirect error-redirect success-redirect]]
     [yki.handler.routing :as routing]
     [yki.middleware.payment :refer [with-request-validation]]
@@ -18,8 +21,11 @@
     [yki.registration.email :as registration-email]
     [yki.util.db :refer [rollback-on-exception]]
     [yki.util.exam-payment-helper :refer [create-payment-for-registration! get-payment-amount-for-registration]]
-    [yki.util.audit-log :as audit])
-  (:import (java.io FileOutputStream InputStream)))
+    [yki.util.audit-log :as audit]
+    [yki.util.common :refer [format-datetime-for-csv-export]]
+    [yki.util.template-util :as template-util])
+  (:import (java.io ByteArrayInputStream FileOutputStream InputStream StringWriter)
+           (java.time LocalDate)))
 
 (defn- infer-content-type [headers]
   (let [content-type-string (headers "content-type")]
@@ -62,6 +68,55 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :payment.error-redirect lang (:exam_session_id registration))))
 
+(def report-csv-fields
+  ["Järjestäjä"
+   "Maksun aikaleima"
+   "Koepäivä"
+   "Kieli"
+   "Taso"
+   "Osallistujan nimi"
+   "Osallistujan sähköposti"
+   "Summa (€)"
+   "Maksun yksilöintitunnus"])
+
+(defn- payment-data->csv-row [url-helper {:keys [amount exam_date form language_code level_code organizer_name paid_at reference]}]
+  (let [last-name  (:last_name form)
+        first-name (:first_name form)
+        email      (:email form)]
+    [organizer_name
+     (format-datetime-for-csv-export paid_at)
+     exam_date
+     (template-util/get-language url-helper language_code "fi")
+     (template-util/get-level url-helper level_code "fi")
+     (str/join ", " [last-name first-name])
+     email
+     (->>
+       (/ amount 100)
+       (double)
+       (format "%.2f"))
+     reference]))
+
+(defn- payments-data->csv-input-stream [url-helper payments-data]
+  (let [writer       (StringWriter.)
+        payment-rows (->> payments-data
+                          (map #(payment-data->csv-row url-helper %))
+                          (sort-by (juxt first second)))]
+    (write-csv
+      writer
+      (into [report-csv-fields] payment-rows)
+      :separator \;
+      :quote? (constantly true))
+    (-> (.toString writer)
+        (.getBytes)
+        (ByteArrayInputStream.))))
+
+(defn- csv-response [{:keys [from to]} body]
+  (let [filename    (str "YKI_tutkintomaksut_" from "_" to ".csv")
+        csv-headers {"Content-Type"        "text/csv"
+                     "Content-Disposition" (str "attachment; filename=\"" filename "\"")}]
+    (-> (ok body)
+        (update :headers merge csv-headers))))
+
 (defmethod ig/init-key :yki.handler/exam-payment-new [_ {:keys [auth access-log db payment-helper url-helper email-q]}]
   {:pre [(some? auth) (some? access-log) (some? db) (some? email-q) (some? payment-helper) (some? url-helper)]}
   (api
@@ -79,7 +134,36 @@
             ; Registration details found, redirect based on registration state.
             (ok {:redirect (registration-redirect db payment-helper url-helper lang registration-details)})
             ; No registration matching given id and external-user-id from session.
-            (bad-request {:reason :registration-not-found})))))
+            (bad-request {:reason :registration-not-found}))))
+      (GET "/report" _
+        :query-params [from :- ::ys/date-type
+                       to :- ::ys/date-type]
+        (try
+          (let [from-inclusive     (LocalDate/parse from)
+                to-exclusive       (-> (LocalDate/parse to)
+                                       (.plusDays 1))
+                completed-payments (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)
+                organizer-oids      (->> completed-payments
+                                             (map :oid)
+                                             (distinct))
+                oid->organizer-name (->> (organization/get-organizations-by-oids url-helper organizer-oids)
+                                             (map (fn [org-data]
+                                                    [(get org-data "oid")
+                                                     (get-in org-data ["nimi" "fi"])]))
+                                             (into {}))
+                with-organizer-name (fn [{:keys [oid] :as val}]
+                                          (assoc val :organizer_name (oid->organizer-name oid)))]
+            (->> completed-payments
+                 (map with-organizer-name)
+                 (payments-data->csv-input-stream url-helper)
+                 (csv-response {:from from
+                                :to   to})))
+          (catch Exception e
+            (log/error e "Failed to generate payment report from" from "to" to)
+            (when-let [response (:response (ex-data e))]
+              (log/error "Response status code:" (:status response))
+              (log/error "Response body:" (:body response)))
+            (internal-server-error {})))))
     (context routing/paytrail-payment-root []
       :coercion :spec
       :no-doc true
@@ -92,7 +176,7 @@
               payment-details     (registration-db/get-new-payment-details db transaction-id)
               registration-id     (:registration_id payment-details)
               participant-details (registration-db/get-participant-data-by-registration-id db registration-id)
-              exam-session-id (:exam_session_id payment-details)]
+              exam-session-id     (:exam_session_id payment-details)]
           (if (and payment-details
                    (= (int (:amount payment-details))
                       (Integer/parseInt amount))
