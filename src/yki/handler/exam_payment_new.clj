@@ -139,20 +139,20 @@
         :query-params [from :- ::ys/date-type
                        to :- ::ys/date-type]
         (try
-          (let [from-inclusive     (LocalDate/parse from)
-                to-exclusive       (-> (LocalDate/parse to)
-                                       (.plusDays 1))
-                completed-payments (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)
+          (let [from-inclusive      (LocalDate/parse from)
+                to-exclusive        (-> (LocalDate/parse to)
+                                        (.plusDays 1))
+                completed-payments  (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)
                 organizer-oids      (->> completed-payments
-                                             (map :oid)
-                                             (distinct))
+                                         (map :oid)
+                                         (distinct))
                 oid->organizer-name (->> (organization/get-organizations-by-oids url-helper organizer-oids)
-                                             (map (fn [org-data]
-                                                    [(get org-data "oid")
-                                                     (get-in org-data ["nimi" "fi"])]))
-                                             (into {}))
+                                         (map (fn [org-data]
+                                                [(get org-data "oid")
+                                                 (get-in org-data ["nimi" "fi"])]))
+                                         (into {}))
                 with-organizer-name (fn [{:keys [oid] :as val}]
-                                          (assoc val :organizer_name (oid->organizer-name oid)))]
+                                      (assoc val :organizer_name (oid->organizer-name oid)))]
             (->> completed-payments
                  (map with-organizer-name)
                  (payments-data->csv-input-stream url-helper)
