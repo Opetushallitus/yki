@@ -117,6 +117,20 @@
     (-> (ok body)
         (update :headers merge csv-headers))))
 
+(defn- with-organizer-names [url-helper payments]
+  (when (seq payments)
+    (let [organizer-oids      (->> payments
+                                   (map :oid)
+                                   (distinct))
+          oid->organizer-name (->> (organization/get-organizations-by-oids url-helper organizer-oids)
+                                   (map (fn [org-data]
+                                          [(get org-data "oid")
+                                           (get-in org-data ["nimi" "fi"])]))
+                                   (into {}))
+          with-organizer-name (fn [{:keys [oid] :as val}]
+                                (assoc val :organizer_name (oid->organizer-name oid)))]
+      (map with-organizer-name payments))))
+
 (defmethod ig/init-key :yki.handler/exam-payment-new [_ {:keys [auth access-log db payment-helper url-helper email-q]}]
   {:pre [(some? auth) (some? access-log) (some? db) (some? email-q) (some? payment-helper) (some? url-helper)]}
   (api
@@ -139,22 +153,12 @@
         :query-params [from :- ::ys/date-type
                        to :- ::ys/date-type]
         (try
-          (let [from-inclusive      (LocalDate/parse from)
-                to-exclusive        (-> (LocalDate/parse to)
-                                        (.plusDays 1))
-                completed-payments  (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)
-                organizer-oids      (->> completed-payments
-                                         (map :oid)
-                                         (distinct))
-                oid->organizer-name (->> (organization/get-organizations-by-oids url-helper organizer-oids)
-                                         (map (fn [org-data]
-                                                [(get org-data "oid")
-                                                 (get-in org-data ["nimi" "fi"])]))
-                                         (into {}))
-                with-organizer-name (fn [{:keys [oid] :as val}]
-                                      (assoc val :organizer_name (oid->organizer-name oid)))]
+          (let [from-inclusive     (LocalDate/parse from)
+                to-exclusive       (-> (LocalDate/parse to)
+                                       (.plusDays 1))
+                completed-payments (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)]
             (->> completed-payments
-                 (map with-organizer-name)
+                 (with-organizer-names url-helper)
                  (payments-data->csv-input-stream url-helper)
                  (csv-response {:from from
                                 :to   to})))
