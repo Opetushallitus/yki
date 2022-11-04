@@ -209,16 +209,19 @@
         (let [{transaction-id "checkout-transaction-id"
                payment-status "checkout-status"} query-params
               payment-details (registration-db/get-new-payment-details db transaction-id)]
-          (log/info "Error callback invoked for transaction-id" transaction-id "with payment-status" payment-status)
+          (log/info "Error callback invoked for transaction-id" transaction-id
+                    "with payment-status" payment-status
+                    "while stored payment-status was" (:state payment-details))
+          (when (= "UNPAID" (:state payment-details))
+            (payment-db/mark-payment-as-cancelled! db (:id payment-details)))
           (if-let [exam-session-id (:exam_session_id payment-details)]
             (cancel-redirect url-helper lang exam-session-id)
-            (error-redirect url-helper lang nil))))
-      ; Report generation callback
-      (POST "/report" req
-        (let [body         (:body req)
-              headers      (:headers req)
-              content-type (infer-content-type headers)]
-          (log/info "REPORT callback invoked with headers:" headers)
-          (store-report! content-type body)
-          (ok {}))))))
-
+            (error-redirect url-helper lang nil)))))
+    ; Report generation callback
+    (POST "/report" req
+      (let [body         (:body req)
+            headers      (:headers req)
+            content-type (infer-content-type headers)]
+        (log/info "REPORT callback invoked with headers:" headers)
+        (store-report! content-type body)
+        (ok {})))))

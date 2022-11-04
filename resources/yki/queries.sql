@@ -632,6 +632,7 @@ SELECT p.id,
        p.amount,
        p.registration_id,
        p.reference,
+       p.state,
        r.exam_session_id
 FROM exam_payment_new p
 INNER JOIN registration r ON r.id = p.registration_id
@@ -711,6 +712,12 @@ SET state = 'PAID',
     paid_at = current_timestamp,
     updated = current_timestamp
 WHERE id = :id AND state != 'PAID';
+
+-- name: update-new-exam-payment-to-cancelled!
+UPDATE exam_payment_new
+SET state = 'ERROR',
+    updated = current_timestamp
+WHERE id = :id AND state = 'UNPAID';
 
 -- name: update-new-evaluation-payment-to-paid!
 UPDATE evaluation_payment_new
