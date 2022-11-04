@@ -17,7 +17,7 @@
 (defprotocol PaymentHelper
   (get-payment-redirect-url [this registration-id lang])
   (get-payment-amount-for-registration [this registration-details])
-  (create-payment-for-registration! [this tx registration language amount])
+  (create-or-return-payment-for-registration! [this tx registration language amount])
   (initialise-payment-on-registration? [this]))
 
 (defrecord LegacyPaymentHelper [db url-helper payment-config]
@@ -28,7 +28,7 @@
     (let [amount (registration->payment-amount payment-config registration-details)]
       {:email-template amount
        :paytrail       amount}))
-  (create-payment-for-registration! [_ tx registration language amount]
+  (create-or-return-payment-for-registration! [_ tx registration language amount]
     (let [order-number-seq (:nextval (first (q/select-next-order-number-suffix tx)))
           oid-last-part    (last (str/split (:oid registration) #"\."))
           order-number     (str "YKI" oid-last-part (format "%09d" order-number-seq))
@@ -105,17 +105,21 @@
        ; Unit of returned amount is EUR.
        ; Return corresponding amount in minor unit, ie. cents.
        :paytrail       (* 100 (int amount))}))
-  (create-payment-for-registration! [_ tx registration language amount]
-    (let [payment-data      (create-payment-data url-helper registration language amount)
-          paytrail-response (create-paytrail-payment! payment-config payment-data)
-          response-body     (:body paytrail-response)
-          exam-payment-data {:registration_id (:id registration)
-                             :amount          amount
-                             :reference       (payment-data "reference")
-                             :transaction_id  (response-body "transactionId")
-                             :href            (response-body "href")}]
-      (q/insert-new-exam-payment<! tx exam-payment-data)
-      response-body))
+  (create-or-return-payment-for-registration! [_ tx registration language amount]
+    (if-let [existing-payment-redirect-url (->> (q/select-unpaid-new-exam-payments-by-registration-id tx {:registration_id (:id registration)})
+                                                (first)
+                                                (:href))]
+      {"href" existing-payment-redirect-url}
+      (let [payment-data      (create-payment-data url-helper registration language amount)
+            paytrail-response (create-paytrail-payment! payment-config payment-data)
+            response-body     (:body paytrail-response)
+            exam-payment-data {:registration_id (:id registration)
+                               :amount          amount
+                               :reference       (payment-data "reference")
+                               :transaction_id  (response-body "transactionId")
+                               :href            (response-body "href")}]
+        (q/insert-new-exam-payment<! tx exam-payment-data)
+        response-body)))
   (initialise-payment-on-registration? [_]
     false))
 

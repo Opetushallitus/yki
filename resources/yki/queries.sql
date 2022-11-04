@@ -1619,3 +1619,8 @@ INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 INNER JOIN organizer o on es.organizer_id = o.id
 WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= epn.paid_at AND
       epn.paid_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
+
+-- name: select-unpaid-new-exam-payments-by-registration-id
+SELECT epn.href
+FROM exam_payment_new epn
+WHERE epn.registration_id = :registration_id AND epn.state = 'UNPAID';

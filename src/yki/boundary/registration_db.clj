@@ -4,7 +4,7 @@
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
             [yki.util.db :refer [rollback-on-exception]]
-            [yki.util.exam-payment-helper :refer [create-payment-for-registration! initialise-payment-on-registration?]])
+            [yki.util.exam-payment-helper :refer [create-or-return-payment-for-registration! initialise-payment-on-registration?]])
   (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
@@ -106,7 +106,7 @@
         tx
         #(when-let [update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
            (when (initialise-payment-on-registration? payment-helper)
-             (create-payment-for-registration! payment-helper tx registration language amount))
+             (create-or-return-payment-for-registration! payment-helper tx registration language amount))
            (after-fn)
            update-success))))
   (create-registration!
