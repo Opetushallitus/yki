@@ -554,18 +554,31 @@ AND EXISTS (SELECT id
             WHERE id = :exam_session_id
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
--- submitted registration expires 8 days from payment creation at midnight
--- name: update-submitted-registrations-to-expired<!
+-- submitted registration expires 8 days from payment creation at midnight,
+-- name: update-submitted-registrations-with-unpaid-legacy-payments-to-expired<!
 UPDATE registration
    SET state = 'EXPIRED',
     modified = current_timestamp
  WHERE state = 'SUBMITTED'
    AND id IN (SELECT r.id FROM payment p
-               INNER JOIN registration r ON r.id = p.registration_id
-               WHERE p.state = 'UNPAID'
-                 AND ((r.kind = 'ADMISSION' AND ts_older_than(p.created, interval '9 days'))
-                      OR (r.kind = 'POST_ADMISSION' AND ts_older_than(p.created, interval '2 days'))))
+              INNER JOIN registration r ON r.id = p.registration_id
+              WHERE p.state = 'UNPAID'
+                AND ((r.kind = 'ADMISSION' AND ts_older_than(p.created, interval '9 days'))
+                     OR (r.kind = 'POST_ADMISSION' AND ts_older_than(p.created, interval '2 days'))))
 RETURNING id as updated;
+
+-- submitted registration expires 8 days from creation at midnight
+-- name: update-submitted-registrations-without-paid-new-payments-to-expired<!
+UPDATE registration
+SET state = 'EXPIRED',
+    modified = current_timestamp
+WHERE state = 'SUBMITTED'
+  AND id IN
+      ((SELECT DISTINCT epn.registration_id FROM exam_payment_new epn WHERE epn.state != 'PAID')
+       EXCEPT
+       (SELECT DISTINCT epn.registration_id FROM exam_payment_new epn WHERE epn.state = 'PAID'))
+  AND ((kind = 'ADMISSION' AND ts_older_than(created, interval '9 days'))
+       OR (kind = 'POST_ADMISSION' AND ts_older_than(created, interval '2 days')));
 
 -- name: select-registration-data
 SELECT re.state,
@@ -591,6 +604,39 @@ WHERE re.id = :id
   AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
+
+-- name: select-registration-details-for-new-payment
+SELECT re.id,
+       re.exam_session_id,
+       re.participant_id,
+       re.kind,
+       re.form,
+       re.state,
+       p.email,
+       p.external_user_id,
+       esl.name,
+       es.language_code,
+       es.level_code,
+       es.organizer_id,
+       ed.exam_date
+FROM registration re
+INNER JOIN participant p ON p.id = re.participant_id
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+WHERE re.id = :id
+  AND p.external_user_id = :external_user_id;
+
+-- name: select-new-exam-payment-details
+SELECT p.id,
+       p.amount,
+       p.registration_id,
+       p.reference,
+       p.state,
+       r.exam_session_id
+FROM exam_payment_new p
+INNER JOIN registration r ON r.id = p.registration_id
+WHERE p.transaction_id = :transaction_id;
 
 -- name: select-registration-data-by-participant
 SELECT re.state,
@@ -630,7 +676,7 @@ WHERE
  id = (SELECT registration_id FROM payment WHERE order_number = :order_number) AND
  state != 'COMPLETED';
 
--- name: insert-payment<!
+-- name: insert-legacy-payment<!
 INSERT INTO payment(
   state,
   registration_id,
@@ -644,6 +690,47 @@ INSERT INTO payment(
   :lang,
   :order_number
 );
+
+-- name: insert-new-exam-payment<!
+INSERT INTO exam_payment_new(
+  state,
+  registration_id,
+  amount,
+  reference,
+  transaction_id,
+  href) VALUES (
+  'UNPAID',
+  :registration_id,
+  :amount,
+  :reference,
+  :transaction_id,
+  :href);
+
+-- name: update-new-exam-payment-to-paid!
+UPDATE exam_payment_new
+SET state = 'PAID',
+    paid_at = current_timestamp,
+    modified = current_timestamp
+WHERE id = :id AND state != 'PAID';
+
+-- name: update-new-exam-payment-to-cancelled!
+UPDATE exam_payment_new
+SET state = 'ERROR',
+    modified = current_timestamp
+WHERE id = :id AND state = 'UNPAID';
+
+-- name: update-new-evaluation-payment-to-paid!
+UPDATE evaluation_payment_new
+SET state = 'PAID',
+    paid_at = current_timestamp,
+    modified = current_timestamp
+WHERE id = :id AND state != 'PAID';
+
+-- name: update-exam-registration-status-to-completed<!
+UPDATE registration
+SET state = 'COMPLETED',
+    modified = current_timestamp
+WHERE id = :id AND state != 'COMPLETED';
 
 -- name: select-payment-by-registration-id
 SELECT
@@ -689,6 +776,22 @@ INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 WHERE pay.order_number = :order_number
   AND esl.lang = pay.lang;
+
+-- name: select-participant-data-by-registration-id
+SELECT p.email,
+       es.language_code,
+       es.level_code,
+       esl.name,
+       esl.street_address,
+       esl.zip,
+       esl.post_office,
+       ed.exam_date
+FROM registration re
+INNER JOIN participant p ON p.id = re.participant_id
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+WHERE re.id = :id;
 
 -- name: select-payment-by-order-number
 SELECT
@@ -814,17 +917,17 @@ SELECT
   r.id as registration_id,
   r.kind,
   r.original_exam_session_id,
-  pa.order_number,
-  pa.created
+  pa.order_number
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 LEFT JOIN payment pa ON pa.registration_id = r.id
 WHERE es.id = :id
 AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
 AND (r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
-    OR (r.state = 'EXPIRED' AND EXISTS (SELECT id
-                                        FROM payment
-                                        WHERE registration_id = r.id)))
+     OR (r.state = 'EXPIRED' AND EXISTS (SELECT id
+                                         FROM payment
+                                         WHERE registration_id = r.id))
+     OR (EXISTS (SELECT id from exam_payment_new WHERE registration_id = r.id)))
 ORDER BY r.created ASC;
 
 --name: update-registration-status-to-cancelled!
@@ -1308,9 +1411,6 @@ INSERT INTO evaluation_order_subtest (
   :subtest
 );
 
---name: select-subtests
-SELECT code from subtest;
-
 -- name: select-next-evaluation-order-number-suffix
 SELECT nextval('payment_order_number_seq');
 
@@ -1329,15 +1429,29 @@ INSERT INTO evaluation_payment(
   :order_number
 );
 
+--name: insert-initial-evaluation-payment-new<!
+INSERT INTO evaluation_payment_new(
+  state,
+  evaluation_order_id,
+  amount,
+  reference,
+  transaction_id,
+  href
+) VALUES (
+  'UNPAID',
+  :evaluation_order_id,
+  :amount,
+  :reference,
+  :transaction_id,
+  :href
+);
+
 --name: select-evaluation-order-by-id
 SELECT
   eo.id,
   edl.language_code,
   edl.level_code,
   ed.exam_date,
-  ep.amount,
-  ep.lang,
-  ep.state,
   (
     SELECT array_to_json(array_agg(subtest))
     FROM (
@@ -1349,9 +1463,23 @@ SELECT
 FROM evaluation_order eo
 INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
 INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
-INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE eo.id = :evaluation_order_id;
+
+--name: select-old-evaluation-payment-by-order-id
+SELECT
+  ep.amount,
+  ep.state
+FROM evaluation_payment ep
+WHERE ep.evaluation_order_id = :evaluation_order_id;
+
+--name: select-new-evaluation-payment-by-order-id
+SELECT
+  epn.amount,
+  epn.state,
+  epn.href
+FROM evaluation_payment_new epn
+WHERE epn.evaluation_order_id = :evaluation_order_id;
 
 --name: select-evaluation-order-with-payment
 SELECT
@@ -1393,6 +1521,16 @@ FROM evaluation_payment ep
 INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
 WHERE order_number = :order_number;
 
+-- name: select-evaluation-payment-new-by-transaction-id
+SELECT
+  epn.id,
+  epn.amount,
+  epn.state,
+  epn.evaluation_order_id,
+  epn.reference
+FROM evaluation_payment_new epn
+WHERE epn.transaction_id = :transaction_id;
+
 -- name: select-evaluation-order-data-by-order-number
 SELECT
   ep.state,
@@ -1426,6 +1564,30 @@ INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE order_number = :order_number;
 
+-- name: select-evaluation-order-with-subtests-by-order-id
+SELECT
+  eo.first_names,
+  eo.last_name,
+  eo.email,
+  eo.birthdate,
+  eo.created,
+  edl.language_code,
+  edl.level_code,
+  ed.exam_date,
+  (
+      SELECT array_to_json(array_agg(subtest))
+      FROM (
+               SELECT subtest
+               FROM evaluation_order_subtest
+               WHERE evaluation_order_id= eo.id
+           ) subtest
+  ) AS subtests
+FROM evaluation_order eo
+INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
+INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
+INNER JOIN exam_date ed on edl.exam_date_id = ed.id
+WHERE eo.id = :evaluation_order_id;
+
 -- name: update-evaluation-payment!
  UPDATE evaluation_payment
  SET
@@ -1447,3 +1609,25 @@ SELECT
   test_mode
 FROM evaluation_payment_config WHERE id = 1;
 
+-- name: select-completed-new-exam-payments-for-timerange
+SELECT
+  epn.reference,
+  epn.amount,
+  epn.paid_at,
+  r.form,
+  es.language_code,
+  es.level_code,
+  ed.exam_date,
+  o.oid
+FROM exam_payment_new epn
+INNER JOIN registration r ON epn.registration_id = r.id
+INNER JOIN exam_session es ON r.exam_session_id = es.id
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+INNER JOIN organizer o on es.organizer_id = o.id
+WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= epn.paid_at AND
+      epn.paid_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
+
+-- name: select-unpaid-new-exam-payments-by-registration-id
+SELECT epn.href
+FROM exam_payment_new epn
+WHERE epn.registration_id = :registration_id AND epn.state = 'UNPAID';

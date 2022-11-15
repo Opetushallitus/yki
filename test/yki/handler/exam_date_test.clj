@@ -54,7 +54,7 @@
 
 (deftest exam-date-new-date-test
 
-  (base/insert-organizer "'1.2.3.4'")
+  (base/insert-organizer (:oid base/organizer))
 
   (testing "creating a new exam date adds a new exam date entity to the system"
     (let [new-dates       {:exam_date "2041-06-07"}
@@ -94,7 +94,7 @@
       (is (= (:status response) 409)))))
 
 (deftest exam-date-delete-date-test
-  (base/insert-organizer "'1.2.3.4'")
+  (base/insert-organizer (:oid base/organizer))
 
   (let [new-dates       {:exam_date "2040-06-07"}
         exam-date-entry (create-exam-date-entry new-dates)]
@@ -116,7 +116,7 @@
   (testing "cannot delete an exam date that has exam sessions assigned to it"
     (base/insert-custom-exam-date "2039-10-01" "2039-10-01" "2039-10-30")
     (let [date-id        (get-exam-date-id-by-date "2039-10-01")
-          insert-session (base/insert-exam-session date-id "'1.2.3.4'" 5)
+          insert-session (base/insert-exam-session date-id (:oid base/organizer) 5)
           response       (delete-exam-date date-id)
           response-body  (base/body-as-json response)]
       (is (= (get-success-status response-body) false))
@@ -124,7 +124,7 @@
 
 (deftest exam-date-language-test
 
-  (base/insert-organizer "'1.2.3.4'")
+  (base/insert-organizer (:oid base/organizer))
 
   (let [post-exam-date-languages (fn [id exam-date-languages]
                                    (let [request (-> (mock/request :post (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id "/languages")) exam-date-languages)
@@ -186,7 +186,7 @@
     (testing "cannot delete a language from an exam date that has exam sessions assigned to it"
       (let [exam-date-id        (get-exam-date-id-by-date "2039-10-12")
             language            (slurp "test/resources/language_eng.json")
-            _                   (base/insert-exam-session exam-date-id "'1.2.3.4'" 5)
+            _                   (base/insert-exam-session exam-date-id (:oid base/organizer) 5)
             response            (delete-exam-date-languages exam-date-id language)
             response-body       (base/body-as-json response)
             exam-date-languages (base/select (base/select-exam-date-languages-by-date-id exam-date-id))]

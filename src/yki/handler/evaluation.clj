@@ -7,7 +7,9 @@
             [yki.boundary.evaluation-db :as evaluation-db]
             [yki.handler.routing :as routing]
             [yki.spec :as ys]
-            [yki.util.common :as common]))
+            [yki.util.common :as common]
+            [yki.util.evaluation-payment-helper :refer [order-id->payment-data use-new-payments-api?]]
+            [yki.util.paytrail-payments :refer [sign-string]]))
 
 (defn- evaluation-not-found [evaluation_id]
   (log/info "Evaluation not found with id" evaluation_id)
@@ -26,18 +28,27 @@
         sanitized   (update-vals text-fields sanitizer)]
     (merge raw-order sanitized)))
 
-(defmethod ig/init-key :yki.handler/evaluation [_ {:keys [db payment-config]}]
-  {:pre [(some? db) (some? payment-config)]}
+(defmethod ig/init-key :yki.handler/evaluation [_ {:keys [db payment-helper]}]
+  {:pre [(some? db) (some? payment-helper)]}
   (context routing/evaluation-root []
     :coercion :spec
     (GET "/" []
       :return ::ys/evaluation-periods-response
       (ok {:evaluation_periods (evaluation-db/get-upcoming-evaluation-periods db)}))
 
+    ; Unauthenticated endpoint
+    ; Called when rendering evaluation payment status
     (GET "/order/:id" []
       :path-params [id :- ::ys/id]
+      :query-params [lang :- ::ys/language-code]
       ;; :return ::ys/evaluation-response
-      (ok (evaluation-db/get-evaluation-order-by-id db id)))
+      (let [lang         (or lang "fi")
+            order-data   (evaluation-db/get-evaluation-order-by-id db id)
+            payment-data (-> (order-id->payment-data payment-helper id)
+                             (select-keys [:state :amount]))]
+        (-> order-data
+            (merge payment-data)
+            (assoc :lang lang))))
 
     (context "/:id" []
       (GET "/" []
@@ -54,6 +65,7 @@
         :return ::ys/evaluation-order-response
         (let [order            (sanitize-order raw-order)
               evaluation       (evaluation-db/get-evaluation-period-by-id db id)
+              payment-config   (:payment-config payment-helper)
               price-config     (:amount payment-config)
               missing-config   (fn [subtest] (when (not (contains? price-config (keyword subtest)))
                                                subtest))
@@ -81,7 +93,11 @@
                     init-payment-data {:evaluation_order_id order-id
                                        :lang                (or lang "fi")
                                        :amount              final-price}]
-                (evaluation-db/create-evaluation-payment! db init-payment-data)
-                (ok {:evaluation_order_id order-id}))
+                (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data)
+                (if (use-new-payments-api? payment-helper)
+                  (ok {:evaluation_order_id          order-id
+                       :use_new_payments_integration (use-new-payments-api? payment-helper)
+                       :signature                    (sign-string (:payment-config payment-helper) (str order-id))})
+                  (ok {:evaluation_order_id          order-id})))
               (internal-server-error {:success false
                                       :error   "Failed to create a new evaluation order"}))))))))

@@ -196,4 +196,3 @@
     [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (q/deactivate-exam-session-post-admission! tx {:exam_session_id id}))))
-

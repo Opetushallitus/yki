@@ -167,11 +167,13 @@
         (is (= (get-in response [:response :status]) 302))))))
 
 (deftest user-with-organizer-role-authorization-test
-  (base/insert-organizer "'1.2.3.4'")
-  (base/insert-organizer "'1.2.3.5'")
-  (base/insert-languages "'1.2.3.4'")
-  (base/insert-languages "'1.2.3.5'")
-  (base/insert-exam-dates)
+  (let [org-1-oid "1.2.3.4"
+        org-2-oid "1.2.3.5"]
+    (base/insert-organizer org-1-oid)
+    (base/insert-organizer org-2-oid)
+    (base/insert-languages org-1-oid)
+    (base/insert-languages org-2-oid)
+    (base/insert-exam-dates))
 
   (with-routes!
     (fn [server]
@@ -199,7 +201,7 @@
         (is (= (-> exam-responses :get :response :status) 200))))))
 
 (deftest user-with-admin-permissions-authorization-test
-  (base/insert-organizer "'1.2.3.5'")
+  (base/insert-organizer "1.2.3.5")
   (base/insert-exam-dates)
 
   (with-routes!
