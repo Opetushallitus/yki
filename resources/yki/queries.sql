@@ -710,20 +710,20 @@ INSERT INTO exam_payment_new(
 UPDATE exam_payment_new
 SET state = 'PAID',
     paid_at = current_timestamp,
-    updated = current_timestamp
+    modified = current_timestamp
 WHERE id = :id AND state != 'PAID';
 
 -- name: update-new-exam-payment-to-cancelled!
 UPDATE exam_payment_new
 SET state = 'ERROR',
-    updated = current_timestamp
+    modified = current_timestamp
 WHERE id = :id AND state = 'UNPAID';
 
 -- name: update-new-evaluation-payment-to-paid!
 UPDATE evaluation_payment_new
 SET state = 'PAID',
     paid_at = current_timestamp,
-    updated = current_timestamp
+    modified = current_timestamp
 WHERE id = :id AND state != 'PAID';
 
 -- name: update-exam-registration-status-to-completed<!
