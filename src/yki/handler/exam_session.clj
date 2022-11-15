@@ -12,7 +12,7 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
-    [yki.registration.paytrail-payment :as paytrail-payment]
+    [yki.registration.payment-e2 :as paytrail-payment]
     [yki.util.audit-log :as audit-log]
     [yki.spec :as ys]))
 
@@ -194,10 +194,12 @@
             (POST "/confirm-payment" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response
-              (let [payment (registration-db/get-payment-by-registration-id db registration-id oid)]
+              ; Handler for marking a payment as paid through the organizer UI.
+              ; Nothing corresponding to this for registrations with payments through the new payment integration.
+              (let [payment (registration-db/get-legacy-payment-by-registration-id db registration-id oid)]
                 (if payment
                   (do
-                    (paytrail-payment/handle-payment-success db email-q url-helper {:order-number (:order_number payment)})
+                    (paytrail-payment/handle-legacy-exam-payment-success db email-q url-helper {:order-number (:order_number payment)})
                     (audit-log/log {:request   request
                                     :target-kv {:k audit-log/registration
                                                 :v registration-id}

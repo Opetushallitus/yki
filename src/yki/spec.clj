@@ -1,12 +1,9 @@
-
 (ns yki.spec
   (:require
-   [clj-time.format :as f]
-   [clojure.spec.alpha :as s]
-   [clojure.string :as str]
-   [spec-tools.spec :as spec]
-   [spec-tools.core :as st])
-
+    [clj-time.format :as f]
+    [clojure.spec.alpha :as s]
+    [clojure.string :as str]
+    [spec-tools.core :as st])
   (:import [org.joda.time DateTime]))
 
 ;; common
@@ -14,7 +11,6 @@
 (def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
-(def ssn-without-identifier-regexp #"[\d]{6}[+\-A-Za-z]")
 (def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,30}|0)){3,13}$")
 
 (defn- empty-or-match [value regexp]
@@ -23,8 +19,8 @@
 (s/def ::ssn (s/and (s/nilable string?) #(empty-or-match % ssn-regexp)))
 (s/def ::amount (s/and string? #(re-matches amount-regexp %)))
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
-(s/def ::language-code  #{"fi" "sv" "en"})
-(s/def ::gender-code  #{"" "1" "2"})
+(s/def ::language-code #{"fi" "sv" "en"})
+(s/def ::gender-code #{"" "1" "2"})
 
 (defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
@@ -32,51 +28,51 @@
 
 (s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))
 (s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION" "OTHER"})
-(s/def ::date-type         (st/spec
-                            {:spec (partial date?)
-                             :type :date-time
-                             :json-schema/default "2018-01-01T00:00:00Z"}))
-(s/def ::time         (s/and string? #(re-matches time-regex %)))
-(s/def ::email-type   (s/and string? #(re-matches email-regex %)))
-(s/def ::oid          (s/and string? #(re-matches oid-regex %)))
-(s/def ::id           pos-int?)
-(s/def ::email        ::email-type)
+(s/def ::date-type (st/spec
+                     {:spec                (partial date?)
+                      :type                :date-time
+                      :json-schema/default "2018-01-01T00:00:00Z"}))
+(s/def ::time (s/and string? #(re-matches time-regex %)))
+(s/def ::email-type (s/and string? #(re-matches email-regex %)))
+(s/def ::oid (s/and string? #(re-matches oid-regex %)))
+(s/def ::id pos-int?)
+(s/def ::email ::email-type)
 
 ;; organizer
 (s/def ::agreement_start_date ::date-type)
-(s/def ::agreement_end_date   ::date-type)
-(s/def ::created              ::date-type)
-(s/def ::contact_name         (s/and string? #(<= (count %) 256)))
-(s/def ::language_code        ::exam-language-code)
-(s/def ::level_code           (s/and string? #(<= (count %) 16)))
-(s/def ::success              boolean?)
-(s/def ::error                string?)
-(s/def ::contact_email        ::email-type)
+(s/def ::agreement_end_date ::date-type)
+(s/def ::created ::date-type)
+(s/def ::contact_name (s/and string? #(<= (count %) 256)))
+(s/def ::language_code ::exam-language-code)
+(s/def ::level_code (s/and string? #(<= (count %) 16)))
+(s/def ::success boolean?)
+(s/def ::error string?)
+(s/def ::contact_email ::email-type)
 (s/def ::contact_shared_email (s/nilable ::email-type))
-(s/def ::extra                (s/and (s/nilable string?) #(<= (count %) 1024)))
+(s/def ::extra (s/and (s/nilable string?) #(<= (count %) 1024)))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
-(s/def ::external_id          (s/and string? #(<= (count %) 64)))
-(s/def ::external-id-type     (s/keys :req-un [::external_id]))
-(s/def ::language             (s/keys :req-un [::language_code]
-                                      :opt-un [::level_code]))
-(s/def ::exam-date-language   (s/keys :req-un [::language_code
-                                               ::level_code]))
-(s/def ::attachment           (s/keys :req-un [::external_id
-                                               ::created]))
-(s/def ::languages            (s/or :null nil? :array (s/coll-of ::language)))
-(s/def ::attachments          (s/or :null nil? :array (s/coll-of ::attachment)))
-(s/def ::merchant_id          (s/nilable pos-int?))
-(s/def ::merchant_secret      (s/nilable (s/and string? #(<= (count %) 30))))
-(s/def ::merchant             (s/nilable (s/keys :req-un [::merchant_id ::merchant_secret])))
-(s/def ::organizer-type       (s/keys :req-un [::oid
-                                               ::agreement_start_date
-                                               ::agreement_end_date
-                                               ::contact_name
-                                               ::contact_email
-                                               ::contact_phone_number]
-                                      :opt-un [::languages
-                                               ::extra
-                                               ::merchant]))
+(s/def ::external_id (s/and string? #(<= (count %) 64)))
+(s/def ::external-id-type (s/keys :req-un [::external_id]))
+(s/def ::language (s/keys :req-un [::language_code]
+                          :opt-un [::level_code]))
+(s/def ::exam-date-language (s/keys :req-un [::language_code
+                                             ::level_code]))
+(s/def ::attachment (s/keys :req-un [::external_id
+                                     ::created]))
+(s/def ::languages (s/or :null nil? :array (s/coll-of ::language)))
+(s/def ::attachments (s/or :null nil? :array (s/coll-of ::attachment)))
+(s/def ::merchant_id (s/nilable pos-int?))
+(s/def ::merchant_secret (s/nilable (s/and string? #(<= (count %) 30))))
+(s/def ::merchant (s/nilable (s/keys :req-un [::merchant_id ::merchant_secret])))
+(s/def ::organizer-type (s/keys :req-un [::oid
+                                         ::agreement_start_date
+                                         ::agreement_end_date
+                                         ::contact_name
+                                         ::contact_email
+                                         ::contact_phone_number]
+                                :opt-un [::languages
+                                         ::extra
+                                         ::merchant]))
 
 (s/def ::organizers (s/coll-of ::organizer-type))
 (s/def ::organizers-response (s/keys :req-un [::organizers]))
@@ -84,11 +80,11 @@
                           :opt-un [::error]))
 
 ;; exam-session-location
-(s/def ::name                 (s/and string? #(<= (count %) 256)))
-(s/def ::other_location_info  (s/and string? #(<= (count %) 1024)))
-(s/def ::lang                 ::language-code)
-(s/def ::extra_information    (s/and (s/nilable string?) #(<= (count %) 1024)))
-(s/def ::exam_session_id      pos-int?)
+(s/def ::name (s/and string? #(<= (count %) 256)))
+(s/def ::other_location_info (s/and string? #(<= (count %) 1024)))
+(s/def ::lang ::language-code)
+(s/def ::extra_information (s/and (s/nilable string?) #(<= (count %) 1024)))
+(s/def ::exam_session_id pos-int?)
 
 (s/def ::exam-session-location (s/keys :req-un [::name
                                                 ::post_office
@@ -114,25 +110,25 @@
                                        ::organizer_oid]))
 
 ;; exam-session
-(s/def ::organizer_oid              ::oid)
-(s/def ::office_oid                 (s/nilable ::oid))
-(s/def ::session_date               ::date-type)
-(s/def ::max_participants           pos-int?)
-(s/def ::published_at               (s/nilable ::date-type))
-(s/def ::participants               int?)
-(s/def ::exam_fee                   ::amount)
-(s/def ::open                       boolean?)
-(s/def ::queue_full                 boolean?)
-(s/def ::queue                      int?)
-(s/def ::from                       ::date-type)
-(s/def ::days                       int?)
+(s/def ::organizer_oid ::oid)
+(s/def ::office_oid (s/nilable ::oid))
+(s/def ::session_date ::date-type)
+(s/def ::max_participants pos-int?)
+(s/def ::published_at (s/nilable ::date-type))
+(s/def ::participants int?)
+(s/def ::exam_fee ::amount)
+(s/def ::open boolean?)
+(s/def ::queue_full boolean?)
+(s/def ::queue int?)
+(s/def ::from ::date-type)
+(s/def ::days int?)
 ; post admission extensions for exam-session
-(s/def ::post_admission_quota      (s/nilable pos-int?))
+(s/def ::post_admission_quota (s/nilable pos-int?))
 (s/def ::post_admission_start_date (s/nilable ::date-type))
-(s/def ::post_admission_end_date   (s/nilable ::date-type))
-(s/def ::post_admission_active     boolean?)
+(s/def ::post_admission_end_date (s/nilable ::date-type))
+(s/def ::post_admission_active boolean?)
 ; exam-session-contact
-(s/def ::contact                    (s/nilable (s/coll-of ::contact-type)))
+(s/def ::contact (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
                                        ::language_code
                                        ::level_code
@@ -164,13 +160,13 @@
 (s/def ::id-response (s/keys :req-un [::id]))
 
 ;; exam date
-(s/def ::exam_date                 ::date-type)
-(s/def ::registration_start_date   ::date-type)
-(s/def ::registration_end_date     ::date-type)
-(s/def ::post_admission_end_date   (s/nilable ::date-type))
+(s/def ::exam_date ::date-type)
+(s/def ::registration_start_date ::date-type)
+(s/def ::registration_end_date ::date-type)
+(s/def ::post_admission_end_date (s/nilable ::date-type))
 (s/def ::post_admission_enabled boolean?)
-(s/def ::exam_session_count         int?)
-(s/def ::languages      (s/or :null nil? :array (s/coll-of ::exam-date-language)))
+(s/def ::exam_session_count int?)
+(s/def ::languages (s/or :null nil? :array (s/coll-of ::exam-date-language)))
 
 (s/def ::exam-date-type (s/keys :req-un [::exam_date
                                          ::registration_start_date
@@ -183,7 +179,7 @@
                                          ::exam_session_count]))
 
 (s/def ::dates (s/coll-of ::exam-date-type))
-(s/def ::date      ::exam-date-type)
+(s/def ::date ::exam-date-type)
 (s/def ::single-exam-date-response (s/keys :req-un [::date]))
 (s/def ::exam-date-response (s/keys :req-un [::dates]))
 
@@ -191,7 +187,7 @@
 (s/def ::exam-date-post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_enabled]))
 
 (s/def ::evaluation_start_date (s/nilable ::date-type))
-(s/def ::evaluation_end_date   (s/nilable ::date-type))
+(s/def ::evaluation_end_date (s/nilable ::date-type))
 (s/def ::exam-date-evaluation (s/keys :req-un [::evaluation_start_date ::evaluation_end_date]))
 
 
@@ -202,22 +198,17 @@
 
 ;; localisation
 (s/def ::category (s/and string? #(<= (count %) 256)))
-(s/def ::key      (s/and string? #(<= (count %) 256)))
+(s/def ::key (s/and string? #(<= (count %) 256)))
 
 ;; login link
-(s/def ::exam_session_id        ::id)
-(s/def ::user_data              (s/and string? #(<= (count %) 2560)))
+(s/def ::exam_session_id ::id)
+(s/def ::user_data (s/and string? #(<= (count %) 2560)))
 
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
                             :opt-un [::user_data]))
 
-(defn- parse-int [int-str]
-  (try (Integer/parseInt int-str)
-       (catch Throwable _)))
-
 ;; payment
-(def pt-order-number-regex #"/^[0-9a-zA-Z()\[\]{}*+\-_,. ]{1,64}$/")
 (def pt-locale-regexp #"^[a-z]{1,2}[_][A-Z]{1,2}$")
 
 (s/def ::timestamp date?)
@@ -275,19 +266,21 @@
 (s/def ::phone_number ::non-blank-string)
 
 (s/def ::registration (s/keys
-                       :req-un [::first_name
-                                ::last_name
-                                ::nationalities
-                                ::certificate_lang
-                                ::exam_lang
-                                (or ::birthdate ::ssn)
-                                ::post_office
-                                ::zip
-                                ::street_address
-                                ::phone_number
-                                ::email]
-                       :opt-un [::gender
-                                ::nationality_desc]))
+                        :req-un [::first_name
+                                 ::last_name
+                                 ::nationalities
+                                 ::certificate_lang
+                                 ::exam_lang
+                                 ; TODO FIXME Should be s/or instead or some other refactoring?
+                                 ;  Currently returns always just ::birthdate.
+                                 (or ::birthdate ::ssn)
+                                 ::post_office
+                                 ::zip
+                                 ::street_address
+                                 ::phone_number
+                                 ::email]
+                        :opt-un [::gender
+                                 ::nationality_desc]))
 
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
@@ -317,27 +310,25 @@
                                                      ::registration_id]))
 
 ;; exam session participant
-(s/def ::state                    ::non-blank-string)
-(s/def ::form                     ::registration)
-(s/def ::kind                     ::registration-kind)
+(s/def ::state ::non-blank-string)
+(s/def ::form ::registration)
+(s/def ::kind ::registration-kind)
 (s/def ::original_exam_session_id (s/nilable ::id))
-(s/def :participant/order_number  (s/nilable ::order-number))
-(s/def :participant/created       (s/nilable ::created))
+(s/def :participant/order_number (s/nilable ::order-number))
 (s/def ::exam-session-participant (s/keys :req-un [::form
                                                    ::registration_id
-                                                   :participant/created
                                                    :participant/order_number
                                                    ::original_exam_session_id
                                                    ::kind
                                                    ::state]))
 (s/def :exam-session/participants (s/coll-of ::exam-session-participant))
-(s/def ::participants-response    (s/keys :req-un [:exam-session/participants]))
+(s/def ::participants-response (s/keys :req-un [:exam-session/participants]))
 
 ;; YKI register sync
-(s/def :sync/type         #{"CREATE" "UPDATE" "DELETE"})
-(s/def :sync/created      number?)
-(s/def ::exam-session-id  (s/nilable ::id))
-(s/def ::organizer-oid    (s/nilable ::oid))
+(s/def :sync/type #{"CREATE" "UPDATE" "DELETE"})
+(s/def :sync/created number?)
+(s/def ::exam-session-id (s/nilable ::id))
+(s/def ::organizer-oid (s/nilable ::oid))
 (s/def ::activate boolean?)
 
 (s/def ::data-sync-request (s/keys :req [:sync/type
@@ -348,6 +339,7 @@
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
 
+; TODO Could these be actual numbers instead?
 (s/def ::PERUS ::non-blank-string)
 (s/def ::KESKI ::non-blank-string)
 (s/def ::YLIN ::non-blank-string)
@@ -368,8 +360,8 @@
 (s/def ::pricing-type (s/keys :req-un [::exam-prices
                                        ::evaluation-prices]))
 ;; Re-evaluation period
-(s/def ::evaluation_start_date   ::date-type)
-(s/def ::evaluation_end_date     ::date-type)
+(s/def ::evaluation_start_date ::date-type)
+(s/def ::evaluation_end_date ::date-type)
 
 (s/def ::evaluation-period (s/keys :req-un [::id
                                             ::exam_date
@@ -387,23 +379,23 @@
 (s/def ::subtests (s/coll-of ::subtest-kind))
 
 (s/def ::evaluation-order (s/keys
-                           :req-un [::first_names
-                                    ::last_name
-                                    ::email
-                                    ::birthdate
-                                    ::subtests]))
+                            :req-un [::first_names
+                                     ::last_name
+                                     ::email
+                                     ::birthdate
+                                     ::subtests]))
 
-(s/def ::evaluation_order_id      pos-int?)
+(s/def ::evaluation_order_id pos-int?)
 (s/def ::evaluation-order-response (s/keys :req-un [::evaluation_order_id]))
 
 (s/def ::evaluation-response (s/keys
-                              :req-un [::id
-                                       ::language_code
-                                       ::level_code
-                                       ::exam_date
-                                       ::subtests
-                                       ::lang
-                                       ::amount]))
+                               :req-un [::id
+                                        ::language_code
+                                        ::level_code
+                                        ::exam_date
+                                        ::subtests
+                                        ::lang
+                                        ::amount]))
 
 (s/def ::params (s/keys :req-un [::MERCHANT_ID
                                  ::LOCALE
@@ -418,3 +410,4 @@
 
 (s/def ::evaluation-payment-form-data (s/keys :req-un [::uri
                                                        ::params]))
+

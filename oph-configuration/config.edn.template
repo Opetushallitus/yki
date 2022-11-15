@@ -14,7 +14,19 @@
                         :oppija-sub-domain   "yki."
                         :yki-register-host   "{{yki_register_host}}"
                         :yki-host-virkailija "{{host_ilb}}"}
-
+  :yki.util/exam-payment-helper {:payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"
+                                                           :KESKI "{{yki_exam_session_fee_intermediate}}"
+                                                           :YLIN  "{{yki_exam_session_fee_advanced}}"}
+                                             :merchant-id "{{yki_examination_paytrail_merchant_id | default('placeholder')}}"
+                                             :merchant-secret "{{yki_examination_paytrail_merchant_secret | default('placeholder')}}"
+                                             :use-new-payments-api? {{yki_examination_use_new_payments | default('false')}}}}
+  :yki.util/evaluation-payment-helper {:payment-config {:amount {:READING "{{yki_exam_session_fee_reading}}"
+                                                                 :LISTENING "{{yki_exam_session_fee_listening}}"
+                                                                 :WRITING "{{yki_exam_session_fee_writing}}"
+                                                                 :SPEAKING "{{yki_exam_session_fee_speaking}}"}
+                                                        :merchant-id "{{yki_evaluation_paytrail_merchant_id | default('placeholder')}}"
+                                                        :merchant-secret "{{yki_evaluation_paytrail_merchant_secret | default('placeholder')}}"
+                                                        :use-new-payments-api? {{yki_evaluation_use_new_payments | default('false')}}}}
   :yki.middleware.access-log/with-logging {:env "{{ymparisto}}"}
 
   :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
@@ -53,13 +65,6 @@
                                                 :WRITING "{{yki_exam_session_fee_writing}}"
                                                 :SPEAKING "{{yki_exam_session_fee_speaking}}"
                                               }}}
-
-:yki.handler/evaluation { :db #ig/ref :duct.database/sql
-                          :payment-config {:amount {:READING "{{yki_exam_session_fee_reading}}"
-                                                          :LISTENING "{{yki_exam_session_fee_listening}}"
-                                                          :WRITING "{{yki_exam_session_fee_writing}}"
-                                                          :SPEAKING "{{yki_exam_session_fee_speaking}}"
-                                                          }}}
 
 :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
                                   :payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"
