@@ -53,6 +53,8 @@
       (assoc
         basic-fields
         :syntymaaika birthdate
+        ; TODO Consider removing the email identifier or replacing it with some other identifier
+        ; guaranteed (or VERY likely) to point to a unique YKI registree
         :identifications [{:idpEntityId "oppijaToken" :identifier email}]
         :eiSuomalaistaHetua true))))
 
@@ -207,7 +209,9 @@
                          onr-client
                          (extract-person-from-registration
                            form-with-email
-                           (:ssn identity))))]
+                           (or
+                             (:ssn identity)
+                             (:ssn form)))))]
         (let [amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
               update-registration     {:id             registration-id
                                        :form           form-with-email
