@@ -30,35 +30,6 @@
   (:id (registration-db/get-or-create-participant! db {:external_user_id (:external-user-id identity)
                                                        :email            nil})))
 
-(defn- extract-nationalities
-  [nationalities]
-  (map (fn [n] {:kansalaisuusKoodi n}) nationalities))
-
-(defn- extract-person-from-registration
-  [{:keys [email first_name last_name gender exam_lang nationalities birthdate]} ssn]
-  (let [basic-fields {:yhteystieto   [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
-                                       :yhteystietoArvo   email}]
-                      :etunimet      first_name
-                      :kutsumanimi   (first (str/split first_name #" "))
-                      :sukunimi      last_name
-                      :sukupuoli     (if (str/blank? gender) nil gender)
-                      :asiointiKieli {:kieliKoodi exam_lang}
-                      :kansalaisuus  (extract-nationalities nationalities)
-                      :henkiloTyyppi "OPPIJA"}]
-    (if ssn
-      (assoc
-        basic-fields
-        :hetu (str/upper-case ssn)
-        :eiSuomalaistaHetua false)
-      (assoc
-        basic-fields
-        :syntymaaika birthdate
-        ; TODO Consider removing the email identifier or replacing it with some other identifier
-        ; guaranteed (or VERY likely) to point to a unique YKI registree
-        :identifications [{:idpEntityId "oppijaToken" :identifier email}]
-        :eiSuomalaistaHetua true))))
-
-
 (defn- sanitized-form [form]
   (let [text-fields (dissoc form :nationalities)
         sanitizer   (partial common/sanitized-string "_")
@@ -207,11 +178,7 @@
       (if-let [oid (or (:oid identity)
                        (onr/get-or-create-person
                          onr-client
-                         (extract-person-from-registration
-                           form-with-email
-                           (or
-                             (:ssn identity)
-                             (:ssn form)))))]
+                         (assoc form-with-email :registration_id registration-id)))]
         (let [amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
               update-registration     {:id             registration-id
                                        :form           form-with-email
