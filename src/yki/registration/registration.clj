@@ -91,7 +91,7 @@
   [db session {:keys [exam_session_id]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
   (let [participant-id          (get-or-create-participant db (:identity session))
-        started-registration-id (registration-db/started-registration-id-by-participant db participant-id exam_session_id)]
+        started-registration-id (registration-db/get-started-registration-id-by-participant-id db participant-id exam_session_id)]
     (log/warn "started-registration-id" started-registration-id)
     (if started-registration-id
       (ok (create-init-response db session exam_session_id started-registration-id payment-config))
