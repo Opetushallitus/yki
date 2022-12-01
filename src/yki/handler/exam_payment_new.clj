@@ -1,7 +1,6 @@
 (ns yki.handler.exam-payment-new
   (:require
     [clj-time.core :as t]
-    [clojure.data.csv :refer [write-csv]]
     [clojure.java.io :as jio]
     [clojure.java.jdbc :as jdbc]
     [clojure.string :as str]
@@ -22,9 +21,9 @@
     [yki.util.db :refer [rollback-on-exception]]
     [yki.util.exam-payment-helper :refer [create-or-return-payment-for-registration! get-payment-amount-for-registration]]
     [yki.util.audit-log :as audit]
-    [yki.util.common :refer [format-datetime-for-csv-export]]
+    [yki.util.common :refer [format-datetime-for-export]]
     [yki.util.template-util :as template-util])
-  (:import (java.io ByteArrayInputStream FileOutputStream InputStream StringWriter)
+  (:import (java.io FileOutputStream InputStream )
            (java.time LocalDate)))
 
 (defn- infer-content-type [headers]
@@ -68,54 +67,19 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :payment.error-redirect lang (:exam_session_id registration))))
 
-(def report-csv-fields
-  ["Järjestäjä"
-   "Maksun aikaleima"
-   "Koepäivä"
-   "Kieli"
-   "Taso"
-   "Osallistujan nimi"
-   "Osallistujan sähköposti"
-   "Summa (€)"
-   "Maksun yksilöintitunnus"])
-
-(defn- payment-data->csv-row [url-helper {:keys [amount exam_date form language_code level_code organizer_name paid_at reference]}]
-  (let [last-name  (:last_name form)
-        first-name (:first_name form)
-        email      (:email form)]
-    [organizer_name
-     (format-datetime-for-csv-export paid_at)
-     exam_date
-     (template-util/get-language url-helper language_code "fi")
-     (template-util/get-level url-helper level_code "fi")
-     (str/join ", " [last-name first-name])
-     email
-     (->>
-       (/ amount 100)
-       (double)
-       (format "%.2f"))
-     reference]))
-
-(defn- payments-data->csv-input-stream [url-helper payments-data]
-  (let [writer       (StringWriter.)
-        payment-rows (->> payments-data
-                          (map #(payment-data->csv-row url-helper %))
-                          (sort-by (juxt first second)))]
-    (write-csv
-      writer
-      (into [report-csv-fields] payment-rows)
-      :separator \;
-      :quote? (constantly true))
-    (-> (.toString writer)
-        (.getBytes)
-        (ByteArrayInputStream.))))
-
-(defn- csv-response [{:keys [from to]} body]
-  (let [filename    (str "YKI_tutkintomaksut_" from "_" to ".csv")
-        csv-headers {"Content-Type"        "text/csv"
-                     "Content-Disposition" (str "attachment; filename=\"" filename "\"")}]
-    (-> (ok body)
-        (update :headers merge csv-headers))))
+(defn payment->json [url-helper {:keys [amount exam_date form language_code level_code organizer_name paid_at reference]}]
+  {:organizer     organizer_name
+   :paid_at       (format-datetime-for-export paid_at)
+   :exam_date     exam_date
+   :exam_language (template-util/get-language url-helper language_code "fi")
+   :exam_level    (template-util/get-level url-helper level_code "fi")
+   :name          (str/join ", " [(:last_name form) (:first_name form)])
+   :email         (:email form)
+   :amount        (->>
+                    (/ amount 100)
+                    (double)
+                    (format "%.2f"))
+   :reference     reference})
 
 (defn- with-organizer-names [url-helper payments]
   (when (seq payments)
@@ -156,12 +120,12 @@
           (let [from-inclusive     (LocalDate/parse from)
                 to-exclusive       (-> (LocalDate/parse to)
                                        (.plusDays 1))
-                completed-payments (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)]
-            (->> completed-payments
-                 (with-organizer-names url-helper)
-                 (payments-data->csv-input-stream url-helper)
-                 (csv-response {:from from
-                                :to   to})))
+                completed-payments (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)
+                result             (->> completed-payments
+                                        (with-organizer-names url-helper)
+                                        (map #(payment->json url-helper %))
+                                        (sort-by (juxt :organizer :paid_at)))]
+            (ok {:payments result}))
           (catch Exception e
             (log/error e "Failed to generate payment report from" from "to" to)
             (when-let [response (:response (ex-data e))]
