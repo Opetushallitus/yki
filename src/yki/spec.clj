@@ -7,7 +7,7 @@
   (:import [org.joda.time DateTime]))
 
 ;; common
-(def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
+(def email-regex #"^(?=^.{4,256}$)(.+@.+\.[a-zA-Z]{2,63})$")
 (def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
@@ -78,6 +78,25 @@
 (s/def ::organizers-response (s/keys :req-un [::organizers]))
 (s/def ::response (s/keys :req-un [::success]
                           :opt-un [::error]))
+
+;; quarantine
+(s/def ::end_date ::date-type)
+(s/def ::quarantined boolean)
+(s/def ::quarantine-type (s/keys :req-un [::id
+                                          ::language_code
+                                          ::level_code
+                                          ::end_date
+                                          ::birthdate
+                                          ::created]
+                                 :opt-un [::ssn
+                                          ::name
+                                          ::email
+                                          ::phone_number]))
+(s/def ::quarantines (s/coll-of ::quarantine-type))
+(s/def ::quarantine-response (s/keys :req-un [::quarantines]))
+(s/def ::quarantine-matches-response (s/keys :req-un [::quarantines]))
+
+
 
 ;; exam-session-location
 (s/def ::name (s/and string? #(<= (count %) 256)))

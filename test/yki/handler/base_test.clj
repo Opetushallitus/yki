@@ -17,6 +17,7 @@
     [yki.handler.file]
     [yki.handler.organizer]
     [yki.handler.login-link :as login-link]
+    [yki.handler.quarantine]
     [yki.handler.routing :as routing]
     [yki.job.job-queue]
     [yki.middleware.no-auth]
@@ -194,6 +195,28 @@
 
 (defn select-one [query]
   (first (select query)))
+
+(defn insert-quarantine []
+  (jdbc/execute! @embedded-db/conn (str "
+    INSERT INTO quarantine (
+        language_code,
+        level_code,
+        end_date,
+        birthdate,
+        ssn,
+        name,
+        email,
+        phone_number
+    ) VALUES (
+        'fin',
+        'PERUS',
+        '2028-01-01',
+        '1999-01-01',
+        '301079-900U',
+        'Max Syöttöpaine',
+        'email@invalid.invalid',
+        '0401234567'
+    ) ON CONFLICT DO NOTHING")))
 
 (defn insert-organizer [organizer-oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
@@ -549,6 +572,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                                                                                                                        :path      "/yki"}}})
         auth-handler         (auth-handler auth url-helper)
         file-handler         (ig/init-key :yki.handler/file {:db db :file-store file-store})
+        quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:db                  db}))
         organizer-handler    (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
                                                                                           :auth                 auth
                                                                                           :data-sync-q          (data-sync-q)
@@ -557,7 +581,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                                                                                           :exam-session-handler exam-session-handler
                                                                                           :exam-date-handler    exam-date-handler
                                                                                           :file-handler         file-handler}))]
-    (routes organizer-handler auth-handler)))
+    (routes organizer-handler quarantine-handler auth-handler)))
 
 (defn send-request-with-tx
   ([request]

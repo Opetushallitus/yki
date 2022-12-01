@@ -110,6 +110,41 @@ INSERT INTO exam_language (
   (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
 );
 
+-- name: select-quarantine
+SELECT
+  q.id,
+  q.language_code,
+  q.level_code,
+  q.end_date,
+  q.birthdate,
+  q.created,
+  q.ssn,
+  q.name,
+  q.email,
+  q.phone_number
+FROM quarantine q;
+
+-- name: select-quarantine-matches
+SELECT
+  q.id,
+  q.language_code,
+  q.level_code,
+  q.end_date,
+  q.birthdate,
+  q.created,
+  q.ssn,
+  q.name,
+  q.email,
+  q.phone_number
+FROM quarantine q
+JOIN registration r
+ON q.birthdate = r.form->>'birthdate'
+JOIN participant p
+ON r.participant_id = p.id;
+
+-- name: update-registration-quarantine!
+UPDATE registration SET quarantined = :id, reviewed = NOW() WHERE id = :reg-id;
+
 -- name: insert-attachment-metadata!
 INSERT INTO attachment_metadata (
   external_id,

@@ -50,6 +50,8 @@
 
 (def organizer-api-root (str virkailija-api-root "/organizer"))
 
+(def quarantine-api-root (str virkailija-api-root "/quarantine"))
+
 (def status-api-root (str api-root "/status"))
 
 (def file-uri "/file")
