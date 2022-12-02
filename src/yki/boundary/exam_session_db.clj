@@ -77,7 +77,9 @@
   (update-exam-session-queue-last-notified-at! [db email exam-session-id])
   (remove-from-exam-session-queue! [db email exam-session-id])
   (set-post-admission-active! [db id quota])
-  (set-post-admission-deactive! [db id]))
+  (set-post-admission-deactive! [db id])
+  (get-contact-info-by-exam-session-id [db id])
+  (get-exam-session-location-extra-information [db id lang]))
 
 (extend-protocol ExamSessions
   Boundary
@@ -195,4 +197,13 @@
   (set-post-admission-deactive!
     [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
-      (q/deactivate-exam-session-post-admission! tx {:exam_session_id id}))))
+      (q/deactivate-exam-session-post-admission! tx {:exam_session_id id})))
+
+  (get-contact-info-by-exam-session-id
+    [{:keys [spec]} id]
+    (first (q/select-exam-session-contact-info spec {:id id})))
+
+  (get-exam-session-location-extra-information
+    [{:keys [spec]} id lang]
+    (first (q/select-exam-session-extra-information spec {:id id
+                                                          :lang lang}))))

@@ -1335,6 +1335,24 @@ WHERE esc.exam_session_id = :exam_session_id
 DELETE FROM exam_session_contact
   WHERE exam_session_id = :exam_session_id;
 
+--name: select-exam-session-contact-info
+SELECT
+  co.name,
+  co.email,
+  co.phone_number
+FROM contact co
+INNER JOIN exam_session_contact esc on co.id = esc.contact_id
+WHERE co.deleted_at IS NULL
+AND esc.deleted_at IS NULL
+AND esc.exam_session_id = :id;
+
+--name: select-exam-session-extra-information
+SELECT
+  esl.extra_information
+FROM exam_session_location esl
+WHERE esl.exam_session_id = :id
+AND esl.lang = :lang;
+
 --name: select-evaluation-by-id
 SELECT
   ep.id,
