@@ -12,6 +12,7 @@
     [ring.util.http-response :refer [bad-request internal-server-error ok]]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.exam-payment-new-db :as payment-db]
+    [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.organization :as organization]
     [yki.handler.payment :refer [cancel-redirect error-redirect success-redirect]]
     [yki.handler.routing :as routing]
@@ -23,7 +24,7 @@
     [yki.util.audit-log :as audit]
     [yki.util.common :refer [format-datetime-for-export]]
     [yki.util.template-util :as template-util])
-  (:import (java.io FileOutputStream InputStream )
+  (:import (java.io FileOutputStream InputStream)
            (java.time LocalDate)))
 
 (defn- infer-content-type [headers]
@@ -150,11 +151,16 @@
                       (Integer/parseInt amount))
                    (= "ok" payment-status))
             (let [payment-id                        (:id payment-details)
+                  exam-session-contact-info         (exam-session-db/get-contact-info-by-exam-session-id db exam-session-id)
+                  exam-session-extra-information    (exam-session-db/get-exam-session-location-extra-information db exam-session-id lang)
+                  email-template-data               (assoc participant-details
+                                                      :contact_info exam-session-contact-info
+                                                      :extra_information (:extra_information exam-session-extra-information))
                   send-registration-complete-email! #(registration-email/send-exam-registration-completed-email!
                                                        email-q
                                                        url-helper
                                                        lang
-                                                       participant-details)]
+                                                       email-template-data)]
               (if (registration-db/complete-new-payment-and-exam-registration! db registration-id payment-id send-registration-complete-email!)
                 (do (audit/log-participant {:request   request
                                             :target-kv {:k audit/payment
