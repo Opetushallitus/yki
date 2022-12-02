@@ -38,6 +38,7 @@
   (when input
     (str/replace (str/trim input) #"[^0-9\-\'\´\`\p{L}\p{M}*+.,_&@ ]" replacement)))
 
+(def export-datetime-formatter (f/formatter "yyyy-MM-dd HH:mm:ss"))
+
 (defn format-datetime-for-export [datetime]
-  (let [csv-datetime-format (f/formatter "yyyy-MM-dd HH:mm:ss")]
-    (f/unparse csv-datetime-format datetime)))
+  (f/unparse export-datetime-formatter datetime))

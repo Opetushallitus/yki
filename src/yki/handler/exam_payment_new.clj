@@ -67,7 +67,7 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :payment.error-redirect lang (:exam_session_id registration))))
 
-(defn payment->json [url-helper {:keys [amount exam_date form language_code level_code organizer_name paid_at reference]}]
+(defn- payment->json [url-helper {:keys [amount exam_date form language_code level_code organizer_name paid_at reference]}]
   {:organizer     organizer_name
    :paid_at       (format-datetime-for-export paid_at)
    :exam_date     exam_date
