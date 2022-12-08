@@ -21,6 +21,15 @@ jobs:
       - name: Prepare Clojure env
         uses: ./.github/actions/prepare-clojure-env
 
+      - name: Install wkhtmltopdf
+        run: |
+          echo 'Installing wkhtmltopdf'
+          sudo apt-get install wkhtmltopdf
+          echo 'Installed wkhtmltopdf, check that it works'
+          wkhtmltopdf --version
+          echo 'Installation of wkhtmltopdf completed'
+        shell: bash
+
       - name: Run tests
         run: lein test
 
@@ -59,7 +68,8 @@ jobs:
       - name: Build and deploy Docker image
         shell: bash
         run: |
-          git clone https://github.com/Opetushallitus/ci-tools.git
+          git clone -b wkhtmltopdfDockerfile https://github.com/Opetushallitus/ci-tools.git
+          cat ./ci-tools/build/Dockerfile_wkhtmltopdf_template > ./ci-tools/build/Dockerfile
           source ci-tools/common/setup-tools.sh
           mv target/yki-*-standalone.jar $DOCKER_BUILD_DIR/artifact/yki.jar
           cp -vr oph-configuration $DOCKER_BUILD_DIR/config/
