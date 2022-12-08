@@ -28,9 +28,10 @@
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject url-helper "payment_success" email-language template-data)
               :body        (template-util/render url-helper "payment_success" email-language (assoc template-data :language exam-language :level exam-level))
-              :attachments [{:name        (str "kuitti_" receipt-id ".pdf")
-                             :data        (exam-payment-receipt-bytes url-helper "fi" template-data (assoc payment-data :receipt_id receipt-id))
-                             :contentType "application/pdf"}]})))
+              :attachments (when payment-data
+                             [{:name        (str "kuitti_" receipt-id ".pdf")
+                               :data        (exam-payment-receipt-bytes url-helper "fi" template-data (assoc payment-data :receipt_id receipt-id))
+                               :contentType "application/pdf"}])})))
 
 (defn send-customer-evaluation-registration-completed-email! [email-q url-helper email-language order-time template-data]
   (pgq/put email-q
