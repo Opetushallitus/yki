@@ -160,7 +160,8 @@
                                                        email-q
                                                        url-helper
                                                        lang
-                                                       email-template-data)]
+                                                       email-template-data
+                                                       payment-details)]
               (if (registration-db/complete-new-payment-and-exam-registration! db registration-id payment-id send-registration-complete-email!)
                 (do (audit/log-participant {:request   request
                                             :target-kv {:k audit/payment

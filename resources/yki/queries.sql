@@ -633,6 +633,7 @@ SELECT p.id,
        p.registration_id,
        p.reference,
        p.state,
+       p.paid_at,
        r.exam_session_id
 FROM exam_payment_new p
 INNER JOIN registration r ON r.id = p.registration_id
@@ -785,7 +786,9 @@ SELECT p.email,
        esl.street_address,
        esl.zip,
        esl.post_office,
-       ed.exam_date
+       ed.exam_date,
+       re.form->>'last_name' AS last_name,
+       re.form->>'first_name' AS first_names
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 INNER JOIN exam_session es ON es.id = re.exam_session_id
