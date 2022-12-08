@@ -21,6 +21,15 @@ jobs:
       - name: Prepare Clojure env
         uses: ./.github/actions/prepare-clojure-env
 
+      - name: Install wkhtmltopdf
+        run: |
+          echo 'Installing wkhtmltopdf'
+          sudo apt-get install wkhtmltopdf
+          echo 'Installed wkhtmltopdf, check that it works'
+          wkhtmltopdf --version
+          echo 'Installation of wkhtmltopdf completed'
+        shell: bash
+
       - name: Run tests
         run: lein test
 
