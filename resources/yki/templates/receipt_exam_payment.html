@@ -59,9 +59,9 @@
 </table>
 
 <p>
-    Kuitin tunniste: {{ receipt_id }}
+    {% i18n email.receipt.common.receiptId %}: {{ receipt_id }}
     <br />
-    Kuitin päivämäärä: {{ receipt_date|date-format-with-dots }}
+    {% i18n email.receipt.common.receiptDate %}: {{ receipt_date|date-format-with-dots }}
 </p>
 <p>
     {% i18n email.receipt.common.paymentDate %}: {{ payment_date|date-format-with-dots }}
