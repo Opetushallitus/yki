@@ -1,7 +1,6 @@
 (ns yki.registration.email
   (:require [yki.util.template-util :as template-util]
             [pgqueue.core :as pgq]
-            [clj-time.core :as t]
             [clojure.set :as set]
             [yki.util.pdf :refer [template+data->pdf-bytes]]))
 
@@ -11,12 +10,12 @@
         receipt-data  (->
                         (merge registration-data payment-data)
                         (assoc
-                          :receipt_date (t/now)
+                          :receipt_date (:paid_at payment-data)
+                          :payment_date (:paid_at payment-data)
                           :level exam-level
                           :language exam-language)
                         (update :amount #(/ % 100))
-                        (set/rename-keys {:paid_at :payment_date
-                                          :name    :organizer_name}))]
+                        (set/rename-keys {:name :organizer_name}))]
     (template+data->pdf-bytes url-helper "receipt_exam_payment" "fi" receipt-data)))
 
 (defn send-exam-registration-completed-email! [email-q url-helper email-language template-data payment-data]

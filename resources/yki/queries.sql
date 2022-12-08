@@ -633,7 +633,6 @@ SELECT p.id,
        p.registration_id,
        p.reference,
        p.state,
-       p.paid_at,
        r.exam_session_id
 FROM exam_payment_new p
 INNER JOIN registration r ON r.id = p.registration_id
@@ -707,7 +706,7 @@ INSERT INTO exam_payment_new(
   :transaction_id,
   :href);
 
--- name: update-new-exam-payment-to-paid!
+-- name: update-new-exam-payment-to-paid<!
 UPDATE exam_payment_new
 SET state = 'PAID',
     paid_at = current_timestamp,
