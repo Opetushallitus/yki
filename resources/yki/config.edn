@@ -179,7 +179,9 @@
                                                        :auth                 #ig/ref :yki.middleware.auth/with-authentication}
 
   :yki.handler/quarantine                             {:db                   #ig/ref :duct.database/sql
-                                                       :auth                 #ig/ref :yki.middleware.auth/with-authentication}
+                                                       :auth                 #ig/ref :yki.middleware.auth/with-authentication
+                                                       :url-helper           #ig/ref :yki.util/url-helper
+                                                       :access-log           #ig/ref :yki.middleware.access-log/with-logging}
 
   :yki.handler/evaluation                             {:db             #ig/ref :duct.database/sql
                                                        :payment-helper #ig/ref :yki.util/evaluation-payment-helper}

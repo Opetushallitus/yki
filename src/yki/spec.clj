@@ -81,7 +81,8 @@
 
 ;; quarantine
 (s/def ::end_date ::date-type)
-(s/def ::quarantined boolean)
+(s/def ::is_quarantined boolean?)
+(s/def ::quarantined (s/keys :req-un [::is_quarantined]))
 (s/def ::quarantine-type (s/keys :req-un [::id
                                           ::language_code
                                           ::level_code

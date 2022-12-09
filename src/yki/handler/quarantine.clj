@@ -12,20 +12,26 @@
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]))
 
-(defmethod ig/init-key :yki.handler/quarantine [_ {:keys [db]}]
-  {:pre [(some? db)]}
+(defmethod ig/init-key :yki.handler/quarantine [_ {:keys [db url-helper access-log]}]
+  {:pre [(some? db) (some? url-helper)]}
   (api
     (context routing/quarantine-api-root []
+      :middleware [access-log]
       :coercion :spec
       (GET "/" {session :session}
         :return ::ys/quarantine-response
-        (response {:quarantines (quarantine-db/get-quarantine db)})))
+        (response {:quarantines (quarantine-db/get-quarantine db)}))
       (GET "/matches" {session :session}
         :return ::ys/quarantine-matches-response
         (response {:quarantines (quarantine-db/get-quarantine-matches db)}))
-      (context "/:id/registration/:reg-id" [id reg-id]
+      (context "/:id/registration/:reg-id" []
         (PUT "/set" request
           :body [quarantined ::ys/quarantined]
+          :path-params [id :- ::ys/id reg-id :- ::ys/id]
           :return ::ys/response
-          (let [ret (quarantine-db/update-registration-quarantine! db id reg-id quarantined)]
-            (response {:success ret}))))))
+          (do
+            (let [ret (quarantine-db/set-registration-quarantine! db
+                                                                  id
+                                                                  reg-id
+                                                                  (:is_quarantined quarantined))]
+              (response {:success true}))))))))

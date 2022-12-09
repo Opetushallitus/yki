@@ -572,7 +572,9 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                                                                                                                        :path      "/yki"}}})
         auth-handler         (auth-handler auth url-helper)
         file-handler         (ig/init-key :yki.handler/file {:db db :file-store file-store})
-        quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:db                  db}))
+        quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:db db
+                                                                                           :url-helper url-helper
+                                                                                           :access-log (access-log)}))
         organizer-handler    (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
                                                                                           :auth                 auth
                                                                                           :data-sync-q          (data-sync-q)

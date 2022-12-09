@@ -124,7 +124,7 @@
   (set-registration-status-to-cancelled!
     [{:keys [spec]} registration-id oid]
     (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/cancel-registration! tx {:id registration-id :oid oid}))))
+      (int->boolean (q/cancel-registration-for-organizer! tx {:id registration-id :oid oid}))))
   (update-exam-session!
     [{:keys [spec]} oid id exam-session]
     (jdbc/with-db-transaction [tx spec]

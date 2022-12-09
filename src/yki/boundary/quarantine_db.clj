@@ -10,10 +10,13 @@
 
 (require-sql ["yki/queries.sql" :as q])
 
+(defn- int->boolean [value]
+  (= value 1))
+
 (defprotocol Quarantine
   (get-quarantine [db])
   (get-quarantine-matches [db])
-  (update-registration-quarantine! [db id reg-id quarantined]))
+  (set-registration-quarantine! [db id reg-id quarantined]))
 
 (extend-protocol Quarantine
   Boundary
@@ -21,5 +24,7 @@
     (q/select-quarantine spec))
   (get-quarantine-matches [{:keys [spec]}]
     (q/select-quarantine-matches spec))
-  (update-registration-quarantine! [{:keys [spec]} id reg-id quarantined]
-    (q/update-registration-quarantine! spec)))
+  (set-registration-quarantine! [{:keys [spec]} id reg-id quarantined]
+    (int->boolean (q/update-registration-quarantine! spec {:id id
+                                                           :reg-id (when-not quarantined reg-id)
+                                                           :quarantined quarantined}))))

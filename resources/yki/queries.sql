@@ -143,7 +143,20 @@ JOIN participant p
 ON r.participant_id = p.id;
 
 -- name: update-registration-quarantine!
-UPDATE registration SET quarantined = :id, reviewed = NOW() WHERE id = :reg-id;
+UPDATE registration SET
+       quarantined = :id,
+       reviewed = NOW(),
+       state =
+        CASE WHEN :quarantined THEN
+            CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state
+              ELSE 'PAID_AND_CANCELLED'::registration_state
+            END
+        ELSE
+            CASE WHEN state = 'CANCELLED'::registration_state THEN 'SUBMITTED'::registration_state
+              ELSE 'COMPLETED'::registration_state
+            END
+        END
+WHERE id = :reg-id;
 
 -- name: insert-attachment-metadata!
 INSERT INTO attachment_metadata (
@@ -968,7 +981,7 @@ AND (r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
      OR (EXISTS (SELECT id from exam_payment_new WHERE registration_id = r.id)))
 ORDER BY r.created ASC;
 
---name: cancel-registration!
+--name: cancel-registration-for-organizer!
 UPDATE registration
 SET state =
   CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state

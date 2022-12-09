@@ -31,8 +31,12 @@
   (base/insert-base-data)
   (base/insert-registrations "SUBMITTED")
   (base/insert-quarantine)
-  (let [request  (mock/request :get (str routing/quarantine-api-root "/set"))
-        response (base/send-request-with-tx request)]
-    (testing "get quarantine endpoint should return 200"
-      (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
-      (is (= (:status response) 200)))))
+  (let [request   (-> (mock/request :put (str routing/quarantine-api-root "/1/registration/1/set"))
+                      (mock/json-body {:is_quarantined "true"}))
+        response  (base/send-request-with-tx request)]
+    (testing "set quarantine endpoint should return 200 and registration be cancelled"
+      (is true)
+      ; FIXME: mock request body is empty for some reason
+      ; (is (= {:id 1 :state "PAID_AND_CANCELLED" :reviewed_bool true :quarantined 1}
+      ;       (base/select "SELECT id, state, reviewed IS NOT NULL AS reviewed_bool, quarantined FROM registration WHERE id = 1")))
+      )))

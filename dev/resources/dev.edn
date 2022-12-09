@@ -83,6 +83,9 @@
                                   :domain "localhost"
                                   :path "/yki"}}}
 
+ :yki.handler/quarantine {:db #ig/ref :duct.database/sql
+                          :url-helper #ig/ref :yki.util/url-helper
+                          :access-log #ig/ref :yki.middleware.access-log/with-logging}
  :yki.handler/organizer {:db #ig/ref :duct.database/sql
                          :url-helper #ig/ref :yki.util/url-helper
                          :file-handler #ig/ref :yki.handler/file
