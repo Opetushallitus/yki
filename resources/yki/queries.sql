@@ -787,7 +787,7 @@ SELECT p.email,
        esl.post_office,
        ed.exam_date,
        re.form->>'last_name' AS last_name,
-       re.form->>'first_name' AS first_names
+       re.form->>'first_name' AS first_name
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 INNER JOIN exam_session es ON es.id = re.exam_session_id

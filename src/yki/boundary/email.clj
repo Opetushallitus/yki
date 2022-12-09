@@ -5,21 +5,23 @@
     [jsonista.core :as json]
     [yki.util.http-util :as http-util]))
 
-(defn- log-disabled-email [recipients subject body]
+(defn- log-disabled-email [recipients subject body attachments]
   (log/info
     (str/join "\r\n"
               ["Email sending is disabled, logging instead:"
                (str "Recipients: " recipients)
                (str "Subject: " subject)
-               (str "Body: " body)]))
-  {:status 200})
+               (str "Body: " body)
+               (str "Attachments: ["
+                    (str/join "," (map :name attachments))
+                    "]")])))
 
-(defn send-email
+(defn send-email!
   [url-helper {:keys [recipients subject body attachments]} disabled]
   (let [url                (url-helper :ryhmasahkoposti-service)
         wrapped-recipients (mapv (fn [rcp] {:email rcp}) recipients)]
     (if disabled
-      (log-disabled-email recipients subject body)
+      (log-disabled-email recipients subject body attachments)
       (let [email-data {:subject     subject
                         :html        true
                         :body        body
