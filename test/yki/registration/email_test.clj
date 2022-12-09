@@ -6,19 +6,16 @@
             [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
-            [yki.registration.email :refer [send-exam-registration-completed-email!]]
-            [yki.util.common :refer [string->date]]
-            [clojure.string :as str]
-            [clojure.java.io :as io])
-  (:import (java.io ByteArrayOutputStream)))
+            [yki.registration.email :refer [exam-payment-receipt-bytes send-exam-registration-completed-email!]]
+            [yki.util.common :refer [string->date]]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 
 (defn- pdf-without-header-bytes [^bytes pdf-bytes]
   (let [total-bytes          (alength pdf-bytes)
         header-bytes-to-skip 256
-        bytes-to-copy (- total-bytes header-bytes-to-skip)
-        dest (byte-array bytes-to-copy)]
+        bytes-to-copy        (- total-bytes header-bytes-to-skip)
+        dest                 (byte-array bytes-to-copy)]
     (System/arraycopy pdf-bytes header-bytes-to-skip dest 0 bytes-to-copy)
     dest))
 
@@ -48,13 +45,20 @@
         (testing "Attachments contains a PDF receipt"
           (is (= 1 (count attachments)))
           (let [attachment-data             (first attachments)
-                pdf-bytes-without-timestamp (pdf-without-header-bytes (:data attachment-data))]
+                pdf-bytes                   (:data attachment-data)
+                pdf-bytes-without-timestamp (pdf-without-header-bytes pdf-bytes)]
             (testing "Attachment has proper content type"
               (is (= "application/pdf" (:contentType attachment-data))))
             (testing "Attachment name contains payment ID"
               (is (= "kuitti_YKI-EXAM-199.pdf" (:name attachment-data))))
             (testing "Attachment contents has expected hash"
-              (is (= "64e29dc8fdc0eba07aa3c37af132f6e4898848a8068dead836c5beaa66bd62f5"
+              (is (= (->> (assoc payment-data :receipt_id (str "YKI-EXAM-" (:id payment-data)))
+                          (exam-payment-receipt-bytes url-helper "fi" registration-data)
+                          (pdf-without-header-bytes)
+                          (sha256)
+                          (bytes->hex))
                      (-> pdf-bytes-without-timestamp
                          (sha256)
-                         (bytes->hex)))))))))))
+                         (bytes->hex)))))
+            (testing "Attachment size is roughly as expected"
+              (is (<= 20000 (alength pdf-bytes) 25000)))))))))
