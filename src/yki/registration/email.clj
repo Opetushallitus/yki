@@ -4,7 +4,7 @@
             [clojure.set :as set]
             [yki.util.pdf :refer [template+data->pdf-bytes]]))
 
-(defn- exam-payment-receipt-bytes [url-helper receipt-language registration-data payment-data]
+(defn exam-payment-receipt-bytes [url-helper receipt-language registration-data payment-data]
   (let [exam-level    (template-util/get-level url-helper (:level_code registration-data) receipt-language)
         exam-language (template-util/get-language url-helper (:language_code registration-data) receipt-language)
         receipt-data  (->
