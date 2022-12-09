@@ -17,6 +17,46 @@
     {{name}}, {{street_address}}, {{zip}} {{post_office}}
   </td>
 </tr>
+{% if extra_information %}
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n email.payment_success.extra_information.label %}:
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {{ extra_information }}
+  </td>
+</tr>
+{% endif %}
+{% if contact_info %}
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n email.payment_success.organizer_contact.label %}:
+  </td>
+</tr>
+{% if contact_info.name %}
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n examSession.contact.name.label %}: {{ contact_info.name }}
+  </td>
+</tr>
+{% endif %}
+{% if contact_info.email %}
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n examSession.contact.email.label %}: {{ contact_info.email }}
+  </td>
+</tr>
+{% endif %}
+{% if contact_info.phone_number %}
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n examSession.contact.phoneNumber.label %}: {{ contact_info.phone_number }}
+  </td>
+</tr>
+{% endif %}
+{% endif %}
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
     {% i18n registration.examDetails.futureInfo %}
