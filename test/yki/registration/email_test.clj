@@ -13,6 +13,9 @@
 
 (defn- pdf-without-header-bytes [^bytes pdf-bytes]
   (let [total-bytes          (alength pdf-bytes)
+        ; 256 is a somewhat arbitrary number, chosen to ensure that the
+        ; /CreationDate (...) comment line is not included when comparing
+        ; PDF contents, allowing for repeatable hashes.
         header-bytes-to-skip 256
         bytes-to-copy        (- total-bytes header-bytes-to-skip)
         dest                 (byte-array bytes-to-copy)]
