@@ -21,6 +21,14 @@
       (GET "/" {session :session}
         :return ::ys/quarantine-response
         (response {:quarantines (quarantine-db/get-quarantine db)}))
+      (POST "/" request
+        :body [quarantine ::ys/quarantine-type]
+        :return ::ys/response
+        (response {:success (quarantine-db/create-quarantine! db quarantine)}))
+      (DELETE "/:id" []
+        :path-params [id :- ::ys/id]
+        :return ::ys/response
+        (response {:success (quarantine-db/delete-quarantine! db id)}))
       (GET "/matches" {session :session}
         :return ::ys/quarantine-matches-response
         (response {:quarantines (quarantine-db/get-quarantine-matches db)}))
@@ -29,9 +37,7 @@
           :body [quarantined ::ys/quarantined]
           :path-params [id :- ::ys/id reg-id :- ::ys/id]
           :return ::ys/response
-          (do
-            (let [ret (quarantine-db/set-registration-quarantine! db
-                                                                  id
-                                                                  reg-id
-                                                                  (:is_quarantined quarantined))]
-              (response {:success true}))))))))
+          (response {:success (quarantine-db/set-registration-quarantine! db
+                                                                          id
+                                                                          reg-id
+                                                                          (:is_quarantined quarantined))}))))))

@@ -83,13 +83,14 @@
 (s/def ::end_date ::date-type)
 (s/def ::is_quarantined boolean?)
 (s/def ::quarantined (s/keys :req-un [::is_quarantined]))
-(s/def ::quarantine-type (s/keys :req-un [::id
-                                          ::language_code
+(s/def ::quarantine-type (s/keys :req-un [::language_code
                                           ::level_code
                                           ::end_date
                                           ::birthdate
-                                          ::created]
-                                 :opt-un [::ssn
+                                          ]
+                                 :opt-un [::created
+                                          ::id
+                                          ::ssn
                                           ::name
                                           ::email
                                           ::phone_number]))

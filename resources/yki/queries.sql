@@ -110,6 +110,9 @@ INSERT INTO exam_language (
   (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
 );
 
+-- name: delete-quarantine!
+DELETE FROM quarantine WHERE id = :id;
+
 -- name: select-quarantine
 SELECT
   q.id,
@@ -123,6 +126,27 @@ SELECT
   q.email,
   q.phone_number
 FROM quarantine q;
+
+-- name: insert-quarantine!
+INSERT INTO quarantine (
+  language_code,
+  level_code,
+  end_date,
+  birthdate,
+  ssn,
+  name,
+  email,
+  phone_number
+) VALUES (
+  :language_code,
+  :level_code,
+  :end_date,
+  :birthdate,
+  :ssn,
+  :name,
+  :email,
+  :phone_number
+);
 
 -- name: select-quarantine-matches
 SELECT
