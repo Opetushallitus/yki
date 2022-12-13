@@ -57,8 +57,8 @@
                   :contentType "application/pdf"}])})))
 
 (defn send-kirjaamo-evaluation-registration-completed-email! [email-q url-helper email-language order-time kirjaamo-email template-data]
-  (let [template-with-subject (assoc template-data :subject "YKI,")
-        template-data         (update template-data :subtests #(template-util/get-subtests url-helper % "fi"))
+  (let [template-with-subject (-> (assoc template-data :subject "YKI,")
+                                  (update :subtests #(template-util/get-subtests url-helper % "fi")))
         ;; Kirjaamo email will not be translated and only send in Finnish
         kirjaamo-template     (if (= email-language "fi")
                                 template-with-subject
