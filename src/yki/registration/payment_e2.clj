@@ -14,7 +14,7 @@
   (let [participant-data (registration-db/get-participant-data-by-order-number db (:order-number payment-params))
         success          (registration-db/complete-registration-and-legacy-payment! db payment-params)]
     (when success
-      (registration-email/send-exam-registration-completed-email! email-q url-helper (:lang participant-data) participant-data))
+      (registration-email/send-exam-registration-completed-email! email-q url-helper (:lang participant-data) participant-data nil))
     success))
 
 (defn handle-evaluation-payment-success [db email-q url-helper payment-config payment-params]

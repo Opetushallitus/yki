@@ -86,7 +86,7 @@
        (take-with-error-handling email-q retry-duration-in-days
                                  (fn [email-req]
                                    (log/info "Email queue reader sending email to:" (:recipients email-req))
-                                   (email/send-email url-helper email-req disabled))))
+                                   (email/send-email! url-helper email-req disabled))))
      (catch Exception e
        (log/error e "Email queue reader failed"))))
 

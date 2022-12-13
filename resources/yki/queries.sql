@@ -706,7 +706,7 @@ INSERT INTO exam_payment_new(
   :transaction_id,
   :href);
 
--- name: update-new-exam-payment-to-paid!
+-- name: update-new-exam-payment-to-paid<!
 UPDATE exam_payment_new
 SET state = 'PAID',
     paid_at = current_timestamp,
@@ -785,7 +785,9 @@ SELECT p.email,
        esl.street_address,
        esl.zip,
        esl.post_office,
-       ed.exam_date
+       ed.exam_date,
+       re.form->>'last_name' AS last_name,
+       re.form->>'first_name' AS first_name
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 INNER JOIN exam_session es ON es.id = re.exam_session_id

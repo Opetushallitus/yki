@@ -156,11 +156,13 @@
                   email-template-data               (assoc participant-details
                                                       :contact_info exam-session-contact-info
                                                       :extra_information (:extra_information exam-session-extra-information))
-                  send-registration-complete-email! #(registration-email/send-exam-registration-completed-email!
-                                                       email-q
-                                                       url-helper
-                                                       lang
-                                                       email-template-data)]
+                  send-registration-complete-email! (fn [updated-payment-details]
+                                                      (registration-email/send-exam-registration-completed-email!
+                                                        email-q
+                                                        url-helper
+                                                        lang
+                                                        email-template-data
+                                                        updated-payment-details))]
               (if (registration-db/complete-new-payment-and-exam-registration! db registration-id payment-id send-registration-complete-email!)
                 (do (audit/log-participant {:request   request
                                             :target-kv {:k audit/payment
