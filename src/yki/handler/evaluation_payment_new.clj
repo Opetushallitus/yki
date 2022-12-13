@@ -14,25 +14,24 @@
     [yki.registration.email :as registration-email]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit]
-    [yki.util.evaluation-payment-helper :refer [order-id->payment-data]]
+    [yki.util.evaluation-payment-helper :refer [order-id->payment-data subtest->price]]
     [yki.util.paytrail-payments :refer [sign-string]]
     [yki.util.template-util :as template-util]))
 
 (require-sql ["yki/queries.sql" :as q])
 
-(defn send-evaluation-order-completed-emails! [email-q url-helper order-data lang]
+(defn send-evaluation-order-completed-emails! [email-q payment-helper url-helper order-data lang]
   (let [order-time    (:created order-data)
         template-data (assoc order-data
                         :subject (str (localisation/get-translation url-helper (str "email.evaluation_payment.subject") lang) ":")
                         :language (template-util/get-language url-helper (:language_code order-data) lang)
                         :level (template-util/get-level url-helper (:level_code order-data) lang)
-                        :subtests (template-util/get-subtests url-helper (:subtests order-data) lang)
                         :order_time order-time
                         :amount (int (:amount order-data))
                         :order_number (:reference order-data))]
     (log/info (str "Evaluation payment success, sending email to " (:email order-data) " and Kirjaamo"))
     ;; Customer email
-    (registration-email/send-customer-evaluation-registration-completed-email! email-q url-helper lang order-time template-data)
+    (registration-email/send-customer-evaluation-registration-completed-email! email-q payment-helper url-helper lang order-time template-data)
     ;; Kirjaamo email
     (registration-email/send-kirjaamo-evaluation-registration-completed-email! email-q url-helper lang order-time "kirjaamo@oph.fi" template-data)))
 
@@ -86,7 +85,7 @@
                                     ; Always redirect to payment success page, as otherwise the user
                                     ; might be redirected to an error page even though the payment went through!
                                     (when updated?
-                                      (send-evaluation-order-completed-emails! email-q url-helper template-data lang))
+                                      (send-evaluation-order-completed-emails! email-q payment-helper url-helper template-data lang))
                                     (success-redirect url-helper lang evaluation-order-id))]
               (handle-exceptions url-helper handle-payment lang evaluation-order-id))
             (do

@@ -26,14 +26,15 @@
                         :subject (str (localisation/get-translation url-helper (str "email.evaluation_payment.subject") lang) ":")
                         :language (template-util/get-language url-helper (:language_code order-data) lang)
                         :level (template-util/get-level url-helper (:level_code order-data) lang)
-                        :subtests (template-util/get-subtests url-helper (:subtests order-data) lang)
                         :order_time order-time
                         :amount (int (:amount order-data)))]
     (when success
       (info (str "Evaluation payment success, sending email to " (:email order-data) " and Kirjaamo"))
 
       ;; Customer email
-      (registration-email/send-customer-evaluation-registration-completed-email! email-q url-helper lang order-time template-data)
+      ; TODO This namespace concerns the legacy payment integration, and is to be removed.
+      ; Thus, it doesn't matter much that we're passing a nil payment-helper below.
+      (registration-email/send-customer-evaluation-registration-completed-email! email-q nil url-helper lang order-time template-data)
 
       ;; Kirjaamo email
       (registration-email/send-kirjaamo-evaluation-registration-completed-email! email-q url-helper lang order-time (:email payment-config) template-data))
