@@ -719,7 +719,7 @@ SET state = 'ERROR',
     modified = current_timestamp
 WHERE id = :id AND state = 'UNPAID';
 
--- name: update-new-evaluation-payment-to-paid!
+-- name: update-new-evaluation-payment-to-paid<!
 UPDATE evaluation_payment_new
 SET state = 'PAID',
     paid_at = current_timestamp,

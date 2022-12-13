@@ -35,13 +35,15 @@
         auth                     (base/auth url-helper)
         access-log               (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler             (base/auth-handler auth url-helper)
+        pdf-renderer             (base/mock-pdf-renderer url-helper)
         exam-payment-new-handler (middleware/wrap-format
                                    (ig/init-key :yki.handler/exam-payment-new {:access-log     access-log
                                                                                :auth           auth
                                                                                :db             db
                                                                                :email-q        (base/email-q)
                                                                                :url-helper     url-helper
-                                                                               :payment-helper payment-helper}))]
+                                                                               :payment-helper payment-helper
+                                                                               :pdf-renderer   pdf-renderer}))]
     (core/routes exam-payment-new-handler auth-handler)))
 
 (defn- redirect [session registration-id lang]

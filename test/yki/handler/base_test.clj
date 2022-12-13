@@ -1,5 +1,6 @@
 (ns yki.handler.base-test
   (:require [integrant.core :as ig]
+            [clojure.string :as str]
             [duct.database.sql :as sql]
             [jsonista.core :as j]
             [muuntaja.middleware :as middleware]
@@ -20,7 +21,8 @@
             [clj-time.format :as f]
             [clj-time.core :as t]
             [yki.handler.organizer]
-            [clojure.string :as str]))
+            [yki.util.template-util :as template-util])
+  (:import (yki.util.pdf PdfTemplateRenderer)))
 
 (def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
 
@@ -489,6 +491,11 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 (defn create-url-helper [uri]
   (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http" :oppija-sub-domain "yki."}))
 
+(defn mock-pdf-renderer [url-helper]
+  (reify PdfTemplateRenderer
+    (template+data->pdf-bytes [_ template-name language template-data]
+      (template-util/render url-helper template-name language template-data))))
+
 (defn create-examination-payment-helper [db url-helper use-new-payments-api?]
   (ig/init-key
     :yki.util/exam-payment-helper
@@ -497,7 +504,8 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
      :payment-config {:use-new-payments-api? use-new-payments-api?
                       :amount                (:amount payment-config)
                       :merchant-id           "375917"
-                      :merchant-secret       "SAIPPUAKAUPPIAS"}}))
+                      :merchant-secret       "SAIPPUAKAUPPIAS"}
+     :pdf-renderer (mock-pdf-renderer url-helper)}))
 
 (def old-evaluation-payment-config {:use-new-payments-api? false
                                     :amount                {:READING   "50.00"

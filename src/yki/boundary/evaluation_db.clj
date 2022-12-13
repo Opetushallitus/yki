@@ -103,7 +103,6 @@
   (complete-new-payment!
     [{:keys [spec]} payment-id]
     (jdbc/with-db-transaction [tx spec]
-      (int->boolean
-        (q/update-new-evaluation-payment-to-paid!
-          tx
-          {:id payment-id})))))
+      (q/update-new-evaluation-payment-to-paid<!
+        tx
+        {:id payment-id}))))

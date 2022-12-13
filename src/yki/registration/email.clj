@@ -6,7 +6,7 @@
     [yki.util.pdf :refer [template+data->pdf-bytes]]
     [yki.util.template-util :as template-util]))
 
-(defn exam-payment-receipt-bytes [url-helper receipt-language registration-data payment-data]
+(defn exam-payment-receipt-contents [url-helper pdf-renderer receipt-language registration-data payment-data]
   (let [exam-level    (template-util/get-level url-helper (:level_code registration-data) receipt-language)
         exam-language (template-util/get-language url-helper (:language_code registration-data) receipt-language)
         receipt-data  (->
@@ -18,17 +18,17 @@
                           :language exam-language)
                         (update :amount #(/ % 100))
                         (set/rename-keys {:name :organizer_name}))]
-    (template+data->pdf-bytes url-helper "receipt_exam_payment" receipt-language receipt-data)))
+    (template+data->pdf-bytes pdf-renderer "receipt_exam_payment" receipt-language receipt-data)))
 
-(defn evaluation-payment-receipt-bytes [payment-helper url-helper receipt-language template-data]
+(defn evaluation-payment-receipt-contents [payment-helper url-helper pdf-renderer receipt-language template-data]
   (let [template-data (-> (update template-data :subtests
                                   #(map (fn [subtest]
                                           {:price (subtest->price payment-helper subtest)
                                            :name  (template-util/get-subtest url-helper subtest "fi")}) %))
                           (set/rename-keys {:first_names :first_name}))]
-    (template+data->pdf-bytes url-helper "receipt_evaluation_payment" receipt-language template-data)))
+    (template+data->pdf-bytes pdf-renderer "receipt_evaluation_payment" receipt-language template-data)))
 
-(defn send-exam-registration-completed-email! [email-q url-helper email-language template-data payment-data]
+(defn send-exam-registration-completed-email! [email-q url-helper pdf-renderer email-language template-data payment-data]
   (let [exam-level    (template-util/get-level url-helper (:level_code template-data) email-language)
         exam-language (template-util/get-language url-helper (:language_code template-data) email-language)
         receipt-id    (str "YKI-EXAM-" (:id payment-data))]
@@ -39,10 +39,10 @@
               :body        (template-util/render url-helper "payment_success" email-language (assoc template-data :language exam-language :level exam-level))
               :attachments (when payment-data
                              [{:name        (str "kuitti_" receipt-id ".pdf")
-                               :data        (exam-payment-receipt-bytes url-helper "fi" template-data (assoc payment-data :receipt_id receipt-id))
+                               :data        (exam-payment-receipt-contents url-helper pdf-renderer "fi" template-data (assoc payment-data :receipt_id receipt-id))
                                :contentType "application/pdf"}])})))
 
-(defn send-customer-evaluation-registration-completed-email! [email-q payment-helper url-helper email-language order-time template-data]
+(defn send-customer-evaluation-registration-completed-email! [email-q payment-helper url-helper pdf-renderer email-language order-time template-data]
   (let [receipt-id (:order_number template-data)]
     (pgq/put email-q
              {:recipients [(:email template-data)]
@@ -53,7 +53,7 @@
               :attachments
               (when payment-helper
                 [{:name        (str "kuitti_" receipt-id ".pdf")
-                  :data        (evaluation-payment-receipt-bytes payment-helper url-helper "fi" (assoc template-data :receipt_id receipt-id))
+                  :data        (evaluation-payment-receipt-contents payment-helper url-helper pdf-renderer "fi" (assoc template-data :receipt_id receipt-id))
                   :contentType "application/pdf"}])})))
 
 (defn send-kirjaamo-evaluation-registration-completed-email! [email-q url-helper email-language order-time kirjaamo-email template-data]

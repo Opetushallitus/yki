@@ -44,6 +44,8 @@
   :yki.util/evaluation-payment-helper                 {:db         #ig/ref :duct.database/sql
                                                        :url-helper #ig/ref :yki.util/url-helper}
 
+  :yki.util/pdf                                       {:url-helper #ig/ref :yki.util/url-helper}
+
   :yki.job.job-queue/init                             {}
 
   :yki.job.job-queue/email-q                          {:init #ig/ref :yki.job.job-queue/init}
@@ -139,7 +141,8 @@
                                                        :access-log     #ig/ref :yki.middleware.access-log/with-logging
                                                        :email-q        #ig/ref :yki.job.job-queue/email-q
                                                        :payment-helper #ig/ref :yki.util/exam-payment-helper
-                                                       :url-helper     #ig/ref :yki.util/url-helper}
+                                                       :url-helper     #ig/ref :yki.util/url-helper
+                                                       :pdf-renderer   #ig/ref :yki.util/pdf}
 
   :yki.handler/evaluation-payment                     {:db             #ig/ref :duct.database/sql
                                                        :auth           #ig/ref :yki.middleware.auth/with-authentication
@@ -181,6 +184,7 @@
                                                        :access-log     #ig/ref :yki.middleware.access-log/with-logging
                                                        :auth           #ig/ref :yki.middleware.auth/with-authentication
                                                        :payment-helper #ig/ref :yki.util/evaluation-payment-helper
+                                                       :pdf-renderer   #ig/ref :yki.util/pdf
                                                        :url-helper     #ig/ref :yki.util/url-helper
                                                        :email-q        #ig/ref :yki.job.job-queue/email-q}}
 

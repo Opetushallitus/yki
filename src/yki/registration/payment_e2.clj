@@ -14,7 +14,7 @@
   (let [participant-data (registration-db/get-participant-data-by-order-number db (:order-number payment-params))
         success          (registration-db/complete-registration-and-legacy-payment! db payment-params)]
     (when success
-      (registration-email/send-exam-registration-completed-email! email-q url-helper (:lang participant-data) participant-data nil))
+      (registration-email/send-exam-registration-completed-email! email-q url-helper nil (:lang participant-data) participant-data nil))
     success))
 
 (defn handle-evaluation-payment-success [db email-q url-helper payment-config payment-params]
@@ -33,8 +33,8 @@
 
       ;; Customer email
       ; TODO This namespace concerns the legacy payment integration, and is to be removed.
-      ; Thus, it doesn't matter much that we're passing a nil payment-helper below.
-      (registration-email/send-customer-evaluation-registration-completed-email! email-q nil url-helper lang order-time template-data)
+      ; Thus, it doesn't matter much that we're passing a nil payment-helper and pdf-renderer below.
+      (registration-email/send-customer-evaluation-registration-completed-email! email-q nil url-helper nil lang order-time template-data)
 
       ;; Kirjaamo email
       (registration-email/send-kirjaamo-evaluation-registration-completed-email! email-q url-helper lang order-time (:email payment-config) template-data))
