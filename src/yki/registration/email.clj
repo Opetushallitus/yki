@@ -24,7 +24,7 @@
   (let [template-data (-> (update template-data :subtests
                                   #(map (fn [subtest]
                                           {:price (subtest->price payment-helper subtest)
-                                           :name  (template-util/get-subtest url-helper subtest "fi")}) %))
+                                           :name  (template-util/get-subtest url-helper subtest receipt-language)}) %))
                           (set/rename-keys {:first_names :first_name}))]
     (template+data->pdf-bytes pdf-renderer "receipt_evaluation_payment" receipt-language template-data)))
 
@@ -39,7 +39,7 @@
               :body        (template-util/render url-helper "payment_success" email-language (assoc template-data :language exam-language :level exam-level))
               :attachments (when payment-data
                              [{:name        (str "kuitti_" receipt-id ".pdf")
-                               :data        (exam-payment-receipt-contents url-helper pdf-renderer "fi" template-data (assoc payment-data :receipt_id receipt-id))
+                               :data        (exam-payment-receipt-contents url-helper pdf-renderer email-language template-data (assoc payment-data :receipt_id receipt-id))
                                :contentType "application/pdf"}])})))
 
 (defn send-customer-evaluation-registration-completed-email! [email-q payment-helper url-helper pdf-renderer email-language order-time template-data]
@@ -53,7 +53,7 @@
               :attachments
               (when payment-helper
                 [{:name        (str "kuitti_" receipt-id ".pdf")
-                  :data        (evaluation-payment-receipt-contents payment-helper url-helper pdf-renderer "fi" (assoc template-data :receipt_id receipt-id))
+                  :data        (evaluation-payment-receipt-contents payment-helper url-helper pdf-renderer email-language (assoc template-data :receipt_id receipt-id))
                   :contentType "application/pdf"}])})))
 
 (defn send-kirjaamo-evaluation-registration-completed-email! [email-q url-helper email-language order-time kirjaamo-email template-data]
