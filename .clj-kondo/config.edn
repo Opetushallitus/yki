@@ -3,7 +3,8 @@
                                          (compojure.api.sweet/PUT)
                                          (compojure.api.sweet/DELETE)
                                          (compojure.api.sweet/context)]}
-           :unresolved-var {:exclude [org.httpkit.client]}}
- :lint-as {pgqueue.core/take-with clojure.core/for
+           :unresolved-var    {:exclude [org.httpkit.client]}}
+ :lint-as {pgqueue.core/take-with    clojure.core/for
            org.httpkit.client/defreq clojure.core/declare}
- :hooks {:macroexpand {jeesql.core/require-sql jeesql.core/require-sql}}}
+ :hooks   {:macroexpand {jeesql.core/require-sql     jeesql.core/require-sql
+                         stub-http.core/with-routes! stub-http.core/with-routes!}}}
