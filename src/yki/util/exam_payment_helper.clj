@@ -1,10 +1,10 @@
 (ns yki.util.exam-payment-helper
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
-            [integrant.core :as ig]
-            [jeesql.core :refer [require-sql]]
-            [yki.util.paytrail-payments :refer [create-paytrail-payment!]]
-            [yki.util.template-util :as template-util]))
+  (:require
+    [clojure.string :as str]
+    [integrant.core :as ig]
+    [jeesql.core :refer [require-sql]]
+    [yki.util.paytrail-payments :refer [create-paytrail-payment!]]
+    [yki.util.template-util :as template-util]))
 
 (require-sql ["yki/queries.sql" :as q])
 
