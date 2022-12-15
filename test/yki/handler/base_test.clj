@@ -1,28 +1,28 @@
 (ns yki.handler.base-test
-  (:require [integrant.core :as ig]
-            [clojure.string :as str]
-            [duct.database.sql :as sql]
-            [jsonista.core :as j]
-            [muuntaja.middleware :as middleware]
-            [compojure.core :refer :all]
-            [peridot.core :as peridot]
-            [clojure.java.jdbc :as jdbc]
-            [yki.embedded-db :as embedded-db]
-            [yki.handler.login-link :as login-link]
-            [yki.handler.routing :as routing]
-            [yki.handler.exam-session]
-            [yki.handler.exam-date]
-            [yki.handler.file]
-            [yki.handler.auth]
-            [yki.job.job-queue]
-            [yki.middleware.no-auth]
-            [yki.util.url-helper]
-            [yki.util.common :as c]
-            [clj-time.format :as f]
-            [clj-time.core :as t]
-            [yki.handler.organizer]
-            [yki.util.template-util :as template-util])
-  (:import (yki.util.pdf PdfTemplateRenderer)))
+  (:require
+    [clj-time.format :as f]
+    [clj-time.core :as t]
+    [clojure.java.jdbc :as jdbc]
+    [clojure.string :as str]
+    [compojure.core :refer [routes]]
+    [duct.database.sql :as sql]
+    [integrant.core :as ig]
+    [jsonista.core :as j]
+    [muuntaja.middleware :as middleware]
+    [peridot.core :as peridot]
+    [yki.embedded-db :as embedded-db]
+    [yki.handler.login-link :as login-link]
+    [yki.handler.routing :as routing]
+    [yki.handler.exam-session]
+    [yki.handler.exam-date]
+    [yki.handler.file]
+    [yki.handler.auth]
+    [yki.job.job-queue]
+    [yki.middleware.no-auth]
+    [yki.util.url-helper]
+    [yki.util.common :as c]
+    [yki.util.template-util :as template-util])
+(:import (yki.util.pdf PdfTemplateRenderer)))
 
 (def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
 
@@ -125,8 +125,8 @@
                                              :cas-creds  {:username "username"
                                                           :password "password"}}))
 (defn onr-client [url-helper]
-  onr-client (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
-                                                        :cas-client (cas-client url-helper)}))
+  (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
+                                             :cas-client (cas-client url-helper)}))
 (defn permissions-client [url-helper]
   (ig/init-key :yki.boundary.permissions/permissions-client
                {:url-helper url-helper

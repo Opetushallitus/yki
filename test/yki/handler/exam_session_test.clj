@@ -1,19 +1,20 @@
 (ns yki.handler.exam-session-test
-  (:require [clojure.test :refer [deftest use-fixtures testing is]]
-            [pgqueue.core :as pgq]
-            [ring.mock.request :as mock]
-            [yki.embedded-db :as embedded-db]
-            [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [clojure.string :as str]))
+  (:require
+    [clojure.test :refer [deftest use-fixtures testing is]]
+    [clojure.string :as str]
+    [pgqueue.core :as pgq]
+    [ring.mock.request :as mock]
+    [yki.embedded-db :as embedded-db]
+    [yki.handler.base-test :as base]
+    [yki.handler.routing :as routing]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
 (defn- get-exam-date [response-body date]
-  (let [exam-dates (fn [r] (get-in r ["session_date"]))
+  (let [exam-dates    (fn [r] (get-in r ["session_date"]))
         exam-sessions (get-in response-body ["exam_sessions"])
-        date-map (map exam-dates exam-sessions)
-        get-date (fn [r] (some #{r} date-map))]
+        date-map      (map exam-dates exam-sessions)
+        get-date      (fn [r] (some #{r} date-map))]
     (get-date date)))
 
 (defn- get-new-entry [orig-entry new-values]
@@ -25,10 +26,9 @@
 
 (deftest exam-session-validation-test
   (let [invalid-exam-session (base/change-entry base/exam-session "session_date" "NOT_A_DATE")
-        request (-> (mock/request :post exam-session-route invalid-exam-session)
-                    (mock/content-type "application/json; charset=UTF-8"))
-        response (base/send-request-with-tx request)
-        response-body (base/body-as-json response)]
+        request              (-> (mock/request :post exam-session-route invalid-exam-session)
+                                 (mock/content-type "application/json; charset=UTF-8"))
+        response             (base/send-request-with-tx request)]
     (testing "post exam session endpoint should return 400 status code for validation errors"
       (is (= {:count 0}
              (base/select-one "SELECT COUNT(1) FROM exam_session")))
@@ -41,12 +41,11 @@
   (base/insert-post-admission-dates)
 
   (testing "post exam session endpoint should add valid exam session to database and send sync request to queue"
-    (let [request (-> (mock/request :post exam-session-route base/exam-session)
-                      (mock/content-type "application/json; charset=UTF-8"))
-          response (base/send-request-with-tx request)
-          response-body (base/body-as-json response)
+    (let [request     (-> (mock/request :post exam-session-route base/exam-session)
+                          (mock/content-type "application/json; charset=UTF-8"))
+          response    (base/send-request-with-tx request)
           data-sync-q (base/data-sync-q)
-          sync-req (pgq/take data-sync-q)]
+          sync-req    (pgq/take data-sync-q)]
       (is (= {:count 1}
              (base/select-one "SELECT COUNT(1) FROM exam_session")))
       (is (= {:count 3}
@@ -56,8 +55,8 @@
       (is (= (:type sync-req) "CREATE"))))
 
   (testing "get exam session endpoint should return exam session with location"
-    (let [request (mock/request :get exam-session-route)
-          response (base/send-request-with-tx request)
+    (let [request       (mock/request :get exam-session-route)
+          response      (base/send-request-with-tx request)
           response-body (base/body-as-json response)]
       (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
       (is (= (:status response) 200))
@@ -65,18 +64,18 @@
 
   (testing "put exam session endpoint should update exam session based on id query parameter"
     (let [updated-exam-session (base/change-entry base/exam-session "max_participants" 51)
-          request (-> (mock/request :put (str exam-session-route "/1") updated-exam-session)
-                      (mock/content-type "application/json; charset=UTF-8"))
-          response (base/send-request-with-tx request)]
+          request              (-> (mock/request :put (str exam-session-route "/1") updated-exam-session)
+                                   (mock/content-type "application/json; charset=UTF-8"))
+          response             (base/send-request-with-tx request)]
       (is (= {:max_participants 51}
              (base/select-one "SELECT max_participants FROM exam_session where id = 1")))
       (is (= (:status response) 200))))
 
   (testing "delete exam session endpoint should remove exam session and it's location"
-    (let [request (mock/request :delete (str exam-session-route "/1"))
-          response (base/send-request-with-tx request)
+    (let [request     (mock/request :delete (str exam-session-route "/1"))
+          response    (base/send-request-with-tx request)
           data-sync-q (base/data-sync-q)
-          sync-req (pgq/take data-sync-q)]
+          sync-req    (pgq/take data-sync-q)]
       (is (= (:status response) 200))
       (is (= {:count 0}
              (base/select-one "SELECT COUNT(1) FROM exam_session")))
@@ -129,24 +128,24 @@
   (base/insert-organizer (:oid base/organizer))
   (base/insert-languages (:oid base/organizer))
 
-  (let [exam-dates [["2040-06-01" "2040-03-01" "2040-05-30"]
-                    ["2040-04-01" "2040-03-01" "2040-03-30"]
-                    ["2039-12-01" "2040-11-01" "2040-11-30"]
-                    ["2039-10-01" "2039-10-01" "2039-10-30"]]
-        date-id (fn [date] (-> date
-                               (base/select-exam-date-id-by-date)
-                               (base/select-one)
-                               :id))
-        insert-dates (fn [dates] (let [[exam-date reg-start reg-end] dates]
-                                   (base/insert-custom-exam-date exam-date reg-start reg-end)
-                                   (base/insert-exam-session (date-id exam-date) (:oid base/organizer) 5)
-                                   (base/insert-exam-session-location-by-date exam-date "fi")))
+  (let [exam-dates         [["2040-06-01" "2040-03-01" "2040-05-30"]
+                            ["2040-04-01" "2040-03-01" "2040-03-30"]
+                            ["2039-12-01" "2040-11-01" "2040-11-30"]
+                            ["2039-10-01" "2039-10-01" "2039-10-30"]]
+        date-id            (fn [date] (-> date
+                                          (base/select-exam-date-id-by-date)
+                                          (base/select-one)
+                                          :id))
+        insert-dates       (fn [dates] (let [[exam-date reg-start reg-end] dates]
+                                         (base/insert-custom-exam-date exam-date reg-start reg-end)
+                                         (base/insert-exam-session (date-id exam-date) (:oid base/organizer) 5)
+                                         (base/insert-exam-session-location-by-date exam-date "fi")))
         iterate-exam-dates (fn [dates] (for [d dates] (insert-dates d)))]
     (doall (iterate-exam-dates exam-dates)))
 
   (testing "exam session endpoint with 'days' parameter should return sessions from past days"
-    (let [request (mock/request :get (str exam-session-route "?from=2040-06-01T00:00:00Z&days=100"))
-          response (base/send-request-with-tx request)
+    (let [request       (mock/request :get (str exam-session-route "?from=2040-06-01T00:00:00Z&days=100"))
+          response      (base/send-request-with-tx request)
           response-body (base/body-as-json response)]
       (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
       (is (= (:status response) 200))
@@ -168,7 +167,7 @@
 (deftest exam-session-delete-fail-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
-  (let [request             (mock/request :delete (str exam-session-route "/1"))
-        response             (base/send-request-with-tx request)]
+  (let [request  (mock/request :delete (str exam-session-route "/1"))
+        response (base/send-request-with-tx request)]
     (testing "should not allow deleting exam session with participants"
       (is (= (:status response) 409)))))

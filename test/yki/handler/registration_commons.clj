@@ -1,16 +1,16 @@
 (ns yki.handler.registration-commons
-  (:require [clojure.java.jdbc :as jdbc]
-            [compojure.core :as core]
-            [duct.database.sql :as sql]
-            [integrant.core :as ig]
-            [muuntaja.middleware :as middleware]
-            [stub-http.core :refer [with-routes!]]
-            [yki.embedded-db :as embedded-db]
-            [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [jsonista.core :as j]
-            [peridot.core :as peridot]
-            [pgqueue.core :as pgq]))
+  (:require
+    [clojure.java.jdbc :as jdbc]
+    [compojure.core :as core]
+    [duct.database.sql :as sql]
+    [integrant.core :as ig]
+    [jsonista.core :as j]
+    [muuntaja.middleware :as middleware]
+    [yki.embedded-db :as embedded-db]
+    [yki.handler.base-test :as base]
+    [yki.handler.routing :as routing]
+    [peridot.core :as peridot]
+    [pgqueue.core :as pgq]))
 
 (defn create-handlers
   [email-q port use-new-payments-api?]

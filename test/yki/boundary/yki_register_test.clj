@@ -1,12 +1,13 @@
 (ns yki.boundary.yki-register-test
-  (:require [clojure.test :refer :all]
-            [clojure.string :as s]
-            [yki.handler.base-test :as base]
-            [stub-http.core :refer :all]
-            [jsonista.core :as j]
-            [yki.embedded-db :as embedded-db]
-            [yki.boundary.exam-session-db :as exam-session-db]
-            [yki.boundary.yki-register :as yki-register]))
+  (:require
+    [clojure.test :refer [deftest is testing use-fixtures]]
+    [clojure.string :as s]
+    [yki.handler.base-test :as base]
+    [stub-http.core :refer [with-routes!]]
+    [jsonista.core :as j]
+    [yki.embedded-db :as embedded-db]
+    [yki.boundary.exam-session-db :as exam-session-db]
+    [yki.boundary.yki-register :as yki-register]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
@@ -50,7 +51,7 @@
     (testing "should create valid csv line with ssn"
       (let [registration-form-with-ssn (dissoc (assoc base/registration-form :ssn "010199-9034" :nationalities ["246"]) :gender)
             result                     (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) registration-form-with-ssn "5.4.3.2.1")
-            csv-record                   ["5.4.3.2.1" "010199-9034" "Ankka" "Aku" "M" "FIN" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi"]]
+            csv-record                 ["5.4.3.2.1" "010199-9034" "Ankka" "Aku" "M" "FIN" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi"]]
         (is (= result csv-record))))))
 
 (deftest delete-exam-session-and-organizer-test
@@ -59,18 +60,18 @@
     (with-routes!
       {{:path "/tutkintotilaisuus" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 202}
        {:path "/jarjestaja" :query-params {:oid "1.2.3.4"}}                                                           {:status 202}}
-      (let [exam-session-id         (:id (base/select-one "SELECT id FROM exam_session"))
-            db                      (base/db)
-            es                      (exam-session-db/get-exam-session-by-id db exam-session-id)
-            url-helper              (base/create-url-helper (str "localhost:" port))
-            delete-organizer-req    {:organizer-oid "1.2.3.4"
-                                     :type          "DELETE"
-                                     :created       (System/currentTimeMillis)}
-            delete-exam-session-req {:exam-session es
-                                     :type         "DELETE"
-                                     :created      (System/currentTimeMillis)}
-            delete-organizer-res    (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-organizer-req)
-            delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-exam-session-req)]
+      (let [exam-session-id          (:id (base/select-one "SELECT id FROM exam_session"))
+            db                       (base/db)
+            es                       (exam-session-db/get-exam-session-by-id db exam-session-id)
+            url-helper               (base/create-url-helper (str "localhost:" port))
+            delete-organizer-req     {:organizer-oid "1.2.3.4"
+                                      :type          "DELETE"
+                                      :created       (System/currentTimeMillis)}
+            delete-exam-session-req  {:exam-session es
+                                      :type         "DELETE"
+                                      :created      (System/currentTimeMillis)}
+            _delete-organizer-res    (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-organizer-req)
+            _delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-exam-session-req)]
         "tests that exception is not thrown"))))
 
 (def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-900U;Ankka;Iines;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;201190-9012;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.4;301079-083N;Ankka;Roope;M;FIN;Katu 5;12346;Ankkalinna;roope@al.fi;fi;fi"]))

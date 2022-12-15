@@ -1,10 +1,10 @@
 (ns yki.util.template-util-test
-  (:require [clojure.test :refer :all]
-            [clojure.string :as s]
-            [integrant.core :as ig]
-            [stub-http.core :refer :all]
-            [yki.handler.base-test :as base]
-            [yki.util.template-util :as template-util]))
+  (:require
+    [clojure.test :refer [deftest is testing]]
+    [clojure.string :as s]
+    [stub-http.core :refer [with-routes!]]
+    [yki.handler.base-test :as base]
+    [yki.util.template-util :as template-util]))
 
 (deftest render-login-link-email-test
   (with-routes!
