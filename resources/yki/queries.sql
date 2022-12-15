@@ -159,7 +159,11 @@ SELECT
   q.ssn,
   q.name,
   q.email,
-  q.phone_number
+  q.phone_number,
+  r.reviewed,
+  r.id AS reg_id,
+  r.quarantined AS quarantine_id,
+  r.form
 FROM quarantine q
 JOIN registration r
 ON q.birthdate = r.form->>'birthdate'

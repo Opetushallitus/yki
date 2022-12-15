@@ -10,8 +10,9 @@ CREATE TABLE IF NOT EXISTS quarantine
     email               TEXT,
     phone_number        TEXT,
     created             TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-    updated             TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
+    updated             TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
+    deleted             TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
-ALTER TABLE registration ADD COLUMN IF NOT EXISTS quarantined BIGINT REFERENCES quarantine(id) DEFAULT NULL;
+ALTER TABLE registration ADD COLUMN IF NOT EXISTS quarantined BIGINT REFERENCES quarantine_id(id) DEFAULT NULL;
 ALTER TABLE registration ADD COLUMN IF NOT EXISTS reviewed TIMESTAMP WITH TIME ZONE DEFAULT NULL;
