@@ -136,6 +136,25 @@ lein cljfmt fix
 
 ### **Static code analysis**
 
+[clj-kondo](https://github.com/clj-kondo/clj-kondo)
+
+Install `clj-kondo` first, eg. with `brew install clj-kondo`.
+
+Then, use `clj-kondo` to get feedback on your code:
+```sh
+clj-kondo --lint src/
+clj-kondo --lint test/
+```
+
+Configurations for `clj-kondo` are stored under `.clj-kondo/`, and they can be modified to eg. suppress false positives.
+
+For best results, integrate `clj-kondo` with your IDE for rapid feedback.
+See [IDE integration guide](https://github.com/clj-kondo/clj-kondo/blob/master/doc/editor-integration.md).
+
+Linting is also performed as a job on the CI.
+The job is configured to fail if `clj-kondo` finds any errors under `src` or `test` directories.
+
+
 [eastwood](https://github.com/jonase/eastwood)
 
 ```sh
