@@ -11,16 +11,17 @@
     [muuntaja.middleware :as middleware]
     [peridot.core :as peridot]
     [yki.embedded-db :as embedded-db]
+    [yki.handler.auth]
+    [yki.handler.exam-date]
+    [yki.handler.exam-session]
+    [yki.handler.file]
+    [yki.handler.organizer]
     [yki.handler.login-link :as login-link]
     [yki.handler.routing :as routing]
-    [yki.handler.exam-session]
-    [yki.handler.exam-date]
-    [yki.handler.file]
-    [yki.handler.auth]
     [yki.job.job-queue]
     [yki.middleware.no-auth]
-    [yki.util.url-helper]
     [yki.util.common :as c]
+    [yki.util.url-helper]
     [yki.util.template-util :as template-util])
 (:import (yki.util.pdf PdfTemplateRenderer)))
 
