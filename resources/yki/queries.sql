@@ -162,7 +162,7 @@ SELECT
   q.phone_number,
   r.reviewed,
   r.id AS reg_id,
-  r.quarantined AS quarantine_id,
+  r.quarantine_id AS quarantine_id,
   r.form
 FROM quarantine q
 JOIN registration r
@@ -172,7 +172,7 @@ ON r.participant_id = p.id;
 
 -- name: update-registration-quarantine!
 UPDATE registration SET
-       quarantined = :id,
+       quarantine_id = :id,
        reviewed = NOW(),
        state =
         CASE WHEN :quarantined THEN
