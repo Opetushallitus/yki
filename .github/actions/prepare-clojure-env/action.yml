@@ -22,6 +22,7 @@ runs:
       uses: DeLaGuardo/setup-clojure@9.5
       with:
         lein: 2.9.10
+        clj-kondo: 'latest'
 
     - name: Install Clojure deps
       run: lein deps
