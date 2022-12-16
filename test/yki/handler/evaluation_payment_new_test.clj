@@ -1,16 +1,21 @@
 (ns yki.handler.evaluation-payment-new-test
-  (:require [clojure.test :refer [deftest use-fixtures is testing]]
-            [compojure.api.sweet :refer [api]]
-            [duct.database.sql]
-            [integrant.core :as ig]
-            [ring.mock.request :as mock]
-            [stub-http.core :refer [with-routes!]]
-            [yki.embedded-db :as embedded-db]
-            [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [yki.handler.evaluation-payment-new]
-            [yki.util.paytrail-payments :refer [amount->paytrail-amount sign-request sign-string]]
-            [clojure.string :as str]))
+  (:require
+    [clojure.test :refer [deftest use-fixtures is testing]]
+    [clojure.string :as str]
+    [clj-time.core :as t]
+    [compojure.api.sweet :refer [api]]
+    [duct.database.sql]
+    [integrant.core :as ig]
+    [pgqueue.core :as pgq]
+    [ring.mock.request :as mock]
+    [selmer.parser :as parser]
+    [stub-http.core :refer [with-routes!]]
+    [yki.embedded-db :as embedded-db]
+    [yki.handler.base-test :as base]
+    [yki.handler.routing :as routing]
+    [yki.handler.evaluation-payment-new]
+    [yki.util.common :refer [format-date-string-to-finnish-format]]
+    [yki.util.paytrail-payments :refer [amount->paytrail-amount sign-request sign-string]]))
 
 (def test-order {:first_names "Anne Marie"
                  :last_name   "Jones"
@@ -33,6 +38,7 @@
             :auth           (base/auth url-helper)
             :access-log     (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
             :payment-helper (base/create-evaluation-payment-helper db url-helper true)
+            :pdf-renderer   (base/mock-pdf-renderer url-helper)
             :url-helper     url-helper
             :email-q        (base/email-q)}))))
 
@@ -98,6 +104,9 @@
                                           (base/body-as-json)
                                           (get "redirect")))))))))
 
+(defn without-empty-lines [text]
+  (remove str/blank? (str/split-lines text)))
+
 (deftest paytrail-callback-test
   (with-routes!
     {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
@@ -113,7 +122,8 @@
           valid-success-callback-headers {"checkout-amount"         (amount->paytrail-amount amount)
                                           "checkout-transaction-id" transaction-id
                                           "checkout-status"         "ok"}
-          get-payment-status             #(:state (order-id->payment-data evaluation-order-id))]
+          get-payment-status             #(:state (order-id->payment-data evaluation-order-id))
+          email-q                        (base/email-q)]
       (testing "Invoking success callback with missing or incorrect signature yields 401 Unauthorized"
         (is (= 401 (-> (success handler lang {})
                        (response->status))))
@@ -143,8 +153,29 @@
         (is (success-redirect? (->> (with-signature valid-success-callback-headers)
                                     (success handler lang))))
         (is (= "PAID" (get-payment-status))))
+      (let [customer-email (pgq/take email-q)
+            [receipt-attachment] (:attachments customer-email)
+            kirjaamo-email (pgq/take email-q)
+            exam-date      (base/two-weeks-ago)]
+        (testing "Emails are sent to customer and kirjaamo after successful payment"
+          (is (= {:recipients ["anne-marie.jones@testi.fi"]
+                  :subject    (str/join ", " ["Tarkistusarviointi: suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
+                 (select-keys customer-email [:recipients :subject])))
+          (testing "Customer email has PDF receipt as attachment"
+            (is (= 1 (count (:attachments customer-email))))
+            (is (= "application/pdf" (:contentType receipt-attachment)))
+            (is (= "kuitti_fake-reference.pdf" (:name receipt-attachment)))
+            (testing "Attachment contents matches expectation"
+              (is (= (without-empty-lines (:data receipt-attachment))
+                     (without-empty-lines (parser/render-file "evaluation_payment_receipt_template.html" {:current_date (t/now)
+                                                                                                          :exam_date    exam-date}))))))
+          (is (= {:recipients ["kirjaamo@oph.fi"]
+                  :subject    (str/join ", " ["YKI" "suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
+                 (select-keys kirjaamo-email [:recipients :subject])))))
       (testing "Once payment is marked as PAID, later callback invocations do not change the status"
         (is (error-redirect? (->> (assoc valid-success-callback-headers "checkout-status" "fail")
                                   (with-signature)
                                   (success handler lang))))
-        (is (= "PAID" (get-payment-status)))))))
+        (is (= "PAID" (get-payment-status))))
+      (testing "Emails to customer and kirjaamo are NOT sent after further success callbacks"
+        (is (nil? (pgq/take email-q)))))))

@@ -96,8 +96,8 @@
                                 (assoc val :organizer_name (oid->organizer-name oid)))]
       (map with-organizer-name payments))))
 
-(defmethod ig/init-key :yki.handler/exam-payment-new [_ {:keys [auth access-log db payment-helper url-helper email-q]}]
-  {:pre [(some? auth) (some? access-log) (some? db) (some? email-q) (some? payment-helper) (some? url-helper)]}
+(defmethod ig/init-key :yki.handler/exam-payment-new [_ {:keys [auth access-log db payment-helper pdf-renderer url-helper email-q]}]
+  {:pre [(some? auth) (some? access-log) (some? db) (some? email-q) (some? payment-helper) (some? pdf-renderer) (some? url-helper)]}
   (api
     (context routing/payment-v2-root []
       :coercion :spec
@@ -160,6 +160,7 @@
                                                       (registration-email/send-exam-registration-completed-email!
                                                         email-q
                                                         url-helper
+                                                        pdf-renderer
                                                         lang
                                                         email-template-data
                                                         updated-payment-details))]

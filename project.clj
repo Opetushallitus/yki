@@ -76,7 +76,8 @@
   :profiles
   {:provided     {:dependencies [[hawk "0.2.11" :exclusions [net.java.dev.jna/jna]]]}
    :dev          [:project/dev :profiles/dev]
-   :test         {:jvm-opts ["-Dlogback.configurationFile=test/resources/logback-test.xml"]}
+   :test         {:jvm-opts ["-Dlogback.configurationFile=test/resources/logback-test.xml"]
+                  :resource-paths ["test/resources"]}
    :repl         {:prep-tasks   ^:replace ["javac" "compile"]
                   :repl-options {:init-ns user}}
    :uberjar      {:aot :all}

@@ -1,75 +1,4 @@
-<!DOCTYPE html>
-<html lang="fi">
-<head>
-    <meta charset="UTF-8"/>
-    <style>
-        body {
-            margin: 30px;
-        }
-
-        .header {
-            width: 100%;
-            color: #808080;
-            border-bottom: 1px solid #d3d3d3;
-        }
-
-        .footer {
-            width: 100%;
-            color: #808080;
-            border-top: 1px solid #d3d3d3;
-            margin-top: 200px;
-        }
-
-        .hf_center {
-            text-align: center;
-        }
-
-        .hf_right {
-            text-align: right;
-        }
-
-        .cell {
-            padding: 5px;
-            border-style: solid;
-            border-color: #d3d3d3;
-        }
-    </style>
-</head>
-<body>
-
-<table class="header">
-    <tr>
-        <td>
-            <svg width="51" height="50" fill="none"
-                 xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" clip-rule="evenodd"
-                      d="M14.474 14.389c1.267-2.56 2.742-5.014 4.024-7.15 2.679-4.46 4.518-7.522 1.873-7.218-2.224.283-4.382.95-6.38 1.971A22.745 22.745 0 0 1 16.776.851S8.657 4.2 5.625 13.765a24.817 24.817 0 0 1 4.017-3.146c3.941-2.504 3.228-.611 1.658 3.558-1.113 2.955-2.657 7.053-3.28 11.541 1.067-1.377 2.35-3.355 3.797-5.585.392-.605.796-1.227 1.211-1.861.356-1.34.84-2.643 1.446-3.89v.007zm21.237-1.103c-1.57-.45-3.202.467-4.846 2.227a88.322 88.322 0 0 0-1.8 4.835c-.463 1.345-.945 2.893-1.452 4.52-2.368 7.605-5.277 16.947-9.21 15.506a5.83 5.83 0 0 1-1.186-.584c-.716 1.188-1.379 2.124-1.98 2.697a6.367 6.367 0 0 1-1.798 1.233c9.048 8.934 25.713 8.555 24.765-2.545-1.124-13.132-1.052-18.694-.951-26.432l.01-.823a5.908 5.908 0 0 0-1.55-.626l-.002-.008zm14.61 5.78c.423 1.868.645 3.775.66 5.69l.008.003c-.019.255-.238 1.756-1.57 1.478a2.31 2.31 0 0 1-1.087-.51C46.32 12.477 38.715-3.092 37.465 9.397a52.389 52.389 0 0 0-1.876-2.51c1.708-2.022 2.964-2.26 3.683-2.372 3.41-.533 9.475 7.63 11.049 14.553z"
-                      fill="#5FC82B"/>
-                <path d="M32.169 3.516C20.635-3.528 5.958 36.063 4.859 26.11 2.023 6.925 16.776.85 16.776.85 7.289 3.997-.166 13.673.003 24.847c.17 11.228 6.418 17.667 8.67 18.783 2.852 1.416 5.343.072 6.572-1.14 4.727-4.508 13.268-31.265 20.467-29.192 8.056 1.944 6.988 18.978 7.378 22.244.775 6.51 2.591 5.732 5.121.949 1.696-3.206 2.8-6.9 2.774-11.773 0 0-.12 1.824-1.574 1.519-1.305-.272-1.793-1.02-5.077-6.173C40.895 14.671 35.64 5.641 32.17 3.522"
-                      fill="#0C48D8"/>
-            </svg>
-        </td>
-        <td>
-            <div class="hf_center">Opetushallitus</div>
-        </td>
-        <td>
-            <div class="hf_right">Kuitti</div>
-        </td>
-    </tr>
-</table>
-
-<p>
-    {% i18n email.receipt.common.receiptId %}: {{ receipt_id }}
-    <br />
-    {% i18n email.receipt.common.receiptDate %}: {{ receipt_date|date-format-with-dots }}
-</p>
-<p>
-    {% i18n email.receipt.common.paymentDate %}: {{ payment_date|date-format-with-dots }}
-</p>
-<p>
-    {{ last_name }}, {{ first_name }}
-</p>
-
+{% extends "yki/templates/receipt_base.html" %} {% block content %}
 <table style="width: 100%;border-spacing: 0;">
     <tr>
         <td colspan="4" class="cell" style="font-weight: bold; border-width: 1px 1px 1px 1px;">
@@ -81,13 +10,13 @@
     </tr>
     <tr>
         <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
-            {{ language }}, {{ level|lower }}, {{ exam_date|date-format-with-dots }}
+            {% i18n email.receipt.common.examSession %}: {{ language }}, {{ level|lower }}, {{ exam_date|date-format-with-dots }}
         </td>
         <td class="cell" style="border-width: 0 1px 0 0;"></td>
     </tr>
     <tr>
         <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
-            {% i18n email.receipt.examPayment.participant %}: {{ last_name }}, {{ first_name }}
+            {% i18n email.receipt.common.participant %}: {{ last_name }}, {{ first_name }}
         </td>
         <td class="cell" style="border-width: 0 1px 0 0;"></td>
     </tr>
@@ -127,35 +56,8 @@
 </table>
 
 <div style="font-size: 14px;">
-    <p>Hinnat ALV 0%</p>
-    <p>Yleisen kielitutkinnon tutkintomaksu on opetus- ja kulttuuriministeriön asetuksella määrätty maksu, johon ei
-        lisätä arvonlisäveroa.</p>
+    <p>{% i18n email.receipt.common.vatZero %}</p>
+    <p>{% i18n email.receipt.examPayment.vatZeroJustification %}</p>
 </div>
 
-<table class="footer">
-    <tr>
-        <td>
-            <div>
-                <div><strong>Opetushallitus</strong></div>
-                <div>Hakaniemenranta 6</div>
-                <div>PL 380, 00531 Helsinki</div>
-            </div>
-        </td>
-        <td>
-            <div>
-                <div>Sähköposti: kirjaamo@oph.fi</div>
-                <div>Puhelin: +358 29 533 1000</div>
-                <div>&nbsp;</div>
-            </div>
-        </td>
-        <td>
-            <div class="hf_right">
-                <div>Y-tunnus: 2769790-1</div>
-                <div>&nbsp;</div>
-                <div>&nbsp;</div>
-            </div>
-        </td>
-    </tr>
-</table>
-</body>
-</html>
+{% endblock %}

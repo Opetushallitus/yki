@@ -1,0 +1,47 @@
+{% extends "yki/templates/receipt_base.html" %} {% block content %}
+
+<table style="width: 100%;border-spacing: 0;">
+  {% for test in subtests %}
+  <tr>
+    <td colspan="4" class="cell" style="font-weight: bold; border-width: 1px 1px 0 1px;">
+      {% i18n email.receipt.evaluationPayment.title %}
+    </td>
+    <td class="cell" style="border-width: 1px 1px 0 0;">
+      {{ test.price.email-template|replace-dot-with-comma }} €
+    </td>
+  </tr>
+  <tr>
+    <td colspan="4" class="cell" style="border-width: 0 1px 0 1px;">
+      {% i18n email.receipt.evaluationPayment.subtest %}: {{ test.name }}
+    </td>
+    <td class="cell" style="border-width: 0 1px 0 0;"></td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td colspan="4" class="cell" style="font-weight: bold;border-width: 1px 1px 0 1px;">
+      {% i18n email.receipt.common.examSession %}: {{ language }}, {{ level|lower }}, {{ exam_date|date-format-with-dots }}
+    </td>
+    <td class="cell" style="border-width: 1px 1px 0 0;"></td>
+  </tr>
+  <tr>
+    <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
+      {% i18n email.receipt.common.participant %}: {{ last_name }}, {{ first_name }}
+    </td>
+    <td class="cell" style="border-width: 0 1px 0 0;"></td>
+  </tr>
+  <tr style="font-weight: bold">
+    <td class="cell" colspan="4" style="font-weight: bold; border-width: 1px 1px 1px 1px;">
+      {% i18n email.receipt.common.total %}
+    </td>
+    <td class="cell" style="border-width: 1px 1px 1px 0;">
+      {{ amount|replace-dot-with-comma }} €
+    </td>
+  </tr>
+</table>
+
+<div style="font-size: 14px;">
+  <p>{% i18n email.receipt.common.vatZero %}</p>
+  <p>{% i18n email.receipt.evaluationPayment.vatZeroJustification %}</p>
+</div>
+
+{% endblock %}
