@@ -151,8 +151,8 @@ INSERT INTO quarantine (
 -- name: select-quarantine-matches
 SELECT
   q.id,
-  q.language_code,
-  q.level_code,
+  q.language_code AS quarantine_lang,
+  q.level_code AS quarantine_level,
   q.end_date,
   q.birthdate,
   q.created,
@@ -163,12 +163,19 @@ SELECT
   r.reviewed,
   r.id AS reg_id,
   r.quarantine_id AS quarantine_id,
-  r.form
+  r.form,
+  ed.exam_date,
+  es.language_code,
+  es.level_code
 FROM quarantine q
 JOIN registration r
 ON q.birthdate = r.form->>'birthdate'
 JOIN participant p
-ON r.participant_id = p.id;
+ON r.participant_id = p.id
+JOIN exam_session es
+ON r.exam_session_id = es.id
+JOIN exam_date ed
+ON es.exam_date_id = ed.id;
 
 -- name: update-registration-quarantine!
 UPDATE registration SET
