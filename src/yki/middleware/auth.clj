@@ -147,6 +147,8 @@
    {:pattern        #".*/api/virkailija/organizer/.*/file.*"
     :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
     :request-method :get}
+   {:pattern #".*/api/virkailija/quarantine.*"
+    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
    {:pattern        #".*/auth/cas.*"
     :handler        (partial virkailija-authenticated db)
     :on-error       (fn [req _] (redirect-to-cas req url-helper))
