@@ -26,8 +26,8 @@
 (extend-protocol Quarantine
   Boundary
   (create-quarantine! [{:keys [spec]} quarantine]
-    (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/insert-quarantine! tx (convert-date quarantine)))))
+     (jdbc/with-db-transaction [tx spec]
+       (int->boolean (q/insert-quarantine! tx (convert-date quarantine)))))
   (delete-quarantine! [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (int->boolean (q/delete-quarantine! tx {:id id}))))

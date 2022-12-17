@@ -1,16 +1,12 @@
 (ns yki.handler.quarantine
   (:require
-    [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
     [integrant.core :as ig]
-    [pgqueue.core :as pgq]
-    [ring.util.response :refer [response not-found]]
+    [ring.util.response :refer [response]]
     [yki.boundary.quarantine-db :as quarantine-db]
     [yki.handler.routing :as routing]
     [yki.middleware.access-log]
-    [yki.middleware.auth :as auth]
-    [yki.spec :as ys]
-    [yki.util.audit-log :as audit-log]))
+    [yki.spec :as ys]))
 
 (defmethod ig/init-key :yki.handler/quarantine [_ {:keys [db url-helper access-log]}]
   {:pre [(some? db) (some? url-helper)]}
@@ -24,7 +20,13 @@
       (POST "/" request
         :body [quarantine ::ys/quarantine-type]
         :return ::ys/response
-        (response {:success (quarantine-db/create-quarantine! db quarantine)}))
+        (let [success (quarantine-db/create-quarantine!
+                        db
+                        (merge {:ssn          nil
+                                :email        nil
+                                :phone_number nil}
+                               quarantine))]
+          (response {:success success})))
       (DELETE "/:id" []
         :path-params [id :- ::ys/id]
         :return ::ys/response

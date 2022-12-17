@@ -117,7 +117,6 @@ DELETE FROM quarantine WHERE id = :id;
 SELECT
   q.id,
   q.language_code,
-  q.level_code,
   q.end_date,
   q.birthdate,
   q.created,
@@ -130,7 +129,6 @@ FROM quarantine q;
 -- name: insert-quarantine!
 INSERT INTO quarantine (
   language_code,
-  level_code,
   end_date,
   birthdate,
   ssn,
@@ -139,7 +137,6 @@ INSERT INTO quarantine (
   phone_number
 ) VALUES (
   :language_code,
-  :level_code,
   :end_date,
   :birthdate,
   :ssn,
@@ -152,7 +149,6 @@ INSERT INTO quarantine (
 SELECT
   q.id,
   q.language_code AS quarantine_lang,
-  q.level_code AS quarantine_level,
   q.end_date,
   q.birthdate,
   q.created,
@@ -161,14 +157,15 @@ SELECT
   q.email,
   q.phone_number,
   r.reviewed,
-  r.id AS reg_id,
-  r.quarantine_id AS quarantine_id,
+  r.id AS registration_id,
+  r.quarantine_id,
   r.form,
   ed.exam_date,
-  es.language_code,
-  es.level_code
+  es.language_code
 FROM quarantine q
 JOIN registration r
+-- TODO Constrain to registrations with now() <= exam_date <= q.end_date
+-- TODO Possibly filter out registrations that are reviewed?
 ON q.birthdate = r.form->>'birthdate'
 JOIN participant p
 ON r.participant_id = p.id

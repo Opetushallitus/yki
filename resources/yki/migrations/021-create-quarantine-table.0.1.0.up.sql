@@ -2,7 +2,6 @@ CREATE TABLE IF NOT EXISTS quarantine
 (
     id                  BIGSERIAL PRIMARY KEY,
     language_code       CHAR(3) REFERENCES language (code)     NOT NULL,
-    level_code          TEXT REFERENCES exam_level (code)      NOT NULL,
     end_date            DATE                                   NOT NULL,
     birthdate           TEXT                                   NOT NULL,
     ssn                 TEXT,
@@ -14,5 +13,5 @@ CREATE TABLE IF NOT EXISTS quarantine
     deleted             TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
-ALTER TABLE registration ADD COLUMN IF NOT EXISTS quarantined BIGINT REFERENCES quarantine_id(id) DEFAULT NULL;
+ALTER TABLE registration ADD COLUMN IF NOT EXISTS quarantine_id BIGINT REFERENCES quarantine (id) DEFAULT NULL;
 ALTER TABLE registration ADD COLUMN IF NOT EXISTS reviewed TIMESTAMP WITH TIME ZONE DEFAULT NULL;

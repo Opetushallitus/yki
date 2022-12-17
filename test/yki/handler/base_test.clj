@@ -190,14 +190,15 @@
                                        :email            "roope@al.fi"
                                        :street_address   "Katu 5"
                                        :phone_number     "+3584012347"})
+
 (def quarantine-form {:language_code "fin"
-                      :level_code    "PERUS"
-                      :end_date      "22-12-30"
+                      :end_date      "2022-12-30"
                       :birthdate     "1999-01-27"
                       :ssn           "301079-900U"
                       :name          "Max Syöttöpaine"
                       :email         "email@invalid.invalid"
                       :phone_number  "0401234567"})
+
 (defn select [query]
   (jdbc/query @embedded-db/conn query))
 
@@ -208,7 +209,6 @@
   (jdbc/execute! @embedded-db/conn (str "
     INSERT INTO quarantine (
         language_code,
-        level_code,
         end_date,
         birthdate,
         ssn,
@@ -217,7 +217,6 @@
         phone_number
     ) VALUES (
         'fin',
-        'PERUS',
         '2028-01-01',
         '1999-01-01',
         '301079-900U',
