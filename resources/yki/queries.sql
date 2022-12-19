@@ -166,13 +166,14 @@ FROM quarantine q
 JOIN registration r
 -- TODO Constrain to registrations with now() <= exam_date <= q.end_date
 -- TODO Possibly filter out registrations that are reviewed?
-ON q.birthdate = r.form->>'birthdate'
+  ON q.birthdate = r.form->>'birthdate'
 JOIN participant p
-ON r.participant_id = p.id
+  ON r.participant_id = p.id
 JOIN exam_session es
-ON r.exam_session_id = es.id
+  ON r.exam_session_id = es.id
+  AND es.language_code = q.language_code
 JOIN exam_date ed
-ON es.exam_date_id = ed.id;
+  ON es.exam_date_id = ed.id;
 
 -- name: update-registration-quarantine!
 UPDATE registration SET
