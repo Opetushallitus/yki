@@ -181,15 +181,15 @@ UPDATE registration SET
        reviewed = NOW(),
        state =
         CASE WHEN :quarantined THEN
-            CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state
-              ELSE 'PAID_AND_CANCELLED'::registration_state
+            CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
+              ELSE 'CANCELLED'::registration_state
             END
         ELSE
             CASE WHEN state = 'CANCELLED'::registration_state THEN 'SUBMITTED'::registration_state
-              ELSE 'COMPLETED'::registration_state
+              ELSE state
             END
         END
-WHERE id = :reg-id;
+WHERE id = :reg_id;
 
 -- name: insert-attachment-metadata!
 INSERT INTO attachment_metadata (
