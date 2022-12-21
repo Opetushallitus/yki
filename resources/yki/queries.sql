@@ -1123,29 +1123,16 @@ SELECT
 FROM exam_date_language edl
 WHERE edl.exam_date_id = :exam_date_id AND edl.deleted_at IS NULL;
 
--- name: select-exam-date-language
-SELECT
-  edl.id,
-  edl.exam_date_id,
-  edl.language_code,
-  edl.level_code
-FROM exam_date_language edl
-  WHERE exam_date_id = :exam_date_id
-    AND level_code = :level_code
-    AND language_code = :language_code
-    AND deleted_at IS NULL;
-
--- name: update-exam-date-post-admission-details!
+-- name: update-exam-date!
 UPDATE exam_date
-   SET post_admission_start_date = :post_admission_start_date,
-       post_admission_end_date = :post_admission_end_date,
-       post_admission_enabled = :post_admission_enabled
-   WHERE id = :id;
-
--- name: update-exam-date-post-admission-status!
-UPDATE exam_date
-   SET post_admission_enabled = :post_admission_enabled
-   WHERE id = :id;
+  SET
+    exam_date = :exam_date,
+    registration_start_date = :registration_start_date,
+    registration_end_date = :registration_end_date,
+    post_admission_start_date = :post_admission_start_date,
+    post_admission_end_date = :post_admission_end_date,
+    post_admission_enabled = :post_admission_enabled
+  WHERE id = :id;
 
 -- name: delete-exam-date!
 UPDATE exam_date

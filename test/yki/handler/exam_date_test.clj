@@ -1,7 +1,6 @@
 (ns yki.handler.exam-date-test
   (:require
     [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-    [jsonista.core :as j]
     [ring.mock.request :as mock]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
@@ -9,264 +8,171 @@
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction]))
 
-(defn- get-success-status [response-body]
-  (get-in response-body ["success"]))
+(def new-exam-date
+  {:exam_date               "2050-02-01"
+   :registration_start_date "2050-01-01"
+   :registration_end_date   "2050-01-12"
+   :languages               [{:language_code "fin" :level_code "YLIN"}
+                             {:language_code "eng" :level_code "YLIN"}]})
 
-(defn- create-new-entry [orig-entry new-values]
-  (reduce-kv (fn [entry k v]
-               (base/change-entry entry (name k) v))
-             orig-entry new-values))
+(def exam-date-url (str routing/organizer-api-root "/" (:oid base/organizer) "/exam-date"))
 
-(defn- create-exam-date-entry [new-values]
-  (create-new-entry base/exam-date new-values))
-
-(defn- get-exam-date-id-by-date [exam-date]
-  (:id (base/select-one (base/select-exam-date-id-by-date exam-date))))
-
-(defn- get-exam-date [id]
-  (let [request (-> (mock/request :get (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id)))
-                    (mock/content-type "application/json; charset=UTF-8"))]
+(defn- request-post-exam-date [exam-date]
+  (let [request (-> (mock/request :post exam-date-url)
+                    (mock/json-body exam-date))]
     (base/send-request-with-tx request)))
 
-(defn- post-exam-date [exam-date-entry]
-  (let [request (-> (mock/request :post (str routing/organizer-api-root "/1.2.3.4/exam-date") exam-date-entry)
-                    (mock/content-type "application/json; charset=UTF-8"))]
+(defn- request-get-exam-date [id]
+  (let [request (mock/request :get (str exam-date-url "/" id))]
     (base/send-request-with-tx request)))
 
-(defn- delete-exam-date [id]
-  (let [request (-> (mock/request :delete (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id))))]
+(defn- request-put-exam-date [id exam-date]
+  (let [request (-> (mock/request :put (str exam-date-url "/" id))
+                    (mock/json-body exam-date))]
     (base/send-request-with-tx request)))
 
-(defn- mock-delete-with-body [uri body]
-  ; Updating to [ring/ring-mock "0.4.0"] contains a version of
-  ; ring.mock.request/request that strips the request body for (among others)
-  ; a DELETE request.
-  ; This simple workaround just mocks a POST request instead and then replaces
-  ; the request method to DELETE as desired.
-  (-> (mock/request :post uri body)
-      (assoc :request-method :delete)))
+(defn- request-delete-exam-date [id]
+  (let [request (mock/request :delete (str exam-date-url "/" id))]
+    (base/send-request-with-tx request)))
 
-(deftest get-exam-dates-test
-  (testing "can get exam dates"
-    (let [request  (mock/request :get (str routing/organizer-api-root "/1.2.3.4/exam-date"))
+(deftest list-exam-dates-test
+  (base/insert-organizer (:oid base/organizer))
+
+  (testing "GET list exam dates returns 200"
+    (let [request  (mock/request :get exam-date-url)
           response (base/send-request-with-tx request)]
-      (testing "should return 200"
-        (is (= (:status response) 200))))))
+      (is (= (:status response) 200)))))
 
-(deftest exam-date-new-date-test
-
+(deftest post-exam-date-test
   (base/insert-organizer (:oid base/organizer))
 
-  (testing "creating a new exam date adds a new exam date entity to the system"
-    (let [new-dates       {:exam_date "2041-06-07"}
-          exam-date-entry (create-exam-date-entry new-dates)
-          response        (post-exam-date exam-date-entry)
-          response-body   (base/body-as-json response)
-          date-id         (get-in response-body ["id"])]
+  (testing "POST with valid data inserts exam date and languages"
+    (let [response      (request-post-exam-date new-exam-date)
+          response-body (base/body-as-json response)
+          id            (get-in response-body ["id"])
+          languages     (base/select (base/select-exam-date-languages-by-date-id id))]
       (is (= (:status response) 200))
-      (is (= date-id (get-exam-date-id-by-date (:exam_date new-dates))))))
+      (is (= 2 (count languages)))))
 
-  (testing "cannot create a new exam date if same date already exists"
-    (let [new-dates       {:exam_date "2041-06-07"}
-          exam-date-entry (create-exam-date-entry new-dates)
-          response        (post-exam-date exam-date-entry)
-          response-body   (base/body-as-json response)]
-      (is (= (get-success-status response-body) false))
+  (testing "POST fails for invalid period"
+    (let [response (request-post-exam-date (assoc new-exam-date :exam_date "2050-01-11"))]
       (is (= (:status response) 409))))
 
-  (testing "cannot create a new exam date when registration end date is before registration start date"
-    (let [new-dates       {:exam_date               "2041-06-08"
-                           :registration_start_date "2041-03-07"
-                           :registration_end_date   "2041-03-01"}
-          exam-date-entry (create-exam-date-entry new-dates)
-          response        (post-exam-date exam-date-entry)
-          response-body   (base/body-as-json response)]
-      (is (= (get-success-status response-body) false))
-      (is (= (:status response) 409))))
-
-  (testing "cannot create a new exam date when registration end date is not before exam date"
-    (let [new-dates       {:exam_date               "2041-06-09"
-                           :registration_start_date "2041-06-01"
-                           :registration_end_date   "2041-06-11"}
-          exam-date-entry (create-exam-date-entry new-dates)
-          response        (post-exam-date exam-date-entry)
-          response-body   (base/body-as-json response)]
-      (is (= (get-success-status response-body) false))
+  (testing "POST fails if trying to insert an exam date with an existing date"
+    (let [response (request-post-exam-date new-exam-date)]
       (is (= (:status response) 409)))))
 
-(deftest exam-date-delete-date-test
+(deftest get-exam-date-test
   (base/insert-organizer (:oid base/organizer))
 
-  (let [new-dates       {:exam_date "2040-06-07"}
-        exam-date-entry (create-exam-date-entry new-dates)]
-    (post-exam-date exam-date-entry))
+  (testing "GET for existing exam event returns 200"
+    (let [create-response (request-post-exam-date (assoc new-exam-date :exam_date "2051-01-01"))
+          id              (get-in (base/body-as-json create-response) ["id"])
+          get-response    (request-get-exam-date id)]
+      (is (= (:status get-response) 200))))
 
-  (testing "delete sets deleted_at timestamp to exam date"
-    (let [date-id  (get-exam-date-id-by-date "2040-06-07")
-          response (delete-exam-date date-id)]
-      (is (not (nil? (:deleted_at (base/select-one (base/select-exam-date date-id))))))
-      (is (= (:status response) 200))))
+  (testing "GET for deleted exam event returns 404"
+    (let [create-response (request-post-exam-date (assoc new-exam-date :exam_date "2052-01-01"))
+          id              (get-in (base/body-as-json create-response) ["id"])
+          _               (request-delete-exam-date id)
+          get-response    (request-get-exam-date id)]
+      (is (= (:status get-response) 404)))))
 
-  (testing "deleted exam date is not returned by get"
-    (let [date-id       (get-exam-date-id-by-date "2040-06-07")
-          response      (get-exam-date date-id)
-          response-body (base/body-as-json response)]
-      (is (= (get-success-status response-body) false))
-      (is (= (:status response) 404))))
-
-  (testing "cannot delete an exam date that has exam sessions assigned to it"
-    (base/insert-custom-exam-date "2039-10-01" "2039-10-01" "2039-10-30")
-    (let [date-id       (get-exam-date-id-by-date "2039-10-01")
-          _             (base/insert-exam-session date-id (:oid base/organizer) 5)
-          response      (delete-exam-date date-id)
-          response-body (base/body-as-json response)]
-      (is (= (get-success-status response-body) false))
-      (is (= (:status response) 409)))))
-
-(deftest exam-date-language-test
-
+(deftest put-exam-date-test
   (base/insert-organizer (:oid base/organizer))
 
-  (let [post-exam-date-languages (fn [id exam-date-languages]
-                                   (let [request (-> (mock/request :post (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id "/languages")) exam-date-languages)
-                                                     (mock/content-type "application/json; charset=UTF-8"))]
-                                     (base/send-request-with-tx request)))]
-    (testing "can add languages to the exam date on exam date creation"
-      (let [languages           (j/read-value (slurp "test/resources/languages.json"))
-            new-dates           {:exam_date "2040-06-15"
-                                 :languages languages}
-            exam-date-entry     (create-exam-date-entry new-dates)
-            response            (post-exam-date exam-date-entry)
-            response-body       (base/body-as-json response)
-            date-id             (get-in response-body ["id"])
-            exam-date           (base/select-one (base/select-exam-date-id-by-date (:exam_date new-dates)))
-            exam-date-languages (base/select (base/select-exam-date-languages-by-date-id date-id))]
-        (is (= (:status response) 200))
-        (is (= date-id (:id exam-date)))
-        (is (= 2 (count exam-date-languages)))))
+  (testing "PUT with valid data updates exam date and its languages"
+    (let [create-response (request-post-exam-date (assoc new-exam-date :exam_date "2050-02-02"))
+          id              (get-in (base/body-as-json create-response) ["id"])
+          update-body     {:exam_date                 "2050-03-15"
+                           :registration_start_date   "2050-01-20"
+                           :registration_end_date     "2050-02-14"
+                           :post_admission_enabled    true
+                           :post_admission_start_date "2050-02-23"
+                           :post_admission_end_date   "2050-03-05"
+                           :languages                 [{:language_code "fin" :level_code "PERUS"}
+                                                       {:language_code "fin" :level_code "YLIN"}
+                                                       {:language_code "eng" :level_code "PERUS"}]}
+          update-response (request-put-exam-date id update-body)
+          exam-date       (base/select-one (base/select-exam-date id))
+          languages       (base/select (base/select-exam-date-languages-by-date-id id))]
+      (is (= (:status update-response) 200))
+      (is (= "2050-03-15" (:exam_date exam-date)))
+      (is (= "2050-01-20" (:registration_start_date exam-date)))
+      (is (= "2050-02-14" (:registration_end_date exam-date)))
+      (is (= true (:post_admission_enabled exam-date)))
+      (is (= "2050-02-23" (:post_admission_start_date exam-date)))
+      (is (= "2050-03-05" (:post_admission_end_date exam-date)))
+      (is (= 3 (count languages)))))
 
-    (testing "languages are deleted on exam date delete"
-      (let [exam-date-id        (get-exam-date-id-by-date "2040-06-15")
-            response            (delete-exam-date exam-date-id)
-            exam-date-languages (base/select (base/select-exam-date-languages-by-date-id exam-date-id))]
-        (is (= (:status response) 200))
-        (is (not (nil? (:deleted_at (base/select-one (base/select-exam-date exam-date-id))))))
-        (is (= 0 (count exam-date-languages)))))
+  (testing "PUT can be used to update period for an exam date with exam sessions"
+    (let [create-body     (assoc new-exam-date :exam_date "2050-02-06")
+          create-response (request-post-exam-date create-body)
+          id              (get-in (base/body-as-json create-response) ["id"])
+          _               (base/insert-exam-session id (:oid base/organizer) 5)
+          update-body     (assoc create-body :registration_end_date "2050-01-20")
+          update-response (request-put-exam-date id update-body)
+          exam-date       (base/select-one (base/select-exam-date id))]
+      (is (= (:status update-response) 200))
+      (is (= "2050-01-20" (:registration_end_date exam-date)))))
 
-    (testing "can add a language to an existing exam date"
-      (base/insert-custom-exam-date "2039-10-12" "2039-10-01" "2039-10-30")
-      (let [languages           (slurp "test/resources/languages.json")
-            exam-date-id        (get-exam-date-id-by-date "2039-10-12")
-            response            (post-exam-date-languages exam-date-id languages)
-            exam-date-languages (base/select (base/select-exam-date-languages-by-date-id exam-date-id))]
-        (is (= (:status response) 200))
-        (is (= 2 (count exam-date-languages)))))
+  (testing "PUT fails for invalid period"
+    (let [create-response (request-post-exam-date (assoc new-exam-date :exam_date "2050-02-03"))
+          id              (get-in (base/body-as-json create-response) ["id"])
+          update-body     {:exam_date                 "2050-03-17"
+                           :registration_start_date   "2050-01-20"
+                           :registration_end_date     "2050-02-14"
+                           :post_admission_enabled    true
+                           :post_admission_start_date "2050-02-13"
+                           :post_admission_end_date   "2050-03-05"
+                           :languages                 [{:language_code "fin" :level_code "PERUS"}]}
+          update-response (request-put-exam-date id update-body)]
+      (is (= (:status update-response) 409))))
 
-    (testing "can post a language-level pair to a exam date even if it already exists"
-      (let [languages     (slurp "test/resources/languages.json")
-            exam-date-id  (get-exam-date-id-by-date "2039-10-12")
-            response      (post-exam-date-languages exam-date-id languages)
-            response-body (base/body-as-json response)]
-        (is (= (:status response) 200))
-        (is (= (get-success-status response-body) true))
-        (is (= 2 (count (base/select (base/select-exam-date-languages-by-date-id exam-date-id))))))))
+  (testing "PUT fails if another exam date with the same date already exists"
+    (let [create-response (request-post-exam-date (assoc new-exam-date :exam_date "2050-02-04"))
+          id              (get-in (base/body-as-json create-response) ["id"])
+          update-response (request-put-exam-date id new-exam-date)]
+      (is (= (:status update-response) 409))))
 
-  (let [delete-exam-date-languages (fn [id exam-date-languages]
-                                     (let [exam-languages-endpoint (str routing/organizer-api-root "/1.2.3.4/exam-date/" id "/languages")
-                                           request                 (-> (mock-delete-with-body exam-languages-endpoint exam-date-languages)
-                                                                       (mock/content-type "application/json; charset=UTF-8"))]
-                                       (base/send-request-with-tx request)))]
-    (testing "can delete a language from an existing exam date"
-      (let [language            (slurp "test/resources/language_fin.json")
-            exam-date-id        (get-exam-date-id-by-date "2039-10-12")
-            response            (delete-exam-date-languages exam-date-id language)
-            exam-date-languages (base/select (base/select-exam-date-languages-by-date-id exam-date-id))]
-        (is (= (:status response) 200))
-        (is (= 1 (count exam-date-languages)))))
+  (testing "PUT fails if trying to change date for an exam date with exam sessions"
+    (let [create-body     (assoc new-exam-date :exam_date "2050-04-01")
+          create-response (request-post-exam-date create-body)
+          id              (get-in (base/body-as-json create-response) ["id"])
+          _               (base/insert-exam-session id (:oid base/organizer) 5)
+          update-body     (assoc create-body :exam_date "2050-04-02")
+          update-response (request-put-exam-date id update-body)]
+      (is (= (:status update-response) 409))))
 
-    (testing "cannot delete a language from an exam date that has exam sessions assigned to it"
-      (let [exam-date-id        (get-exam-date-id-by-date "2039-10-12")
-            language            (slurp "test/resources/language_eng.json")
-            _                   (base/insert-exam-session exam-date-id (:oid base/organizer) 5)
-            response            (delete-exam-date-languages exam-date-id language)
-            response-body       (base/body-as-json response)
-            exam-date-languages (base/select (base/select-exam-date-languages-by-date-id exam-date-id))]
-        (is (= (:status response) 409))
-        (is (= (get-success-status response-body) false))
-        (is (= 1 (count exam-date-languages)))))))
+  (testing "PUT fails if trying to change languages for an exam date with exam sessions"
+    (let [create-body     (assoc new-exam-date :exam_date "2050-02-05")
+          create-response (request-post-exam-date create-body)
+          id              (get-in (base/body-as-json create-response) ["id"])
+          _               (base/insert-exam-session id (:oid base/organizer) 5)
+          update-body     (assoc create-body :languages [{:language_code "fin" :level_code "YLIN"}])
+          update-response (request-put-exam-date id update-body)]
+      (is (= (:status update-response) 409)))))
 
-(deftest exam-date-post-admission-configure-test
-  (base/insert-custom-exam-date "2042-06-01" "2042-01-01" "2042-01-30")
-  (let [configure-post-admission (fn [id configuration]
-                                   (let [request (-> (mock/request :post (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id "/post-admission")) configuration)
-                                                     (mock/content-type "application/json; charset=UTF-8"))]
-                                     (base/send-request-with-tx request)))
-        exam-date-id             (get-exam-date-id-by-date "2042-06-01")]
+(deftest delete-exam-date-test
+  (base/insert-organizer (:oid base/organizer))
 
-    (testing "can configure post admission for the exam date"
-      (let [post-admission {:post_admission_start_date "2042-02-01"
-                            :post_admission_end_date   "2042-02-28"
-                            :post_admission_enabled    false}
-            configuration  (create-new-entry "{}" post-admission)
-            response       (configure-post-admission exam-date-id configuration)
-            exam-date      (base/select-one (base/select-exam-date exam-date-id))]
-        (is (= (:status response) 200))
-        (is (= (:post_admission_end_date exam-date) (:post_admission_end_date post-admission)))
-        (is (= (:post_admission_start_date exam-date) (:post_admission_start_date post-admission)))
-        (is (= (:post_admission_enabled exam-date) (:post_admission_enabled post-admission)))))
+  (testing "DELETE marks exam date and its languages deleted"
+    (let [create-response (request-post-exam-date (assoc new-exam-date :exam_date "2053-01-01"))
+          id              (get-in (base/body-as-json create-response) ["id"])
+          delete-response (request-delete-exam-date id)
+          exam-date       (base/select-one (base/select-exam-date id))
+          languages       (base/select (base/select-exam-date-languages-by-date-id id))]
+      (is (= (:status delete-response) 200))
+      (is (not (nil? (:deleted_at exam-date))))
+      (is (empty? languages))))
 
-    (testing "cannot add a post admission start date that is before it's end date"
-      (let [post-admission {:post_admission_start_date "2042-02-28"
-                            :post_admission_end_date   "2042-02-01"
-                            :post_admission_enabled    false}
-            configuration  (create-new-entry "{}" post-admission)
-            response       (configure-post-admission exam-date-id configuration)
-            response-body  (base/body-as-json response)]
-        (is (= (:status response) 409))
-        (is (= (get-success-status response-body) false))))
+  (testing "DELETE fails if exam date by given id is not found"
+    (let [delete-response (request-delete-exam-date 10000)]
+      (is (= (:status delete-response) 404))))
 
-    (testing "cannot add a post admission start date that is before registration end"
-      (let [post-admission {:post_admission_start_date "2042-01-28"
-                            :post_admission_end_date   "2042-02-28"
-                            :post_admission_enabled    false}
-            configuration  (create-new-entry "{}" post-admission)
-            response       (configure-post-admission exam-date-id configuration)
-            response-body  (base/body-as-json response)]
-        (is (= (:status response) 409))
-        (is (= (get-success-status response-body) false))))
-
-    (testing "cannot add a post admission end date that is after exam date"
-      (let [post-admission {:post_admission_start_date "2042-02-28"
-                            :post_admission_end_date   "2042-06-28"
-                            :post_admission_enabled    false}
-            configuration  (create-new-entry "{}" post-admission)
-            response       (configure-post-admission exam-date-id configuration)
-            response-body  (base/body-as-json response)]
-        (is (= (:status response) 409))
-        (is (= (get-success-status response-body) false)))))
-
-  (base/insert-custom-exam-date "2042-12-01" "2042-06-01" "2042-06-30")
-  (let [toggle-post-admission   (fn [id status-endpoint]
-                                  (let [request (-> (mock/request :post (str routing/organizer-api-root (str "/1.2.3.4/exam-date/" id "/post-admission/" status-endpoint)))
-                                                    (mock/content-type "appll.ö,_Bication/json; charset=UTF-8"))]
-                                    (base/send-request-with-tx request)))
-        configured-exam-date-id (get-exam-date-id-by-date "2042-06-01")
-        new-exam-date-id        (get-exam-date-id-by-date "2042-12-01")]
-
-    (testing "can enable post admission"
-      (let [response  (toggle-post-admission configured-exam-date-id "enable")
-            exam-date (base/select-one (base/select-exam-date configured-exam-date-id))]
-        (is (= (:status response) 200))
-        (is (= (:post_admission_enabled exam-date) true))))
-
-    (testing "can disable post admission"
-      (let [response  (toggle-post-admission configured-exam-date-id "disable")
-            exam-date (base/select-one (base/select-exam-date configured-exam-date-id))]
-        (is (= (:status response) 200))
-        (is (= (:post_admission_enabled exam-date) false))))
-
-    (testing "cannot toggle post admission if dates have not been configured"
-      (let [response  (toggle-post-admission new-exam-date-id "enable")
-            exam-date (base/select-one (base/select-exam-date new-exam-date-id))]
-        (is (= (:status response) 409))
-        (is (= (:post_admission_enabled exam-date) false))))))
+  (testing "DELETE fails if exam sessions exist for exam date"
+    (let [create-response (request-post-exam-date (assoc new-exam-date :exam_date "2054-01-01"))
+          id              (get-in (base/body-as-json create-response) ["id"])
+          _               (base/insert-exam-session id (:oid base/organizer) 5)
+          delete-response (request-delete-exam-date id)]
+      (is (= (:status delete-response) 409)))))
