@@ -37,6 +37,6 @@
     (q/select-quarantine-matches spec))
   (set-registration-quarantine! [{:keys [spec]} id reg-id quarantined]
     (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/update-registration-quarantine! tx {:id (when-not quarantined id)
+      (int->boolean (q/update-registration-quarantine! tx {:id (when quarantined id)
                                                            :reg_id reg-id
                                                            :quarantined quarantined})))))
