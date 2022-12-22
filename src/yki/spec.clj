@@ -86,7 +86,8 @@
 (s/def ::quarantine-type (s/keys :req-un [::language_code
                                           ::end_date
                                           ::birthdate
-                                          ::name]
+                                          ::first_name
+                                          ::last_name]
                                  :opt-un [::created
                                           ::id
                                           ::ssn

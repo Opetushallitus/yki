@@ -195,7 +195,8 @@
                       :end_date      "2022-12-30"
                       :birthdate     "1999-01-27"
                       :ssn           "301079-900U"
-                      :name          "Max Syöttöpaine"
+                      :first_name    "Max"
+                      :last_name     "Syöttöpaine"
                       :email         "email@invalid.invalid"
                       :phone_number  "0401234567"})
 
@@ -212,7 +213,8 @@
         end_date,
         birthdate,
         ssn,
-        name,
+        first_name,
+        last_name,
         email,
         phone_number
     ) VALUES (
@@ -220,7 +222,8 @@
         '2028-01-01',
         '1999-01-01',
         '301079-900U',
-        'Max Syöttöpaine',
+        'Max',
+        'Syöttöpaine',
         'email@invalid.invalid',
         '0401234567'
     ) ON CONFLICT DO NOTHING")))
@@ -533,7 +536,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                       :amount                (:amount payment-config)
                       :merchant-id           "375917"
                       :merchant-secret       "SAIPPUAKAUPPIAS"}
-     :pdf-renderer (mock-pdf-renderer url-helper)}))
+     :pdf-renderer   (mock-pdf-renderer url-helper)}))
 
 (def old-evaluation-payment-config {:use-new-payments-api? false
                                     :amount                {:READING   "50.00"

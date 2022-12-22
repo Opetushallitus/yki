@@ -121,18 +121,20 @@ SELECT
   q.birthdate,
   q.created,
   q.ssn,
-  q.name,
+  q.first_name,
+  q.last_name,
   q.email,
   q.phone_number
 FROM quarantine q;
 
--- name: insert-quarantine!
+-- name: insert-quarantine<!
 INSERT INTO quarantine (
   language_code,
   end_date,
   birthdate,
   ssn,
-  name,
+  first_name,
+  last_name,
   email,
   phone_number
 ) VALUES (
@@ -140,7 +142,8 @@ INSERT INTO quarantine (
   :end_date,
   :birthdate,
   :ssn,
-  :name,
+  :first_name,
+  :last_name,
   :email,
   :phone_number
 );
@@ -153,7 +156,8 @@ SELECT
   q.birthdate,
   q.created,
   q.ssn,
-  q.name,
+  q.first_name,
+  q.last_name,
   q.email,
   q.phone_number,
   r.reviewed,
