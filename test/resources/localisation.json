@@ -417,7 +417,7 @@
     "force": false,
     "key": "registration.description.read",
     "locale": "fi",
-    "value": "Luetun ymmärtäminen"
+    "value": "Tekstin ymmärtäminen"
   },
   {
     "accesscount": 0,
@@ -571,7 +571,7 @@
     "key": "email.receipt.evaluationPayment.vatZeroJustification",
     "id": 33038,
     "locale": "fi",
-    "value": "Yleisen kielitutkinnon tarkistusarviointimaksu on opetus- ja kulttuuriministeriön asetuksella määrätty maksu, johon ei lisätä arvonlisäveroa."
+    "value": "Yleisten kielitutkintojen tarkistusarviointimaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (xxxx/202x) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
   },
   {
     "accesscount": 0,
@@ -627,6 +627,6 @@
     "key": "email.receipt.examPayment.vatZeroJustification",
     "id": 33039,
     "locale": "fi",
-    "value": "Yleisen kielitutkinnon tutkintomaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (xxxx/202x) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
+    "value": "Yleisten kielitutkintojen tutkintomaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (xxxx/202x) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
   }
 ]
