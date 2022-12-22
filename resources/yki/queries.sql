@@ -177,7 +177,11 @@ JOIN exam_session es
   ON r.exam_session_id = es.id
   AND es.language_code = q.language_code
 JOIN exam_date ed
-  ON es.exam_date_id = ed.id;
+  ON es.exam_date_id = ed.id
+WHERE r.state IN ('SUBMITTED', 'COMPLETED')
+  AND r.quarantine_id IS NULL
+  AND (r.reviewed IS NULL OR r.reviewed <= q.updated)
+  AND ed.exam_date BETWEEN q.created AND q.end_date;
 
 -- name: update-registration-quarantine!
 UPDATE registration SET
