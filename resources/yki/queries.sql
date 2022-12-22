@@ -110,6 +110,7 @@ INSERT INTO exam_language (
   (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
 );
 
+-- TODO Soft delete?
 -- name: delete-quarantine!
 DELETE FROM quarantine WHERE id = :id;
 
