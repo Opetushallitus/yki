@@ -560,6 +560,18 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                        new-evaluation-payment-config
                        old-evaluation-payment-config)}))
 
+(defn no-auth-middleware [db url-helper]
+  (ig/init-key
+    :yki.middleware.no-auth/with-authentication
+    {:url-helper     url-helper
+     :db             db
+     :session-config {:key          "ad7tbRZIG839gDo2"
+                      :cookie-attrs {:max-age   28800
+                                     :http-only true
+                                     :domain    "localhost"
+                                     :secure    false
+                                     :path      "/yki"}}}))
+
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)
         db                   (duct.database.sql/->Boundary @embedded-db/conn)
@@ -572,19 +584,13 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
 
         file-store           (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
-        auth                 (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper     url-helper
-                                                                                       :db             db
-                                                                                       :session-config {:key          "ad7tbRZIG839gDo2"
-                                                                                                        :cookie-attrs {:max-age   28800
-                                                                                                                       :http-only true
-                                                                                                                       :domain    "localhost"
-                                                                                                                       :secure    false
-                                                                                                                       :path      "/yki"}}})
+        auth                 (no-auth-middleware db url-helper)
         auth-handler         (auth-handler auth url-helper)
         file-handler         (ig/init-key :yki.handler/file {:db db :file-store file-store})
-        quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:db db
-                                                                                           :url-helper url-helper
-                                                                                           :access-log (access-log)}))
+        quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:access-log (access-log)
+                                                                                           :auth       auth
+                                                                                           :db         db
+                                                                                           :url-helper url-helper}))
         organizer-handler    (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
                                                                                           :auth                 auth
                                                                                           :data-sync-q          (data-sync-q)

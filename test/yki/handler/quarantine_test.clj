@@ -18,7 +18,10 @@
   (let [access-log         (base/access-log)
         db                 (base/db)
         url-helper         (base/create-url-helper (str "localhost" port))
-        quarantine-handler (ig/init-key :yki.handler/quarantine {:db db :url-helper url-helper :access-log access-log})]
+        quarantine-handler (ig/init-key :yki.handler/quarantine {:access-log access-log
+                                                                 :auth       (base/no-auth-middleware db url-helper)
+                                                                 :db         db
+                                                                 :url-helper url-helper})]
     (core/routes quarantine-handler)))
 
 (deftest get-quarantine-test
@@ -84,17 +87,17 @@
   (base/insert-quarantine)
   (with-routes!
     {}
-    (let [handler                           (create-handlers port)
-          session                           (peridot/session handler)
-          set-registration-quarantine-state (fn [registration-id quarantine-id quarantined?]
-                                              (request-with-json-body
-                                                session
-                                                (str/join "/" [routing/quarantine-api-root quarantine-id
-                                                               "registration"
-                                                               registration-id
-                                                               "set"])
-                                                :put
-                                                {:is_quarantined quarantined?}))
+    (let [handler                                    (create-handlers port)
+          session                                    (peridot/session handler)
+          set-registration-quarantine-state          (fn [registration-id quarantine-id quarantined?]
+                                                       (request-with-json-body
+                                                         session
+                                                         (str/join "/" [routing/quarantine-api-root quarantine-id
+                                                                        "registration"
+                                                                        registration-id
+                                                                        "set"])
+                                                         :put
+                                                         {:is_quarantined quarantined?}))
           select-quarantine-details-for-registration #(base/select-one
                                                         (str "SELECT id, state, reviewed IS NOT NULL AS reviewed_bool, quarantine_id FROM registration WHERE id = " % ";"))]
       (testing "set quarantine endpoint should return 200 and cancel registration"
@@ -103,7 +106,7 @@
                (set-registration-quarantine-state 1 1 true)))
         (is (= {:id 1 :state "CANCELLED" :reviewed_bool true :quarantine_id 1}
                (select-quarantine-details-for-registration 1)))
-        (is (= {:body {:success true}
+        (is (= {:body   {:success true}
                 :status 200}
                (set-registration-quarantine-state 4 1 true)))
         (is (= {:id 4 :state "PAID_AND_CANCELLED" :reviewed_bool true :quarantine_id 1}

@@ -23,6 +23,7 @@
 (def registration-init "registration-init")
 (def exam-session "exam-session")
 (def exam-date "exam-date")
+(def quarantine "quarantine")
 
 (defonce ^JsonParser jsonParser (JsonParser.))
 
