@@ -17,7 +17,7 @@
       :coercion :spec
       (GET "/" {session :session}
         :return ::ys/quarantine-response
-        (response {:quarantines (quarantine-db/get-quarantine db)}))
+        (response {:quarantines (quarantine-db/get-quarantines db)}))
       (POST "/" request
         :body [quarantine ::ys/quarantine-type]
         :return ::ys/response

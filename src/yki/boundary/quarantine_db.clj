@@ -19,7 +19,7 @@
 (defprotocol Quarantine
   (create-quarantine! [db quarantine])
   (delete-quarantine! [db id])
-  (get-quarantine [db])
+  (get-quarantines [db])
   (get-quarantine-matches [db])
   (set-registration-quarantine! [db id reg-id quarantined]))
 
@@ -31,8 +31,8 @@
   (delete-quarantine! [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (int->boolean (q/delete-quarantine! tx {:id id}))))
-  (get-quarantine [{:keys [spec]}]
-    (q/select-quarantine spec))
+  (get-quarantines [{:keys [spec]}]
+    (q/select-quarantines spec))
   (get-quarantine-matches [{:keys [spec]}]
     (q/select-quarantine-matches spec))
   (set-registration-quarantine! [{:keys [spec]} id reg-id quarantined]

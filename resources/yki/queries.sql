@@ -113,7 +113,7 @@ INSERT INTO exam_language (
 -- name: delete-quarantine!
 DELETE FROM quarantine WHERE id = :id;
 
--- name: select-quarantine
+-- name: select-quarantines
 SELECT
   q.id,
   q.language_code,
