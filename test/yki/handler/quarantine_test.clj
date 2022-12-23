@@ -14,14 +14,18 @@
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
+(def session-virkailija-oid "1.2.3.4")
+
 (defn create-handlers [port]
   (let [access-log         (base/access-log)
         db                 (base/db)
         url-helper         (base/create-url-helper (str "localhost" port))
-        quarantine-handler (ig/init-key :yki.handler/quarantine {:access-log access-log
-                                                                 :auth       (base/no-auth-middleware db url-helper)
-                                                                 :db         db
-                                                                 :url-helper url-helper})]
+        quarantine-handler (ig/init-key
+                             :yki.handler/quarantine
+                             {:access-log access-log
+                              :auth       (base/no-auth-fake-session-oid-middleware session-virkailija-oid)
+                              :db         db
+                              :url-helper url-helper})]
     (core/routes quarantine-handler)))
 
 (deftest get-quarantine-test
@@ -59,9 +63,9 @@
                                :request-method method
                                :body (json/write-str data)
                                :content-type "application/json")
-        body (-> (:body response)
-                 (slurp)
-                 (json/read-str :key-fn keyword))]
+        body (some-> (:body response)
+                     (slurp)
+                     (json/read-str :key-fn keyword))]
     {:status (:status response)
      :body   body}))
 
@@ -101,26 +105,26 @@
                                                          :put
                                                          {:is_quarantined quarantined?}))
           select-quarantine-details-for-registration #(base/select-one
-                                                        (str "SELECT id, state, reviewed IS NOT NULL AS reviewed_bool, quarantine_id FROM registration WHERE id = " % ";"))]
+                                                        (str "SELECT r.id, r.state, qr.quarantine_id, qr.quarantined FROM registration r INNER JOIN quarantine_review qr ON r.id = qr.registration_id WHERE r.id = " % ";"))]
       (testing "set quarantine endpoint should return 200 and cancel registration"
         (is (= {:body   {:success true}
                 :status 200}
                (set-registration-quarantine-state 1 1 true)))
-        (is (= {:id 1 :state "CANCELLED" :reviewed_bool true :quarantine_id 1}
+        (is (= {:id 1 :state "CANCELLED" :quarantine_id 1 :quarantined true}
                (select-quarantine-details-for-registration 1)))
         (is (= {:body   {:success true}
                 :status 200}
                (set-registration-quarantine-state 4 1 true)))
-        (is (= {:id 4 :state "PAID_AND_CANCELLED" :reviewed_bool true :quarantine_id 1}
+        (is (= {:id 4 :state "PAID_AND_CANCELLED" :quarantine_id 1 :quarantined true}
                (select-quarantine-details-for-registration 4))))
       (testing "set quarantine endpoint should allow setting registration as not quarantined"
         (is (= {:body   {:success true}
                 :status 200}
                (set-registration-quarantine-state 1 1 false)))
-        (is (= {:id 1 :state "SUBMITTED" :reviewed_bool true :quarantine_id nil}
+        (is (= {:id 1 :state "CANCELLED" :quarantine_id 1 :quarantined false}
                (select-quarantine-details-for-registration 1)))
         (is (= {:body   {:success true}
                 :status 200}
                (set-registration-quarantine-state 4 1 false)))
-        (is (= {:id 4 :state "PAID_AND_CANCELLED" :reviewed_bool true :quarantine_id nil}
+        (is (= {:id 4 :state "PAID_AND_CANCELLED" :quarantine_id 1 :quarantined false}
                (select-quarantine-details-for-registration 4)))))))

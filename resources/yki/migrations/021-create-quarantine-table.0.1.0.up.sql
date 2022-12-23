@@ -10,11 +10,22 @@ CREATE TABLE IF NOT EXISTS quarantine
     email         TEXT,
     phone_number  TEXT,
     created       TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-    updated       TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-    deleted       TIMESTAMP WITH TIME ZONE
+    updated       TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 
-ALTER TABLE registration
-    ADD COLUMN IF NOT EXISTS quarantine_id BIGINT REFERENCES quarantine (id) DEFAULT NULL;
-ALTER TABLE registration
-    ADD COLUMN IF NOT EXISTS reviewed TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+CREATE TABLE IF NOT EXISTS quarantine_review
+(
+    id              BIGSERIAL PRIMARY KEY,
+    quarantine_id   BIGINT REFERENCES quarantine (id)   NOT NULL,
+    registration_id BIGINT REFERENCES registration (id) NOT NULL,
+    quarantined     BOOLEAN                             NOT NULL,
+    created         TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
+    updated         TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
+    reviewer_oid    TEXT                                NOT NULL,
+    CONSTRAINT quarantine_review_unique_quarantine_registration_combination UNIQUE (quarantine_id, registration_id)
+);
+
+-- ALTER TABLE registration
+--     ADD COLUMN IF NOT EXISTS quarantine_id BIGINT REFERENCES quarantine (id) DEFAULT NULL;
+-- ALTER TABLE registration
+--     ADD COLUMN IF NOT EXISTS reviewed TIMESTAMP WITH TIME ZONE DEFAULT NULL;

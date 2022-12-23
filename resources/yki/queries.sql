@@ -178,16 +178,12 @@ SELECT
   q.last_name,
   q.email,
   q.phone_number,
-  r.reviewed,
   r.id AS registration_id,
-  r.quarantine_id,
   r.form,
   ed.exam_date,
   es.language_code
 FROM quarantine q
 JOIN registration r
--- TODO Constrain to registrations with now() <= exam_date <= q.end_date
--- TODO Possibly filter out registrations that are reviewed?
   ON q.birthdate = r.form->>'birthdate'
 JOIN participant p
   ON r.participant_id = p.id
@@ -197,25 +193,32 @@ JOIN exam_session es
 JOIN exam_date ed
   ON es.exam_date_id = ed.id
 WHERE r.state IN ('SUBMITTED', 'COMPLETED')
-  AND r.quarantine_id IS NULL
-  AND (r.reviewed IS NULL OR r.reviewed <= q.updated)
+  -- Filter out possible matches that have been reviewed after quarantine was last updated
+  AND NOT EXISTS (SELECT qr.id FROM quarantine_review qr WHERE qr.registration_id = r.id AND qr.quarantine_id = q.id AND q.updated <= qr.updated)
   AND ed.exam_date BETWEEN q.created AND q.end_date;
 
--- name: update-registration-quarantine!
+-- name: upsert-quarantine-review<!
+INSERT INTO quarantine_review (
+  quarantine_id,
+  registration_id,
+  quarantined,
+  reviewer_oid
+) VALUES (
+  :quarantine_id,
+  :registration_id,
+  :quarantined,
+  :reviewer_oid
+)
+ON CONFLICT ON CONSTRAINT quarantine_review_unique_quarantine_registration_combination
+DO UPDATE SET quarantined = :quarantined, reviewer_oid = :reviewer_oid, updated = current_timestamp;
+
+-- name: cancel-registration!
 UPDATE registration SET
-       quarantine_id = :id,
-       reviewed = NOW(),
-       state =
-        CASE WHEN :quarantined THEN
-            CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
-              ELSE 'CANCELLED'::registration_state
-            END
-        ELSE
-            CASE WHEN state = 'CANCELLED'::registration_state THEN 'SUBMITTED'::registration_state
-              ELSE state
-            END
+    state =
+        CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
+            ELSE 'CANCELLED'::registration_state
         END
-WHERE id = :reg_id;
+WHERE id = :id;
 
 -- name: insert-attachment-metadata!
 INSERT INTO attachment_metadata (

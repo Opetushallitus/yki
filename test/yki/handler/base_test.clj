@@ -572,6 +572,9 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                                      :secure    false
                                      :path      "/yki"}}}))
 
+(defn no-auth-fake-session-oid-middleware [oid]
+  (ig/init-key :yki.middleware.no-auth/with-fake-oid {:oid oid}))
+
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)
         db                   (duct.database.sql/->Boundary @embedded-db/conn)

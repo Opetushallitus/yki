@@ -33,7 +33,7 @@
                                       :v (:id created)}
                           :change    {:type audit-log/create-op
                                       :new  quarantine}})
-          (created {:success true})))
+          (ok {:success true})))
       (PUT "/:id" request
         :path-params [id :- ::ys/id]
         :body [quarantine ::ys/quarantine-type]
@@ -65,14 +65,24 @@
           (not-found)))
       (GET "/matches" {session :session}
         :return ::ys/quarantine-matches-response
+        ; TODO Remove debug logging - now in place just to see how the session info looks like on deployed environments
+        (log/info (str "Matches called with session details: " session))
         (ok {:quarantines (quarantine-db/get-quarantine-matches db)}))
       (context "/:id/registration/:reg-id" []
         (PUT "/set" request
           :body [quarantined ::ys/quarantined]
           :path-params [id :- ::ys/id reg-id :- ::ys/id]
           :return ::ys/response
-          ; TODO audit logging
-          (ok {:success (quarantine-db/set-registration-quarantine! db
-                                                                    id
-                                                                    reg-id
-                                                                    (:is_quarantined quarantined))}))))))
+          (if-let [quarantine-review (quarantine-db/set-registration-quarantine!
+                                       db
+                                       id
+                                       reg-id
+                                       (:is_quarantined quarantined)
+                                       (get-in request [:session :identity :oid]))]
+            (do (audit-log/log {:request   request
+                                :target-kv {:k audit-log/quarantine-review
+                                            :v (:id quarantine-review)}
+                                :change    {:type audit-log/create-op
+                                            :new  quarantine-review}})
+                (ok {:success true}))
+            (internal-server-error)))))))

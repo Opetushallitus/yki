@@ -23,7 +23,7 @@
   (get-quarantines [db])
   (get-quarantine [db id])
   (get-quarantine-matches [db])
-  (set-registration-quarantine! [db id reg-id quarantined]))
+  (set-registration-quarantine! [db quarantine-id registration-id quarantined reviewer-oid]))
 
 (extend-protocol Quarantine
   Boundary
@@ -43,8 +43,14 @@
     (first (q/select-quarantine spec {:id id})))
   (get-quarantine-matches [{:keys [spec]}]
     (q/select-quarantine-matches spec))
-  (set-registration-quarantine! [{:keys [spec]} id reg-id quarantined]
+  (set-registration-quarantine! [{:keys [spec]} quarantine-id registration-id quarantined reviewer-oid]
     (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/update-registration-quarantine! tx {:id          (when quarantined id)
-                                                           :reg_id      reg-id
-                                                           :quarantined quarantined})))))
+      (rollback-on-exception
+        tx
+        #(do
+           (when quarantined
+             (q/cancel-registration! tx {:id registration-id}))
+           (q/upsert-quarantine-review<! tx {:quarantine_id   quarantine-id
+                                            :registration_id registration-id
+                                            :quarantined     quarantined
+                                            :reviewer_oid    reviewer-oid}))))))
