@@ -83,6 +83,8 @@
                                   :domain "localhost"
                                   :path "/yki"}}}
 
+ :yki.middleware.no-auth/with-fake-oid {:oid "1.2.3.4"}
+
  :yki.handler/quarantine {:db #ig/ref :duct.database/sql
                           :url-helper #ig/ref :yki.util/url-helper
                           :access-log #ig/ref :yki.middleware.access-log/with-logging}
