@@ -44,11 +44,13 @@
 
 (deftest delete-quarantine-test
   (base/insert-quarantine)
-  (let [request  (mock/request :delete (str routing/quarantine-api-root "/1"))
-        response (base/send-request-with-tx request)]
+  (let [delete! #(base/send-request-with-tx (mock/request :delete (str routing/quarantine-api-root "/" %)))]
     (testing "delete quarantine endpoint should return 200 and delete existing quarantine"
-      (is (= (:status response) 200))
-      (is (= 0 (:count (base/select-one "SELECT COUNT(*) FROM quarantine")))))))
+      (is (= (:status (delete! 1)) 200))
+      (is (= 0 (:count (base/select-one "SELECT COUNT(*) FROM quarantine")))))
+    (testing "delete endpoint should return 404 if quarantine with given id does not exist"
+      (is (= (:status (delete! 999)) 404))
+      (is (= (:status (delete! 1)) 404)))))
 
 (defn- request-with-json-body [session route method data]
   (let [{response :response} (peridot/request

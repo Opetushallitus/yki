@@ -18,25 +18,33 @@
 
 (defprotocol Quarantine
   (create-quarantine! [db quarantine])
+  (update-quarantine! [db id quarantine])
   (delete-quarantine! [db id])
   (get-quarantines [db])
+  (get-quarantine [db id])
   (get-quarantine-matches [db])
   (set-registration-quarantine! [db id reg-id quarantined]))
 
 (extend-protocol Quarantine
   Boundary
   (create-quarantine! [{:keys [spec]} quarantine]
-     (jdbc/with-db-transaction [tx spec]
-       (q/insert-quarantine<! tx (convert-date quarantine))))
+    (jdbc/with-db-transaction [tx spec]
+      (q/insert-quarantine<! tx (convert-date quarantine))))
+  (update-quarantine! [{:keys [spec]} id quarantine]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-quarantine<! tx (-> (assoc quarantine :id id)
+                                    (convert-date)))))
   (delete-quarantine! [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (int->boolean (q/delete-quarantine! tx {:id id}))))
   (get-quarantines [{:keys [spec]}]
     (q/select-quarantines spec))
+  (get-quarantine [{:keys [spec]} id]
+    (first (q/select-quarantine spec {:id id})))
   (get-quarantine-matches [{:keys [spec]}]
     (q/select-quarantine-matches spec))
   (set-registration-quarantine! [{:keys [spec]} id reg-id quarantined]
     (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/update-registration-quarantine! tx {:id (when quarantined id)
-                                                           :reg_id reg-id
+      (int->boolean (q/update-registration-quarantine! tx {:id          (when quarantined id)
+                                                           :reg_id      reg-id
                                                            :quarantined quarantined})))))

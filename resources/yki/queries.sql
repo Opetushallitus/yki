@@ -110,7 +110,6 @@ INSERT INTO exam_language (
   (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
 );
 
--- TODO Soft delete?
 -- name: delete-quarantine!
 DELETE FROM quarantine WHERE id = :id;
 
@@ -120,13 +119,18 @@ SELECT
   q.language_code,
   q.end_date,
   q.birthdate,
-  q.created,
   q.ssn,
   q.first_name,
   q.last_name,
   q.email,
-  q.phone_number
+  q.phone_number,
+  q.created
 FROM quarantine q;
+
+-- name: select-quarantine
+SELECT *
+FROM quarantine q
+WHERE q.id = :id;
 
 -- name: insert-quarantine<!
 INSERT INTO quarantine (
@@ -148,6 +152,19 @@ INSERT INTO quarantine (
   :email,
   :phone_number
 );
+
+-- name: update-quarantine<!
+UPDATE quarantine
+SET language_code = :language_code,
+    end_date = :end_date,
+    birthdate = :birthdate,
+    first_name = :first_name,
+    last_name = :last_name,
+    ssn = :ssn,
+    email = :email,
+    phone_number = :phone_number,
+    updated = current_timestamp
+WHERE id = :id;
 
 -- name: select-quarantine-matches
 SELECT

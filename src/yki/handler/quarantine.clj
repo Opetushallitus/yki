@@ -1,8 +1,9 @@
 (ns yki.handler.quarantine
   (:require
+    [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
     [integrant.core :as ig]
-    [ring.util.response :refer [response]]
+    [ring.util.http-response :refer [ok not-found internal-server-error]]
     [yki.util.audit-log :as audit-log]
     [yki.boundary.quarantine-db :as quarantine-db]
     [yki.handler.routing :as routing]
@@ -17,7 +18,7 @@
       :coercion :spec
       (GET "/" {session :session}
         :return ::ys/quarantine-response
-        (response {:quarantines (quarantine-db/get-quarantines db)}))
+        (ok {:quarantines (quarantine-db/get-quarantines db)}))
       (POST "/" request
         :body [quarantine ::ys/quarantine-type]
         :return ::ys/response
@@ -32,25 +33,46 @@
                                       :v (:id created)}
                           :change    {:type audit-log/create-op
                                       :new  quarantine}})
-          (response {:success true})))
+          (created {:success true})))
+      (PUT "/:id" request
+        :path-params [id :- ::ys/id]
+        :body [quarantine ::ys/quarantine-type]
+        (if-let [existing (quarantine-db/get-quarantine db id)]
+          (if-let [updated (quarantine-db/update-quarantine! db id quarantine)]
+            (do
+              (audit-log/log {:request   request
+                              :target-kv {:k audit-log/quarantine
+                                          :v id}
+                              :change    {:type audit-log/update-op
+                                          :old  existing
+                                          :new  updated}})
+              (ok {:success true}))
+            (do
+              (log/error (str "Update failed for existing quarantine with id " id))
+              (internal-server-error)))
+          (do
+            (log/error (str "Attempted to update non-existing quarantine with id " id))
+            (not-found))))
       (DELETE "/:id" request
         :path-params [id :- ::ys/id]
         :return ::ys/response
-        (when-let [success (quarantine-db/delete-quarantine! db id)]
-          (audit-log/log {:request   request
-                          :target-kv {:k audit-log/quarantine
-                                      :v id}
-                          :change {:type audit-log/delete-op}})
-          (response {:success success})))
+        (if-let [success (quarantine-db/delete-quarantine! db id)]
+          (do (audit-log/log {:request   request
+                              :target-kv {:k audit-log/quarantine
+                                          :v id}
+                              :change    {:type audit-log/delete-op}})
+              (ok {:success success}))
+          (not-found)))
       (GET "/matches" {session :session}
         :return ::ys/quarantine-matches-response
-        (response {:quarantines (quarantine-db/get-quarantine-matches db)}))
+        (ok {:quarantines (quarantine-db/get-quarantine-matches db)}))
       (context "/:id/registration/:reg-id" []
         (PUT "/set" request
           :body [quarantined ::ys/quarantined]
           :path-params [id :- ::ys/id reg-id :- ::ys/id]
           :return ::ys/response
-          (response {:success (quarantine-db/set-registration-quarantine! db
-                                                                          id
-                                                                          reg-id
-                                                                          (:is_quarantined quarantined))}))))))
+          ; TODO audit logging
+          (ok {:success (quarantine-db/set-registration-quarantine! db
+                                                                    id
+                                                                    reg-id
+                                                                    (:is_quarantined quarantined))}))))))
