@@ -590,20 +590,6 @@
   {
     "accesscount": 0,
     "createdBy": "1.2.246.562.24.57774768388",
-    "modified": 1670508666608,
-    "modifiedBy": "1.2.246.562.24.57774768388",
-    "accessed": 1670508666608,
-    "category": "yki",
-    "created": 1670508666608,
-    "force": false,
-    "key": "email.receipt.examPayment.participant",
-    "id": 32925,
-    "locale": "fi",
-    "value": "Osallistuja"
-  },
-  {
-    "accesscount": 0,
-    "createdBy": "1.2.246.562.24.57774768388",
     "modified": 1670508637324,
     "modifiedBy": "1.2.246.562.24.57774768388",
     "accessed": 1670508637324,
