@@ -25,7 +25,4 @@ CREATE TABLE IF NOT EXISTS quarantine_review
     CONSTRAINT quarantine_review_unique_quarantine_registration_combination UNIQUE (quarantine_id, registration_id)
 );
 
--- ALTER TABLE registration
---     ADD COLUMN IF NOT EXISTS quarantine_id BIGINT REFERENCES quarantine (id) DEFAULT NULL;
--- ALTER TABLE registration
---     ADD COLUMN IF NOT EXISTS reviewed TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+-- TODO Add trigger to ensure registration state can't become COMPLETED if it's under quarantine?
