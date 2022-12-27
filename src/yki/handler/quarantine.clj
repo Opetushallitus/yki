@@ -22,12 +22,7 @@
       (POST "/" request
         :body [quarantine ::ys/quarantine-type]
         :return ::ys/response
-        (when-let [created (quarantine-db/create-quarantine!
-                             db
-                             (merge {:ssn          nil
-                                     :email        nil
-                                     :phone_number nil}
-                                    quarantine))]
+        (when-let [created (quarantine-db/create-quarantine! db quarantine)]
           (audit-log/log {:request   request
                           :target-kv {:k audit-log/quarantine
                                       :v (:id created)}
