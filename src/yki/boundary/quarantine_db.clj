@@ -16,6 +16,11 @@
 (defn- convert-date [quarantine]
   (update-in quarantine [:end_date] f/parse))
 
+(defn- without-nils [kvs]
+  (->> kvs
+       (filter (fn [[_ v]] v))
+       (into {})))
+
 (defprotocol Quarantine
   (create-quarantine! [db quarantine])
   (update-quarantine! [db id quarantine])
@@ -29,7 +34,10 @@
   Boundary
   (create-quarantine! [{:keys [spec]} quarantine]
     (jdbc/with-db-transaction [tx spec]
-      (q/insert-quarantine<! tx (convert-date quarantine))))
+      (q/insert-quarantine<!
+        tx
+        (merge {:ssn nil :phone_number nil :email nil}
+               (convert-date quarantine)))))
   (update-quarantine! [{:keys [spec]} id quarantine]
     (jdbc/with-db-transaction [tx spec]
       (q/update-quarantine<! tx (-> (assoc quarantine :id id)
@@ -42,7 +50,7 @@
   (get-quarantine [{:keys [spec]} id]
     (first (q/select-quarantine spec {:id id})))
   (get-quarantine-matches [{:keys [spec]}]
-    (q/select-quarantine-matches spec))
+    (map without-nils (q/select-quarantine-matches spec)))
   (set-registration-quarantine! [{:keys [spec]} quarantine-id registration-id quarantined reviewer-oid]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
@@ -51,6 +59,6 @@
            (when quarantined
              (q/cancel-registration! tx {:id registration-id}))
            (q/upsert-quarantine-review<! tx {:quarantine_id   quarantine-id
-                                            :registration_id registration-id
-                                            :quarantined     quarantined
-                                            :reviewer_oid    reviewer-oid}))))))
+                                             :registration_id registration-id
+                                             :quarantined     quarantined
+                                             :reviewer_oid    reviewer-oid}))))))

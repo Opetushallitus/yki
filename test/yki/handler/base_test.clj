@@ -192,7 +192,7 @@
                                        :phone_number     "+3584012347"})
 
 (def quarantine-form {:language_code "fin"
-                      :end_date      "2022-12-30"
+                      :end_date      "2040-12-30"
                       :birthdate     "1999-01-27"
                       :ssn           "301079-900U"
                       :first_name    "Max"
@@ -206,27 +206,29 @@
 (defn select-one [query]
   (first (select query)))
 
-(defn insert-quarantine []
-  (jdbc/execute! @embedded-db/conn (str "
-    INSERT INTO quarantine (
-        language_code,
-        end_date,
-        birthdate,
-        ssn,
-        first_name,
-        last_name,
-        email,
-        phone_number
-    ) VALUES (
-        'fin',
-        '2028-01-01',
-        '1999-01-01',
-        '301079-900U',
-        'Max',
-        'Syöttöpaine',
-        'email@invalid.invalid',
-        '0401234567'
-    ) ON CONFLICT DO NOTHING")))
+(defn insert-quarantine [quarantine]
+  (let [columns     [:language_code :end_date :birthdate :ssn :first_name :last_name :email :phone_number]
+        columns-str (->> columns
+                         (map name)
+                         (str/join ","))
+        values-str (->> columns
+                        (map quarantine)
+                        (map #(if % (str "'" % "'") "NULL"))
+                        (str/join ","))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO quarantine (" columns-str ") VALUES (" values-str ") ON CONFLICT DO NOTHING;"))))
+
+(defn update-quarantine-language! [id language]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE quarantine SET language_code='" language "' WHERE id=" id ";")))
+
+(defn update-exam-date! [exam-date-id new-exam-date]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET exam_date='" new-exam-date "' WHERE id=" exam-date-id ";")))
+
+(defn update-registration-form! [registration-id attr val]
+  {:pre [(pos-int? registration-id) (string? attr) (string? val)]}
+  (jdbc/execute! @embedded-db/conn (str "UPDATE registration SET form = JSONB_SET(form, '{" attr "}', '\"" val "\"') WHERE id=" registration-id ";")))
+
+(defn update-registration-state! [registration-id state]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE registration SET state='" state "' WHERE id=" registration-id ";")))
 
 (defn insert-organizer [organizer-oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)

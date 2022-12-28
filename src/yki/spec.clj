@@ -95,6 +95,16 @@
                                           ::phone_number]))
 (s/def ::quarantines (s/coll-of ::quarantine-type))
 (s/def ::quarantine-response (s/keys :req-un [::quarantines]))
+
+(s/def ::quarantine-match (s/keys :req-un [::language_code
+                                           ::end_date
+                                           ::birthdate
+                                           ::first_name
+                                           ::last_name]
+                                  :opt-un [::ssn
+                                           ::email
+                                           ::phone_number]))
+(s/def ::quarantine-matches (s/coll-of ::quarantine-match))
 (s/def ::quarantine-matches-response (s/keys :req-un [::quarantines]))
 
 ;; exam-session-location

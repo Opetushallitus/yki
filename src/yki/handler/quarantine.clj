@@ -74,10 +74,11 @@
                                        reg-id
                                        (:is_quarantined quarantined)
                                        (get-in request [:session :identity :oid]))]
-            (do (audit-log/log {:request   request
-                                :target-kv {:k audit-log/quarantine-review
-                                            :v (:id quarantine-review)}
-                                :change    {:type audit-log/create-op
-                                            :new  quarantine-review}})
-                (ok {:success true}))
+            (do
+              (audit-log/log {:request   request
+                              :target-kv {:k audit-log/quarantine-review
+                                          :v (:id quarantine-review)}
+                              :change    {:type audit-log/create-op
+                                          :new  quarantine-review}})
+              (ok {:success true}))
             (internal-server-error)))))))
