@@ -1,7 +1,7 @@
 (ns yki.handler.exam-date-public
-  (:require [compojure.api.sweet :refer [context GET DELETE POST]]
+  (:require [compojure.api.sweet :refer [context GET]]
             [yki.boundary.exam-date-db :as exam-date-db]
-            [ring.util.http-response :refer [ok not-found]]
+            [ring.util.http-response :refer [ok]]
             [yki.spec :as ys]
             [yki.handler.routing :as routing]
             [integrant.core :as ig]))

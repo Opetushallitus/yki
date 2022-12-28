@@ -21,7 +21,7 @@
               filename (:filename file)]
           (try
             (if-let [resp (files/upload-file file-store tempfile filename)]
-              (if (organizer-db/create-attachment-metadata! db oid "agreement" (resp "key"))
+              (when (organizer-db/create-attachment-metadata! db oid "agreement" (resp "key"))
                 (ok {:external_id (resp "key")}))
               (bad-request {:error "Failed to upload file"}))
             (catch Exception e
@@ -30,9 +30,9 @@
             (finally
               (io/delete-file tempfile true)))))
       (context "/:external-id" []
-        (GET "/" request
+        (GET "/" _
           :path-params [external-id :- ::ys/external_id]
-          (if-let [metadata (organizer-db/get-attachment-metadata db external-id oid)]
+          (if (organizer-db/get-attachment-metadata db external-id oid)
             (if-let [file-response (files/get-file file-store external-id)]
               (header (ok (:body file-response))
                       "Content-Disposition"

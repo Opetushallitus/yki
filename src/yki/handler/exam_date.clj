@@ -17,7 +17,7 @@
                                (t/before? (to-date current-date) (to-date post-date)))))
 
 (defn toggle-post-admission [db id enabled]
-  (let [current (exam-date-db/get-exam-date-by-id db id)
+  (let [current        (exam-date-db/get-exam-date-by-id db id)
         is-configured? (and
                          (some? (:post_admission_start_date current))
                          (some? (:post_admission_end_date current)))]
@@ -34,16 +34,16 @@
                   (internal-server-error {:success false :error "Could not enable post admission for the exam date"}))))))
 
 (defmethod ig/init-key :yki.handler/exam-date [_ {:keys [db]}]
-  (fn [oid]
+  (fn [_oid]
     (context "/" []
       (GET "/" []
         :query-params [{from :- ::ys/date-type nil} {days :- ::ys/days nil}]
         :return ::ys/exam-date-response
-        (let [from-date (if from (c/from-long from) (t/now))
-              history-date (if days (-> from-date
-                                        (t/minus (t/days days))) from-date)
+        (let [from-date     (if from (c/from-long from) (t/now))
+              history-date  (if days (-> from-date
+                                         (t/minus (t/days days))) from-date)
               new-from-date (f/unparse (f/formatter "yyyy-MM-dd") history-date)
-              dates (exam-date-db/get-organizer-exam-dates db new-from-date)]
+              dates         (exam-date-db/get-organizer-exam-dates db new-from-date)]
           (ok {:dates dates})))
 
       (POST "/" request
@@ -89,7 +89,7 @@
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (log/info "Deleting exam date " id)
-          (let [exam-date (exam-date-db/get-exam-date-by-id db id)
+          (let [exam-date     (exam-date-db/get-exam-date-by-id db id)
                 session-count (:count (exam-date-db/get-exam-date-session-count db id))]
             (cond
               (= exam-date nil) (do (log/error "Could not find an exam date " id " to delete")
@@ -111,9 +111,9 @@
           :path-params [id :- ::ys/id]
           :body [languages ::ys/languages]
           :return ::ys/response
-          (let [exam-date (exam-date-db/get-exam-date-by-id db id)
+          (let [exam-date           (exam-date-db/get-exam-date-by-id db id)
                 exam-date-languages (vec (:languages exam-date))
-                new-languages (set/difference (set languages) (set exam-date-languages))
+                new-languages       (set/difference (set languages) (set exam-date-languages))
                 removable-languages (set/difference (set exam-date-languages) (set languages))]
 
             (when (not-empty new-languages) (log/info "Adding languages to exam date " id ": " new-languages))
@@ -139,7 +139,7 @@
           :path-params [id :- ::ys/id]
           :body [languages ::ys/languages]
           :return ::ys/response
-          (let [exam-date (exam-date-db/get-exam-date-by-id db id)
+          (let [exam-date     (exam-date-db/get-exam-date-by-id db id)
                 session-count (:count (exam-date-db/get-exam-date-session-count db id))]
             (cond
               (= exam-date nil) (not-found {:success false :error "Exam date not found"})
@@ -157,12 +157,12 @@
                 (internal-server-error {:success false :error "Could not delete exam date languages"})))))
 
         (context "/post-admission" []
-          (POST "/" request
+          (POST "/" _
             :path-params [id :- ::ys/id]
             :body [post-admission ::ys/exam-date-post-admission-update]
             :return ::ys/response
             (let [{post-start :post_admission_start_date post-end :post_admission_end_date} post-admission
-                  current (exam-date-db/get-exam-date-by-id db id)
+                  current                    (exam-date-db/get-exam-date-by-id db id)
                   post-admission-date-errors (remove nil?
                                                      (vector
                                                        (when (is-first-date-before-second post-end post-start)
@@ -180,24 +180,24 @@
                         (do (log/error "Error occurred when attempting to configure post admission for exam date " id)
                             (internal-server-error {:success false :error "Could not configure post admission"}))))))
 
-          (POST "/enable" request
+          (POST "/enable" _
             :path-params [id :- ::ys/id]
             :return ::ys/response
             (toggle-post-admission db id true))
 
-          (POST "/disable" request
+          (POST "/disable" _
             :path-params [id :- ::ys/id]
             :return ::ys/response
             (toggle-post-admission db id false)))
 
-        (POST "/evaluation" request
+        (POST "/evaluation" _
           :path-params [id :- ::ys/id]
           :body [evaluation ::ys/exam-date-evaluation]
           :return ::ys/response
           (if-let [exam-date (exam-date-db/get-exam-date-by-id db id)]
             (let [{:keys [evaluation_start_date evaluation_end_date]} evaluation
                   exam-date-languages (exam-date-db/get-exam-date-languages db id)
-                  evaluations (evaluation-db/get-evaluation-periods-by-exam-date-id db id)]
+                  evaluations         (evaluation-db/get-evaluation-periods-by-exam-date-id db id)]
               (cond
                 (empty? exam-date-languages) (do (log/error "Could not find language options for exam date " id)
                                                  (conflict {:success false
@@ -213,7 +213,7 @@
                   evaluation_end_date evaluation_start_date) (do (log/error "Evaluation start date " evaluation_start_date " has to be before it's end date " evaluation_end_date)
                                                                  (conflict {:success false
                                                                             :error   "Evaluation start date has to be before it's end date"}))
-                :else (if-let [success (evaluation-db/create-evaluation! db exam-date-languages evaluation)]
+                :else (if (evaluation-db/create-evaluation! db exam-date-languages evaluation)
                         (ok {:success true})
                         (do (log/error "Error occurred when attempting to create evaluation period for exam date " id)
                             (internal-server-error {:success false

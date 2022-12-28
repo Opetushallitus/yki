@@ -1,10 +1,11 @@
 (ns yki.handler.exam-date-test
-  (:require [clojure.test :refer [use-fixtures join-fixtures deftest testing is]]
-            [ring.mock.request :as mock]
-            [yki.handler.base-test :as base]
-            [jsonista.core :as j]
-            [yki.embedded-db :as embedded-db]
-            [yki.handler.routing :as routing]))
+  (:require
+    [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+    [jsonista.core :as j]
+    [ring.mock.request :as mock]
+    [yki.embedded-db :as embedded-db]
+    [yki.handler.base-test :as base]
+    [yki.handler.routing :as routing]))
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction]))
 
@@ -115,10 +116,10 @@
 
   (testing "cannot delete an exam date that has exam sessions assigned to it"
     (base/insert-custom-exam-date "2039-10-01" "2039-10-01" "2039-10-30")
-    (let [date-id        (get-exam-date-id-by-date "2039-10-01")
-          insert-session (base/insert-exam-session date-id (:oid base/organizer) 5)
-          response       (delete-exam-date date-id)
-          response-body  (base/body-as-json response)]
+    (let [date-id       (get-exam-date-id-by-date "2039-10-01")
+          _             (base/insert-exam-session date-id (:oid base/organizer) 5)
+          response      (delete-exam-date date-id)
+          response-body (base/body-as-json response)]
       (is (= (get-success-status response-body) false))
       (is (= (:status response) 409)))))
 

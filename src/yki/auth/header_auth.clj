@@ -1,6 +1,6 @@
 (ns yki.auth.header-auth
   (:require [clojure.tools.logging :as log]
-            [ring.util.http-response :refer [found ok see-other]]
+            [ring.util.http-response :refer [found see-other]]
             [yki.boundary.onr :as onr])
   (:import [java.util UUID]))
 

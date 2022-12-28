@@ -3,7 +3,6 @@
             [buddy.core.hash :as hash]
             [clj-time.core :as t]
             [clj-time.format :as f]
-            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [pgqueue.core :as pgq]
             [ring.util.http-response :refer [ok conflict]]

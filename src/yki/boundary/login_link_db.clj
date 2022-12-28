@@ -1,9 +1,9 @@
 (ns yki.boundary.login-link-db
   (:require [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
-            [clj-time.format :as f]
             [clojure.java.jdbc :as jdbc]
-            [duct.database.sql]))
+            [duct.database.sql])
+  (:import (duct.database.sql Boundary)))
 
 (require-sql ["yki/queries.sql" :as q])
 
@@ -13,7 +13,7 @@
   (get-login-link-by-exam-session-and-registration-id [db registration-id]))
 
 (extend-protocol LoginLinks
-  duct.database.sql.Boundary
+  Boundary
   (create-login-link! [{:keys [spec]} login-link]
     (jdbc/with-db-transaction [tx spec]
       (q/insert-login-link<! tx login-link)))

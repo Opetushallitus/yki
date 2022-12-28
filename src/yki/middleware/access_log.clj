@@ -14,7 +14,7 @@
 
 (defn- env->log-transformer
   [env]
-  (fn [{{:keys [request-method remote-addr headers cookies query-string uri status session ring.logger/ms]} :message :as opt}]
+  (fn [{{:keys [request-method remote-addr headers query-string uri status session ring.logger/ms]} :message :as opt}]
     (let [method      (-> request-method name s/upper-case)
           request     (str method " " uri (when query-string (str "?" (remove-ticket query-string))))
           log-map     {:timestamp       (str (t/to-time-zone (t/now) (t/time-zone-for-id "Europe/Helsinki")))
