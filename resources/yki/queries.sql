@@ -183,14 +183,12 @@ SELECT
   ed.exam_date,
   es.language_code
 FROM quarantine q
-JOIN registration r
+INNER JOIN registration r
   ON q.birthdate = r.form->>'birthdate'
-JOIN participant p
-  ON r.participant_id = p.id
-JOIN exam_session es
+INNER JOIN exam_session es
   ON r.exam_session_id = es.id
   AND es.language_code = q.language_code
-JOIN exam_date ed
+INNER JOIN exam_date ed
   ON es.exam_date_id = ed.id
 WHERE r.state IN ('SUBMITTED', 'COMPLETED')
   -- Filter out possible matches that have been reviewed after quarantine was last updated
