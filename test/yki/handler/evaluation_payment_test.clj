@@ -88,8 +88,8 @@
 
       (testing "should send an email to kirjaamo"
         (is (= "kirjaamo@testi.fi" (first (:recipients kirjaamo-email))))
-        (is (includes-all (:body kirjaamo-email) ["YKI-EVA-TEST" "suomi perustaso" "Luetun ymmärtäminen" "Puheen ymmärtäminen"])))
+        (is (includes-all (:body kirjaamo-email) ["YKI-EVA-TEST" "suomi perustaso" "Tekstin ymmärtäminen" "Puheen ymmärtäminen"])))
 
       (testing "should send an email to customer"
         (is (= (:email test-order) (first (:recipients customer-email))))
-        (is (includes-all (:body customer-email) ["suomi perustaso" "Luetun ymmärtäminen" "Puheen ymmärtäminen"]))))))
+        (is (includes-all (:body customer-email) ["suomi perustaso" "Tekstin ymmärtäminen" "Puheen ymmärtäminen"]))))))

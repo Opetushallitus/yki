@@ -417,7 +417,7 @@
     "force": false,
     "key": "registration.description.read",
     "locale": "fi",
-    "value": "Luetun ymmärtäminen"
+    "value": "Tekstin ymmärtäminen"
   },
   {
     "accesscount": 0,
@@ -557,7 +557,7 @@
     "key": "email.receipt.evaluationPayment.title",
     "id": 33035,
     "locale": "fi",
-    "value": "Yleinen kielitutkinto (YKI), tarkistusarviointimaksu"
+    "value": "Yleiset kielitutkinnot (YKI), tarkistusarviointimaksu"
   },
   {
     "accesscount": 0,
@@ -571,7 +571,7 @@
     "key": "email.receipt.evaluationPayment.vatZeroJustification",
     "id": 33038,
     "locale": "fi",
-    "value": "Yleisen kielitutkinnon tarkistusarviointimaksu on opetus- ja kulttuuriministeriön asetuksella määrätty maksu, johon ei lisätä arvonlisäveroa."
+    "value": "Yleisten kielitutkintojen tarkistusarviointimaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (1223/2022) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
   },
   {
     "accesscount": 0,
@@ -590,20 +590,6 @@
   {
     "accesscount": 0,
     "createdBy": "1.2.246.562.24.57774768388",
-    "modified": 1670508666608,
-    "modifiedBy": "1.2.246.562.24.57774768388",
-    "accessed": 1670508666608,
-    "category": "yki",
-    "created": 1670508666608,
-    "force": false,
-    "key": "email.receipt.examPayment.participant",
-    "id": 32925,
-    "locale": "fi",
-    "value": "Osallistuja"
-  },
-  {
-    "accesscount": 0,
-    "createdBy": "1.2.246.562.24.57774768388",
     "modified": 1670508637324,
     "modifiedBy": "1.2.246.562.24.57774768388",
     "accessed": 1670508637324,
@@ -613,7 +599,7 @@
     "key": "email.receipt.examPayment.title",
     "id": 32924,
     "locale": "fi",
-    "value": "Yleinen kielitutkinto (YKI), tutkintomaksu"
+    "value": "Yleiset kielitutkinnot (YKI), tutkintomaksu"
   },
   {
     "accesscount": 0,
@@ -627,6 +613,6 @@
     "key": "email.receipt.examPayment.vatZeroJustification",
     "id": 33039,
     "locale": "fi",
-    "value": "Yleisen kielitutkinnon tutkintomaksu on opetus- ja kulttuuriministeriön asetuksella määrätty maksu, johon ei lisätä arvonlisäveroa."
+    "value": "Yleisten kielitutkintojen tutkintomaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (1223/2022) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
   }
 ]
