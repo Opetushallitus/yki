@@ -571,7 +571,7 @@
     "key": "email.receipt.evaluationPayment.vatZeroJustification",
     "id": 33038,
     "locale": "fi",
-    "value": "Yleisten kielitutkintojen tarkistusarviointimaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (xxxx/202x) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
+    "value": "Yleisten kielitutkintojen tarkistusarviointimaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (1223/2022) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
   },
   {
     "accesscount": 0,
@@ -613,6 +613,6 @@
     "key": "email.receipt.examPayment.vatZeroJustification",
     "id": 33039,
     "locale": "fi",
-    "value": "Yleisten kielitutkintojen tutkintomaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (xxxx/202x) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
+    "value": "Yleisten kielitutkintojen tutkintomaksut ovat opetus- ja kulttuuriministeriön asetuksella Opetushallituksen suoritteiden maksullisuudesta (1223/2022) määrättyjä maksuja, joista ei peritä arvonlisäveroa."
   }
 ]
