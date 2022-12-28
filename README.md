@@ -138,7 +138,7 @@ lein cljfmt fix
 
 [clj-kondo](https://github.com/clj-kondo/clj-kondo)
 
-Install `clj-kondo` first, eg. with `brew install clj-kondo`.
+Install `clj-kondo` first, eg. with `brew install borkdude/brew/clj-kondo`.
 
 Before using clj-kondo, we first need to set it up properly for this project.
 For more details, check out (https://github.com/clj-kondo/clj-kondo#project-setup).
