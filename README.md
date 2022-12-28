@@ -140,7 +140,14 @@ lein cljfmt fix
 
 Install `clj-kondo` first, eg. with `brew install clj-kondo`.
 
-Then, use `clj-kondo` to get feedback on your code:
+Before using clj-kondo, we first need to set it up properly for this project.
+For more details, check out (https://github.com/clj-kondo/clj-kondo#project-setup).
+Briefly, the following command needs to be run to let `clj-kondo` analyze the dependencies and create a cache for future use.
+```sh
+clj-kondo --lint "$(lein classpath)" --dependencies --parallel --copy-configs
+```
+
+Now, we're ready to use `clj-kondo` to get feedback on our code:
 ```sh
 clj-kondo --lint src/
 clj-kondo --lint test/
