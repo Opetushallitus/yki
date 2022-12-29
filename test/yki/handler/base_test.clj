@@ -218,7 +218,7 @@
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO quarantine (" columns-str ") VALUES (" values-str ") ON CONFLICT DO NOTHING;"))))
 
 (defn update-quarantine-language! [id language]
-  (jdbc/execute! @embedded-db/conn (str "UPDATE quarantine SET language_code='" language "' WHERE id=" id ";")))
+  (jdbc/execute! @embedded-db/conn (str "UPDATE quarantine SET updated=(current_timestamp + (5 * interval '1 seconds')), language_code='" language "' WHERE id=" id ";")))
 
 (defn update-exam-date! [exam-date-id new-exam-date]
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET exam_date='" new-exam-date "' WHERE id=" exam-date-id ";")))

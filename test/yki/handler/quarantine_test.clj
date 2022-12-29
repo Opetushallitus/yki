@@ -61,45 +61,37 @@
     {}
     (let [handler     (create-handlers port)
           session     (peridot/session handler)
-          get-matches #(request-with-json-body session (str routing/quarantine-api-root "/matches") :get nil)
-          response    (get-matches)]
+          get-matches (fn []
+                        (-> (request-with-json-body session (str routing/quarantine-api-root "/matches") :get nil)
+                            (:body)
+                            (:quarantines)))]
       (testing "get quarantine endpoint should return 200"
-        (is (= (:status response) 200)))
+        (is (= (:status (request-with-json-body session (str routing/quarantine-api-root "/matches") :get nil)) 200)))
       (testing "initially no matches should be returned"
-        (is (= (:body response) {:quarantines []})))
+        (is (= (get-matches) [])))
       (testing "match if registration birth date matches and exam date is between quarantine start and end dates"
         (base/update-exam-date! 1 "2030-01-01")
         (base/update-registration-form! 1 "birthdate" (:birthdate base/quarantine-form))
         (is (= (-> (get-matches)
-                   (:body)
-                   (:quarantines)
                    (count))
                1)))
       (testing "only registrations in state COMPLETED or SUBMITTED can be matches"
         (doseq [state ["STARTED" "EXPIRED" "CANCELLED" "PAID_AND_CANCELLED"]]
           (base/update-registration-state! 1 state)
-          (is (empty? (-> (get-matches)
-                          (:body)
-                          (:quarantines)))))
+          (is (empty? (get-matches))))
         (doseq [state ["SUBMITTED" "COMPLETED"]]
           (base/update-registration-state! 1 state)
           (is (= (-> (get-matches)
-                     (:body)
-                     (:quarantines)
                      (count))
                  1))))
       (testing "one quarantine can produce multiple matches"
         (base/update-registration-form! 2 "birthdate" (:birthdate base/quarantine-form))
         (is (= (-> (get-matches)
-                   (:body)
-                   (:quarantines)
                    (count))
                2)))
       (testing "multiple quarantines can match same registration"
         (base/insert-quarantine (dissoc base/quarantine-form :ssn))
         (is (= (->> (get-matches)
-                    (:body)
-                    (:quarantines)
                     (map #(select-keys % [:id :registration_id]))
                     (into #{}))
                #{{:id 1 :registration_id 1} {:id 1 :registration_id 2}
@@ -113,8 +105,6 @@
             :put
             {:is_quarantined quarantined}))
         (is (= (->> (get-matches)
-                    (:body)
-                    (:quarantines)
                     (map #(select-keys % [:id :registration_id]))
                     (into #{}))
                ; Note: only the below match should be returned,
@@ -123,9 +113,13 @@
                #{{:id 2 :registration_id 1}})))
       (testing "exam language on registration and quarantine must be same for a match"
         (base/update-quarantine-language! 2 "swe")
-        (is (empty? (->> (get-matches)
-                         (:body)
-                         (:quarantines))))))))
+        (is (empty? (get-matches))))
+      (testing "if a quarantine is updated after it was reviewed, it can again be matched"
+        (base/update-quarantine-language! 1 "fin")
+        (is (= (->> (get-matches)
+                    (map #(select-keys % [:id :registration_id]))
+                    (into #{}))
+               #{{:id 1 :registration_id 1}}))))))
 
 (deftest delete-quarantine-test
   (base/insert-quarantine base/quarantine-form)
