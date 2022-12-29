@@ -1,96 +1,97 @@
 {
- :duct.database.sql/hikaricp {:adapter "postgresql"
-                              :database-name "yki"
-                              :server-name "localhost"
-                              :port-number "5432"
-                              :username "admin"
-                              :password "admin"}
+ :duct.database.sql/hikaricp             {:adapter       "postgresql"
+                                          :database-name "yki"
+                                          :server-name   "localhost"
+                                          :port-number   "5432"
+                                          :username      "admin"
+                                          :password      "admin"}
 
  :yki.middleware.access-log/with-logging {:env "dev"}
 
- :yki.job.job-queue/init {:db-config {:db {:subprotocol "postgresql"
-                                           :subname "//localhost:5432/yki"
-                                           :user "admin"
-                                           :password "admin"}}}
+ :yki.job.job-queue/init                 {:db-config {:db {:subprotocol "postgresql"
+                                                           :subname     "//localhost:5432/yki"
+                                                           :user        "admin"
+                                                           :password    "admin"}}}
 
- :yki.util/url-helper {:virkailija-host        "virkailija.untuvaopintopolku.fi"
-                       :oppija-host            "untuvaopintopolku.fi"
-                       :oppija-sub-domain      "yki."
-                       :yki-register-host      "http://localhost:8080"
-                       :alb-host               "https://virkailija.untuvaopintopolku.fi"
-                       :tunnistus-host         "tunnistus.untuvaopintopolku.fi"
-                       :yki-host-virkailija    "http://localhost:8080"}
+ :yki.util/url-helper                    {:virkailija-host     "virkailija.untuvaopintopolku.fi"
+                                          :oppija-host         "untuvaopintopolku.fi"
+                                          :oppija-sub-domain   "yki."
+                                          :yki-register-host   "http://localhost:8080"
+                                          :alb-host            "https://virkailija.untuvaopintopolku.fi"
+                                          :tunnistus-host      "tunnistus.untuvaopintopolku.fi"
+                                          :yki-host-virkailija "http://localhost:8080"}
 
- :yki.handler/payment {:db #ig/ref :duct.database/sql
-                       :auth #ig/ref :yki.middleware.auth/with-authentication
-                       :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                        :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"}}
+ :yki.handler/payment                    {:db             #ig/ref :duct.database/sql
+                                          :auth           #ig/ref :yki.middleware.auth/with-authentication
+                                          :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
+                                                           :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"}}
 
- :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
-                                  :auth #ig/ref :yki.middleware.auth/with-authentication
-                                  :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                                   :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/evaluation-payment"
-                                                   :amount {:READING "50.00"
-                                                            :LISTENING "50.00"
-                                                            :WRITING "50.00"
-                                                            :SPEAKING "50.00"}}
-                                  :url-helper #ig/ref :yki.util/url-helper
-                                  :email-q #ig/ref :yki.job.job-queue/email-q}
+ :yki.handler/evaluation-payment         {:db             #ig/ref :duct.database/sql
+                                          :auth           #ig/ref :yki.middleware.auth/with-authentication
+                                          :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
+                                                           :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/evaluation-payment"
+                                                           :amount          {:READING   "50.00"
+                                                                             :LISTENING "50.00"
+                                                                             :WRITING   "50.00"
+                                                                             :SPEAKING  "50.00"}}
+                                          :url-helper     #ig/ref :yki.util/url-helper
+                                          :email-q        #ig/ref :yki.job.job-queue/email-q}
 
- :yki.handler/evaluation {:db #ig/ref :duct.database/sql
-                          :payment-config {:amount {:READING "50.00"
-                                                    :LISTENING "50.00"
-                                                    :WRITING "50.00"
-                                                    :SPEAKING "50.00"}}}
+ :yki.handler/evaluation                 {:db             #ig/ref :duct.database/sql
+                                          :payment-config {:amount {:READING   "50.00"
+                                                                    :LISTENING "50.00"
+                                                                    :WRITING   "50.00"
+                                                                    :SPEAKING  "50.00"}}}
 
- :yki.handler/registration {:db #ig/ref :duct.database/sql
-                            :auth #ig/ref :yki.middleware.auth/with-authentication
-                            :url-helper #ig/ref :yki.util/url-helper
-                            :email-q #ig/ref :yki.job.job-queue/email-q
-                            :onr-client #ig/ref :yki.boundary.onr/onr-client
-                            :access-log #ig/ref :yki.middleware.access-log/with-logging
-                            :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                             :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                             :amount {:PERUS "120.00"
-                                                      :KESKI "140.00"
-                                                      :YLIN "180.00"}}}
+ :yki.handler/registration               {:db             #ig/ref :duct.database/sql
+                                          :auth           #ig/ref :yki.middleware.auth/with-authentication
+                                          :url-helper     #ig/ref :yki.util/url-helper
+                                          :email-q        #ig/ref :yki.job.job-queue/email-q
+                                          :onr-client     #ig/ref :yki.boundary.onr/onr-client
+                                          :access-log     #ig/ref :yki.middleware.access-log/with-logging
+                                          :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
+                                                           :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                                           :amount          {:PERUS "120.00"
+                                                                             :KESKI "140.00"
+                                                                             :YLIN  "180.00"}}}
 
-   :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
-                                     :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                                      :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                                      :amount {:PERUS "120.00"
-                                                               :KESKI "140.00"
-                                                               :YLIN "180.00"
-                                                               :READING "50.00"
-                                                               :LISTENING "50.00"
-                                                               :WRITING "50.00"
-                                                               :SPEAKING "50.00"}}}
+ :yki.handler/exam-session-public        {:db             #ig/ref :duct.database/sql
+                                          :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
+                                                           :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
+                                                           :amount          {:PERUS     "120.00"
+                                                                             :KESKI     "140.00"
+                                                                             :YLIN      "180.00"
+                                                                             :READING   "50.00"
+                                                                             :LISTENING "50.00"
+                                                                             :WRITING   "50.00"
+                                                                             :SPEAKING  "50.00"}}}
 
 
  :yki.middleware.auth/with-authentication
- {:url-helper #ig/ref :yki.util/url-helper
-  :session-config {:key "ad7tbRZIG839gDo2"
-                   :cookie-attrs {:max-age 28800
+ {:url-helper     #ig/ref :yki.util/url-helper
+  :session-config {:key          "ad7tbRZIG839gDo2"
+                   :cookie-attrs {:max-age   28800
                                   :http-only true
-                                  :secure false
-                                  :path "/yki"}}}
+                                  :secure    false
+                                  :path      "/yki"}}}
 
  :yki.middleware.no-auth/with-authentication
- {:session-config {:key "ad7tbRZIG839gDo2"
-                   :cookie-attrs {:max-age 28800
+ {:session-config {:key          "ad7tbRZIG839gDo2"
+                   :cookie-attrs {:max-age   28800
                                   :http-only true
-                                  :secure false
-                                  :domain "localhost"
-                                  :path "/yki"}}}
+                                  :secure    false
+                                  :domain    "localhost"
+                                  :path      "/yki"}}}
 
- :yki.middleware.no-auth/with-fake-oid {:oid "1.2.3.4"}
+ :yki.middleware.no-auth/with-fake-oid   {:oid "1.2.3.4"}
 
- :yki.handler/quarantine {:db #ig/ref :duct.database/sql
-                          :url-helper #ig/ref :yki.util/url-helper
-                          :access-log #ig/ref :yki.middleware.access-log/with-logging}
- :yki.handler/organizer {:db #ig/ref :duct.database/sql
-                         :url-helper #ig/ref :yki.util/url-helper
-                         :file-handler #ig/ref :yki.handler/file
-                         :access-log #ig/ref :yki.middleware.access-log/with-logging
-                         :auth #ig/ref :yki.middleware.auth/with-authentication}}
+ :yki.handler/quarantine                 {:db         #ig/ref :duct.database/sql
+                                          :url-helper #ig/ref :yki.util/url-helper
+                                          :access-log #ig/ref :yki.middleware.access-log/with-logging
+                                          :auth       #ig/ref :yki.middleware.no-auth/with-fake-oid}
+ :yki.handler/organizer                  {:db           #ig/ref :duct.database/sql
+                                          :url-helper   #ig/ref :yki.util/url-helper
+                                          :file-handler #ig/ref :yki.handler/file
+                                          :access-log   #ig/ref :yki.middleware.access-log/with-logging
+                                          :auth         #ig/ref :yki.middleware.auth/with-authentication}}
 
