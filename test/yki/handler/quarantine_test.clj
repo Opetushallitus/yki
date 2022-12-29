@@ -176,17 +176,47 @@
                (select-quarantine-details-for-registration 1)))
         (is (= {:body   {:success true}
                 :status 200}
+               (set-registration-quarantine-state 2 1 true)))
+        (is (= {:id 2 :state "CANCELLED" :quarantine_id 1 :quarantined true}
+               (select-quarantine-details-for-registration 2)))
+        (is (= {:body   {:success true}
+                :status 200}
                (set-registration-quarantine-state 4 1 true)))
         (is (= {:id 4 :state "PAID_AND_CANCELLED" :quarantine_id 1 :quarantined true}
                (select-quarantine-details-for-registration 4))))
       (testing "set quarantine endpoint should allow setting registration as not quarantined"
-        (is (= {:body   {:success true}
-                :status 200}
-               (set-registration-quarantine-state 1 1 false)))
-        (is (= {:id 1 :state "CANCELLED" :quarantine_id 1 :quarantined false}
-               (select-quarantine-details-for-registration 1)))
-        (is (= {:body   {:success true}
-                :status 200}
-               (set-registration-quarantine-state 4 1 false)))
-        (is (= {:id 4 :state "PAID_AND_CANCELLED" :quarantine_id 1 :quarantined false}
-               (select-quarantine-details-for-registration 4)))))))
+        (testing "already cancelled registrations stay cancelled"
+          (is (= {:body   {:success true}
+                  :status 200}
+                 (set-registration-quarantine-state 1 1 false)))
+          (is (= {:id 1 :state "CANCELLED" :quarantine_id 1 :quarantined false}
+                 (select-quarantine-details-for-registration 1)))
+          (is (= {:body   {:success true}
+                  :status 200}
+                 (set-registration-quarantine-state 4 1 false)))
+          (is (= {:id 4 :state "PAID_AND_CANCELLED" :quarantine_id 1 :quarantined false}
+                 (select-quarantine-details-for-registration 4))))
+        (testing "submitted or completed registrations stay as such"
+          (is (= {:body   {:success true}
+                  :status 200}
+                 (set-registration-quarantine-state 3 1 false)))
+          (is (= {:id 3 :state "SUBMITTED" :quarantine_id 1 :quarantined false}
+                 (select-quarantine-details-for-registration 3)))
+          (is (= {:body   {:success true}
+                  :status 200}
+                 (set-registration-quarantine-state 5 1 false)))
+          (is (= {:id 5 :state "COMPLETED" :quarantine_id 1 :quarantined false}
+                 (select-quarantine-details-for-registration 5)))))
+      (testing "quarantine decisions can be fetched from /reviews"
+        (let [{:keys [body status]} (request-with-json-body session (str routing/quarantine-api-root "/reviews") :get {})
+              reviews (:reviews body)]
+          (is (= 200 status))
+          (is (= 5 (count reviews)))
+          (is (= #{[1 1 false]
+                   [1 2 true]
+                   [1 3 false]
+                   [1 4 false]
+                   [1 5 false]}
+                 (->> reviews
+                      (map (juxt :quarantine_id :registration_id :is_quarantined))
+                      (into #{})))))))))

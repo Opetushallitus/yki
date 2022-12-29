@@ -19,6 +19,9 @@
       (GET "/" {session :session}
         :return ::ys/quarantine-response
         (ok {:quarantines (quarantine-db/get-quarantines db)}))
+      (GET "/reviews" request
+        :return ::ys/quarantine-reviews-response
+        (ok {:reviews (quarantine-db/get-reviews db)}))
       (POST "/" request
         :body [quarantine ::ys/quarantine-type]
         :return ::ys/response

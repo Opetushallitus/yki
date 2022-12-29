@@ -18,8 +18,11 @@
 
 (defn- without-nils [kvs]
   (->> kvs
-       (filter (fn [[_ v]] v))
+       (filter (fn [[_ v]] (some? v)))
        (into {})))
+
+(defn- with-placeholders-for-optional-values [quarantine]
+  (merge {:ssn nil :phone_number nil :email nil} quarantine))
 
 (defprotocol Quarantine
   (create-quarantine! [db quarantine])
@@ -28,7 +31,8 @@
   (get-quarantines [db])
   (get-quarantine [db id])
   (get-quarantine-matches [db])
-  (set-registration-quarantine! [db quarantine-id registration-id quarantined reviewer-oid]))
+  (set-registration-quarantine! [db quarantine-id registration-id quarantined reviewer-oid])
+  (get-reviews [db]))
 
 (extend-protocol Quarantine
   Boundary
@@ -36,21 +40,26 @@
     (jdbc/with-db-transaction [tx spec]
       (q/insert-quarantine<!
         tx
-        (merge {:ssn nil :phone_number nil :email nil}
-               (convert-date quarantine)))))
+        (-> quarantine
+            (convert-date)
+            (with-placeholders-for-optional-values)))))
   (update-quarantine! [{:keys [spec]} id quarantine]
     (jdbc/with-db-transaction [tx spec]
-      (q/update-quarantine<! tx (-> (assoc quarantine :id id)
-                                    (convert-date)))))
+      (q/update-quarantine<! tx (-> quarantine
+                                    (assoc :id id)
+                                    (convert-date)
+                                    (with-placeholders-for-optional-values)))))
   (delete-quarantine! [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]
       (int->boolean (q/delete-quarantine! tx {:id id}))))
   (get-quarantines [{:keys [spec]}]
-    (q/select-quarantines spec))
+    (->> (q/select-quarantines spec)
+         (map without-nils)))
   (get-quarantine [{:keys [spec]} id]
     (first (q/select-quarantine spec {:id id})))
   (get-quarantine-matches [{:keys [spec]}]
-    (map without-nils (q/select-quarantine-matches spec)))
+    (->> (q/select-quarantine-matches spec)
+         (map without-nils)))
   (set-registration-quarantine! [{:keys [spec]} quarantine-id registration-id quarantined reviewer-oid]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
@@ -61,4 +70,7 @@
            (q/upsert-quarantine-review<! tx {:quarantine_id   quarantine-id
                                              :registration_id registration-id
                                              :quarantined     quarantined
-                                             :reviewer_oid    reviewer-oid}))))))
+                                             :reviewer_oid    reviewer-oid})))))
+  (get-reviews [{:keys [spec]}]
+    (->> (q/select-quarantine-reviews spec)
+         (map without-nils))))

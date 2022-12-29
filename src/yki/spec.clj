@@ -100,12 +100,33 @@
                                            ::end_date
                                            ::birthdate
                                            ::first_name
-                                           ::last_name]
+                                           ::last_name
+                                           ::form
+                                           ::registration_id
+                                           ::id]
                                   :opt-un [::ssn
                                            ::email
                                            ::phone_number]))
 (s/def ::quarantine-matches (s/coll-of ::quarantine-match))
 (s/def ::quarantine-matches-response (s/keys :req-un [::quarantines]))
+
+(s/def ::quarantine_id ::id)
+
+(s/def ::review (s/keys :req-un [::is_quarantined
+                                 ::quarantine_id
+                                 ::registration_id
+                                 ::exam_date
+                                 ::end_date
+                                 ::language_code
+                                 ::birthdate
+                                 ::first_name
+                                 ::last_name
+                                 ::form]
+                        :opt-un [::ssn
+                                 ::email
+                                 ::phone_number]))
+(s/def ::reviews (s/coll-of ::review))
+(s/def ::quarantine-reviews-response (s/keys :req-un [::reviews]))
 
 ;; exam-session-location
 (s/def ::name (s/and string? #(<= (count %) 256)))

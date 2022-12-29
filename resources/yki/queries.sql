@@ -195,6 +195,31 @@ WHERE r.state IN ('SUBMITTED', 'COMPLETED')
   AND NOT EXISTS (SELECT qr.id FROM quarantine_review qr WHERE qr.registration_id = r.id AND qr.quarantine_id = q.id AND q.updated <= qr.updated)
   AND ed.exam_date BETWEEN q.created AND q.end_date;
 
+-- name: select-quarantine-reviews
+SELECT
+  qr.quarantined AS is_quarantined,
+  qr.quarantine_id,
+  qr.registration_id,
+  ed.exam_date,
+  es.language_code,
+  q.birthdate,
+  q.first_name,
+  q.last_name,
+  q.ssn,
+  q.email,
+  q.phone_number,
+  q.end_date,
+  r.form
+FROM quarantine_review qr
+INNER JOIN quarantine q
+  ON qr.quarantine_id = q.id
+INNER JOIN registration r
+  ON qr.registration_id = r.id
+INNER JOIN exam_session es
+  ON r.exam_session_id = es.id
+INNER JOIN exam_date ed
+  ON es.exam_date_id = ed.id;
+
 -- name: upsert-quarantine-review<!
 INSERT INTO quarantine_review (
   quarantine_id,
