@@ -728,7 +728,10 @@ WHERE id = :id AND state != 'PAID';
 
 -- name: update-exam-registration-status-to-completed<!
 UPDATE registration
-SET state = 'COMPLETED',
+SET state =
+    CASE WHEN state = 'SUBMITTED'::registration_state THEN 'COMPLETED'::registration_state
+         ELSE 'PAID_AND_CANCELLED'::registration_state
+    END,
     modified = current_timestamp
 WHERE id = :id AND state != 'COMPLETED';
 
@@ -858,8 +861,6 @@ WHERE es.id = :exam_session_id
      FROM participant_sync_status pss
      WHERE pss.exam_session_id = es.id
             AND pss.success_at IS NULL)  = 0;
-
-
 
 --name: insert-relocated-participants-sync-status!
 INSERT INTO participant_sync_status(
@@ -1036,8 +1037,6 @@ ed.post_admission_enabled,
 FROM exam_date ed
 WHERE ed.exam_date >= COALESCE(:from, current_date) AND ed.deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
-
-
 
 -- name: insert-exam-date<!
 INSERT INTO exam_date (

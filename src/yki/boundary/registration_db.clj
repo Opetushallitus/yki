@@ -154,7 +154,8 @@
       (rollback-on-exception
         tx
         (fn update-payment-and-registration-states! []
-          (let [updated-payment-details (q/update-new-exam-payment-to-paid<! tx {:id payment-id})]
-            (when (q/update-exam-registration-status-to-completed<! tx {:id registration-id})
-              (after-fn updated-payment-details)
-              true)))))))
+          (let [updated-payment-details (q/update-new-exam-payment-to-paid<! tx {:id payment-id})
+                updated-registration    (q/update-exam-registration-status-to-completed<! tx {:id registration-id})]
+            (when (= "COMPLETED" (:state updated-registration))
+              (after-fn updated-payment-details))
+            updated-registration))))))
