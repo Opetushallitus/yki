@@ -85,11 +85,10 @@
   (oph-admin? (get-organizations-from-session (:session request))))
 
 (defn- redirect-to-cas-oppija
-  [request url-helper]
+  [{:keys [query-params]} url-helper]
   (log/info "Redirect to cas-oppija")
-  (let [exam-session-id ((:query-params request) "examSessionId")
-        lang            (or (some #{((:query-params request) "lang")}
-                                  ["fi" "sv" "en"])
+  (let [exam-session-id (query-params "examSessionId")
+        lang            (or (#{"fi" "sv" "en"} (query-params "lang"))
                             "fi")
         success-url     (url-helper (str "cas-oppija.login-success." lang) exam-session-id)
         login-url       (str (url-helper :cas-oppija.login lang) success-url)]

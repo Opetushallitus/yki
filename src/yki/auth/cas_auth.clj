@@ -44,8 +44,7 @@
             permissions   (permissions/virkailija-by-username permissions-client username)
             person-oid    (:oidHenkilo permissions)
             person        (onr/get-person-by-oid onr-client person-oid)
-            lang          (or (some #{(get-in person ["asiointiKieli" "kieliKoodi"])}
-                                    ["fi" "sv"])
+            lang          (or (#{"fi" "sv"} (get-in person ["asiointiKieli" "kieliKoodi"]))
                               "fi")
             organizations (get-organizations-with-yki-permissions (:organisaatiot permissions))
             oph-admin?    (auth/oph-admin? organizations)
@@ -99,7 +98,7 @@
 (defn process-attributes [attributes]
   (into {} (for [m attributes
                  [k v] m]
-             [k (clojure.string/join " " v)])))
+             [k (str/join " " v)])))
 
 (defn process-cas-attributes [response]
   (let [xml-response (-> response
@@ -133,8 +132,8 @@
         address      {:post_office    VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip            VakinainenKotimainenLahiosoitePostinumero
                       :street_address VakinainenKotimainenLahiosoiteS}
-        lang         (or language (some #{(get-in asiointiKieli ["kieliKoodi"])}
-                                        ["fi" "sv"])
+        lang         (or language
+                         (#{"fi" "sv"} (get-in asiointiKieli ["kieliKoodi"]))
                          "fi")
         redirect-uri (if (:success-redirect session)
                        (str (:success-redirect session))
@@ -170,9 +169,8 @@
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
       (let [{:strs [examSessionId]} (:query-params request)
-            lang           (str/lower-case (or (some #{(-> request :route-params :*)}
-                                                     ["FI" "SV" "EN"])
-                                               "fi"))
+            lang-suffix    (-> request :route-params :* str/lower-case)
+            lang           (or (#{"fi" "sv" "en"} lang-suffix) "fi")
             callback-uri   (url-helper (str "cas-oppija.login-success." lang) examSessionId)
             cas-response   (cas/validate-oppija-ticket (cas-client "/") ticket callback-uri)
             cas-attributes (process-cas-attributes cas-response)
