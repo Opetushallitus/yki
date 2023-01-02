@@ -47,9 +47,6 @@
 (def exam-session
   (slurp "test/resources/exam_session.json"))
 
-(def exam-date
-  (slurp "test/resources/exam_date.json"))
-
 (def organization
   (slurp "test/resources/organization.json"))
 
