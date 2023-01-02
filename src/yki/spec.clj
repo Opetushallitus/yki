@@ -268,8 +268,6 @@
                                  ::nationalities
                                  ::certificate_lang
                                  ::exam_lang
-                                 ; TODO FIXME Should be s/or instead or some other refactoring?
-                                 ;  Currently returns always just ::birthdate.
                                  (or ::birthdate ::ssn)
                                  ::post_office
                                  ::zip
