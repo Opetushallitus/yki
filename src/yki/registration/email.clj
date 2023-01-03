@@ -12,6 +12,7 @@
         receipt-data  (->
                         (merge registration-data payment-data)
                         (assoc
+                          :receipt_id (:reference payment-data)
                           :receipt_date (:paid_at payment-data)
                           :payment_date (:paid_at payment-data)
                           :level exam-level
@@ -31,15 +32,15 @@
 (defn send-exam-registration-completed-email! [email-q url-helper pdf-renderer email-language template-data payment-data]
   (let [exam-level    (template-util/get-level url-helper (:level_code template-data) email-language)
         exam-language (template-util/get-language url-helper (:language_code template-data) email-language)
-        receipt-id    (str "YKI-EXAM-" (:id payment-data))]
+        receipt-id    (:reference payment-data)]
     (pgq/put email-q
              {:recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject url-helper "payment_success" email-language template-data)
               :body        (template-util/render url-helper "payment_success" email-language (assoc template-data :language exam-language :level exam-level))
               :attachments (when payment-data
-                             [{:name        (str "kuitti_" receipt-id ".pdf")
-                               :data        (exam-payment-receipt-contents url-helper pdf-renderer email-language template-data (assoc payment-data :receipt_id receipt-id))
+                             [{:name        (str receipt-id ".pdf")
+                               :data        (exam-payment-receipt-contents url-helper pdf-renderer email-language template-data payment-data)
                                :contentType "application/pdf"}])})))
 
 (defn send-customer-evaluation-registration-completed-email! [email-q payment-helper url-helper pdf-renderer email-language order-time template-data]
@@ -52,7 +53,7 @@
                                                 (update template-data :subtests #(template-util/get-subtests url-helper % email-language)))
               :attachments
               (when payment-helper
-                [{:name        (str "kuitti_" receipt-id ".pdf")
+                [{:name        (str receipt-id ".pdf")
                   :data        (evaluation-payment-receipt-contents payment-helper url-helper pdf-renderer email-language (assoc template-data :receipt_id receipt-id))
                   :contentType "application/pdf"}])})))
 
