@@ -164,7 +164,7 @@
           (testing "Customer email has PDF receipt as attachment"
             (is (= 1 (count (:attachments customer-email))))
             (is (= "application/pdf" (:contentType receipt-attachment)))
-            (is (= "kuitti_fake-reference.pdf" (:name receipt-attachment)))
+            (is (= "fake-reference.pdf" (:name receipt-attachment)))
             (testing "Attachment contents matches expectation"
               (is (= (without-empty-lines (:data receipt-attachment))
                      (without-empty-lines (parser/render-file "evaluation_payment_receipt_template.html" {:current_date (t/now)
