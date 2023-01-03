@@ -29,10 +29,10 @@
                              :street_address "Katukatu 1313 W 9"
                              :zip            "00100"
                              :post_office    "HELSINKI"}
-          payment-data      {:paid_at (string->date "2022-10-13T22:00.00Z")
-                             :amount  14000M
-                             :id      199
-                             :reference "YKI-EXAM-1-2-3-random-id"}]
+          random-uuid       #uuid"f5e96975-9d1d-484e-a83b-deadec01ab7c"
+          payment-data      {:paid_at   (string->date "2022-10-13T22:00.00Z")
+                             :amount    14000M
+                             :reference (str "YKI-EXAM-1-2-3-" random-uuid)}]
       (send-exam-registration-completed-email! email-q url-helper pdf-renderer "fi" registration-data payment-data)
       (let [{:keys [recipients attachments]} (pgq/take email-q)]
         (testing "Confirmation email is sent to correct recipient"
@@ -44,7 +44,7 @@
             (testing "Attachment has proper content type"
               (is (= "application/pdf" (:contentType attachment-data))))
             (testing "Attachment name contains payment ID"
-              (is (= "YKI-EXAM-1-2-3-random-id.pdf" (:name attachment-data))))
+              (is (= (str (:reference payment-data) ".pdf") (:name attachment-data))))
             (testing "Attachment contents matches expectation"
               (is (= attachment-contents
                      (parser/render-file "exam_payment_receipt_template.html" {:current_date (t/now)}))))))))))
