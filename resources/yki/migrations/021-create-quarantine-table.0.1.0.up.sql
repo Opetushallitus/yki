@@ -24,5 +24,3 @@ CREATE TABLE IF NOT EXISTS quarantine_review
     reviewer_oid    TEXT                                NOT NULL,
     CONSTRAINT quarantine_review_unique_quarantine_registration_combination UNIQUE (quarantine_id, registration_id)
 );
-
--- TODO Add trigger to ensure registration state can't become COMPLETED if it's under quarantine?

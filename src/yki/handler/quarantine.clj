@@ -16,10 +16,10 @@
     (context routing/quarantine-api-root []
       :middleware [auth access-log]
       :coercion :spec
-      (GET "/" {session :session}
+      (GET "/" _
         :return ::ys/quarantine-response
         (ok {:quarantines (quarantine-db/get-quarantines db)}))
-      (GET "/reviews" request
+      (GET "/reviews" _
         :return ::ys/quarantine-reviews-response
         (ok {:reviews (quarantine-db/get-reviews db)}))
       (POST "/" request
@@ -61,10 +61,8 @@
                               :change    {:type audit-log/delete-op}})
               (ok {:success success}))
           (not-found)))
-      (GET "/matches" {session :session}
+      (GET "/matches" _
         :return ::ys/quarantine-matches-response
-        ; TODO Remove debug logging - now in place just to see how the session info looks like on deployed environments
-        (log/info (str "Matches called with session details: " session))
         (ok {:quarantines (quarantine-db/get-quarantine-matches db)}))
       (context "/:id/registration/:reg-id" []
         (PUT "/set" request
