@@ -3,8 +3,12 @@ name: YKI
 on:
   workflow_dispatch:
   push:
-    paths-ignore:
-      - '**.md'
+    paths:
+      - "**"
+      - "!**/*.md"
+    # Setting 'branches' has the side effect that just pushing tags does not start workflows.
+    branches:
+      - '**'
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
