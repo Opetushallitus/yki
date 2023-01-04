@@ -726,14 +726,14 @@ SET state = 'PAID',
     modified = current_timestamp
 WHERE id = :id AND state != 'PAID';
 
--- name: update-exam-registration-status-to-completed<!
+-- name: complete-registration<!
 UPDATE registration
 SET state =
     CASE WHEN state = 'SUBMITTED'::registration_state THEN 'COMPLETED'::registration_state
          ELSE 'PAID_AND_CANCELLED'::registration_state
     END,
     modified = current_timestamp
-WHERE id = :id AND state != 'COMPLETED';
+WHERE id = :id AND state IN ('SUBMITTED', 'EXPIRED', 'CANCELLED');
 
 -- name: select-payment-by-registration-id
 SELECT
@@ -933,7 +933,7 @@ AND (r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
      OR (EXISTS (SELECT id from exam_payment_new WHERE registration_id = r.id)))
 ORDER BY r.created ASC;
 
---name: update-registration-status-to-cancelled!
+--name: cancel-registration!
 UPDATE registration
 SET state =
   CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state

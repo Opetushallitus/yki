@@ -164,19 +164,18 @@
                                                         lang
                                                         email-template-data
                                                         updated-payment-details))]
-              (let [updated-registration (registration-db/complete-new-payment-and-exam-registration! db registration-id payment-id send-registration-complete-email!)]
-                (if updated-registration
-                  (do
-                    (audit/log-participant {:request   request
-                                            :target-kv {:k audit/payment
-                                                        :v (:reference payment-details)}
-                                            :change    {:type audit/create-op
-                                                        :new  (:params request)}})
-                    (case (:state updated-registration)
-                      "COMPLETED" (log/info "Completed payment with transaction-id" transaction-id ", updating registration with id" registration-id "to COMPLETED.")
-                      "PAID_AND_CANCELLED" (log/warn "Completed payment with transaction-id" transaction-id ", updating registration with id" registration-id "to PAID_AND_CANCELLED")
-                      (log/error "Completed payment with transaction-id" transaction-id ", but unexpectedly registration with id" registration-id "is in state" (:state updated-registration))))
-                  (log/info "Success callback invoked for transaction-id" transaction-id "corresponding to already completed registration with id" registration-id "; this is a no-op.")))
+              (if-let [updated-registration (registration-db/complete-new-payment-and-exam-registration! db registration-id payment-id send-registration-complete-email!)]
+                (do
+                  (audit/log-participant {:request   request
+                                          :target-kv {:k audit/payment
+                                                      :v (:reference payment-details)}
+                                          :change    {:type audit/create-op
+                                                      :new  (:params request)}})
+                  (case (:state updated-registration)
+                    "COMPLETED" (log/info "Completed payment with transaction-id" transaction-id ", updated registration with id" registration-id "to COMPLETED.")
+                    "PAID_AND_CANCELLED" (log/warn "Completed payment with transaction-id" transaction-id ", updated registration with id" registration-id "to PAID_AND_CANCELLED")
+                    (log/error "Completed payment with transaction-id" transaction-id ", but unexpectedly registration with id" registration-id "is in state" (:state updated-registration))))
+                (log/info "Success callback invoked for transaction-id" transaction-id "corresponding to already completed registration with id" registration-id "; this is a no-op."))
               (success-redirect url-helper lang exam-session-id))
             (do
               (log/error "Success callback invoked with unexpected parameters for transaction-id" transaction-id "corresponding to registration with id" registration-id
