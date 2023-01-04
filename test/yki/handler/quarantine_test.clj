@@ -64,7 +64,7 @@
           get-matches (fn []
                         (-> (request-with-json-body session (str routing/quarantine-api-root "/matches") :get nil)
                             (:body)
-                            (:quarantines)))]
+                            (:quarantine-matches)))]
       (testing "get quarantine endpoint should return 200"
         (is (= (:status (request-with-json-body session (str routing/quarantine-api-root "/matches") :get nil)) 200)))
       (testing "initially no matches should be returned"
@@ -90,7 +90,9 @@
                    (count))
                2)))
       (testing "multiple quarantines can match same registration"
-        (base/insert-quarantine (dissoc base/quarantine-form :ssn))
+        (base/insert-quarantine (-> base/quarantine-form
+                                    (dissoc :ssn)
+                                    (assoc :diary_number "OPH-999-2023")))
         (is (= (->> (get-matches)
                     (map #(select-keys % [:id :registration_id]))
                     (into #{}))

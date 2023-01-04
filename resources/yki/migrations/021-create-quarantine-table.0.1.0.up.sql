@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS quarantine
     birthdate     TEXT                               NOT NULL,
     first_name    TEXT                               NOT NULL,
     last_name     TEXT                               NOT NULL,
+    diary_number  TEXT                               NOT NULL UNIQUE,
     ssn           TEXT,
     email         TEXT,
     phone_number  TEXT,

@@ -63,7 +63,7 @@
           (not-found)))
       (GET "/matches" _
         :return ::ys/quarantine-matches-response
-        (ok {:quarantines (quarantine-db/get-quarantine-matches db)}))
+        (ok {:quarantine-matches (quarantine-db/get-quarantine-matches db)}))
       (context "/:id/registration/:reg-id" []
         (PUT "/set" request
           :body [quarantined ::ys/quarantined]

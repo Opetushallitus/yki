@@ -124,6 +124,7 @@ SELECT
   q.last_name,
   q.email,
   q.phone_number,
+  q.diary_number,
   q.created
 FROM quarantine q;
 
@@ -141,7 +142,8 @@ INSERT INTO quarantine (
   first_name,
   last_name,
   email,
-  phone_number
+  phone_number,
+  diary_number
 ) VALUES (
   :language_code,
   :end_date,
@@ -150,7 +152,8 @@ INSERT INTO quarantine (
   :first_name,
   :last_name,
   :email,
-  :phone_number
+  :phone_number,
+  :diary_number
 );
 
 -- name: update-quarantine<!
@@ -163,6 +166,7 @@ SET language_code = :language_code,
     ssn = :ssn,
     email = :email,
     phone_number = :phone_number,
+    diary_number = :diary_number,
     updated = current_timestamp
 WHERE id = :id;
 

@@ -83,11 +83,13 @@
 (s/def ::end_date ::date-type)
 (s/def ::is_quarantined boolean?)
 (s/def ::quarantined (s/keys :req-un [::is_quarantined]))
+(s/def ::diary_number (s/and string? (complement str/blank?)))
 (s/def ::quarantine-type (s/keys :req-un [::language_code
                                           ::end_date
                                           ::birthdate
                                           ::first_name
-                                          ::last_name]
+                                          ::last_name
+                                          ::diary_number]
                                  :opt-un [::created
                                           ::id
                                           ::ssn
@@ -108,7 +110,7 @@
                                            ::email
                                            ::phone_number]))
 (s/def ::quarantine-matches (s/coll-of ::quarantine-match))
-(s/def ::quarantine-matches-response (s/keys :req-un [::quarantines]))
+(s/def ::quarantine-matches-response (s/keys :req-un [::quarantine-matches]))
 
 (s/def ::quarantine_id ::id)
 

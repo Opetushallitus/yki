@@ -198,7 +198,8 @@
                       :first_name    "Max"
                       :last_name     "Syöttöpaine"
                       :email         "email@invalid.invalid"
-                      :phone_number  "0401234567"})
+                      :phone_number  "0401234567"
+                      :diary_number  "OPH-1234-2023"})
 
 (defn select [query]
   (jdbc/query @embedded-db/conn query))
@@ -207,7 +208,7 @@
   (first (select query)))
 
 (defn insert-quarantine [quarantine]
-  (let [columns     [:language_code :end_date :birthdate :ssn :first_name :last_name :email :phone_number]
+  (let [columns     [:language_code :end_date :birthdate :ssn :first_name :last_name :email :phone_number :diary_number]
         columns-str (->> columns
                          (map name)
                          (str/join ","))
