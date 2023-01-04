@@ -159,7 +159,7 @@
             exam-date      (base/two-weeks-ago)]
         (testing "Emails are sent to customer and kirjaamo after successful payment"
           (is (= {:recipients ["anne-marie.jones@testi.fi"]
-                  :subject    (str/join ", " ["Tarkistusarviointi: suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
+                  :subject    (str/join ", " ["Tarkistusarviointi: Suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
                  (select-keys customer-email [:recipients :subject])))
           (testing "Customer email has PDF receipt as attachment"
             (is (= 1 (count (:attachments customer-email))))
@@ -170,7 +170,7 @@
                      (without-empty-lines (parser/render-file "evaluation_payment_receipt_template.html" {:current_date (t/now)
                                                                                                           :exam_date    exam-date}))))))
           (is (= {:recipients ["kirjaamo@oph.fi"]
-                  :subject    (str/join ", " ["YKI" "suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
+                  :subject    (str/join ", " ["YKI" "Suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
                  (select-keys kirjaamo-email [:recipients :subject])))))
       (testing "Once payment is marked as PAID, later callback invocations do not change the status"
         (is (error-redirect? (->> (assoc valid-success-callback-headers "checkout-status" "fail")
