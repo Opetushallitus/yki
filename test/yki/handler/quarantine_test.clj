@@ -64,7 +64,7 @@
           get-matches (fn []
                         (-> (request-with-json-body session (str routing/quarantine-api-root "/matches") :get nil)
                             (:body)
-                            (:quarantine-matches)))]
+                            (:quarantine_matches)))]
       (testing "get quarantine endpoint should return 200"
         (is (= (:status (request-with-json-body session (str routing/quarantine-api-root "/matches") :get nil)) 200)))
       (testing "initially no matches should be returned"

@@ -109,8 +109,8 @@
                                   :opt-un [::ssn
                                            ::email
                                            ::phone_number]))
-(s/def ::quarantine-matches (s/coll-of ::quarantine-match))
-(s/def ::quarantine-matches-response (s/keys :req-un [::quarantine-matches]))
+(s/def ::quarantine_matches (s/coll-of ::quarantine-match))
+(s/def ::quarantine-matches-response (s/keys :req-un [::quarantine_matches]))
 
 (s/def ::quarantine_id ::id)
 
