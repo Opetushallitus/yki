@@ -29,6 +29,7 @@
                                                        #ig/ref :yki.handler/localisation
                                                        #ig/ref :yki.handler/registration
                                                        #ig/ref :yki.handler/organizer
+                                                       #ig/ref :yki.handler/quarantine
                                                        #ig/ref :yki.handler/evaluation
                                                        #ig/ref :yki.handler/evaluation-payment
                                                        #ig/ref :yki.handler/exam-payment-new
@@ -176,6 +177,11 @@
                                                        :exam-date-handler    #ig/ref :yki.handler/exam-date
                                                        :data-sync-q          #ig/ref :yki.job.job-queue/data-sync-q
                                                        :auth                 #ig/ref :yki.middleware.auth/with-authentication}
+
+  :yki.handler/quarantine                             {:db                   #ig/ref :duct.database/sql
+                                                       :auth                 #ig/ref :yki.middleware.auth/with-authentication
+                                                       :url-helper           #ig/ref :yki.util/url-helper
+                                                       :access-log           #ig/ref :yki.middleware.access-log/with-logging}
 
   :yki.handler/evaluation                             {:db             #ig/ref :duct.database/sql
                                                        :payment-helper #ig/ref :yki.util/evaluation-payment-helper}

@@ -17,6 +17,7 @@
     [yki.handler.file]
     [yki.handler.organizer]
     [yki.handler.login-link :as login-link]
+    [yki.handler.quarantine]
     [yki.handler.routing :as routing]
     [yki.job.job-queue]
     [yki.middleware.no-auth]
@@ -189,11 +190,46 @@
                                        :email            "roope@al.fi"
                                        :street_address   "Katu 5"
                                        :phone_number     "+3584012347"})
+
+(def quarantine-form {:language_code "fin"
+                      :end_date      "2040-12-30"
+                      :birthdate     "1999-01-27"
+                      :ssn           "301079-900U"
+                      :first_name    "Max"
+                      :last_name     "Syöttöpaine"
+                      :email         "email@invalid.invalid"
+                      :phone_number  "0401234567"
+                      :diary_number  "OPH-1234-2023"})
+
 (defn select [query]
   (jdbc/query @embedded-db/conn query))
 
 (defn select-one [query]
   (first (select query)))
+
+(defn insert-quarantine [quarantine]
+  (let [columns     [:language_code :end_date :birthdate :ssn :first_name :last_name :email :phone_number :diary_number]
+        columns-str (->> columns
+                         (map name)
+                         (str/join ","))
+        values-str (->> columns
+                        (map quarantine)
+                        (map #(if % (str "'" % "'") "NULL"))
+                        (str/join ","))]
+    (jdbc/execute! @embedded-db/conn (str "INSERT INTO quarantine (" columns-str ") VALUES (" values-str ") ON CONFLICT DO NOTHING;"))))
+
+(defn update-quarantine-language! [id language]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE quarantine SET updated=(current_timestamp + (5 * interval '1 seconds')), language_code='" language "' WHERE id=" id ";")))
+
+(defn update-exam-date! [exam-date-id new-exam-date]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET exam_date='" new-exam-date "' WHERE id=" exam-date-id ";")))
+
+(defn update-registration-form! [registration-id attr val]
+  {:pre [(pos-int? registration-id) (string? attr) (string? val)]}
+  (jdbc/execute! @embedded-db/conn (str "UPDATE registration SET form = JSONB_SET(form, '{" attr "}', '\"" val "\"') WHERE id=" registration-id ";")))
+
+(defn update-registration-state! [registration-id state]
+  (jdbc/execute! @embedded-db/conn (str "UPDATE registration SET state='" state "' WHERE id=" registration-id ";")))
 
 (defn insert-organizer [organizer-oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
@@ -503,7 +539,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                       :amount                (:amount payment-config)
                       :merchant-id           "375917"
                       :merchant-secret       "SAIPPUAKAUPPIAS"}
-     :pdf-renderer (mock-pdf-renderer url-helper)}))
+     :pdf-renderer   (mock-pdf-renderer url-helper)}))
 
 (def old-evaluation-payment-config {:use-new-payments-api? false
                                     :amount                {:READING   "50.00"
@@ -527,6 +563,21 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                        new-evaluation-payment-config
                        old-evaluation-payment-config)}))
 
+(defn no-auth-middleware [db url-helper]
+  (ig/init-key
+    :yki.middleware.no-auth/with-authentication
+    {:url-helper     url-helper
+     :db             db
+     :session-config {:key          "ad7tbRZIG839gDo2"
+                      :cookie-attrs {:max-age   28800
+                                     :http-only true
+                                     :domain    "localhost"
+                                     :secure    false
+                                     :path      "/yki"}}}))
+
+(defn no-auth-fake-session-oid-middleware [oid]
+  (ig/init-key :yki.middleware.no-auth/with-fake-oid {:oid oid}))
+
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)
         db                   (duct.database.sql/->Boundary @embedded-db/conn)
@@ -539,16 +590,13 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
 
         file-store           (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
-        auth                 (ig/init-key :yki.middleware.no-auth/with-authentication {:url-helper     url-helper
-                                                                                       :db             db
-                                                                                       :session-config {:key          "ad7tbRZIG839gDo2"
-                                                                                                        :cookie-attrs {:max-age   28800
-                                                                                                                       :http-only true
-                                                                                                                       :domain    "localhost"
-                                                                                                                       :secure    false
-                                                                                                                       :path      "/yki"}}})
+        auth                 (no-auth-middleware db url-helper)
         auth-handler         (auth-handler auth url-helper)
         file-handler         (ig/init-key :yki.handler/file {:db db :file-store file-store})
+        quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:access-log (access-log)
+                                                                                           :auth       auth
+                                                                                           :db         db
+                                                                                           :url-helper url-helper}))
         organizer-handler    (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
                                                                                           :auth                 auth
                                                                                           :data-sync-q          (data-sync-q)
@@ -557,7 +605,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
                                                                                           :exam-session-handler exam-session-handler
                                                                                           :exam-date-handler    exam-date-handler
                                                                                           :file-handler         file-handler}))]
-    (routes organizer-handler auth-handler)))
+    (routes organizer-handler quarantine-handler auth-handler)))
 
 (defn send-request-with-tx
   ([request]

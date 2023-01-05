@@ -7,7 +7,7 @@
   (:import [org.joda.time DateTime]))
 
 ;; common
-(def email-regex #"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$")
+(def email-regex #"^(?=^.{4,256}$)(.+@.+\.[a-zA-Z]{2,63})$")
 (def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
@@ -78,6 +78,57 @@
 (s/def ::organizers-response (s/keys :req-un [::organizers]))
 (s/def ::response (s/keys :req-un [::success]
                           :opt-un [::error]))
+
+;; quarantine
+(s/def ::end_date ::date-type)
+(s/def ::is_quarantined boolean?)
+(s/def ::quarantined (s/keys :req-un [::is_quarantined]))
+(s/def ::diary_number (s/and string? (complement str/blank?)))
+(s/def ::quarantine-type (s/keys :req-un [::language_code
+                                          ::end_date
+                                          ::birthdate
+                                          ::first_name
+                                          ::last_name
+                                          ::diary_number]
+                                 :opt-un [::created
+                                          ::id
+                                          ::ssn
+                                          ::email
+                                          ::phone_number]))
+(s/def ::quarantines (s/coll-of ::quarantine-type))
+(s/def ::quarantine-response (s/keys :req-un [::quarantines]))
+
+(s/def ::quarantine-match (s/keys :req-un [::language_code
+                                           ::end_date
+                                           ::birthdate
+                                           ::first_name
+                                           ::last_name
+                                           ::form
+                                           ::registration_id
+                                           ::id]
+                                  :opt-un [::ssn
+                                           ::email
+                                           ::phone_number]))
+(s/def ::quarantine_matches (s/coll-of ::quarantine-match))
+(s/def ::quarantine-matches-response (s/keys :req-un [::quarantine_matches]))
+
+(s/def ::quarantine_id ::id)
+
+(s/def ::review (s/keys :req-un [::is_quarantined
+                                 ::quarantine_id
+                                 ::registration_id
+                                 ::exam_date
+                                 ::end_date
+                                 ::language_code
+                                 ::birthdate
+                                 ::first_name
+                                 ::last_name
+                                 ::form]
+                        :opt-un [::ssn
+                                 ::email
+                                 ::phone_number]))
+(s/def ::reviews (s/coll-of ::review))
+(s/def ::quarantine-reviews-response (s/keys :req-un [::reviews]))
 
 ;; exam-session-location
 (s/def ::name (s/and string? #(<= (count %) 256)))

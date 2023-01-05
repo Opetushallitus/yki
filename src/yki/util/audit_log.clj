@@ -23,6 +23,8 @@
 (def registration-init "registration-init")
 (def exam-session "exam-session")
 (def exam-date "exam-date")
+(def quarantine "quarantine")
+(def quarantine-review "quarantine-review")
 
 (defonce ^JsonParser jsonParser (JsonParser.))
 
@@ -31,7 +33,7 @@
     (log [_ msg]
       (log/info msg))))
 
-(defn op ^Operation[operation]
+(defn op ^Operation [operation]
   (reify Operation
     (name [_]
       operation)))

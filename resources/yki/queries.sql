@@ -110,6 +110,149 @@ INSERT INTO exam_language (
   (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL)
 );
 
+-- name: delete-quarantine!
+UPDATE quarantine SET deleted_at=current_timestamp WHERE id = :id AND deleted_at IS NULL;
+
+-- name: select-quarantines
+SELECT
+  q.id,
+  q.language_code,
+  q.end_date,
+  q.birthdate,
+  q.ssn,
+  q.first_name,
+  q.last_name,
+  q.email,
+  q.phone_number,
+  q.diary_number,
+  q.created
+FROM quarantine q
+WHERE deleted_at IS NULL
+ORDER BY q.id DESC;
+
+-- name: select-quarantine
+SELECT *
+FROM quarantine q
+WHERE q.id = :id AND deleted_at IS NULL;
+
+-- name: insert-quarantine<!
+INSERT INTO quarantine (
+  language_code,
+  end_date,
+  birthdate,
+  ssn,
+  first_name,
+  last_name,
+  email,
+  phone_number,
+  diary_number
+) VALUES (
+  :language_code,
+  :end_date,
+  :birthdate,
+  :ssn,
+  :first_name,
+  :last_name,
+  :email,
+  :phone_number,
+  :diary_number
+);
+
+-- name: update-quarantine<!
+UPDATE quarantine
+SET language_code = :language_code,
+    end_date = :end_date,
+    birthdate = :birthdate,
+    first_name = :first_name,
+    last_name = :last_name,
+    ssn = :ssn,
+    email = :email,
+    phone_number = :phone_number,
+    diary_number = :diary_number,
+    updated = current_timestamp
+WHERE id = :id AND deleted_at IS NULL;
+
+-- name: select-quarantine-matches
+SELECT
+  q.id,
+  q.language_code AS quarantine_lang,
+  q.end_date,
+  q.birthdate,
+  q.created,
+  q.ssn,
+  q.first_name,
+  q.last_name,
+  q.email,
+  q.phone_number,
+  r.id AS registration_id,
+  r.form,
+  ed.exam_date,
+  es.language_code
+FROM quarantine q
+INNER JOIN registration r
+  ON q.birthdate = r.form->>'birthdate'
+INNER JOIN exam_session es
+  ON r.exam_session_id = es.id
+INNER JOIN exam_date ed
+  ON es.exam_date_id = ed.id
+WHERE r.state IN ('SUBMITTED', 'COMPLETED')
+  AND es.language_code = q.language_code
+  -- Filter out possible matches that have been reviewed after quarantine was last updated
+  AND NOT EXISTS (SELECT qr.id FROM quarantine_review qr WHERE qr.registration_id = r.id AND qr.quarantine_id = q.id AND q.updated <= qr.updated)
+  AND ed.exam_date BETWEEN q.created AND q.end_date
+  AND q.deleted_at IS NULL
+ORDER BY q.id DESC, r.id;
+
+-- name: select-quarantine-reviews
+SELECT
+  qr.quarantined AS is_quarantined,
+  qr.quarantine_id,
+  qr.registration_id,
+  ed.exam_date,
+  es.language_code,
+  q.birthdate,
+  q.first_name,
+  q.last_name,
+  q.ssn,
+  q.email,
+  q.phone_number,
+  q.end_date,
+  r.form
+FROM quarantine_review qr
+INNER JOIN quarantine q
+  ON qr.quarantine_id = q.id
+INNER JOIN registration r
+  ON qr.registration_id = r.id
+INNER JOIN exam_session es
+  ON r.exam_session_id = es.id
+INNER JOIN exam_date ed
+  ON es.exam_date_id = ed.id
+WHERE q.deleted_at IS NULL
+ORDER BY qr.id DESC;
+
+-- name: upsert-quarantine-review<!
+INSERT INTO quarantine_review (
+  quarantine_id,
+  registration_id,
+  quarantined,
+  reviewer_oid
+) VALUES (
+  :quarantine_id,
+  :registration_id,
+  :quarantined,
+  :reviewer_oid
+)
+ON CONFLICT ON CONSTRAINT quarantine_review_unique_quarantine_registration_combination
+DO UPDATE SET quarantined = :quarantined, reviewer_oid = :reviewer_oid, updated = current_timestamp;
+
+-- name: cancel-registration!
+UPDATE registration SET
+    state =
+        CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
+            ELSE 'CANCELLED'::registration_state
+        END
+WHERE id = :id;
+
 -- name: insert-attachment-metadata!
 INSERT INTO attachment_metadata (
   external_id,
@@ -933,7 +1076,7 @@ AND (r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
      OR (EXISTS (SELECT id from exam_payment_new WHERE registration_id = r.id)))
 ORDER BY r.created ASC;
 
---name: cancel-registration!
+--name: cancel-registration-for-organizer!
 UPDATE registration
 SET state =
   CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state
