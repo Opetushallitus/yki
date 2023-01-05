@@ -222,4 +222,15 @@
                    [1 5 false]}
                  (->> reviews
                       (map (juxt :quarantine_id :registration_id :is_quarantined))
-                      (into #{})))))))))
+                      (into #{}))))))
+      (testing "once quarantine is deleted, it can no longer be reviewed"
+        (base/insert-quarantine (-> base/quarantine-form
+                                    (dissoc :ssn)
+                                    (assoc :diary_number "OPH-99999-2023")))
+        (is (= {:body   {:success true}
+                :status 200}
+               (set-registration-quarantine-state 6 2 false)))
+        (is (= {:id 6 :state "COMPLETED" :quarantine_id 2 :quarantined false}
+               (select-quarantine-details-for-registration 6)))
+        (request-with-json-body session (str routing/quarantine-api-root "/" 2) :delete nil)
+        (is (= 400 (:status (set-registration-quarantine-state 6 2 true))))))))

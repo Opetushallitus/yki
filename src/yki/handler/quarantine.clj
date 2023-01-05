@@ -3,7 +3,7 @@
     [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST PUT DELETE]]
     [integrant.core :as ig]
-    [ring.util.http-response :refer [ok not-found internal-server-error]]
+    [ring.util.http-response :refer [ok not-found bad-request]]
     [yki.util.audit-log :as audit-log]
     [yki.boundary.quarantine-db :as quarantine-db]
     [yki.handler.routing :as routing]
@@ -46,10 +46,10 @@
                                           :new  updated}})
               (ok {:success true}))
             (do
-              (log/error (str "Update failed for existing quarantine with id " id))
-              (internal-server-error)))
+              (log/error "Update failed for existing quarantine with id" id)
+              (bad-request)))
           (do
-            (log/error (str "Attempted to update non-existing quarantine with id " id))
+            (log/error "Attempted to update non-existing quarantine with id" id)
             (not-found))))
       (DELETE "/:id" request
         :path-params [id :- ::ys/id]
@@ -69,17 +69,21 @@
           :body [quarantined ::ys/quarantined]
           :path-params [id :- ::ys/id reg-id :- ::ys/id]
           :return ::ys/response
-          (if-let [quarantine-review (quarantine-db/set-registration-quarantine!
-                                       db
-                                       id
-                                       reg-id
-                                       (:is_quarantined quarantined)
-                                       (get-in request [:session :identity :oid]))]
-            (do
-              (audit-log/log {:request   request
-                              :target-kv {:k audit-log/quarantine-review
-                                          :v (:id quarantine-review)}
-                              :change    {:type audit-log/create-op
-                                          :new  quarantine-review}})
-              (ok {:success true}))
-            (internal-server-error)))))))
+          (try
+            (if-let [quarantine-review (quarantine-db/set-registration-quarantine!
+                                         db
+                                         id
+                                         reg-id
+                                         (:is_quarantined quarantined)
+                                         (get-in request [:session :identity :oid]))]
+              (do
+                (audit-log/log {:request   request
+                                :target-kv {:k audit-log/quarantine-review
+                                            :v (:id quarantine-review)}
+                                :change    {:type audit-log/create-op
+                                            :new  quarantine-review}})
+                (ok {:success true}))
+              (bad-request))
+            (catch Exception e
+              (log/error e "Exception occurred trying to set quarantine decision for id" id "and registration-id" reg-id)
+              (bad-request))))))))

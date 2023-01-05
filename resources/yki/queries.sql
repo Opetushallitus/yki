@@ -223,7 +223,8 @@ INNER JOIN registration r
 INNER JOIN exam_session es
   ON r.exam_session_id = es.id
 INNER JOIN exam_date ed
-  ON es.exam_date_id = ed.id;
+  ON es.exam_date_id = ed.id
+WHERE q.deleted_at IS NULL;
 
 -- name: upsert-quarantine-review<!
 INSERT INTO quarantine_review (
