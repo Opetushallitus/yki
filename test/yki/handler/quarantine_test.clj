@@ -126,10 +126,11 @@
 (deftest delete-quarantine-test
   (base/insert-quarantine base/quarantine-form)
   (let [delete! #(base/send-request-with-tx (mock/request :delete (str routing/quarantine-api-root "/" %)))]
-    (testing "delete quarantine endpoint should return 200 and delete existing quarantine"
+    (testing "delete quarantine endpoint should return 200 and mark existing quarantine deleted"
       (is (= (:status (delete! 1)) 200))
-      (is (= (:count (base/select-one "SELECT COUNT(*) FROM quarantine")) 0)))
-    (testing "delete endpoint should return 404 if quarantine with given id does not exist"
+      (is (= (:count (base/select-one "SELECT COUNT(*) FROM quarantine WHERE deleted_at IS NULL")) 0))
+      (is (= (:count (base/select-one "SELECT COUNT(*) FROM quarantine WHERE deleted_at IS NOT NULL")) 1)))
+    (testing "delete endpoint should return 404 if quarantine with given id does not exist or is already deleted"
       (is (= (:status (delete! 999)) 404))
       (is (= (:status (delete! 1)) 404)))))
 
@@ -148,7 +149,7 @@
                 :body   {:success true}} response))
         (is (= (assoc base/quarantine-form :id 1)
                (-> (base/select-one "SELECT * FROM quarantine")
-                   (dissoc :created :updated :deleted))))))))
+                   (dissoc :created :updated :deleted_at))))))))
 
 (deftest set-quarantine-test
   (base/insert-base-data)

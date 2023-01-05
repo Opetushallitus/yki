@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS quarantine
     email         TEXT,
     phone_number  TEXT,
     created       TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
-    updated       TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
+    updated       TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
+    deleted_at    TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE IF NOT EXISTS quarantine_review

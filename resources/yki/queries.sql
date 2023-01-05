@@ -111,7 +111,7 @@ INSERT INTO exam_language (
 );
 
 -- name: delete-quarantine!
-DELETE FROM quarantine WHERE id = :id;
+UPDATE quarantine SET deleted_at=current_timestamp WHERE id = :id AND deleted_at IS NULL;
 
 -- name: select-quarantines
 SELECT
@@ -126,12 +126,12 @@ SELECT
   q.phone_number,
   q.diary_number,
   q.created
-FROM quarantine q;
+FROM quarantine q WHERE deleted_at IS NULL;
 
 -- name: select-quarantine
 SELECT *
 FROM quarantine q
-WHERE q.id = :id;
+WHERE q.id = :id AND deleted_at IS NULL;
 
 -- name: insert-quarantine<!
 INSERT INTO quarantine (
@@ -168,7 +168,7 @@ SET language_code = :language_code,
     phone_number = :phone_number,
     diary_number = :diary_number,
     updated = current_timestamp
-WHERE id = :id;
+WHERE id = :id AND deleted_at IS NULL;
 
 -- name: select-quarantine-matches
 SELECT
@@ -197,7 +197,8 @@ WHERE r.state IN ('SUBMITTED', 'COMPLETED')
   AND es.language_code = q.language_code
   -- Filter out possible matches that have been reviewed after quarantine was last updated
   AND NOT EXISTS (SELECT qr.id FROM quarantine_review qr WHERE qr.registration_id = r.id AND qr.quarantine_id = q.id AND q.updated <= qr.updated)
-  AND ed.exam_date BETWEEN q.created AND q.end_date;
+  AND ed.exam_date BETWEEN q.created AND q.end_date
+  AND q.deleted_at IS NULL;
 
 -- name: select-quarantine-reviews
 SELECT
