@@ -726,11 +726,14 @@ SET state = 'PAID',
     modified = current_timestamp
 WHERE id = :id AND state != 'PAID';
 
--- name: update-exam-registration-status-to-completed<!
+-- name: complete-registration<!
 UPDATE registration
-SET state = 'COMPLETED',
+SET state =
+    CASE WHEN state = 'SUBMITTED'::registration_state THEN 'COMPLETED'::registration_state
+         ELSE 'PAID_AND_CANCELLED'::registration_state
+    END,
     modified = current_timestamp
-WHERE id = :id AND state != 'COMPLETED';
+WHERE id = :id AND state IN ('SUBMITTED', 'EXPIRED', 'CANCELLED');
 
 -- name: select-payment-by-registration-id
 SELECT
@@ -859,8 +862,6 @@ WHERE es.id = :exam_session_id
      WHERE pss.exam_session_id = es.id
             AND pss.success_at IS NULL)  = 0;
 
-
-
 --name: insert-relocated-participants-sync-status!
 INSERT INTO participant_sync_status(
   relocated_at,
@@ -932,7 +933,7 @@ AND (r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
      OR (EXISTS (SELECT id from exam_payment_new WHERE registration_id = r.id)))
 ORDER BY r.created ASC;
 
---name: update-registration-status-to-cancelled!
+--name: cancel-registration!
 UPDATE registration
 SET state =
   CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state
@@ -1036,8 +1037,6 @@ ed.post_admission_enabled,
 FROM exam_date ed
 WHERE ed.exam_date >= COALESCE(:from, current_date) AND ed.deleted_at IS NULL
 ORDER BY ed.exam_date ASC;
-
-
 
 -- name: insert-exam-date<!
 INSERT INTO exam_date (
