@@ -126,7 +126,9 @@ SELECT
   q.phone_number,
   q.diary_number,
   q.created
-FROM quarantine q WHERE deleted_at IS NULL;
+FROM quarantine q
+WHERE deleted_at IS NULL
+ORDER BY q.id DESC;
 
 -- name: select-quarantine
 SELECT *
@@ -198,7 +200,8 @@ WHERE r.state IN ('SUBMITTED', 'COMPLETED')
   -- Filter out possible matches that have been reviewed after quarantine was last updated
   AND NOT EXISTS (SELECT qr.id FROM quarantine_review qr WHERE qr.registration_id = r.id AND qr.quarantine_id = q.id AND q.updated <= qr.updated)
   AND ed.exam_date BETWEEN q.created AND q.end_date
-  AND q.deleted_at IS NULL;
+  AND q.deleted_at IS NULL
+ORDER BY q.id DESC, r.id;
 
 -- name: select-quarantine-reviews
 SELECT
@@ -224,7 +227,8 @@ INNER JOIN exam_session es
   ON r.exam_session_id = es.id
 INNER JOIN exam_date ed
   ON es.exam_date_id = ed.id
-WHERE q.deleted_at IS NULL;
+WHERE q.deleted_at IS NULL
+ORDER BY qr.id DESC;
 
 -- name: upsert-quarantine-review<!
 INSERT INTO quarantine_review (
