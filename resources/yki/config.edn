@@ -125,8 +125,7 @@
                                                        :payment-helper #ig/ref :yki.util/exam-payment-helper
                                                        :email-q        #ig/ref :yki.job.job-queue/email-q
                                                        :onr-client     #ig/ref :yki.boundary.onr/onr-client
-                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging
-                                                       :payment-config {}}
+                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging}
 
   :yki.handler/exam-payment-new                       {:db             #ig/ref :duct.database/sql
                                                        :auth           #ig/ref :yki.middleware.auth/with-authentication

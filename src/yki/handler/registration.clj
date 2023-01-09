@@ -8,8 +8,8 @@
             [clojure.tools.logging :as log]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-config payment-helper url-helper email-q onr-client user-config]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? payment-config) (some? url-helper) (some? email-q) (some? onr-client)]}
+(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client user-config]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? url-helper) (some? email-q) (some? onr-client)]}
   (api
    (context routing/registration-api-root []
      :coercion :spec
@@ -25,7 +25,7 @@
        (registration/init-registration db
                                        (or user-config (:session request))
                                        registration-init
-                                       payment-config))
+                                       (:payment-config payment-helper)))
      (context "/:id" []
        (POST "/submit" request
          :body [registration ::ys/registration]

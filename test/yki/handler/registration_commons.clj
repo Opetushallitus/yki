@@ -25,7 +25,6 @@
                                                                                              :payment-helper payment-helper
                                                                                              :email-q        email-q
                                                                                              :access-log     access-log
-                                                                                             :payment-config base/payment-config
                                                                                              :onr-client     (base/onr-client url-helper)
                                                                                              :auth           auth}))]
     (core/routes registration-handler auth-handler)))

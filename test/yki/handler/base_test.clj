@@ -73,14 +73,6 @@
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
 
-(def payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
-                     :yki-payment-uri "http://localhost:8080/yki/payment"
-                     :amount          {:PERUS "100.00"
-                                       :KESKI "123.00"
-                                       :YLIN  "160.00"}
-                     :msg             {:fi "msg_fi"
-                                       :sv "msg_sv"}})
-
 (defn cas-mock-routes [port]
   {"/cas/v1/tickets"                                            {:status    201
                                                                  :method    :post
@@ -490,7 +482,9 @@
     :yki.util/exam-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config {:amount                (:amount payment-config)
+     :payment-config {:amount                {:PERUS "135.00"
+                                              :KESKI "155.00"
+                                              :YLIN  "195.00"}
                       :merchant-id           "375917"
                       :merchant-secret       "SAIPPUAKAUPPIAS"}
      :pdf-renderer   (mock-pdf-renderer url-helper)}))
