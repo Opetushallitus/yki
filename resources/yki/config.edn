@@ -23,7 +23,6 @@
                                                        #ig/ref :yki.handler/code
                                                        #ig/ref :yki.handler/exam-date-public
                                                        #ig/ref :yki.handler/auth
-                                                       #ig/ref :yki.handler/payment
                                                        #ig/ref :yki.handler/login-link
                                                        #ig/ref :yki.handler/exam-session-public
                                                        #ig/ref :yki.handler/localisation
@@ -129,13 +128,6 @@
                                                        :onr-client     #ig/ref :yki.boundary.onr/onr-client
                                                        :access-log     #ig/ref :yki.middleware.access-log/with-logging
                                                        :payment-config {}}
-
-  :yki.handler/payment                                {:db         #ig/ref :duct.database/sql
-                                                       :auth       #ig/ref :yki.middleware.auth/with-authentication
-                                                       :onr-client #ig/ref :yki.boundary.onr/onr-client
-                                                       :email-q    #ig/ref :yki.job.job-queue/email-q
-                                                       :access-log #ig/ref :yki.middleware.access-log/with-logging
-                                                       :url-helper #ig/ref :yki.util/url-helper}
 
   :yki.handler/exam-payment-new                       {:db             #ig/ref :duct.database/sql
                                                        :auth           #ig/ref :yki.middleware.auth/with-authentication

@@ -10,13 +10,6 @@
             [yki.util.common :as common]
             [yki.util.template-util :as template-util]))
 
-(defn handle-legacy-exam-payment-success [db email-q url-helper payment-params]
-  (let [participant-data (registration-db/get-participant-data-by-order-number db (:order-number payment-params))
-        success          (registration-db/complete-registration-and-legacy-payment! db payment-params)]
-    (when success
-      (registration-email/send-exam-registration-completed-email! email-q url-helper nil (:lang participant-data) participant-data nil))
-    success))
-
 (defn handle-evaluation-payment-success [db email-q url-helper payment-config payment-params]
   (let [success       (evaluation-db/complete-payment! db payment-params)
         order-data    (evaluation-db/get-order-data-by-order-number db (:order-number payment-params))
@@ -73,10 +66,6 @@
         form-data    (payment-util/generate-evaluation-form-data payment-config payment-data url-helper (:subtests evaluation-order))]
     form-data))
 
-(defn valid-return-params? [db params]
-  (let [{:keys [merchant_secret]} (registration-db/get-legacy-payment-config-by-order-number db (:ORDER_NUMBER params))]
-    (payment-util/valid-return-params? merchant_secret params)))
-
 (defn valid-evaluation-return-params? [params payment-config]
   (payment-util/valid-return-params? (:merchant_secret payment-config) params))
 
@@ -86,13 +75,6 @@
    :reference-number (number-or-nil SETTLEMENT_REFERENCE_NUMBER)
    :payment-method   PAYMENT_METHOD
    :timestamp        (c/from-long (* 1000 (Long/valueOf TIMESTAMP)))})
-
-(defn handle-payment-return
-  [db email-q url-helper {:keys [STATUS] :as params}]
-  (case STATUS
-    "PAID" (handle-legacy-exam-payment-success db email-q url-helper (payment-params params))
-    "CANCELLED" (handle-payment-cancelled db (payment-params params))
-    (error "Unknown return status" STATUS)))
 
 (defn handle-evaluation-payment-return
   [db email-q url-helper payment-config {:keys [STATUS] :as params}]

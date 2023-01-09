@@ -49,12 +49,6 @@
                                                  :url-helper #ig/ref :yki.util/url-helper
                                                  :retry-duration-in-days 0}
 
-:yki.handler/payment {:db #ig/ref :duct.database/sql
-                      :auth #ig/ref :yki.middleware.auth/with-authentication
-                      :access-log #ig/ref :yki.middleware.access-log/with-logging
-                      :payment-config {:paytrail-host "{{yki_paytrail_host}}"
-                                       :yki-payment-uri "https://yki.{{host_oppija}}/yki/payment"}}
-
 :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
                                  :auth #ig/ref :yki.middleware.auth/with-authentication
                                  :access-log #ig/ref :yki.middleware.access-log/with-logging

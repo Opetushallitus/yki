@@ -21,10 +21,11 @@
                                           :tunnistus-host      "tunnistus.untuvaopintopolku.fi"
                                           :yki-host-virkailija "http://localhost:8080"}
 
- :yki.handler/payment                    {:db             #ig/ref :duct.database/sql
-                                          :auth           #ig/ref :yki.middleware.auth/with-authentication
-                                          :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
-                                                           :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"}}
+ :yki.util/exam-payment-helper           {:payment-config {:merchant-id     "375917"
+                                                           :merchant-secret "SAIPPUAKAUPPIAS"
+                                                           :amount          {:PERUS "120.00"
+                                                                             :KESKI "140.00"
+                                                                             :YLIN  "180.00"}}}
 
  :yki.handler/evaluation-payment         {:db             #ig/ref :duct.database/sql
                                           :auth           #ig/ref :yki.middleware.auth/with-authentication
