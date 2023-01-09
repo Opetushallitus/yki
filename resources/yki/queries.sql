@@ -1491,21 +1491,6 @@ INSERT INTO evaluation_order_subtest (
 -- name: select-next-evaluation-order-number-suffix
 SELECT nextval('payment_order_number_seq');
 
--- name: insert-initial-evaluation-payment<!
-INSERT INTO evaluation_payment(
-  state,
-  evaluation_order_id,
-  amount,
-  lang,
-  order_number
-) VALUES (
-  'UNPAID',
-  :evaluation_order_id,
-  :amount,
-  :lang,
-  :order_number
-);
-
 --name: insert-initial-evaluation-payment-new<!
 INSERT INTO evaluation_payment_new(
   state,
@@ -1543,13 +1528,6 @@ INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
 INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
 WHERE eo.id = :evaluation_order_id;
 
---name: select-old-evaluation-payment-by-order-id
-SELECT
-  ep.amount,
-  ep.state
-FROM evaluation_payment ep
-WHERE ep.evaluation_order_id = :evaluation_order_id;
-
 --name: select-new-evaluation-payment-by-order-id
 SELECT
   epn.amount,
@@ -1557,46 +1535,6 @@ SELECT
   epn.href
 FROM evaluation_payment_new epn
 WHERE epn.evaluation_order_id = :evaluation_order_id;
-
---name: select-evaluation-order-with-payment
-SELECT
-  eo.id,
-  edl.language_code,
-  edl.level_code,
-  ed.exam_date,
-  ep.amount,
-  ep.lang,
-  ep.order_number,
-  ep.state,
-  (
-    SELECT array_to_json(array_agg(subtest))
-    FROM (
-      SELECT subtest
-      FROM evaluation_order_subtest
-      WHERE evaluation_order_id= eo.id
-    ) subtest
-  ) AS subtests
-FROM evaluation_order eo
-INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
-INNER JOIN evaluation_payment ep on eo.id = ep.evaluation_order_id
-INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
-INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
-WHERE eo.id = :evaluation_order_id;
-
--- name: select-evaluation-payment-by-order-number
-SELECT
-  ep.state,
-  ep.evaluation_order_id,
-  ep.amount,
-  ep.lang,
-  ep.reference_number,
-  ep.order_number,
-  ep.external_payment_id,
-  ep.payment_method,
-  ep.payed_at
-FROM evaluation_payment ep
-INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
-WHERE order_number = :order_number;
 
 -- name: select-evaluation-payment-new-by-transaction-id
 SELECT
@@ -1607,39 +1545,6 @@ SELECT
   epn.reference
 FROM evaluation_payment_new epn
 WHERE epn.transaction_id = :transaction_id;
-
--- name: select-evaluation-order-data-by-order-number
-SELECT
-  ep.state,
-  ep.evaluation_order_id,
-  ep.amount,
-  ep.lang,
-  ep.reference_number,
-  ep.order_number,
-  ep.external_payment_id,
-  ep.payment_method,
-  ep.payed_at,
-  edl.language_code,
-  edl.level_code,
-  ed.exam_date,
-  eo.first_names,
-  eo.last_name,
-  eo.email,
-  eo.birthdate,
-    (
-    SELECT array_to_json(array_agg(subtest))
-    FROM (
-      SELECT subtest
-      FROM evaluation_order_subtest
-      WHERE evaluation_order_id= eo.id
-    ) subtest
-  ) AS subtests
-FROM evaluation_payment ep
-INNER JOIN evaluation_order eo ON eo.id = ep.evaluation_order_id
-INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
-INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
-INNER JOIN exam_date ed ON edl.exam_date_id = ed.id
-WHERE order_number = :order_number;
 
 -- name: select-evaluation-order-with-subtests-by-order-id
 SELECT
@@ -1664,27 +1569,6 @@ INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
 INNER JOIN exam_date_language edl on ev.exam_date_language_id = edl.id
 INNER JOIN exam_date ed on edl.exam_date_id = ed.id
 WHERE eo.id = :evaluation_order_id;
-
--- name: update-evaluation-payment!
- UPDATE evaluation_payment
- SET
-    state = :state::payment_state,
-    external_payment_id = :external_payment_id,
-    payment_method = :payment_method,
-    reference_number = :reference_number,
-    payed_at = :payed_at,
-    modified = current_timestamp
-WHERE
-  order_number = :order_number AND state != 'PAID';
-
--- For now we only have one config for evaluation payment with set id.
--- name: select-evaluation-payment-config
-SELECT
-  merchant_id,
-  merchant_secret,
-  email,
-  test_mode
-FROM evaluation_payment_config WHERE id = 1;
 
 -- name: select-completed-new-exam-payments-for-timerange
 SELECT
