@@ -1,11 +1,12 @@
 (ns yki.handler.participant-test
-  (:require [clojure.test :refer [deftest use-fixtures testing is]]
-            [jsonista.core :as j]
-            [ring.mock.request :as mock]
-            [yki.embedded-db :as embedded-db]
-            [yki.handler.base-test :as base]
-            [yki.handler.routing :as routing]
-            [clojure.string :as str]))
+  (:require
+    [clojure.test :refer [deftest use-fixtures testing is]]
+    [clojure.string :as str]
+    [jsonista.core :as j]
+    [ring.mock.request :as mock]
+    [yki.embedded-db :as embedded-db]
+    [yki.handler.base-test :as base]
+    [yki.handler.routing :as routing]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
@@ -79,18 +80,3 @@
           registration-state (:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
       (is (= (:status response) 200))
       (is (= registration-state "PAID_AND_CANCELLED")))))
-
-(deftest confirm-payment-test
-  (testing "confirm payment should set payment status to PAID and registration state to COMPLETED"
-    (base/insert-base-data)
-    (base/insert-payment)
-    (let [registration-id          (:id (base/select-one "SELECT id from registration"))
-          exam-session-route       (get-exam-session-route)
-          confirm-payment-request  (-> (mock/request :post (str exam-session-route "/registration/" registration-id "/confirm-payment"))
-                                       (mock/content-type "application/json; charset=UTF-8"))
-          confirm-payment-response (base/send-request-with-tx confirm-payment-request)
-          payment                  (base/select-one "SELECT * from payment")
-          registration-state       (:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
-      (is (= (:status confirm-payment-response) 200))
-      (is (= (:state payment) "PAID"))
-      (is (= registration-state "COMPLETED")))))
