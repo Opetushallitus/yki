@@ -22,9 +22,9 @@
     [yki.job.job-queue]
     [yki.middleware.no-auth]
     [yki.util.common :as c]
-    [yki.util.url-helper]
-    [yki.util.template-util :as template-util])
-(:import (yki.util.pdf PdfTemplateRenderer)))
+    [yki.util.pdf :refer [PdfTemplateRenderer template+data->pdf-bytes]]
+    [yki.util.template-util :as template-util]
+    [yki.util.url-helper]))
 
 (def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
 
