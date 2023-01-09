@@ -241,10 +241,6 @@
 
 (s/def ::to-queue-request (s/keys :req-un [::email]))
 
-;; localisation
-(s/def ::category (s/and string? #(<= (count %) 256)))
-(s/def ::key (s/and string? #(<= (count %) 256)))
-
 ;; login link
 (s/def ::exam_session_id ::id)
 (s/def ::user_data (s/and string? #(<= (count %) 2560)))
