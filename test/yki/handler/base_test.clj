@@ -490,33 +490,24 @@
     :yki.util/exam-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config {:use-new-payments-api? true
-                      :amount                (:amount payment-config)
+     :payment-config {:amount                (:amount payment-config)
                       :merchant-id           "375917"
                       :merchant-secret       "SAIPPUAKAUPPIAS"}
      :pdf-renderer   (mock-pdf-renderer url-helper)}))
 
-(def old-evaluation-payment-config {:use-new-payments-api? false
-                                    :amount                {:READING   "50.00"
-                                                            :LISTENING "50.00"
-                                                            :WRITING   "50.00"
-                                                            :SPEAKING  "50.00"}})
-(def new-evaluation-payment-config {:use-new-payments-api? true
-                                    :amount                {:READING   "50.00"
+(def new-evaluation-payment-config {:amount                {:READING   "50.00"
                                                             :LISTENING "50.00"
                                                             :WRITING   "50.00"
                                                             :SPEAKING  "50.00"}
                                     :merchant-id           "375917"
                                     :merchant-secret       "SAIPPUAKAUPPIAS"})
 
-(defn create-evaluation-payment-helper [db url-helper use-new-payments-api?]
+(defn create-evaluation-payment-helper [db url-helper]
   (ig/init-key
     :yki.util/evaluation-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config (if use-new-payments-api?
-                       new-evaluation-payment-config
-                       old-evaluation-payment-config)}))
+     :payment-config new-evaluation-payment-config}))
 
 (defn no-auth-middleware [db url-helper]
   (ig/init-key

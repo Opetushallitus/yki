@@ -11,18 +11,7 @@
 (defprotocol EvaluationPaymentHelper
   (order-id->payment-data [this id])
   (insert-initial-payment-data! [this tx payment-data])
-  (use-new-payments-api? [this])
   (subtest->price [this subtest]))
-
-(defrecord OldEvaluationPaymentHelper
-  [db payment-config]
-  EvaluationPaymentHelper
-  (order-id->payment-data [_ id]
-    (first (q/select-old-evaluation-payment-by-order-id (:spec db) {:evaluation_order_id id})))
-  (insert-initial-payment-data! [_ tx payment-data]
-    (q/insert-initial-evaluation-payment<! tx payment-data))
-  (use-new-payments-api? [_]
-    false))
 
 (defn- subtest->description
   [url-helper evaluation-order subtest]
@@ -98,14 +87,10 @@
                                    :transaction_id      (response-body "transactionId")
                                    :href                (response-body "href")}]
       (q/insert-initial-evaluation-payment-new<! tx evaluation-payment-data)))
-  (use-new-payments-api? [_]
-    true)
   (subtest->price [_ subtest]
     (let [price (Double/parseDouble (get-in payment-config [:amount (keyword subtest)]))]
       {:email-template (int price)
        :paytrail       (amount->paytrail-amount price)})))
 
 (defmethod ig/init-key :yki.util/evaluation-payment-helper [_ {:keys [db payment-config url-helper]}]
-  (if (:use-new-payments-api? payment-config)
-    (->NewEvaluationPaymentHelper db payment-config url-helper)
-    (->OldEvaluationPaymentHelper db payment-config)))
+  (->NewEvaluationPaymentHelper db payment-config url-helper))

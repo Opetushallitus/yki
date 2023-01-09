@@ -22,10 +22,10 @@
    :subtests    ["WRITING"
                  "READING"]})
 
-(defn- create-handler [port use-new-payments-api?]
+(defn- create-handler [port]
   (let [db             (base/db)
         url-helper     (base/create-url-helper (str "localhost:" port))
-        payment-helper (base/create-evaluation-payment-helper db url-helper use-new-payments-api?)]
+        payment-helper (base/create-evaluation-payment-helper db url-helper)]
     (api (ig/init-key :yki.handler/evaluation {:db             db
                                                :payment-helper payment-helper}))))
 
@@ -43,7 +43,7 @@
     {"/lokalisointi/cxf/rest/v1/localisation" {:status       200
                                                :content-type "application/json"
                                                :body         (slurp "test/resources/localisation.json")}}
-    (let [handler (create-handler port false)]
+    (let [handler (create-handler port)]
       (let [request            (mock/request :get (str routing/evaluation-root))
             response           (handler request)
             response-body      (base/body-as-json response)
@@ -69,52 +69,6 @@
           (is (= (:status response) 200))
           (is (= (response-body "id") evaluation-id)))))))
 
-(deftest handle-evaluation-order
-  (base/insert-base-data)
-  (base/insert-evaluation-data)
-  (with-routes!
-    {"/lokalisointi/cxf/rest/v1/localisation" {:status       200
-                                               :content-type "application/json"
-                                               :body         (slurp "test/resources/localisation.json")}}
-
-    (let [open-evaluation-id   (:id (base/select-evaluation-by-date (base/two-weeks-ago)))
-          closed-evaluation-id (:id (base/select-evaluation-by-date "2019-05-02"))
-          handler              (create-handler port false)]
-      (let [response         (evaluation-order-post handler open-evaluation-id mock-evaluation-order)
-            response-body    (base/body-as-json response)
-            order-id         (response-body "evaluation_order_id")
-            order            (base/select-one (str "SELECT * FROM evaluation_order WHERE id=" order-id))
-            order-subtests   (base/select (str "SELECT subtest FROM evaluation_order_subtest WHERE evaluation_order_id=" order-id))
-            payment-id       (base/select-one (str "SELECT id FROM evaluation_payment WHERE evaluation_order_id=" order-id))
-            order-comparison (map (fn [x] (= (order x) (mock-evaluation-order x))) [:first_names :last_name :email :birthdate])]
-
-        (testing "can post a valid evaluation order"
-          (is (= (:status response) 200))
-          (is (every? true? order-comparison))
-          (is (= (count (:subtests mock-evaluation-order)) (count order-subtests)))
-          (is (some? payment-id))))
-
-      (let [response      (evaluation-order-post handler closed-evaluation-id mock-evaluation-order)
-            response-body (base/body-as-json response)]
-
-        (testing "cannot post evaluation order when evaluation period has closed"
-          (is (= (:status response) 409))
-          (is (= (response-body "success") false))))
-
-      (let [response      (evaluation-order-post handler open-evaluation-id (assoc mock-evaluation-order :subtests []))
-            response-body (base/body-as-json response)]
-
-        (testing "cannot post evaluation order with no subtests"
-          (is (= (:status response) 422))
-          (is (= (response-body "success") false))))
-
-      (let [response      (evaluation-order-post handler open-evaluation-id (assoc mock-evaluation-order :subtests ["READING" "LISTENING" "LISTENING"]))
-            response-body (base/body-as-json response)]
-
-        (testing "cannot post evaluation order with duplicate subtests"
-          (is (= (:status response) 422))
-          (is (= (response-body "success") false)))))))
-
 (deftest handle-evaluation-order-with-new-payments
   (base/insert-base-data)
   (base/insert-evaluation-data)
@@ -125,7 +79,7 @@
 
     (let [open-evaluation-id   (:id (base/select-evaluation-by-date (base/two-weeks-ago)))
           closed-evaluation-id (:id (base/select-evaluation-by-date "2019-05-02"))
-          handler              (create-handler port true)]
+          handler              (create-handler port)]
       (let [response         (evaluation-order-post handler open-evaluation-id mock-evaluation-order)
             response-body    (base/body-as-json response)
             order-id         (response-body "evaluation_order_id")
