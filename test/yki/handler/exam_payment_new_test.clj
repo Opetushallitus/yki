@@ -63,9 +63,7 @@
 
 (deftest paytrail-redirect-test
   (with-routes!
-    {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
-                                               :body   (slurp "test/resources/localisation.json")}}
-
+    {}
     (let [handler         (create-handlers port)
           registration-id 1
           lang            "fi"]
@@ -96,8 +94,7 @@
 
 (deftest payment-success-handler-test
   (with-routes!
-    {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
-                                               :body   (slurp "test/resources/localisation.json")}}
+    {}
     (let [handlers             (create-handlers port)
           registration-id      1
           amount               1337
@@ -202,8 +199,7 @@
 
 (deftest paytrail-payment-contents-test
   (with-routes!
-    {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
-                                               :body   (slurp "test/resources/localisation.json")}}
+    {}
     (let [db                    (sql/->Boundary @embedded-db/conn)
           url-helper            (base/create-url-helper (str "localhost:" port))
           language              "fi"

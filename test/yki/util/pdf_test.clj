@@ -8,8 +8,7 @@
 
 (deftest pdf-renderer-test
   (with-routes!
-    {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
-                                               :body   (slurp "test/resources/localisation.json")}}
+    {}
     (testing "Ensure PdfTemplateRenderer renders PDF content given a template and data"
       (let [pdf-renderer (ig/init-key :yki.util/pdf {})
             pdf-bytes    (template+data->pdf-bytes

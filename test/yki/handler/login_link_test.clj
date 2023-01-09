@@ -27,8 +27,7 @@
 (deftest login-link-create-test
   (base/insert-base-data)
   (with-routes!
-    {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
-                                               :body   (slurp "test/resources/localisation.json")}}
+    {}
     (let [email-q          (base/email-q)
           json-body        (j/write-value-as-string {:email           "test@test.com"
                                                      :exam_session_id 1})
