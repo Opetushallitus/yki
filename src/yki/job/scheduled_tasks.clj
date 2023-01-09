@@ -14,16 +14,16 @@
   (:import [java.util UUID]))
 
 (defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
-                                          :task "REGISTRATION_STATE_HANDLER"
-                                          :interval "59 SECONDS"})
+                                          :task      "REGISTRATION_STATE_HANDLER"
+                                          :interval  "59 SECONDS"})
 
 (defonce participants-sync-handler-conf {:worker-id (str (UUID/randomUUID))
-                                         :task "PARTICIPANTS_SYNC_HANDLER"
-                                         :interval "59 MINUTES"})
+                                         :task      "PARTICIPANTS_SYNC_HANDLER"
+                                         :interval  "59 MINUTES"})
 
 (defonce exam-session-queue-handler-conf {:worker-id (str (UUID/randomUUID))
-                                          :task "EXAM_SESSION_QUEUE_HANDLER"
-                                          :interval "599 SECONDS"})
+                                          :task      "EXAM_SESSION_QUEUE_HANDLER"
+                                          :interval  "599 SECONDS"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -33,16 +33,16 @@
   (log/debug "Executing handler on queue" (:name queue))
   (try
     (pgq/take-with
-     [request queue]
-     (when request
-       (try
-         (handler-fn request)
-         (catch Exception e
-           (let [created     (c/from-long (:created request))
-                 retry-until (t/plus created (t/days retry-duration-in-days))]
-             (if (t/after? (t/now) retry-until)
-               (log/error "Stopped retrying" request)
-               (throw e)))))))
+      [request queue]
+      (when request
+        (try
+          (handler-fn request)
+          (catch Exception e
+            (let [created     (c/from-long (:created request))
+                  retry-until (t/plus created (t/days retry-duration-in-days))]
+              (if (t/after? (t/now) retry-until)
+                (log/error "Stopped retrying" request)
+                (throw e)))))))
     (catch Exception e
       (log/error e "Queue reader failed"))))
 
@@ -113,19 +113,20 @@
                      email            (:email item)
                      exam-session-id  (:exam_session_id exam-session)
                      exam-session-url (url-helper :exam-session.url exam-session-id lang)
-                     language         (template-util/get-language url-helper (:language_code exam-session) lang)
-                     level            (template-util/get-level url-helper (:level_code exam-session) lang)]
+                     language         (template-util/get-language (:language_code exam-session) lang)
+                     level            (template-util/get-level (:level_code exam-session) lang)]
                  (log/info "Sending notification to email" email)
                  (pgq/put email-q
                           {:recipients [email]
-                           :created (System/currentTimeMillis)
-                           :subject (template-util/subject url-helper "queue_notification" lang exam-session)
-                           :body (template-util/render url-helper "queue_notification"
-                                                       lang
-                                                       (assoc exam-session
-                                                              :exam-session-url exam-session-url
-                                                              :language language
-                                                              :level level))})
+                           :created    (System/currentTimeMillis)
+                           :subject    (template-util/subject "queue_notification" lang exam-session)
+                           :body       (template-util/render
+                                         "queue_notification"
+                                         lang
+                                         (assoc exam-session
+                                           :exam-session-url exam-session-url
+                                           :language language
+                                           :level level))})
                  (exam-session-db/update-exam-session-queue-last-notified-at! db email exam-session-id)))
              (catch Exception e
                (log/error e "Failed to send notifications for" exam-session))))))

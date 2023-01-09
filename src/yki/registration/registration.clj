@@ -103,8 +103,8 @@
     (pgq/put email-q
              {:recipients [email]
               :created    (System/currentTimeMillis)
-              :subject    (template-util/subject url-helper link-type lang template-data)
-              :body       (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
+              :subject    (template-util/subject link-type lang template-data)
+              :body       (template-util/render link-type lang (assoc template-data :login-url login-url))})))
 
 ; FINISH ME. needs to create a new login link, cant reuse old because of hash
 ; (defn resend-link [db url-helper email-q lang exam-session-id registration-id]
@@ -199,8 +199,8 @@
                                                              payment-link
                                                              (assoc registration-data
                                                                :amount (:email-template amount)
-                                                               :language (template-util/get-language url-helper (:language_code registration-data) lang)
-                                                               :level (template-util/get-level url-helper (:level_code registration-data) lang)
+                                                               :language (template-util/get-language (:language_code registration-data) lang)
+                                                               :level (template-util/get-level (:level_code registration-data) lang)
                                                                :expiration-date (common/format-date-to-finnish-format expiration-date)))
               success                 (registration-db/update-registration-details! db
                                                                                     update-registration

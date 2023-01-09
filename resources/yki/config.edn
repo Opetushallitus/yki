@@ -42,7 +42,7 @@
   :yki.util/evaluation-payment-helper                 {:db         #ig/ref :duct.database/sql
                                                        :url-helper #ig/ref :yki.util/url-helper}
 
-  :yki.util/pdf                                       {:url-helper #ig/ref :yki.util/url-helper}
+  :yki.util/pdf                                       {}
 
   :yki.job.job-queue/init                             {}
 

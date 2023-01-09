@@ -41,12 +41,12 @@
       (log/error e "Payment handling failed")
       (error-redirect url-helper lang order-id))))
 
-(defn send-evaluation-order-completed-emails! [email-q payment-helper url-helper pdf-renderer order-data lang]
+(defn send-evaluation-order-completed-emails! [email-q payment-helper pdf-renderer order-data lang]
   (let [order-time    (:created order-data)
         template-data (assoc order-data
-                        :subject (str (localisation/get-translation url-helper (str "email.evaluation_payment.subject") lang) ":")
-                        :language (template-util/get-language url-helper (:language_code order-data) lang)
-                        :level (template-util/get-level url-helper (:level_code order-data) lang)
+                        :subject (str (localisation/get-translation lang (str "email.evaluation_payment.subject")) ":")
+                        :language (template-util/get-language (:language_code order-data) lang)
+                        :level (template-util/get-level (:level_code order-data) lang)
                         :order_time order-time
                         :amount (int (:amount order-data))
                         :order_number (:reference order-data)
@@ -54,9 +54,9 @@
                         :payment_date (:paid_at order-data))]
     (log/info (str "Evaluation payment success, sending email to " (:email order-data) " and Kirjaamo"))
     ;; Customer email
-    (registration-email/send-customer-evaluation-registration-completed-email! email-q payment-helper url-helper pdf-renderer lang order-time template-data)
+    (registration-email/send-customer-evaluation-registration-completed-email! email-q payment-helper pdf-renderer lang order-time template-data)
     ;; Kirjaamo email
-    (registration-email/send-kirjaamo-evaluation-registration-completed-email! email-q url-helper lang order-time "kirjaamo@oph.fi" template-data)))
+    (registration-email/send-kirjaamo-evaluation-registration-completed-email! email-q lang order-time "kirjaamo@oph.fi" template-data)))
 
 (defmethod ig/init-key :yki.handler/evaluation-payment-new [_ {:keys [db auth access-log payment-helper pdf-renderer url-helper email-q]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? payment-helper) (some? url-helper) (some? pdf-renderer) (some? email-q)]}
@@ -107,7 +107,7 @@
                                      ; Always redirect to payment success page, as otherwise the user
                                      ; might be redirected to an error page even though the payment went through!
                                      (when updated-payment
-                                       (send-evaluation-order-completed-emails! email-q payment-helper url-helper pdf-renderer (merge updated-payment order-data) lang))
+                                       (send-evaluation-order-completed-emails! email-q payment-helper pdf-renderer (merge updated-payment order-data) lang))
                                      (success-redirect url-helper lang evaluation-order-id))]
               (handle-exceptions url-helper handle-payment lang evaluation-order-id))
             (do

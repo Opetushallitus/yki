@@ -4,7 +4,6 @@
     [clj-time.core :as t]
     [integrant.core :as ig]
     [stub-http.core :refer [with-routes!]]
-    [yki.handler.base-test :as base]
     [yki.util.pdf :refer [template+data->pdf-bytes]]))
 
 (deftest pdf-renderer-test
@@ -12,8 +11,7 @@
     {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
                                                :body   (slurp "test/resources/localisation.json")}}
     (testing "Ensure PdfTemplateRenderer renders PDF content given a template and data"
-      (let [url-helper   (base/create-url-helper (str "localhost" port))
-            pdf-renderer (ig/init-key :yki.util/pdf {:url-helper url-helper})
+      (let [pdf-renderer (ig/init-key :yki.util/pdf {})
             pdf-bytes    (template+data->pdf-bytes
                            pdf-renderer
                            "receipt_base"

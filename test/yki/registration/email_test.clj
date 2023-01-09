@@ -16,9 +16,8 @@
   (with-routes!
     {"/lokalisointi/cxf/rest/v1/localisation" {:status 200 :content-type "application/json"
                                                :body   (slurp "test/resources/localisation.json")}}
-    (let [url-helper        (base/create-url-helper (str "localhost:" port))
-          email-q           (base/email-q)
-          pdf-renderer      (base/mock-pdf-renderer url-helper)
+    (let [email-q           (base/email-q)
+          pdf-renderer      (base/mock-pdf-renderer)
           registration-data {:level_code     "KESKI"
                              :language_code  "fin"
                              :email          "teijo@test.invalid"
@@ -33,7 +32,7 @@
           payment-data      {:paid_at   (string->date "2022-10-13T22:00.00Z")
                              :amount    14000M
                              :reference (str "YKI-EXAM-1-2-3-" random-uuid)}]
-      (send-exam-registration-completed-email! email-q url-helper pdf-renderer "fi" registration-data payment-data)
+      (send-exam-registration-completed-email! email-q pdf-renderer "fi" registration-data payment-data)
       (let [{:keys [recipients attachments]} (pgq/take email-q)]
         (testing "Confirmation email is sent to correct recipient"
           (is (= ["teijo@test.invalid"] recipients)))

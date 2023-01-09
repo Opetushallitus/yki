@@ -17,7 +17,7 @@
                        "en" (read-translations "en")
                        "sv" (read-translations "sv")})
 
-(defn get-translation [_ key lang]
+(defn get-translation [lang key]
   (if-let [translation (get-in translations [lang key])]
     translation
     (do

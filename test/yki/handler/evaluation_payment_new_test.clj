@@ -38,7 +38,7 @@
             :auth           (base/auth url-helper)
             :access-log     (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
             :payment-helper (base/create-evaluation-payment-helper db url-helper)
-            :pdf-renderer   (base/mock-pdf-renderer url-helper)
+            :pdf-renderer   (base/mock-pdf-renderer)
             :url-helper     url-helper
             :email-q        (base/email-q)}))))
 

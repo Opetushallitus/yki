@@ -457,10 +457,10 @@
 (defn create-url-helper [uri]
   (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http" :oppija-sub-domain "yki."}))
 
-(defn mock-pdf-renderer [url-helper]
+(defn mock-pdf-renderer []
   (reify PdfTemplateRenderer
     (template+data->pdf-bytes [_ template-name language template-data]
-      (template-util/render url-helper template-name language template-data))))
+      (template-util/render template-name language template-data))))
 
 (defn create-examination-payment-helper [db url-helper]
   (ig/init-key
@@ -472,7 +472,7 @@
                                         :YLIN  "195.00"}
                       :merchant-id     "375917"
                       :merchant-secret "SAIPPUAKAUPPIAS"}
-     :pdf-renderer   (mock-pdf-renderer url-helper)}))
+     :pdf-renderer   (mock-pdf-renderer)}))
 
 (def new-evaluation-payment-config {:amount          {:READING   "50.00"
                                                       :LISTENING "50.00"

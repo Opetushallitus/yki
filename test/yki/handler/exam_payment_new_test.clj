@@ -35,7 +35,7 @@
         auth                     (base/auth url-helper)
         access-log               (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler             (base/auth-handler auth url-helper)
-        pdf-renderer             (base/mock-pdf-renderer url-helper)
+        pdf-renderer             (base/mock-pdf-renderer)
         exam-payment-new-handler (middleware/wrap-format
                                    (ig/init-key :yki.handler/exam-payment-new {:access-log     access-log
                                                                                :auth           auth
@@ -218,8 +218,8 @@
                                  "firstName" (:first_name (:form registration-data))
                                  "lastName"  (:last_name (:form registration-data))}
           description-lines     ["Yleinen kielitutkinto (YKI): Tutkintomaksu"
-                                 (str/join ", " [(template-util/get-language url-helper (:language_code registration-data) language)
-                                                 (template-util/get-level url-helper (:level_code registration-data) language)])
+                                 (str/join ", " [(template-util/get-language (:language_code registration-data) language)
+                                                 (template-util/get-level (:level_code registration-data) language)])
                                  (str/join ", " [(:name registration-data) (:exam_date registration-data)])
                                  (str/join ", " [(:last_name (:form registration-data)) (:first_name (:form registration-data))])]
           description           (-> (str/join "\n" description-lines)

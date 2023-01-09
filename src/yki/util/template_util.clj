@@ -26,9 +26,8 @@
 
 (parser/add-tag! :i18n
                  (fn [[key] context]
-                   (let [url-helper (context :url-helper)
-                         lang       (or (context :lang) "fi")]
-                     (localisation/get-translation url-helper key lang))))
+                   (let [lang (or (context :lang) "fi")]
+                     (localisation/get-translation lang key))))
 
 (filters/add-filter! :date-format-with-dots
                      (fn [date-string]
@@ -48,26 +47,26 @@
 (set-missing-value-formatter! missing-value-fn)
 
 (defn get-level
-  [url-helper level-code lang]
-  (localisation/get-translation url-helper (level-translation-key level-code) lang))
+  [level-code lang]
+  (localisation/get-translation lang (level-translation-key level-code)))
 
 (defn get-language
-  [url-helper language-code lang]
-  (localisation/get-translation url-helper (str "common.language." language-code) lang))
+  [language-code lang]
+  (localisation/get-translation lang (str "common.language." language-code)))
 
-(defn get-subtest [url-helper subtest lang]
-  (localisation/get-translation url-helper (subtest-translation-key subtest) lang))
+(defn get-subtest [subtest lang]
+  (localisation/get-translation lang (subtest-translation-key subtest)))
 
 (defn get-subtests
-  [url-helper subtests lang]
-  (let [translated (fn [test] (localisation/get-translation url-helper (subtest-translation-key test) lang))]
+  [subtests lang]
+  (let [translated (fn [test] (localisation/get-translation lang (subtest-translation-key test)))]
     (map translated subtests)))
 
 (defn subject
-  [url-helper template lang params]
-  (let [subject  (localisation/get-translation url-helper (str "email." (str/lower-case template) ".subject") lang)
-        level    (get-level url-helper (:level_code params) lang)
-        language (get-language url-helper (:language_code params) lang)]
+  [template lang params]
+  (let [subject  (localisation/get-translation lang (str "email." (str/lower-case template) ".subject"))
+        level    (get-level (:level_code params) lang)
+        language (get-language (:language_code params) lang)]
     (parser/render "{{subject}}: {{language}} {{level|lower}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject :level level :language language))))
 
 (defn evaluation-subject
@@ -75,5 +74,5 @@
   (parser/render "{{subject}} {{language}} {{level|lower}}, {{exam_date|date-format-with-dots}}" params))
 
 (defn render
-  [url-helper template lang params]
-  (parser/render-file (str "yki/templates/" (template-name template)) (assoc params :url-helper url-helper :lang lang)))
+  [template lang params]
+  (parser/render-file (str "yki/templates/" (template-name template)) (assoc params :lang lang)))
