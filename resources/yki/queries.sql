@@ -794,30 +794,6 @@ WHERE re.id = :id
             AND reg.state = 'STARTED'
             AND reg.exam_session_id = es.id) > 0;
 
--- name: update-registration-to-completed!
-UPDATE registration
-SET
-  state = 'COMPLETED',
-  modified = current_timestamp
-WHERE
- id = (SELECT registration_id FROM payment WHERE order_number = :order_number) AND
- state != 'COMPLETED';
-
--- name: insert-legacy-payment<!
-INSERT INTO payment(
-  state,
-  registration_id,
-  amount,
-  lang,
-  order_number
-) VALUES (
-  'UNPAID',
-  :registration_id,
-  :amount,
-  :lang,
-  :order_number
-);
-
 -- name: insert-new-exam-payment<!
 INSERT INTO exam_payment_new(
   state,
@@ -862,22 +838,6 @@ SET state =
     modified = current_timestamp
 WHERE id = :id AND state IN ('SUBMITTED', 'EXPIRED', 'CANCELLED');
 
--- name: select-payment-by-registration-id
-SELECT
-  pa.state,
-  pa.registration_id,
-  pa.amount,
-  pa.reference_number,
-  pa.order_number,
-  pa.external_payment_id,
-  pa.payment_method,
-  pa.payed_at
- FROM payment pa
- INNER JOIN registration re ON re.id = pa.registration_id
- INNER JOIN exam_session es ON es.id = re.exam_session_id
- WHERE registration_id = :registration_id
- AND es.organizer_id IN (SELECT id FROM organizer o WHERE oid = COALESCE(:oid, o.oid));
-
 -- name: select-participant-by-external-id
 SELECT id, external_user_id, email
 FROM participant
@@ -887,25 +847,6 @@ WHERE external_user_id = :external_user_id;
 SELECT id, external_user_id, email
 FROM participant
 WHERE id = :id;
-
--- name: select-participant-data-by-order-number
-SELECT par.email,
-       pay.lang,
-       es.language_code,
-       es.level_code,
-       esl.name,
-       esl.street_address,
-       esl.zip,
-       esl.post_office,
-       ed.exam_date
-FROM participant par
-INNER JOIN registration re ON re.participant_id = par.id
-INNER JOIN payment pay ON re.id = pay.registration_id
-INNER JOIN exam_session es ON es.id = re.exam_session_id
-INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
-INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-WHERE pay.order_number = :order_number
-  AND esl.lang = pay.lang;
 
 -- name: select-participant-data-by-registration-id
 SELECT p.email,
@@ -924,37 +865,6 @@ INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 WHERE re.id = :id;
-
--- name: select-payment-by-order-number
-SELECT
-  p.state,
-  p.registration_id,
-  p.amount,
-  p.lang,
-  p.reference_number,
-  p.order_number,
-  p.external_payment_id,
-  p.payment_method,
-  p.payed_at,
-  re.exam_session_id
-FROM payment p
-INNER JOIN registration re ON re.id = p.registration_id
-WHERE order_number = :order_number;
-
--- name: select-next-order-number-suffix
-SELECT nextval('payment_order_number_seq');
-
--- name: update-payment!
- UPDATE payment
- SET
-    state = :state::payment_state,
-    external_payment_id = :external_payment_id,
-    payment_method = :payment_method,
-    reference_number = :reference_number,
-    payed_at = :payed_at,
-    modified = current_timestamp
-WHERE
-  order_number = :order_number;
 
 -- name: insert-ticket!
 INSERT INTO cas_ticketstore (ticket) VALUES (:ticket);
