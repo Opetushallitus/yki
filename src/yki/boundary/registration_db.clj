@@ -3,8 +3,7 @@
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
-            [yki.util.db :refer [rollback-on-exception]]
-            [yki.util.exam-payment-helper :refer [create-or-return-payment-for-registration! initialise-payment-on-registration?]])
+            [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
@@ -15,7 +14,7 @@
   (get-legacy-payment-by-order-number [db order-number])
   (get-legacy-payment-config-by-order-number [db order-number])
   (complete-registration-and-legacy-payment! [db payment-params])
-  (update-registration-details! [db payment-helper registration language amount after-fn])
+  (update-registration-details! [db registration after-fn])
   (get-registration-data-for-new-payment [db registration-id external-user-id])
   (get-new-payment-details [db transaction-id])
   (complete-new-payment-and-exam-registration! [db registration-id payment-id after-fn])
@@ -100,13 +99,11 @@
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-email! tx {:email email :id participant-id})))
   (update-registration-details!
-    [{:keys [spec]} payment-helper registration language amount after-fn]
+    [{:keys [spec]} registration after-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
         tx
         #(when-let [update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
-           (when (initialise-payment-on-registration? payment-helper)
-             (create-or-return-payment-for-registration! payment-helper tx registration language amount))
            (after-fn)
            update-success))))
   (create-registration!

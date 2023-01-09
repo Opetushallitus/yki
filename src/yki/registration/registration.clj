@@ -203,10 +203,7 @@
                                                                :level (template-util/get-level url-helper (:level_code registration-data) lang)
                                                                :expiration-date (common/format-date-to-finnish-format expiration-date)))
               success                 (registration-db/update-registration-details! db
-                                                                                    payment-helper
                                                                                     update-registration
-                                                                                    lang
-                                                                                    (:paytrail amount)
                                                                                     create-and-send-link-fn)]
           (if success
             (do
