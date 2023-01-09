@@ -29,10 +29,9 @@
 
 (defn create-handlers
   [port]
-  (let [use-new-payments-api?    true
-        db                       (sql/->Boundary @embedded-db/conn)
+  (let [db                       (sql/->Boundary @embedded-db/conn)
         url-helper               (base/create-url-helper (str "localhost:" port))
-        payment-helper           (base/create-examination-payment-helper db url-helper use-new-payments-api?)
+        payment-helper           (base/create-examination-payment-helper db url-helper)
         auth                     (base/auth url-helper)
         access-log               (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler             (base/auth-handler auth url-helper)

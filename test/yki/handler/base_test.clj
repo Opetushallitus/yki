@@ -51,12 +51,6 @@
 (def organization
   (slurp "test/resources/organization.json"))
 
-(def payment-formdata-json
-  (read-json-from-file "test/resources/payment_formdata.json"))
-
-(def evaluation-payment-formdata-json
-  (read-json-from-file "test/resources/evaluation_payment_formdata.json"))
-
 (def post-admission
   (slurp "test/resources/post_admission.json"))
 
@@ -389,50 +383,11 @@
                                VALUES (" evaluation-order-id ", 'LISTENING')"))
       {:evaluation-order-id evaluation-order-id})))
 
-(defn insert-evaluation-payment-data [evaluation-order-id]
-  (jdbc/execute! @embedded-db/conn (str "UPDATE evaluation_payment_config SET merchant_id=12345, merchant_secret='6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ', email='kirjaamo@testi.fi' "))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment
-                                               (state, evaluation_order_id, amount, lang, order_number) VALUES
-                                               ('UNPAID'," evaluation-order-id ", 100, 'fi', 'YKI-EVA-TEST')")))
-
 (defn insert-evaluation-payment-new-data [evaluation-order-id]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment_new
                                                (state, evaluation_order_id, amount, reference, transaction_id, href) VALUES
                                                ('UNPAID'," evaluation-order-id ", 100, 'fake-reference', 'fake-transaction-id',
                                                'https://pay.paytrail.com/pay/fake-transaction-id')")))
-
-(defn get-evaluation-order-and-status [{:keys [first_names last_name email birthdate]}]
-  (select-one (str "SELECT
-  eo.id,
-  eo.first_names,
-  eo.last_name,
-  eo.email,
-  eo.birthdate,
-  edl.language_code,
-  edl.level_code,
-  ed.exam_date,
-  ep.state,
-  (
-    SELECT array_to_json(array_agg(subtest))
-    FROM (
-      SELECT subtest
-      FROM evaluation_order_subtest
-      WHERE evaluation_order_id= eo.id
-    ) subtest
-  ) AS subtests
-FROM evaluation_order eo
-INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
-INNER JOIN exam_date_language edl ON edl.id = ev.exam_date_language_id
-INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
-INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
-WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND eo.email = '" email "' AND eo.birthdate = '" birthdate "'")))
-
-(defn get-evaluation-payment-status-by-order-id [order-id]
-  (select-one
-    (str "SELECT ep.state, ep.amount
-         FROM evaluation_order eo
-         INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
-         WHERE eo.id = " order-id " AND deleted_at IS NULL")))
 
 (defn insert-base-data []
   (let [organizer-oid (:oid organizer)]
@@ -530,12 +485,12 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
     (template+data->pdf-bytes [_ template-name language template-data]
       (template-util/render url-helper template-name language template-data))))
 
-(defn create-examination-payment-helper [db url-helper use-new-payments-api?]
+(defn create-examination-payment-helper [db url-helper]
   (ig/init-key
     :yki.util/exam-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config {:use-new-payments-api? use-new-payments-api?
+     :payment-config {:use-new-payments-api? true
                       :amount                (:amount payment-config)
                       :merchant-id           "375917"
                       :merchant-secret       "SAIPPUAKAUPPIAS"}

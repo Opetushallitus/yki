@@ -13,10 +13,10 @@
     [pgqueue.core :as pgq]))
 
 (defn create-handlers
-  [email-q port use-new-payments-api?]
+  [email-q port]
   (let [db                   (sql/->Boundary @embedded-db/conn)
         url-helper           (base/create-url-helper (str "localhost:" port))
-        payment-helper       (base/create-examination-payment-helper db url-helper use-new-payments-api?)
+        payment-helper       (base/create-examination-payment-helper db url-helper)
         auth                 (base/auth url-helper)
         access-log           (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler         (base/auth-handler auth url-helper)
@@ -62,9 +62,9 @@
          {"/oppijanumerorekisteri-service/s2s/findOrCreateHenkiloPerustieto" {:status 200 :content-type "application/json"
                                                                               :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}}))
 
-(defn common-bindings [server use-new-payments-api?]
+(defn common-bindings [server]
   (let [email-q                (base/email-q)
-        handlers               (create-handlers email-q (:port server) use-new-payments-api?)
+        handlers               (create-handlers email-q (:port server))
         session                (base/login-with-login-link (peridot/session handlers))
         init-response          (-> session
                                    (peridot/request (str routing/registration-api-root "/init")
@@ -84,9 +84,7 @@
                                                     :body (j/write-value-as-string registration-form-data)
                                                     :content-type "application/json"
                                                     :request-method :post))
-        payment                (if use-new-payments-api?
-                                 (base/select-one (str "SELECT * FROM exam_payment_new WHERE registration_id = " registration-id))
-                                 (base/select-one (str "SELECT * FROM payment WHERE registration_id = " registration-id)))
+        payment                (base/select-one (str "SELECT * FROM exam_payment_new WHERE registration_id = " registration-id))
         payment-link           (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " registration-id))
         submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
         email-request          (pgq/take email-q)]
@@ -102,11 +100,9 @@
      :submitted-registration submitted-registration
      :email-request          email-request}))
 
-(defn registration-success-redirect [registration-id port use-new-payments-api?]
+(defn registration-success-redirect [registration-id port]
   (str "http://yki.localhost:"
        port
-       "/yki/maksu"
-       (when use-new-payments-api? "/v2")
-       "/ilmoittautuminen/"
+       "/yki/maksu/v2/ilmoittautuminen/"
        registration-id
        "?lang=fi"))
