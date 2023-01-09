@@ -27,6 +27,10 @@
                                                                              :KESKI "140.00"
                                                                              :YLIN  "180.00"}}}
 
+ :yki.handler/exam-payment-new           {:db         #ig/ref :duct.database/sql
+                                          :auth       #ig/ref :yki.middleware.no-auth/with-authentication
+                                          :access-log #ig/ref :yki.middleware.access-log/with-logging}
+
  :yki.handler/evaluation-payment         {:db             #ig/ref :duct.database/sql
                                           :auth           #ig/ref :yki.middleware.auth/with-authentication
                                           :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
