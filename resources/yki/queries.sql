@@ -1047,18 +1047,12 @@ SELECT
   r.state,
   r.id as registration_id,
   r.kind,
-  r.original_exam_session_id,
-  pa.order_number
+  r.original_exam_session_id
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
-LEFT JOIN payment pa ON pa.registration_id = r.id
 WHERE es.id = :id
 AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
-AND (r.state IN ('COMPLETED', 'SUBMITTED', 'CANCELLED', 'PAID_AND_CANCELLED')
-     OR (r.state = 'EXPIRED' AND EXISTS (SELECT id
-                                         FROM payment
-                                         WHERE registration_id = r.id))
-     OR (EXISTS (SELECT id from exam_payment_new WHERE registration_id = r.id)))
+AND r.state != 'STARTED'
 ORDER BY r.created ASC;
 
 --name: cancel-registration-for-organizer!
@@ -1074,57 +1068,6 @@ AND exam_session_id IN (SELECT id
                           (SELECT id
                             FROM organizer
                             WHERE oid = :oid));
-
--- name: insert-payment-config!
-INSERT INTO payment_config(
-  organizer_id,
-  merchant_id,
-  merchant_secret
-) VALUES (
-  (SELECT id FROM organizer
-   WHERE oid = :oid
-   AND deleted_at IS NULL),
-  :merchant_id,
-  :merchant_secret
-);
-
--- name: select-payment-config
-SELECT
-  organizer_id,
-  merchant_id,
-  merchant_secret,
-  test_mode
-FROM payment_config
-WHERE organizer_id = :organizer_id;
-
--- name: select-payment-config-by-order-number
-SELECT
-  pc.organizer_id,
-  pc.merchant_id,
-  pc.merchant_secret,
-  pc.test_mode
-FROM payment_config pc
-INNER JOIN organizer o ON pc.organizer_id = o.id
-INNER JOIN exam_session es ON o.id = es.organizer_id
-INNER JOIN registration re ON es.id = re.exam_session_id
-INNER JOIN payment p ON re.id = p.registration_id
-WHERE p.order_number = :order_number;
-
--- name: update-payment-config!
-UPDATE payment_config
-SET merchant_id = :merchant_id,
-    merchant_secret = :merchant_secret
-WHERE organizer_id =
-  (SELECT id FROM organizer
-    WHERE oid = :oid
-    AND deleted_at IS NULL);
-
--- name: delete-payment-config!
-DELETE FROM payment_config
-WHERE organizer_id =
-  (SELECT id FROM organizer
-    WHERE oid = :oid
-    AND deleted_at IS NULL);
 
 -- name: select-exam-dates
 SELECT ed.id, ed.exam_date, ed.registration_start_date, ed.registration_end_date, ed.post_admission_end_date,
