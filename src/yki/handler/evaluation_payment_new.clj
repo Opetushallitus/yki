@@ -5,8 +5,7 @@
     [integrant.core :as ig]
     [jeesql.core :refer [require-sql]]
     [ring.middleware.params :refer [wrap-params]]
-    [ring.util.http-response :refer [bad-request ok unauthorized]]
-    [yki.handler.evaluation-payment :refer [cancel-redirect error-redirect success-redirect handle-exceptions]]
+    [ring.util.http-response :refer [bad-request found ok unauthorized]]
     [yki.handler.routing :as routing]
     [yki.boundary.evaluation-db :as evaluation-db]
     [yki.boundary.localisation :as localisation]
@@ -19,6 +18,28 @@
     [yki.util.template-util :as template-util]))
 
 (require-sql ["yki/queries.sql" :as q])
+
+(defn- success-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :evaluation-payment.success-redirect lang order-id)]
+    (log/info "Evaluation payment success, redirecting to:" redirect-url)
+    (found redirect-url)))
+
+(defn- error-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :evaluation-payment.error-redirect lang order-id)]
+    (log/info "Evaluation payment error, redirecting to:" redirect-url)
+    (found redirect-url)))
+
+(defn- cancel-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :evaluation-payment.cancel-redirect lang order-id)]
+    (log/info "Evaluation payment cancelled, redirecting to:" redirect-url)
+    (found redirect-url)))
+
+(defn- handle-exceptions [url-helper f lang order-id]
+  (try
+    (f)
+    (catch Exception e
+      (log/error e "Payment handling failed")
+      (error-redirect url-helper lang order-id))))
 
 (defn send-evaluation-order-completed-emails! [email-q payment-helper url-helper pdf-renderer order-data lang]
   (let [order-time    (:created order-data)

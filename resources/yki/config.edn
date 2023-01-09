@@ -30,7 +30,6 @@
                                                        #ig/ref :yki.handler/organizer
                                                        #ig/ref :yki.handler/quarantine
                                                        #ig/ref :yki.handler/evaluation
-                                                       #ig/ref :yki.handler/evaluation-payment
                                                        #ig/ref :yki.handler/exam-payment-new
                                                        #ig/ref :yki.handler/evaluation-payment-new]
 
@@ -136,13 +135,6 @@
                                                        :payment-helper #ig/ref :yki.util/exam-payment-helper
                                                        :url-helper     #ig/ref :yki.util/url-helper
                                                        :pdf-renderer   #ig/ref :yki.util/pdf}
-
-  :yki.handler/evaluation-payment                     {:db             #ig/ref :duct.database/sql
-                                                       :auth           #ig/ref :yki.middleware.auth/with-authentication
-                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging
-                                                       :email-q        #ig/ref :yki.job.job-queue/email-q
-                                                       :url-helper     #ig/ref :yki.util/url-helper
-                                                       :payment-config {}}
 
   :yki.handler/localisation                           {:url-helper #ig/ref :yki.util/url-helper
                                                        :access-log #ig/ref :yki.middleware.access-log/with-logging}
