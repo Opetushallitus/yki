@@ -62,7 +62,7 @@
 
       (testing "and send email with payment link"
         (is (= (:subject email-request) "Maksulinkki: suomi perustaso - Omenia, 27.1.2018"))
-        (is (s/includes? (:body email-request) "100,00 €"))
+        (is (s/includes? (:body email-request) "135,00 €"))
         (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 Espoo"))
         (is (= (:type payment-link) "PAYMENT"))
         (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port))))

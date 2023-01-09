@@ -221,10 +221,6 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
         VALUES ('" organizer-oid "', '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi') ON CONFLICT DO NOTHING")))
 
-(defn insert-payment-config [organizer-oid]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO payment_config (organizer_id, merchant_id, merchant_secret)
-        VALUES ((SELECT id FROM organizer WHERE oid = '" organizer-oid "' AND deleted_at IS NULL), 12345, 'SECRET_KEY')")))
-
 (defn insert-languages [organizer-oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('fin', 'PERUS', (SELECT id FROM organizer WHERE oid = '" organizer-oid "' AND deleted_at IS NULL))"))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('swe', 'PERUS', (SELECT id FROM organizer WHERE oid = '" organizer-oid "' AND deleted_at IS NULL))")))
@@ -384,7 +380,6 @@
 (defn insert-base-data []
   (let [organizer-oid (:oid organizer)]
     (insert-organizer organizer-oid)
-    (insert-payment-config organizer-oid)
     (insert-languages organizer-oid)
     (insert-exam-dates)
     (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
@@ -395,12 +390,6 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') "))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('anothertest@user.com', 'anothertest@user.com') "))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('thirdtest@user.com', 'thirdtest@user.com') ")))
-
-(defn insert-payment []
-  (jdbc/execute! @embedded-db/conn (str
-                                     "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', " select-exam-session ", " select-participant ")"))
-  (jdbc/execute! @embedded-db/conn (str
-                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
 
 (defn insert-exam-payment-new [registration-id amount reference transaction-id href]
   (let [quote-strings #(if (string? %)
@@ -427,10 +416,7 @@
 (defn insert-unpaid-expired-registration []
   (jdbc/execute! @embedded-db/conn (str
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                     ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
-  (jdbc/execute! @embedded-db/conn (str
-                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values
-                         ('UNPAID', (SELECT id FROM registration where person_oid = '5.4.3.2.3'), 100.00, 'fi', 'order1234')")))
+                                     ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')")))
 
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link

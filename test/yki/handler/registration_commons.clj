@@ -51,7 +51,6 @@
 (defn insert-common-base-data [organizer-oid]
   (base/insert-base-data)
   (base/insert-organizer organizer-oid)
-  (base/insert-payment-config organizer-oid)
   (base/insert-languages organizer-oid))
 
 (defn common-route-specs [server]

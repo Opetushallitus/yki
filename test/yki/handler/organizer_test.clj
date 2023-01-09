@@ -35,8 +35,6 @@
                     "' AND deleted_at IS NULL)"))))
       (is (= {:contact_name "fuu"}
              (base/select-one (str "SELECT contact_name FROM organizer where oid = '" organizer-oid "'"))))
-      (is (= {:merchant_secret "SECRET2"}
-             (base/select-one "SELECT merchant_secret FROM payment_config where merchant_id = 2")))
       (is (= (:status response) 200)))))
 
 (deftest add-organizer-test
@@ -47,8 +45,6 @@
     (testing "post organizer endpoint should add organizer"
       (is (= {:count 1}
              (base/select-one "SELECT COUNT(1) FROM organizer")))
-      (is (= {:count 1}
-             (base/select-one "SELECT COUNT(1) FROM payment_config")))
       (is (= (:status response) 200)))))
 
 (deftest get-organizers-test
@@ -77,9 +73,7 @@
       (is (= {:count 0}
              (base/select-one "SELECT COUNT(1) FROM organizer where deleted_at IS NULL")))
       (is (= {:count 1}
-             (base/select-one "SELECT COUNT(1) FROM organizer where deleted_at IS NOT NULL")))
-      (is (= {:count 1}
-             (base/select-one "SELECT COUNT(1) FROM payment_config"))))
+             (base/select-one "SELECT COUNT(1) FROM organizer where deleted_at IS NOT NULL"))))
 
     (testing "delete organizer endpoint should send organizer and office oids to sync queue"
       (is (= (:type sync-req-1) "DELETE"))
