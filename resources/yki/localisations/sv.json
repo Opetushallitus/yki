@@ -17,6 +17,7 @@
   "common.level.middle": "Mellannivå",
   "common.paymentMessage": "Examenstillfälle",
   "common.paymentMessage.evaluation": "Kontrollbedömning",
+  "common.registration": "Anmälning",
   "email.evaluation_payment.content.orderNumber": "Beställningsnummer",
   "email.evaluation_payment.content.paid": "Betald",
   "email.evaluation_payment.content.total": "Summa",

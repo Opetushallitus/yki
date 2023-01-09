@@ -17,6 +17,7 @@
   "common.level.middle": "Intermediate level",
   "common.paymentMessage": "Test session",
   "common.paymentMessage.evaluation": "Reassessment",
+  "common.registration": "Registration",
   "email.evaluation_payment.content.orderNumber": "Order number",
   "email.evaluation_payment.content.paid": "Paid",
   "email.evaluation_payment.content.total": "Amount",

@@ -17,6 +17,7 @@
   "common.level.middle": "Keskitaso",
   "common.paymentMessage": "Tutkintotilaisuus",
   "common.paymentMessage.evaluation": "Tarkistusarviointi",
+  "common.registration": "Ilmoittautuminen",
   "email.evaluation_payment.content.orderNumber": "Tilausnumero",
   "email.evaluation_payment.content.paid": "Maksettu",
   "email.evaluation_payment.content.total": "Summa",
