@@ -72,14 +72,4 @@
 
  ;; Localhost is not acceptable redirect uri for paytrail atm. This is why when developing
  ;; on locahost, random name can be set to resolve to localhost (here example.coom) in the host file
-
- :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
-    :auth #ig/ref :yki.middleware.auth/with-authentication
-    :access-log #ig/ref :yki.middleware.access-log/with-logging
-    :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                      :yki-payment-uri "http://example.com:8080/yki/evaluation-payment"
-                      :amount {:READING "50.00"
-                              :LISTENING "50.00"
-                              :WRITING "50.00"
-                              :SPEAKING "50.00"}
-                      :test_mode true}}}
+}
