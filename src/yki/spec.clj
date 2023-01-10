@@ -253,46 +253,6 @@
                                      ::exam_session_id]
                             :opt-un [::user_data]))
 
-;; payment
-(def pt-locale-regexp #"^[a-z]{1,2}[_][A-Z]{1,2}$")
-
-(s/def ::timestamp date?)
-(s/def ::order-number (s/and ::non-blank-string #(< (count %) 33)))
-(s/def ::msg ::non-blank-string)
-(s/def ::payment-id (s/and ::non-blank-string #(< (count %) 26)))
-(s/def ::uri ::non-blank-string)
-
-(s/def ::pt-payment-params (s/keys :req [::language-code
-                                         ::order-number
-                                         ::reference-number]))
-
-(s/def ::MERCHANT_ID number?)
-(s/def ::LOCALE (s/and string? #(re-matches pt-locale-regexp %)))
-(s/def ::URL_SUCCESS ::non-blank-string)
-(s/def ::URL_CANCEL ::non-blank-string)
-(s/def ::AMOUNT (s/and string? #(re-matches amount-regexp %)))
-(s/def ::ORDER_NUMBER ::order-number)
-(s/def ::MSG_SETTLEMENT_PAYER ::non-blank-string)
-(s/def ::MSG_UI_MERCHANT_PANEL ::non-blank-string)
-(s/def ::PARAMS_IN ::non-blank-string)
-(s/def ::PARAMS_OUT ::non-blank-string)
-(s/def ::AUTHCODE ::non-blank-string)
-
-(s/def ::params (s/keys :req-un [::MERCHANT_ID
-                                 ::LOCALE
-                                 ::URL_SUCCESS
-                                 ::URL_CANCEL
-                                 ::AMOUNT
-                                 ::ORDER_NUMBER
-                                 ::MSG_SETTLEMENT_PAYER
-                                 ::MSG_UI_MERCHANT_PANEL
-                                 ::PARAMS_IN
-                                 ::PARAMS_OUT
-                                 ::AUTHCODE]))
-
-(s/def ::pt-payment-form-data (s/keys :req-un [::uri
-                                               ::params]))
-
 ;; registration
 
 (s/def ::first_name ::non-blank-string)
@@ -440,18 +400,4 @@
                                         ::subtests
                                         ::lang
                                         ::amount]))
-
-(s/def ::params (s/keys :req-un [::MERCHANT_ID
-                                 ::LOCALE
-                                 ::URL_SUCCESS
-                                 ::URL_CANCEL
-                                 ::ORDER_NUMBER
-                                 ::MSG_SETTLEMENT_PAYER
-                                 ::MSG_UI_MERCHANT_PANEL
-                                 ::PARAMS_IN
-                                 ::PARAMS_OUT
-                                 ::AUTHCODE]))
-
-(s/def ::evaluation-payment-form-data (s/keys :req-un [::uri
-                                                       ::params]))
 
