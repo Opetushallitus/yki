@@ -1058,6 +1058,7 @@ AND state = 'COMPLETED';
 
 -- name: select-exam-session-participants
 SELECT
+  r.created,
   r.form,
   r.state,
   r.id as registration_id,

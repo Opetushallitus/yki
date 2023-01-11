@@ -40,6 +40,8 @@ jobs:
 
       - name: Install wkhtmltopdf
         run: |
+          echo 'Updating apt-get package information'
+          sudo apt-get update
           echo 'Installing wkhtmltopdf'
           sudo apt-get install wkhtmltopdf
           echo 'Installed wkhtmltopdf, check that it works'
