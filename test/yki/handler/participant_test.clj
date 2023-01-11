@@ -21,11 +21,21 @@
     (let [exam-session-route    (get-exam-session-route)
           request               (mock/request :get (str exam-session-route "/registration"))
           response              (base/send-request-with-tx request)
-          participants-response (base/body-as-json response)]
+          participants-response (base/body-as-json response)
+          id->created           (->> (str "SELECT r.id, r.created FROM registration r WHERE r.exam_session_id=" (base/get-exam-session-id))
+                                     (base/select)
+                                     (map (juxt :id :created))
+                                     (into {}))
+          expected-response     (update
+                                  (j/read-value (slurp "test/resources/participants.json"))
+                                  "participants"
+                                  #(map (fn [data]
+                                          (let [registration-id (data "registration_id")]
+                                            (assoc data "created" (str (id->created registration-id)))))
+                                        %))]
       (is (= "application/json; charset=utf-8" (get (:headers response) "Content-Type")))
       (is (= 200 (:status response)))
-      (is (= (j/read-value (slurp "test/resources/participants.json"))
-             participants-response))
+      (is (= expected-response participants-response))
 
       (base/insert-exam-session 2 (:oid base/organizer) 5)
       (testing "participant registration is changed to another exam session"
