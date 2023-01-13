@@ -60,14 +60,20 @@
 
 (deftest handle-submitted-registration-expired-test
   (base/insert-base-data)
-  (base/insert-payment)
-  (jdbc/execute! @embedded-db/conn
-                 "UPDATE payment SET created = (current_timestamp - interval '9 days')")
-  (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (base/db)})
-        _                          (registration-state-handler)
-        registration               (base/select-one "SELECT * FROM registration")]
-    (testing "when submitted registration has not been payed in 8 days then state is set to expired"
-      (is (= (:state registration) "EXPIRED")))))
+  (base/insert-registrations "SUBMITTED")
+  (let [[reg-one-id reg-two-id] (map :id (base/select "SELECT id FROM registration where state = 'SUBMITTED'"))]
+    (jdbc/execute! @embedded-db/conn
+                   (str "UPDATE registration SET created = (current_timestamp - interval '9 days') WHERE id=" reg-one-id))
+    (jdbc/execute! @embedded-db/conn
+                   (str "UPDATE registration SET created = (current_timestamp - interval '8 days') WHERE id=" reg-two-id))
+    (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (base/db)})
+          _                          (registration-state-handler)
+          registration-1             (base/select-one (str "SELECT * FROM registration WHERE id=" reg-one-id ";"))
+          registration-2             (base/select-one (str "SELECT * FROM registration WHERE id=" reg-two-id ";"))]
+      (testing "if registration was submitted over 8 days ago and was not yet COMPLETED, it will become EXPIRED"
+        (is (= (:state registration-1) "EXPIRED")))
+      (testing "a SUBMITTED registration that was created a day later will not yet become expired"
+        (is (= (:state registration-2) "SUBMITTED"))))))
 
 (deftest handle-exam-session-create-request-test
   (base/insert-base-data)
