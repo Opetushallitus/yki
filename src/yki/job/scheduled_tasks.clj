@@ -66,8 +66,8 @@
   #(try
      (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
        (log/info "Check participants sync")
-       (let [exam-sessions (exam-session-db/get-exam-sessions-to-be-synced db (str retry-duration-in-days " days"))]
-         (log/info "Syncronizing participants of exam sessions" exam-sessions)
+       (when-let [exam-sessions (seq (exam-session-db/get-exam-sessions-to-be-synced db (str retry-duration-in-days " days")))]
+         (log/info "Syncronizing participants of exam sessions" (map :exam_session_id exam-sessions))
          (doseq [exam-session exam-sessions]
            (try
              (yki-register/sync-exam-session-participants db url-helper basic-auth disabled (:exam_session_id exam-session))
