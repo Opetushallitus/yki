@@ -120,9 +120,7 @@
   (update-submitted-registrations-to-expired!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
-      (let [ids-from-expired-legacy-payments (q/update-submitted-registrations-with-unpaid-legacy-payments-to-expired<! tx)
-            ids-from-new-payments            (q/update-submitted-registrations-without-paid-new-payments-to-expired<! tx)]
-        (concat ids-from-expired-legacy-payments ids-from-new-payments))))
+      (q/update-submitted-registrations-to-expired<! tx)))
   (get-participant-data-by-order-number
     [{:keys [spec]} order-number]
     (first (q/select-participant-data-by-order-number spec {:order_number order-number})))

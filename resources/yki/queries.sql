@@ -697,31 +697,15 @@ AND EXISTS (SELECT id
             WHERE id = :exam_session_id
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
--- submitted registration expires 8 days from payment creation at midnight,
--- name: update-submitted-registrations-with-unpaid-legacy-payments-to-expired<!
-UPDATE registration
-   SET state = 'EXPIRED',
-    modified = current_timestamp
- WHERE state = 'SUBMITTED'
-   AND id IN (SELECT r.id FROM payment p
-              INNER JOIN registration r ON r.id = p.registration_id
-              WHERE p.state = 'UNPAID'
-                AND ((r.kind = 'ADMISSION' AND ts_older_than(p.created, interval '9 days'))
-                     OR (r.kind = 'POST_ADMISSION' AND ts_older_than(p.created, interval '2 days'))))
-RETURNING id as updated;
-
 -- submitted registration expires 8 days from creation at midnight
--- name: update-submitted-registrations-without-paid-new-payments-to-expired<!
+-- name: update-submitted-registrations-to-expired<!
 UPDATE registration
 SET state = 'EXPIRED',
     modified = current_timestamp
 WHERE state = 'SUBMITTED'
-  AND id IN
-      ((SELECT DISTINCT epn.registration_id FROM exam_payment_new epn WHERE epn.state != 'PAID')
-       EXCEPT
-       (SELECT DISTINCT epn.registration_id FROM exam_payment_new epn WHERE epn.state = 'PAID'))
   AND ((kind = 'ADMISSION' AND ts_older_than(created, interval '9 days'))
-       OR (kind = 'POST_ADMISSION' AND ts_older_than(created, interval '2 days')));
+       OR (kind = 'POST_ADMISSION' AND ts_older_than(created, interval '2 days')))
+RETURNING id AS updated;
 
 -- name: select-registration-data
 SELECT re.state,
