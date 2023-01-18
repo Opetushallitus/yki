@@ -95,7 +95,6 @@
                                        :amount              final-price}]
                 (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data)
                 (ok {:evaluation_order_id          order-id
-                     :use_new_payments_integration true
                      :signature                    (sign-string (:payment-config payment-helper) (str order-id))}))
               (internal-server-error {:success false
                                       :error   "Failed to create a new evaluation order"}))))))))
