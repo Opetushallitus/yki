@@ -91,7 +91,6 @@
         (testing "can post a valid evaluation order"
           (is (= (:status response) 200))
           (is (= response-body {"evaluation_order_id"          order-id
-                                "use_new_payments_integration" true
                                 "signature"                    (sign-string base/new-evaluation-payment-config (str order-id))}))
           (is (every? true? order-comparison))
           (is (= (count (:subtests mock-evaluation-order)) (count order-subtests)))
