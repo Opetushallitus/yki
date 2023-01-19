@@ -35,7 +35,6 @@
                 :contact_name         "fuu"
                 :contact_phone_number "123456"
                 :extra                "shared@oph.fi"
-                :merchant             {:merchant_id 123456 :merchant_secret "SECRET"}
                 :languages            [{:language_code "fin" :level_code "PERUS"}
                                        {:language_code "eng" :level_code "PERUS"}]})
 
@@ -198,10 +197,10 @@
         columns-str (->> columns
                          (map name)
                          (str/join ","))
-        values-str (->> columns
-                        (map quarantine)
-                        (map #(if % (str "'" % "'") "NULL"))
-                        (str/join ","))]
+        values-str  (->> columns
+                         (map quarantine)
+                         (map #(if % (str "'" % "'") "NULL"))
+                         (str/join ","))]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO quarantine (" columns-str ") VALUES (" values-str ") ON CONFLICT DO NOTHING;"))))
 
 (defn update-quarantine-language! [id language]
@@ -468,19 +467,19 @@
     :yki.util/exam-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config {:amount                {:PERUS "135.00"
-                                              :KESKI "155.00"
-                                              :YLIN  "195.00"}
-                      :merchant-id           "375917"
-                      :merchant-secret       "SAIPPUAKAUPPIAS"}
+     :payment-config {:amount          {:PERUS "135.00"
+                                        :KESKI "155.00"
+                                        :YLIN  "195.00"}
+                      :merchant-id     "375917"
+                      :merchant-secret "SAIPPUAKAUPPIAS"}
      :pdf-renderer   (mock-pdf-renderer url-helper)}))
 
-(def new-evaluation-payment-config {:amount                {:READING   "50.00"
-                                                            :LISTENING "50.00"
-                                                            :WRITING   "50.00"
-                                                            :SPEAKING  "50.00"}
-                                    :merchant-id           "375917"
-                                    :merchant-secret       "SAIPPUAKAUPPIAS"})
+(def new-evaluation-payment-config {:amount          {:READING   "50.00"
+                                                      :LISTENING "50.00"
+                                                      :WRITING   "50.00"
+                                                      :SPEAKING  "50.00"}
+                                    :merchant-id     "375917"
+                                    :merchant-secret "SAIPPUAKAUPPIAS"})
 
 (defn create-evaluation-payment-helper [db url-helper]
   (ig/init-key

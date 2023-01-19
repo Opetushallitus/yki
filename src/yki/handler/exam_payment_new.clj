@@ -19,7 +19,7 @@
     [yki.spec :as ys]
     [yki.registration.email :as registration-email]
     [yki.util.db :refer [rollback-on-exception]]
-    [yki.util.exam-payment-helper :refer [create-or-return-payment-for-registration! get-payment-amount-for-registration]]
+    [yki.util.exam-payment-helper :refer [registration->payment get-payment-amount-for-registration]]
     [yki.util.audit-log :as audit]
     [yki.util.common :refer [format-datetime-for-export]]
     [yki.util.template-util :as template-util])
@@ -61,7 +61,7 @@
       (rollback-on-exception
         tx
         #(let [amount            (:paytrail (get-payment-amount-for-registration payment-helper registration))
-               paytrail-response (create-or-return-payment-for-registration! payment-helper tx registration lang amount)
+               paytrail-response (registration->payment payment-helper tx registration lang amount)
                redirect-url      (paytrail-response "href")]
            redirect-url)))
     ; Other values are unexpected. Redirect to error page.

@@ -17,7 +17,7 @@
 (defprotocol PaymentHelper
   (get-payment-redirect-url [this registration-id lang])
   (get-payment-amount-for-registration [this registration-details])
-  (create-or-return-payment-for-registration! [this tx registration language amount]))
+  (registration->payment [this tx registration language amount]))
 
 (defn- registration->payment-description
   [url-helper registration]
@@ -84,7 +84,7 @@
        ; Unit of returned amount is EUR.
        ; Return corresponding amount in minor unit, ie. cents.
        :paytrail       (* 100 (int amount))}))
-  (create-or-return-payment-for-registration! [_ tx registration language amount]
+  (registration->payment [_ tx registration language amount]
     (if-let [existing-payment-redirect-url (->> (q/select-unpaid-new-exam-payments-by-registration-id tx {:registration_id (:id registration)})
                                                 (first)
                                                 (:href))]

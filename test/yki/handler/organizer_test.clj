@@ -23,7 +23,8 @@
 (deftest update-organizer-test
   (let [organizer-oid "1.2.3.5"
         _             (base/insert-organizer organizer-oid)
-        json-body     (j/write-value-as-string (assoc base/organizer :merchant {:merchant_id 2 :merchant_secret "SECRET2"}))
+        updated-email "new-email@test.invalid"
+        json-body     (j/write-value-as-string (assoc base/organizer :contact_email updated-email))
         request       (-> (mock/request :put (str routing/organizer-api-root "/" organizer-oid) json-body)
                           (mock/content-type "application/json; charset=UTF-8"))
         response      (base/send-request-with-tx request)]
@@ -35,6 +36,8 @@
                     "' AND deleted_at IS NULL)"))))
       (is (= {:contact_name "fuu"}
              (base/select-one (str "SELECT contact_name FROM organizer where oid = '" organizer-oid "'"))))
+      (is (= {:contact_email updated-email}
+             (base/select-one (str "SELECT contact_email FROM organizer where oid = '" organizer-oid "'"))))
       (is (= (:status response) 200)))))
 
 (deftest add-organizer-test
