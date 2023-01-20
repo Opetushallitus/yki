@@ -17,28 +17,7 @@
 (defprotocol PaymentHelper
   (get-payment-redirect-url [this registration-id lang])
   (get-payment-amount-for-registration [this registration-details])
-  (create-or-return-payment-for-registration! [this tx registration language amount])
-  (initialise-payment-on-registration? [this]))
-
-(defrecord LegacyPaymentHelper [db url-helper payment-config]
-  PaymentHelper
-  (get-payment-redirect-url [_ registration-id lang]
-    (url-helper :payment-link.old.redirect registration-id lang))
-  (get-payment-amount-for-registration [_ registration-details]
-    (let [amount (registration->payment-amount payment-config registration-details)]
-      {:email-template amount
-       :paytrail       amount}))
-  (create-or-return-payment-for-registration! [_ tx registration language amount]
-    (let [order-number-seq (:nextval (first (q/select-next-order-number-suffix tx)))
-          oid-last-part    (last (str/split (:oid registration) #"\."))
-          order-number     (str "YKI" oid-last-part (format "%09d" order-number-seq))
-          payment          {:registration_id (:id registration)
-                            :amount          amount
-                            :lang            language
-                            :order_number    order-number}]
-      (q/insert-legacy-payment<! tx payment)))
-  (initialise-payment-on-registration? [_]
-    true))
+  (registration->payment [this tx registration language amount]))
 
 (defn- registration->payment-description
   [url-helper registration]
@@ -105,7 +84,7 @@
        ; Unit of returned amount is EUR.
        ; Return corresponding amount in minor unit, ie. cents.
        :paytrail       (* 100 (int amount))}))
-  (create-or-return-payment-for-registration! [_ tx registration language amount]
+  (registration->payment [_ tx registration language amount]
     (if-let [existing-payment-redirect-url (->> (q/select-unpaid-new-exam-payments-by-registration-id tx {:registration_id (:id registration)})
                                                 (first)
                                                 (:href))]
@@ -119,11 +98,7 @@
                                :transaction_id  (response-body "transactionId")
                                :href            (response-body "href")}]
         (q/insert-new-exam-payment<! tx exam-payment-data)
-        response-body)))
-  (initialise-payment-on-registration? [_]
-    false))
+        response-body))))
 
 (defmethod ig/init-key :yki.util/exam-payment-helper [_ {:keys [db url-helper payment-config]}]
-  (if (:use-new-payments-api? payment-config)
-    (->NewPaymentHelper db url-helper payment-config)
-    (->LegacyPaymentHelper db url-helper payment-config)))
+  (->NewPaymentHelper db url-helper payment-config))

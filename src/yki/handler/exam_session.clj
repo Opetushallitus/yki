@@ -10,11 +10,9 @@
     [ring.util.http-response :refer [conflict internal-server-error]]
     [ring.util.response :refer [response not-found]]
     [yki.boundary.exam-session-db :as exam-session-db]
-    [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
-    [yki.registration.payment-e2 :as paytrail-payment]
-    [yki.util.audit-log :as audit-log]
-    [yki.spec :as ys]))
+    [yki.spec :as ys]
+    [yki.util.audit-log :as audit-log]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
   #(pgq/put data-sync-q {:type         type
@@ -178,34 +176,4 @@
                     (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                     (response {:success true}))
                   (not-found {:success false
-                              :error   "Registration not found"}))))
-            ; Regarding email confirmation resend: needs to generate a whole new login link and invalidate old one
-            ; (POST "/resendConfirmation" request
-            ;   :path-params [id :- ::ys/id registration-id :- ::ys/id]
-            ;   :query-params [emailLang :- ::ys/language-code]
-            ;   :return ::ys/response
-            ;   (log/info "id: " id " registration-id: " registration-id " emailLang: " emailLang)
-            ;   (if (registration/resend-link db url-helper email-q emailLang id registration-id)
-            ;       (response {:success true})
-            ;       (not-found {:success false
-            ;                  :error "Registration not found"})))
-
-
-            (POST "/confirm-payment" request
-              :path-params [id :- ::ys/id registration-id :- ::ys/id]
-              :return ::ys/response
-              ; Handler for marking a payment as paid through the organizer UI.
-              ; Nothing corresponding to this for registrations with payments through the new payment integration.
-              (let [payment (registration-db/get-legacy-payment-by-registration-id db registration-id oid)]
-                (if payment
-                  (do
-                    (paytrail-payment/handle-legacy-exam-payment-success db email-q url-helper {:order-number (:order_number payment)})
-                    (audit-log/log {:request   request
-                                    :target-kv {:k audit-log/registration
-                                                :v registration-id}
-                                    :change    {:type audit-log/update-op
-                                                :old  {:payment_state "UNPAID"}
-                                                :new  {:payment_state "PAID"}}})
-                    (response {:success true}))
-                  (not-found {:success false
-                              :error   "Payment not found"}))))))))))
+                              :error   "Registration not found"}))))))))))

@@ -22,9 +22,9 @@
     [yki.job.job-queue]
     [yki.middleware.no-auth]
     [yki.util.common :as c]
-    [yki.util.url-helper]
-    [yki.util.template-util :as template-util])
-(:import (yki.util.pdf PdfTemplateRenderer)))
+    [yki.util.pdf :refer [PdfTemplateRenderer template+data->pdf-bytes]]
+    [yki.util.template-util :as template-util]
+    [yki.util.url-helper]))
 
 (def code-ok "4ce84260-3d04-445e-b914-38e93c1ef667")
 
@@ -35,7 +35,6 @@
                 :contact_name         "fuu"
                 :contact_phone_number "123456"
                 :extra                "shared@oph.fi"
-                :merchant             {:merchant_id 123456 :merchant_secret "SECRET"}
                 :languages            [{:language_code "fin" :level_code "PERUS"}
                                        {:language_code "eng" :level_code "PERUS"}]})
 
@@ -50,12 +49,6 @@
 
 (def organization
   (slurp "test/resources/organization.json"))
-
-(def payment-formdata-json
-  (read-json-from-file "test/resources/payment_formdata.json"))
-
-(def evaluation-payment-formdata-json
-  (read-json-from-file "test/resources/evaluation_payment_formdata.json"))
 
 (def post-admission
   (slurp "test/resources/post_admission.json"))
@@ -78,14 +71,6 @@
 (defn change-entry
   [json-string key value]
   (j/write-value-as-string (assoc-in (j/read-value json-string) [key] value)))
-
-(def payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
-                     :yki-payment-uri "http://localhost:8080/yki/payment"
-                     :amount          {:PERUS "100.00"
-                                       :KESKI "123.00"
-                                       :YLIN  "160.00"}
-                     :msg             {:fi "msg_fi"
-                                       :sv "msg_sv"}})
 
 (defn cas-mock-routes [port]
   {"/cas/v1/tickets"                                            {:status    201
@@ -212,10 +197,10 @@
         columns-str (->> columns
                          (map name)
                          (str/join ","))
-        values-str (->> columns
-                        (map quarantine)
-                        (map #(if % (str "'" % "'") "NULL"))
-                        (str/join ","))]
+        values-str  (->> columns
+                         (map quarantine)
+                         (map #(if % (str "'" % "'") "NULL"))
+                         (str/join ","))]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO quarantine (" columns-str ") VALUES (" values-str ") ON CONFLICT DO NOTHING;"))))
 
 (defn update-quarantine-language! [id language]
@@ -234,10 +219,6 @@
 (defn insert-organizer [organizer-oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO organizer (oid, agreement_start_date, agreement_end_date, contact_name, contact_email, contact_phone_number, extra)
         VALUES ('" organizer-oid "', '2018-01-01', '2089-01-01', 'name', 'email@oph.fi', 'phone', 'shared@oph.fi') ON CONFLICT DO NOTHING")))
-
-(defn insert-payment-config [organizer-oid]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO payment_config (organizer_id, merchant_id, merchant_secret)
-        VALUES ((SELECT id FROM organizer WHERE oid = '" organizer-oid "' AND deleted_at IS NULL), 12345, 'SECRET_KEY')")))
 
 (defn insert-languages [organizer-oid]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_language (language_code, level_code, organizer_id) values ('fin', 'PERUS', (SELECT id FROM organizer WHERE oid = '" organizer-oid "' AND deleted_at IS NULL))"))
@@ -389,55 +370,15 @@
                                VALUES (" evaluation-order-id ", 'LISTENING')"))
       {:evaluation-order-id evaluation-order-id})))
 
-(defn insert-evaluation-payment-data [evaluation-order-id]
-  (jdbc/execute! @embedded-db/conn (str "UPDATE evaluation_payment_config SET merchant_id=12345, merchant_secret='6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ', email='kirjaamo@testi.fi' "))
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment
-                                               (state, evaluation_order_id, amount, lang, order_number) VALUES
-                                               ('UNPAID'," evaluation-order-id ", 100, 'fi', 'YKI-EVA-TEST')")))
-
 (defn insert-evaluation-payment-new-data [evaluation-order-id]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO evaluation_payment_new
                                                (state, evaluation_order_id, amount, reference, transaction_id, href) VALUES
                                                ('UNPAID'," evaluation-order-id ", 100, 'fake-reference', 'fake-transaction-id',
                                                'https://pay.paytrail.com/pay/fake-transaction-id')")))
 
-(defn get-evaluation-order-and-status [{:keys [first_names last_name email birthdate]}]
-  (select-one (str "SELECT
-  eo.id,
-  eo.first_names,
-  eo.last_name,
-  eo.email,
-  eo.birthdate,
-  edl.language_code,
-  edl.level_code,
-  ed.exam_date,
-  ep.state,
-  (
-    SELECT array_to_json(array_agg(subtest))
-    FROM (
-      SELECT subtest
-      FROM evaluation_order_subtest
-      WHERE evaluation_order_id= eo.id
-    ) subtest
-  ) AS subtests
-FROM evaluation_order eo
-INNER JOIN evaluation ev ON eo.evaluation_id = ev.id
-INNER JOIN exam_date_language edl ON edl.id = ev.exam_date_language_id
-INNER JOIN exam_date ed ON ev.exam_date_id = ed.id
-INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
-WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND eo.email = '" email "' AND eo.birthdate = '" birthdate "'")))
-
-(defn get-evaluation-payment-status-by-order-id [order-id]
-  (select-one
-    (str "SELECT ep.state, ep.amount
-         FROM evaluation_order eo
-         INNER JOIN evaluation_payment ep ON ep.evaluation_order_id = eo.id
-         WHERE eo.id = " order-id " AND deleted_at IS NULL")))
-
 (defn insert-base-data []
   (let [organizer-oid (:oid organizer)]
     (insert-organizer organizer-oid)
-    (insert-payment-config organizer-oid)
     (insert-languages organizer-oid)
     (insert-exam-dates)
     (jdbc/execute! @embedded-db/conn "UPDATE exam_date set registration_end_date = '2039-12-01'")
@@ -448,12 +389,6 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('test@user.com', 'test@user.com') "))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('anothertest@user.com', 'anothertest@user.com') "))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant (external_user_id, email) VALUES ('thirdtest@user.com', 'thirdtest@user.com') ")))
-
-(defn insert-payment []
-  (jdbc/execute! @embedded-db/conn (str
-                                     "INSERT INTO registration(state, exam_session_id, participant_id) values ('SUBMITTED', " select-exam-session ", " select-participant ")"))
-  (jdbc/execute! @embedded-db/conn (str
-                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values ('UNPAID', (SELECT id FROM registration where state = 'SUBMITTED'), 100.00, 'fi', 'order1234')")))
 
 (defn insert-exam-payment-new [registration-id amount reference transaction-id href]
   (let [quote-strings #(if (string? %)
@@ -480,10 +415,7 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
 (defn insert-unpaid-expired-registration []
   (jdbc/execute! @embedded-db/conn (str
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                     ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
-  (jdbc/execute! @embedded-db/conn (str
-                                     "INSERT INTO payment(state, registration_id, amount, lang, order_number) values
-                         ('UNPAID', (SELECT id FROM registration where person_oid = '5.4.3.2.3'), 100.00, 'fi', 'order1234')")))
+                                     ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')")))
 
 (defn insert-login-link [code expires-at]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
@@ -530,38 +462,31 @@ WHERE eo.first_names = '" first_names "' AND eo.last_name = '" last_name "' AND 
     (template+data->pdf-bytes [_ template-name language template-data]
       (template-util/render url-helper template-name language template-data))))
 
-(defn create-examination-payment-helper [db url-helper use-new-payments-api?]
+(defn create-examination-payment-helper [db url-helper]
   (ig/init-key
     :yki.util/exam-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config {:use-new-payments-api? use-new-payments-api?
-                      :amount                (:amount payment-config)
-                      :merchant-id           "375917"
-                      :merchant-secret       "SAIPPUAKAUPPIAS"}
+     :payment-config {:amount          {:PERUS "135.00"
+                                        :KESKI "155.00"
+                                        :YLIN  "195.00"}
+                      :merchant-id     "375917"
+                      :merchant-secret "SAIPPUAKAUPPIAS"}
      :pdf-renderer   (mock-pdf-renderer url-helper)}))
 
-(def old-evaluation-payment-config {:use-new-payments-api? false
-                                    :amount                {:READING   "50.00"
-                                                            :LISTENING "50.00"
-                                                            :WRITING   "50.00"
-                                                            :SPEAKING  "50.00"}})
-(def new-evaluation-payment-config {:use-new-payments-api? true
-                                    :amount                {:READING   "50.00"
-                                                            :LISTENING "50.00"
-                                                            :WRITING   "50.00"
-                                                            :SPEAKING  "50.00"}
-                                    :merchant-id           "375917"
-                                    :merchant-secret       "SAIPPUAKAUPPIAS"})
+(def new-evaluation-payment-config {:amount          {:READING   "50.00"
+                                                      :LISTENING "50.00"
+                                                      :WRITING   "50.00"
+                                                      :SPEAKING  "50.00"}
+                                    :merchant-id     "375917"
+                                    :merchant-secret "SAIPPUAKAUPPIAS"})
 
-(defn create-evaluation-payment-helper [db url-helper use-new-payments-api?]
+(defn create-evaluation-payment-helper [db url-helper]
   (ig/init-key
     :yki.util/evaluation-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config (if use-new-payments-api?
-                       new-evaluation-payment-config
-                       old-evaluation-payment-config)}))
+     :payment-config new-evaluation-payment-config}))
 
 (defn no-auth-middleware [db url-helper]
   (ig/init-key

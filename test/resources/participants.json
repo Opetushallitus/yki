@@ -18,7 +18,6 @@
         "zip": "12346"
       },
       "original_exam_session_id": null,
-      "order_number": null,
       "kind": "ADMISSION",
       "state": "COMPLETED",
       "registration_id": 1
@@ -42,7 +41,6 @@
         "zip": "12345"
       },
       "original_exam_session_id": null,
-      "order_number": null,
       "kind": "ADMISSION",
       "state": "COMPLETED",
       "registration_id": 2
@@ -65,7 +63,6 @@
         "zip": "12346"
       },
       "original_exam_session_id": null,
-      "order_number": null,
       "kind": "POST_ADMISSION",
       "state": "COMPLETED",
       "registration_id": 3
@@ -88,7 +85,6 @@
         "zip": "12346"
       },
       "original_exam_session_id": null,
-      "order_number": "order1234",
       "kind": "ADMISSION",
       "state": "EXPIRED",
       "registration_id": 4

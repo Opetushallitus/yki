@@ -21,21 +21,22 @@
                                           :tunnistus-host      "tunnistus.untuvaopintopolku.fi"
                                           :yki-host-virkailija "http://localhost:8080"}
 
- :yki.handler/payment                    {:db             #ig/ref :duct.database/sql
-                                          :auth           #ig/ref :yki.middleware.auth/with-authentication
-                                          :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
-                                                           :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"}}
+ :yki.util/exam-payment-helper           {:payment-config {:merchant-id     "375917"
+                                                           :merchant-secret "SAIPPUAKAUPPIAS"
+                                                           :amount          {:PERUS "135.00"
+                                                                             :KESKI "155.00"
+                                                                             :YLIN  "195.00"}}}
 
- :yki.handler/evaluation-payment         {:db             #ig/ref :duct.database/sql
-                                          :auth           #ig/ref :yki.middleware.auth/with-authentication
-                                          :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
-                                                           :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/evaluation-payment"
+ :yki.util/evaluation-payment-helper     {:payment-config {:merchant-id     "375917"
+                                                           :merchant-secret "SAIPPUAKAUPPIAS"
                                                            :amount          {:READING   "50.00"
                                                                              :LISTENING "50.00"
                                                                              :WRITING   "50.00"
-                                                                             :SPEAKING  "50.00"}}
-                                          :url-helper     #ig/ref :yki.util/url-helper
-                                          :email-q        #ig/ref :yki.job.job-queue/email-q}
+                                                                             :SPEAKING  "50.00"}}}
+
+ :yki.handler/exam-payment-new           {:db         #ig/ref :duct.database/sql
+                                          :auth       #ig/ref :yki.middleware.no-auth/with-authentication
+                                          :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
  :yki.handler/evaluation                 {:db             #ig/ref :duct.database/sql
                                           :payment-config {:amount {:READING   "50.00"
@@ -48,19 +49,14 @@
                                           :url-helper     #ig/ref :yki.util/url-helper
                                           :email-q        #ig/ref :yki.job.job-queue/email-q
                                           :onr-client     #ig/ref :yki.boundary.onr/onr-client
-                                          :access-log     #ig/ref :yki.middleware.access-log/with-logging
-                                          :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
-                                                           :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                                           :amount          {:PERUS "120.00"
-                                                                             :KESKI "140.00"
-                                                                             :YLIN  "180.00"}}}
+                                          :access-log     #ig/ref :yki.middleware.access-log/with-logging}
 
  :yki.handler/exam-session-public        {:db             #ig/ref :duct.database/sql
                                           :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
                                                            :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                                           :amount          {:PERUS     "120.00"
-                                                                             :KESKI     "140.00"
-                                                                             :YLIN      "180.00"
+                                                           :amount          {:PERUS     "135.00"
+                                                                             :KESKI     "155.00"
+                                                                             :YLIN      "195.00"
                                                                              :READING   "50.00"
                                                                              :LISTENING "50.00"
                                                                              :WRITING   "50.00"
@@ -93,5 +89,5 @@
                                           :url-helper   #ig/ref :yki.util/url-helper
                                           :file-handler #ig/ref :yki.handler/file
                                           :access-log   #ig/ref :yki.middleware.access-log/with-logging
-                                          :auth         #ig/ref :yki.middleware.auth/with-authentication}}
+                                          :auth         #ig/ref :yki.middleware.no-auth/with-authentication}}
 

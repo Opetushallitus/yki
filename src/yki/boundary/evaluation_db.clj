@@ -17,19 +17,11 @@
   (get-evaluation-period-by-id [db id])
   (get-evaluation-periods-by-exam-date-id [db exam-date-id])
   (get-evaluation-order-by-id [db id])
-  (get-evaluation-order-with-payment [db id])
-  (get-payment-by-order-number [db order-number])
-  (get-payment-config [db])
   (get-new-payment-by-transaction-id [db transaction-id])
-  (get-order-data-by-order-number [db order-number])
   (create-evaluation-order! [db evaluation-id evaluation-order])
   (create-evaluation! [db exam-date-languages evaluation])
   (create-evaluation-payment! [db payment-helper payment])
-  (complete-payment! [db payment-params])
   (complete-new-payment! [db payment-id]))
-
-(defn- int->boolean [value]
-  (pos? value))
 
 (extend-protocol Evaluations
   Boundary
@@ -41,20 +33,9 @@
     (q/select-evaluations-by-exam-date-id spec {:exam_date_id exam-date-id}))
   (get-evaluation-order-by-id [{:keys [spec]} id]
     (first (q/select-evaluation-order-by-id spec {:evaluation_order_id id})))
-  (get-evaluation-order-with-payment [{:keys [spec]} id]
-    (first (q/select-evaluation-order-with-payment spec {:evaluation_order_id id})))
-  (get-payment-by-order-number
-    [{:keys [spec]} order-number]
-    (first (q/select-evaluation-payment-by-order-number spec {:order_number order-number})))
-  (get-payment-config
-    [{:keys [spec]}]
-    (first (q/select-evaluation-payment-config spec)))
   (get-new-payment-by-transaction-id
     [{:keys [spec]} transaction-id]
     (first (q/select-evaluation-payment-new-by-transaction-id spec {:transaction_id transaction-id})))
-  (get-order-data-by-order-number
-    [{:keys [spec]} order-number]
-    (first (q/select-evaluation-order-data-by-order-number spec {:order_number order-number})))
   (create-evaluation!
     [{:keys [spec]} exam-date-languages evaluation]
     (jdbc/with-db-transaction [tx spec]
@@ -91,15 +72,6 @@
                                     (subs 4))
                order-number     (str "YKI-EVAL" unix-ts-substr (format "%09d" order-number-seq))]
            (insert-initial-payment-data! payment-helper tx (assoc payment :order_number order-number))))))
-  (complete-payment!
-    [{:keys [spec]} {:keys [order-number payment-id payment-method timestamp reference-number]}]
-    (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/update-evaluation-payment! tx {:order_number        order-number
-                                                      :external_payment_id payment-id
-                                                      :payment_method      payment-method
-                                                      :payed_at            timestamp
-                                                      :reference_number    reference-number
-                                                      :state               "PAID"}))))
   (complete-new-payment!
     [{:keys [spec]} payment-id]
     (jdbc/with-db-transaction [tx spec]

@@ -9,18 +9,17 @@
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
     [ring.middleware.file]
-    [ring.util.http-response :refer [bad-request internal-server-error ok]]
+    [ring.util.http-response :refer [bad-request found internal-server-error ok]]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.exam-payment-new-db :as payment-db]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.organization :as organization]
-    [yki.handler.payment :refer [cancel-redirect error-redirect success-redirect]]
     [yki.handler.routing :as routing]
     [yki.middleware.payment :refer [with-request-validation]]
     [yki.spec :as ys]
     [yki.registration.email :as registration-email]
     [yki.util.db :refer [rollback-on-exception]]
-    [yki.util.exam-payment-helper :refer [create-or-return-payment-for-registration! get-payment-amount-for-registration]]
+    [yki.util.exam-payment-helper :refer [registration->payment get-payment-amount-for-registration]]
     [yki.util.audit-log :as audit]
     [yki.util.common :refer [format-datetime-for-export]]
     [yki.util.template-util :as template-util])
@@ -62,7 +61,7 @@
       (rollback-on-exception
         tx
         #(let [amount            (:paytrail (get-payment-amount-for-registration payment-helper registration))
-               paytrail-response (create-or-return-payment-for-registration! payment-helper tx registration lang amount)
+               paytrail-response (registration->payment payment-helper tx registration lang amount)
                redirect-url      (paytrail-response "href")]
            redirect-url)))
     ; Other values are unexpected. Redirect to error page.
@@ -95,6 +94,15 @@
           with-organizer-name (fn [{:keys [oid] :as val}]
                                 (assoc val :organizer_name (oid->organizer-name oid)))]
       (map with-organizer-name payments))))
+
+(defn- success-redirect [url-helper lang exam-session-id]
+  (found (url-helper :payment.success-redirect lang exam-session-id)))
+
+(defn- error-redirect [url-helper lang exam-session-id]
+  (found (url-helper :payment.error-redirect lang exam-session-id)))
+
+(defn- cancel-redirect [url-helper lang exam-session-id]
+  (found (url-helper :payment.cancel-redirect lang exam-session-id)))
 
 (defmethod ig/init-key :yki.handler/exam-payment-new [_ {:keys [auth access-log db payment-helper pdf-renderer url-helper email-q]}]
   {:pre [(some? auth) (some? access-log) (some? db) (some? email-q) (some? payment-helper) (some? pdf-renderer) (some? url-helper)]}

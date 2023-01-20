@@ -3,19 +3,13 @@
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
-            [yki.util.db :refer [rollback-on-exception]]
-            [yki.util.exam-payment-helper :refer [create-or-return-payment-for-registration! initialise-payment-on-registration?]])
+            [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
 
 (defprotocol Registration
-  ; Payment related methods
-  (get-legacy-payment-by-registration-id [db registration-id oid])
-  (get-legacy-payment-by-order-number [db order-number])
-  (get-legacy-payment-config-by-order-number [db order-number])
-  (complete-registration-and-legacy-payment! [db payment-params])
-  (update-registration-details! [db payment-helper registration language amount after-fn])
+  (update-registration-details! [db registration after-fn])
   (get-registration-data-for-new-payment [db registration-id external-user-id])
   (get-new-payment-details [db transaction-id])
   (complete-new-payment-and-exam-registration! [db registration-id payment-id after-fn])
@@ -32,7 +26,6 @@
   (exam-session-registration-open? [db exam-session-id])
   (exam-session-post-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
-  (get-participant-data-by-order-number [db order-number])
   (get-participant-data-by-registration-id [db registration-id])
   (get-registration [db registration-id external-user-id])
   (get-or-create-participant! [db participant])
@@ -44,27 +37,9 @@
 
 (extend-protocol Registration
   Boundary
-  (get-legacy-payment-by-registration-id [{:keys [spec]} registration-id oid]
-    (first (q/select-payment-by-registration-id spec {:registration_id registration-id :oid oid})))
-  (get-legacy-payment-by-order-number
-    [{:keys [spec]} order-number]
-    (first (q/select-payment-by-order-number spec {:order_number order-number})))
-  (complete-registration-and-legacy-payment!
-    [{:keys [spec]} {:keys [order-number payment-id payment-method timestamp reference-number]}]
-    (jdbc/with-db-transaction [tx spec]
-      (q/update-payment! tx {:order_number        order-number
-                             :external_payment_id payment-id
-                             :payment_method      payment-method
-                             :payed_at            timestamp
-                             :reference_number    reference-number
-                             :state               "PAID"})
-      (int->boolean (q/update-registration-to-completed! tx {:order_number order-number}))))
   (get-participant-by-id
     [{:keys [spec]} id]
     (first (q/select-participant-by-id spec {:id id})))
-  (get-legacy-payment-config-by-order-number
-    [{:keys [spec]} order-number]
-    (first (q/select-payment-config-by-order-number spec {:order_number order-number})))
   (get-participant-by-external-id
     [{:keys [spec]} external-id]
     (first (q/select-participant-by-external-id spec {:external_user_id external-id})))
@@ -100,13 +75,11 @@
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-email! tx {:email email :id participant-id})))
   (update-registration-details!
-    [{:keys [spec]} payment-helper registration language amount after-fn]
+    [{:keys [spec]} registration after-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
         tx
         #(when-let [update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
-           (when (initialise-payment-on-registration? payment-helper)
-             (create-or-return-payment-for-registration! payment-helper tx registration language amount))
            (after-fn)
            update-success))))
   (create-registration!
@@ -121,9 +94,6 @@
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (q/update-submitted-registrations-to-expired<! tx)))
-  (get-participant-data-by-order-number
-    [{:keys [spec]} order-number]
-    (first (q/select-participant-data-by-order-number spec {:order_number order-number})))
   (get-participant-data-by-registration-id
     [{:keys [spec]} registration-id]
     (first (q/select-participant-data-by-registration-id spec {:id registration-id})))

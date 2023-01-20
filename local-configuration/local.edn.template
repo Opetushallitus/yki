@@ -20,14 +20,7 @@
                             :email-q #ig/ref :yki.job.job-queue/email-q
                             :onr-client #ig/ref :yki.boundary.onr/onr-client
                             :access-log #ig/ref :yki.middleware.access-log/with-logging
-                            :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                                             :merchant_id 13466
-                                             :merchant_secret "6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ"
-                                             :yki-payment-uri "http://example.com:8080/yki/payment"
-                                             :amount {:PERUS "120.00"
-                                                      :KESKI "140.00"
-                                                      :YLIN "180.00"}}
-                            ; User configutation. Changing the id will create a new participant.
+                            ; User configuration. Changing the id will create a new participant.
                             :user-config {:identity {:external-user-id "local_test@testi.fi"
                                                      :email "local_test@testi.fi"
                                                      :ssn "301079-900U"
@@ -36,9 +29,9 @@
  :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
                                    :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                                     :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                                    :amount {:PERUS "120.00"
-                                                             :KESKI "140.00"
-                                                             :YLIN "180.00"
+                                                    :amount {:PERUS "135.00"
+                                                             :KESKI "155.00"
+                                                             :YLIN "195.00"
                                                              :READING "50.00"
                                                              :LISTENING "50.00"
                                                              :WRITING "50.00"
@@ -72,25 +65,4 @@
 
  ;; Localhost is not acceptable redirect uri for paytrail atm. This is why when developing
  ;; on locahost, random name can be set to resolve to localhost (here example.coom) in the host file
-
- :yki.handler/payment {:db #ig/ref :duct.database/sql
-  :auth #ig/ref :yki.middleware.auth/with-authentication
-  :access-log #ig/ref :yki.middleware.access-log/with-logging
-  :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                   :yki-payment-uri "http://example.com:8080/yki/payment"
-                   :amount {:READING "50.00"
-                            :LISTENING "50.00"
-                            :WRITING "50.00"
-                            :SPEAKING "50.00"}
-                   :test_mode true}}
-
- :yki.handler/evaluation-payment {:db #ig/ref :duct.database/sql
-    :auth #ig/ref :yki.middleware.auth/with-authentication
-    :access-log #ig/ref :yki.middleware.access-log/with-logging
-    :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
-                      :yki-payment-uri "http://example.com:8080/yki/evaluation-payment"
-                      :amount {:READING "50.00"
-                              :LISTENING "50.00"
-                              :WRITING "50.00"
-                              :SPEAKING "50.00"}
-                      :test_mode true}}}
+}

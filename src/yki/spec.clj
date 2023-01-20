@@ -61,9 +61,7 @@
                                      ::created]))
 (s/def ::languages (s/or :null nil? :array (s/coll-of ::language)))
 (s/def ::attachments (s/or :null nil? :array (s/coll-of ::attachment)))
-(s/def ::merchant_id (s/nilable pos-int?))
-(s/def ::merchant_secret (s/nilable (s/and string? #(<= (count %) 30))))
-(s/def ::merchant (s/nilable (s/keys :req-un [::merchant_id ::merchant_secret])))
+
 (s/def ::organizer-type (s/keys :req-un [::oid
                                          ::agreement_start_date
                                          ::agreement_end_date
@@ -71,8 +69,7 @@
                                          ::contact_email
                                          ::contact_phone_number]
                                 :opt-un [::languages
-                                         ::extra
-                                         ::merchant]))
+                                         ::extra]))
 
 (s/def ::organizers (s/coll-of ::organizer-type))
 (s/def ::organizers-response (s/keys :req-un [::organizers]))
@@ -256,46 +253,6 @@
                                      ::exam_session_id]
                             :opt-un [::user_data]))
 
-;; payment
-(def pt-locale-regexp #"^[a-z]{1,2}[_][A-Z]{1,2}$")
-
-(s/def ::timestamp date?)
-(s/def ::order-number (s/and ::non-blank-string #(< (count %) 33)))
-(s/def ::msg ::non-blank-string)
-(s/def ::payment-id (s/and ::non-blank-string #(< (count %) 26)))
-(s/def ::uri ::non-blank-string)
-
-(s/def ::pt-payment-params (s/keys :req [::language-code
-                                         ::order-number
-                                         ::reference-number]))
-
-(s/def ::MERCHANT_ID number?)
-(s/def ::LOCALE (s/and string? #(re-matches pt-locale-regexp %)))
-(s/def ::URL_SUCCESS ::non-blank-string)
-(s/def ::URL_CANCEL ::non-blank-string)
-(s/def ::AMOUNT (s/and string? #(re-matches amount-regexp %)))
-(s/def ::ORDER_NUMBER ::order-number)
-(s/def ::MSG_SETTLEMENT_PAYER ::non-blank-string)
-(s/def ::MSG_UI_MERCHANT_PANEL ::non-blank-string)
-(s/def ::PARAMS_IN ::non-blank-string)
-(s/def ::PARAMS_OUT ::non-blank-string)
-(s/def ::AUTHCODE ::non-blank-string)
-
-(s/def ::params (s/keys :req-un [::MERCHANT_ID
-                                 ::LOCALE
-                                 ::URL_SUCCESS
-                                 ::URL_CANCEL
-                                 ::AMOUNT
-                                 ::ORDER_NUMBER
-                                 ::MSG_SETTLEMENT_PAYER
-                                 ::MSG_UI_MERCHANT_PANEL
-                                 ::PARAMS_IN
-                                 ::PARAMS_OUT
-                                 ::AUTHCODE]))
-
-(s/def ::pt-payment-form-data (s/keys :req-un [::uri
-                                               ::params]))
-
 ;; registration
 
 (s/def ::first_name ::non-blank-string)
@@ -362,11 +319,9 @@
 (s/def ::form ::registration)
 (s/def ::kind ::registration-kind)
 (s/def ::original_exam_session_id (s/nilable ::id))
-(s/def :participant/order_number (s/nilable ::order-number))
 (s/def ::exam-session-participant (s/keys :req-un [::created
                                                    ::form
                                                    ::registration_id
-                                                   :participant/order_number
                                                    ::original_exam_session_id
                                                    ::kind
                                                    ::state]))
@@ -435,7 +390,9 @@
                                      ::subtests]))
 
 (s/def ::evaluation_order_id pos-int?)
-(s/def ::evaluation-order-response (s/keys :req-un [::evaluation_order_id]))
+(s/def ::signature ::non-blank-string)
+(s/def ::evaluation-order-response (s/keys :req-un [::evaluation_order_id
+                                                    ::signature]))
 
 (s/def ::evaluation-response (s/keys
                                :req-un [::id
@@ -445,18 +402,3 @@
                                         ::subtests
                                         ::lang
                                         ::amount]))
-
-(s/def ::params (s/keys :req-un [::MERCHANT_ID
-                                 ::LOCALE
-                                 ::URL_SUCCESS
-                                 ::URL_CANCEL
-                                 ::ORDER_NUMBER
-                                 ::MSG_SETTLEMENT_PAYER
-                                 ::MSG_UI_MERCHANT_PANEL
-                                 ::PARAMS_IN
-                                 ::PARAMS_OUT
-                                 ::AUTHCODE]))
-
-(s/def ::evaluation-payment-form-data (s/keys :req-un [::uri
-                                                       ::params]))
-

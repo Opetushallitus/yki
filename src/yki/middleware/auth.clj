@@ -122,18 +122,6 @@
     :request-method :get}
    {:pattern #".*/api/evaluation.*"
     :handler any-access}
-   {:pattern        #".*/evaluation-payment/formdata"
-    :handler        any-access
-    :request-method :get}
-   {:pattern        #".*/evaluation-payment/success"
-    :handler        any-access
-    :request-method :get}
-   {:pattern        #".*/evaluation-payment/cancel"
-    :handler        any-access
-    :request-method :get}
-   {:pattern        #".*/evaluation-payment/notify"
-    :handler        any-access
-    :request-method :get}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
    {:pattern #".*/api/virkailija/organizer/.*/exam-date.*"
@@ -163,14 +151,6 @@
     :handler participant-authenticated}
    {:pattern #".*/api/exam-date/.*"
     :handler oph-admin-access}
-   {:pattern #".*/payment/formdata"
-    :handler participant-authenticated}
-   {:pattern #".*/payment/success"
-    :handler participant-authenticated}
-   {:pattern #".*/payment/cancel"
-    :handler participant-authenticated}
-   {:pattern #".*/payment/notify"
-    :handler any-access}
    {:pattern #".*/api/payment/v2/report"
     :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
    {:pattern #".*/api/payment/v2/paytrail/.*"

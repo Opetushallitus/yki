@@ -27,93 +27,11 @@
     (base/insert-login-link base/code-ok "2038-01-01")
     (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")))
 
-(deftest registration-create-and-update-with-legacy-payments-test
-  (insert-initial-data!)
-  (with-routes!
-    common-route-specs
-    (let [use-new-payments-api? false
-          {session                :session
-           init-response          :init-response
-           init-response-body     :init-response-body
-           registration           :registration
-           registration-id        :registration-id
-           create-twice-response  :create-twice-response
-           submit-response        :submit-response
-           payment                :payment
-           payment-link           :payment-link
-           submitted-registration :submitted-registration
-           email-request          :email-request} (common-bindings server use-new-payments-api?)]
-      (testing "post init endpoint should create registration with status STARTED"
-        (is (= (get-in init-response [:response :status]) 200))
-        (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))
-        (is (= (:state registration) "STARTED"))
-        (is (some? (:started_at registration))))
-
-      (testing "second post before submitting should return init data"
-        (let [create-twice-response-body (base/body-as-json (:response create-twice-response))]
-          (is (= (get-in create-twice-response [:response :status]) 200))
-          (is (= create-twice-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))))
-
-      (testing "post submit endpoint should create payment"
-        (is (= (get-in submit-response [:response :status]) 200))
-        (is (= (:id payment) registration-id)))
-
-      (testing "and send email with payment link"
-        (is (= (:subject email-request) "Maksulinkki: suomi perustaso - Omenia, 27.1.2018"))
-        (is (s/includes? (:body email-request) "100,00 €"))
-        (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 Espoo"))
-        (is (= (:type payment-link) "PAYMENT"))
-        (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port use-new-payments-api?)))
-        (is (= (:order_number payment) "YKI6000000001")))
-
-      (testing "and set registration status to SUBMITTED"
-        (is (= (:state submitted-registration) "SUBMITTED"))
-        (is (map? (:form submitted-registration)))
-        (is (some? (:started_at submitted-registration))))
-
-      (testing "sanitize registration input"
-        (is (= (get-in submitted-registration [:form :post_office]) "Helsinki_")))
-
-      (testing "and delete item from exam session queue"
-        (is (= {:count 0}
-               (base/select-one "SELECT COUNT(1) FROM exam_session_queue"))))
-
-      (testing "second post to same session after submit should return conflict with proper error"
-        (let [create-twice-response (-> session
-                                        (peridot/request (str routing/registration-api-root "/init")
-                                                         :body (j/write-value-as-string {:exam_session_id 1})
-                                                         :content-type "application/json"
-                                                         :request-method :post))]
-
-          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
-          (is (= (get-in create-twice-response [:response :status]) 409))))
-
-      (testing "second post to another session should return conflict with proper error"
-        (let [create-twice-response (-> session
-                                        (peridot/request (str routing/registration-api-root "/init")
-                                                         :body (j/write-value-as-string {:exam_session_id 2})
-                                                         :content-type "application/json"
-                                                         :request-method :post))]
-
-          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
-          (is (= (get-in create-twice-response [:response :status]) 409))))
-
-      (testing "when session is full should return conflict with proper error"
-        (fill-exam-session 50, "ADMISSION")
-        (let [session-full-response (-> session
-                                        (peridot/request (str routing/registration-api-root "/init")
-                                                         :body (j/write-value-as-string {:exam_session_id 2})
-                                                         :content-type "application/json"
-                                                         :request-method :post))]
-          (is (= (get-in session-full-response [:response :status]) 409))
-          (is (= (get-in (base/body-as-json (:response session-full-response)) ["error" "full"]) true)))))))
-
 (deftest registration-create-and-update-with-new-payments-test
   (insert-initial-data!)
   (with-routes!
     common-route-specs
-    (let [use-new-payments-api? true
-          {session                :session
+    (let [{session                :session
            init-response          :init-response
            init-response-body     :init-response-body
            registration           :registration
@@ -123,7 +41,7 @@
            payment                :payment
            payment-link           :payment-link
            submitted-registration :submitted-registration
-           email-request          :email-request} (common-bindings server use-new-payments-api?)]
+           email-request          :email-request} (common-bindings server)]
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
         (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))
@@ -141,10 +59,10 @@
 
       (testing "and send email with payment link"
         (is (= (:subject email-request) "Maksulinkki: suomi perustaso - Omenia, 27.1.2018"))
-        (is (s/includes? (:body email-request) "100,00 €"))
+        (is (s/includes? (:body email-request) "135,00 €"))
         (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 Espoo"))
         (is (= (:type payment-link) "PAYMENT"))
-        (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port use-new-payments-api?))))
+        (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port))))
 
       (testing "and set registration status to SUBMITTED"
         (is (= (:state submitted-registration) "SUBMITTED"))
