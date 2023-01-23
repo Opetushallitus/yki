@@ -4,7 +4,6 @@
             [ring.util.http-response :refer [ok found]]
             [yki.auth.cas-auth :as cas-auth]
             [yki.auth.code-auth :as code-auth]
-            [yki.auth.header-auth :as header-auth]
             [yki.handler.routing :as routing]
             [yki.middleware.access-log]))
 
@@ -14,9 +13,6 @@
    (context routing/auth-root []
      :no-doc true
      :middleware [auth access-log]
-     ;; Initsession used by shibboleth auth. Can be removed.
-     (GET "/initsession" [lang :as request]
-       (header-auth/login request onr-client url-helper))
      (GET "/user" {session :session}
        (ok (update-in session [:identity] dissoc :ticket)))
      (GET "/login" [code lang]

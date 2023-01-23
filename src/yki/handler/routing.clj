@@ -6,8 +6,6 @@
 
 (def auth-root (str app-root "/auth"))
 
-(def auth-init-session-uri "/initsession")
-
 (def virkailija-auth-uri "/cas")
 
 (def virkailija-auth-callback (str auth-root virkailija-auth-uri "/callback"))
