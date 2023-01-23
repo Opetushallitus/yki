@@ -159,6 +159,8 @@
     :handler participant-authenticated}
    {:pattern #".*/api/evaluation-payment/v2/.*"
     :handler any-access}
+   {:pattern #".*/api/yki-register-debug/.*"
+    :handler oph-admin-access}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"

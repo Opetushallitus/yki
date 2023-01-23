@@ -31,7 +31,8 @@
                                                        #ig/ref :yki.handler/quarantine
                                                        #ig/ref :yki.handler/evaluation
                                                        #ig/ref :yki.handler/exam-payment-new
-                                                       #ig/ref :yki.handler/evaluation-payment-new]
+                                                       #ig/ref :yki.handler/evaluation-payment-new
+                                                       #ig/ref :yki.handler/yki-register-debug]
 
   :yki/migrations                                     {}
 
@@ -175,7 +176,12 @@
                                                        :payment-helper #ig/ref :yki.util/evaluation-payment-helper
                                                        :pdf-renderer   #ig/ref :yki.util/pdf
                                                        :url-helper     #ig/ref :yki.util/url-helper
-                                                       :email-q        #ig/ref :yki.job.job-queue/email-q}}
+                                                       :email-q        #ig/ref :yki.job.job-queue/email-q}
+
+  :yki.handler/yki-register-debug {:access-log #ig/ref :yki.middleware.access-log/with-logging
+                                   :auth #ig/ref :yki.middleware.auth/with-authentication
+                                   :db #ig/ref :duct.database/sql
+                                   :url-helper #ig/ref :yki.util/url-helper}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"
