@@ -130,30 +130,32 @@
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id
    raw-form onr-client exam-session-registration]
-  (let [form            (sanitized-form raw-form)
-        identity        (:identity session)
-        form-with-email (if (= (:auth-method session) "EMAIL")
-                          (assoc form :email (:external-user-id identity))
-                          (assoc form :ssn (:ssn identity)))
-        participant-id  (get-participant-id db identity)
-        email           (:email form)
-        started?        (= (:state exam-session-registration) "STARTED")]
-    (log/info (str "Get registration data with registration id " registration-id " , participant id " participant-id " and lang " lang ". Current state: " (:state exam-session-registration)))
+  (let [form                   (sanitized-form raw-form)
+        identity               (:identity session)
+        form-with-email        (if (= (:auth-method session) "EMAIL")
+                                 (assoc form :email (:external-user-id identity))
+                                 (assoc form :ssn (:ssn identity)))
+        session-participant-id (get-participant-id db identity)
+        email                  (:email form)
+        started?               (= (:state exam-session-registration) "STARTED")]
+    (log/info (str "Get registration data with registration id " registration-id " , participant id " session-participant-id " and lang " lang ". Current state: " (:state exam-session-registration)))
     (when email
-      (registration-db/update-participant-email! db email participant-id))
-    (if-let [registration-data (when started? (get-registration-data db registration-id participant-id lang))]
+      (registration-db/update-participant-email! db email session-participant-id))
+    (if-let [registration-data (when started? (get-registration-data db registration-id session-participant-id lang))]
       (if-let [oid (or (:oid identity)
                        (onr/get-or-create-person
                          onr-client
                          (assoc form-with-email :registration_id registration-id)))]
         (let [amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
+              ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
+              unified-participant-id  (or (:participant_id registration-data) session-participant-id)
               update-registration     {:id             registration-id
                                        :form           form-with-email
                                        :oid            oid
                                        :form_version   1
-                                       :participant_id (or (:participant_id registration-data) participant-id)}
+                                       :participant_id unified-participant-id}
               expiration-date         (registration->expiration-date registration-data)
-              payment-link            {:participant_id        participant-id
+              payment-link            {:participant_id        unified-participant-id
                                        :exam_session_id       nil
                                        :registration_id       registration-id
                                        :expires_at            expiration-date
