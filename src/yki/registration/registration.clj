@@ -12,8 +12,7 @@
             [yki.boundary.registration-db :as registration-db]
             [yki.util.common :as common]
             [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration get-payment-redirect-url]]
-            [yki.util.template-util :as template-util])
-  (:import [java.util UUID]))
+            [yki.util.template-util :as template-util]))
 
 (defn sha256-hash [code]
   (-> code
@@ -91,7 +90,7 @@
         (conflict {:error {:closed true}})))))
 
 (defn create-and-send-link [db url-helper email-q lang login-link template-data]
-  (let [code      (str (UUID/randomUUID))
+  (let [code      (str (random-uuid))
         login-url (url-helper :yki.login-link.url code)
         email     (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
         link-type (:type login-link)
@@ -105,37 +104,6 @@
               :created    (System/currentTimeMillis)
               :subject    (template-util/subject url-helper link-type lang template-data)
               :body       (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
-
-; FINISH ME. needs to create a new login link, cant reuse old because of hash
-; (defn resend-link [db url-helper email-q lang exam-session-id registration-id]
-;   (let [login-link              (login-link-db/get-login-link-by-exam-session-and-registration-id db registration-id)
-;         participant-id          (:participant_id login-link)
-;         registration-data       (registration-db/get-registration-data db registration-id participant-id lang)
-;         code                    (:code login-link)
-;         login-url               (url-helper :yki.login-link.url code)
-;         email                   (:email (registration-db/get-participant-by-id db participant-id))
-;         registration-kind       (:kind registration-data)
-;         registration-end-time   (c/next-start-of-day
-;                                   (f/parse
-;                                     (if (= registration-kind "POST_ADMISSION")
-;                                         (:post_admission_end_date registration-data)
-;                                         (:registration_end_date registration-data))))
-;         expiration-date         (t/min-date
-;                                   (if (= registration-kind "POST_ADMISSION")
-;                                       (c/date-from-now 2)
-;                                       (c/date-from-now 8))
-;                                   registration-end-time)
-;         link-type               (:type login-link)
-;         template-data           (assoc registration-data
-;                                        :amount "??.??" ;FIX ME, need to inject payment config here and probably also to handler
-;                                        :language (template-util/get-language url-helper (:language_code registration-data) lang)
-;                                        :level (template-util/get-level url-helper (:level_code registration-data) lang)
-;                                        :expiration-date (c/format-date-to-finnish-format expiration-date))]
-;       (pgq/put email-q
-;               {:recipients [email]
-;                 :created (System/currentTimeMillis)
-;                 :subject (template-util/subject url-helper link-type lang template-data)
-;                 :body (template-util/render url-helper link-type lang (assoc template-data :login-url login-url))})))
 
 ;; Get registration data with participant found in session
 ;; In a case user has two different registration forms open and a non matching session,
