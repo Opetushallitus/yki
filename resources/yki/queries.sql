@@ -963,6 +963,7 @@ INNER JOIN registration r ON es.id = r.exam_session_id
 WHERE es.id = :id
 AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
 AND r.state != 'STARTED'
+AND r.form IS NOT NULL
 ORDER BY r.created ASC;
 
 --name: cancel-registration-for-organizer!
