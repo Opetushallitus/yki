@@ -186,6 +186,7 @@ SELECT
   q.phone_number,
   r.id AS registration_id,
   r.form,
+  r.state,
   ed.exam_date,
   es.language_code
 FROM quarantine q
@@ -217,7 +218,8 @@ SELECT
   q.email,
   q.phone_number,
   q.end_date,
-  r.form
+  r.form,
+  r.state
 FROM quarantine_review qr
 INNER JOIN quarantine q
   ON qr.quarantine_id = q.id
