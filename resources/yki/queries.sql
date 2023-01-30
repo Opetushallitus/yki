@@ -755,11 +755,11 @@ WHERE re.id = :id
     OR (re.kind = 'POST_ADMISSION' AND (ed.post_admission_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')))
   AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
   AND esl.lang = :lang
-  AND (SELECT COUNT(1)
+  AND EXISTS (SELECT 1
        FROM registration as reg
        WHERE reg.participant_id = :participant_id
          AND reg.state = 'STARTED'
-         AND reg.exam_session_id = es.id) > 0;
+         AND reg.exam_session_id = es.id);
 
 -- name: select-registration-details-for-new-payment
 SELECT re.id,
