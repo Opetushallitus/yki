@@ -732,6 +732,35 @@ WHERE re.id = :id
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
+-- name: select-registration-data-by-participant
+SELECT re.state,
+       re.exam_session_id,
+       re.participant_id,
+       re.kind,
+       es.language_code,
+       es.level_code,
+       ed.exam_date,
+       ed.registration_end_date,
+       ed.post_admission_end_date,
+       esl.street_address,
+       esl.post_office,
+       esl.zip,
+       esl.name
+FROM registration re
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+WHERE re.id = :id
+  AND ((re.kind = 'ADMISSION' AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
+    OR (re.kind = 'POST_ADMISSION' AND (ed.post_admission_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')))
+  AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
+  AND esl.lang = :lang
+  AND EXISTS (SELECT 1
+       FROM registration as reg
+       WHERE reg.participant_id = :participant_id
+         AND reg.state = 'STARTED'
+         AND reg.exam_session_id = es.id);
+
 -- name: select-registration-details-for-new-payment
 SELECT re.id,
        re.exam_session_id,
@@ -764,35 +793,6 @@ SELECT p.id,
 FROM exam_payment_new p
 INNER JOIN registration r ON r.id = p.registration_id
 WHERE p.transaction_id = :transaction_id;
-
--- name: select-registration-data-by-participant
-SELECT re.state,
-       re.exam_session_id,
-       re.participant_id,
-       re.kind,
-       es.language_code,
-       es.level_code,
-       ed.exam_date,
-       ed.registration_end_date,
-       ed.post_admission_end_date,
-       esl.street_address,
-       esl.post_office,
-       esl.zip,
-       esl.name
-FROM registration re
-INNER JOIN exam_session es ON es.id = re.exam_session_id
-INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
-WHERE re.id = :id
-  AND ((re.kind = 'ADMISSION' AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
-       OR (re.kind = 'POST_ADMISSION' AND (ed.post_admission_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')))
-  AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
-  AND esl.lang = :lang
-  AND (SELECT COUNT(1)
-     FROM registration as reg
-     WHERE reg.participant_id = :participant_id
-            AND reg.state = 'STARTED'
-            AND reg.exam_session_id = es.id) > 0;
 
 -- name: insert-new-exam-payment<!
 INSERT INTO exam_payment_new(
