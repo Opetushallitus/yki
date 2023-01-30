@@ -102,7 +102,8 @@
                                            ::last_name
                                            ::form
                                            ::registration_id
-                                           ::id]
+                                           ::id
+                                           ::state]
                                   :opt-un [::ssn
                                            ::email
                                            ::phone_number]))
@@ -120,7 +121,8 @@
                                  ::birthdate
                                  ::first_name
                                  ::last_name
-                                 ::form]
+                                 ::form
+                                 ::state]
                         :opt-un [::ssn
                                  ::email
                                  ::phone_number]))
