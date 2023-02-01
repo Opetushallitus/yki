@@ -50,7 +50,8 @@
               :created    order-time
               :subject    (template-util/evaluation-subject template-data)
               :body       (template-util/render
-                            "evaluation_payment_success" email-language
+                            "evaluation_payment_success"
+                            email-language
                             (update template-data :subtests #(template-util/get-subtests % email-language)))
               :attachments
               (when payment-helper

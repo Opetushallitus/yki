@@ -16,8 +16,6 @@
 
 (def auth-callback (str auth-root "/login"))
 
-(def localisation-api-root (str api-root "/localisation"))
-
 (def exam-date-api-root (str api-root "/exam-date"))
 
 (def login-link-api-root (str api-root "/login-link"))

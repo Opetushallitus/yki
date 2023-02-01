@@ -59,8 +59,7 @@
 
 (defn get-subtests
   [subtests lang]
-  (let [translated (fn [test] (localisation/get-translation lang (subtest-translation-key test)))]
-    (map translated subtests)))
+  (map #(get-subtest % lang) subtests))
 
 (defn subject
   [template lang params]
