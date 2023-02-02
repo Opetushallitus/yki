@@ -67,12 +67,12 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :payment.error-redirect lang (:exam_session_id registration))))
 
-(defn- payment->json [url-helper {:keys [amount exam_date form language_code level_code organizer_name paid_at reference]}]
+(defn- payment->json [{:keys [amount exam_date form language_code level_code organizer_name paid_at reference]}]
   {:organizer     organizer_name
    :paid_at       (format-datetime-for-export paid_at)
    :exam_date     exam_date
-   :exam_language (template-util/get-language url-helper language_code "fi")
-   :exam_level    (template-util/get-level url-helper level_code "fi")
+   :exam_language (template-util/get-language language_code "fi")
+   :exam_level    (template-util/get-level level_code "fi")
    :name          (str/join ", " [(:last_name form) (:first_name form)])
    :email         (:email form)
    :amount        (->>
@@ -132,7 +132,7 @@
                 completed-payments (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)
                 result             (->> completed-payments
                                         (with-organizer-names url-helper)
-                                        (map #(payment->json url-helper %))
+                                        (map payment->json)
                                         (sort-by (juxt :organizer :paid_at)))]
             (ok {:payments result}))
           (catch Exception e
@@ -167,7 +167,6 @@
                   send-registration-complete-email! (fn [updated-payment-details]
                                                       (registration-email/send-exam-registration-completed-email!
                                                         email-q
-                                                        url-helper
                                                         pdf-renderer
                                                         lang
                                                         email-template-data

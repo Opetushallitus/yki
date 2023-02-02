@@ -25,7 +25,6 @@
                                                        #ig/ref :yki.handler/auth
                                                        #ig/ref :yki.handler/login-link
                                                        #ig/ref :yki.handler/exam-session-public
-                                                       #ig/ref :yki.handler/localisation
                                                        #ig/ref :yki.handler/registration
                                                        #ig/ref :yki.handler/organizer
                                                        #ig/ref :yki.handler/quarantine
@@ -44,7 +43,7 @@
   :yki.util/evaluation-payment-helper                 {:db         #ig/ref :duct.database/sql
                                                        :url-helper #ig/ref :yki.util/url-helper}
 
-  :yki.util/pdf                                       {:url-helper #ig/ref :yki.util/url-helper}
+  :yki.util/pdf                                       {}
 
   :yki.job.job-queue/init                             {}
 
@@ -135,9 +134,6 @@
                                                        :payment-helper #ig/ref :yki.util/exam-payment-helper
                                                        :url-helper     #ig/ref :yki.util/url-helper
                                                        :pdf-renderer   #ig/ref :yki.util/pdf}
-
-  :yki.handler/localisation                           {:url-helper #ig/ref :yki.util/url-helper
-                                                       :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
   :yki.handler/exam-session                           {:db          #ig/ref :duct.database/sql
                                                        :data-sync-q #ig/ref :yki.job.job-queue/data-sync-q

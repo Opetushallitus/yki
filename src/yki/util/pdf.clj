@@ -11,12 +11,12 @@
   (template+data->pdf-bytes [_ template-name language template-data]))
 
 (defrecord PdfTemplateRendererImpl
-  [url-helper]
+  []
   PdfTemplateRenderer
   (template+data->pdf-bytes [_ template-name language template-data]
     (let [pdf (Pdf. pdf-wrapper-config)]
-      (.addPageFromString pdf (template-util/render url-helper template-name language template-data))
+      (.addPageFromString pdf (template-util/render template-name language template-data))
       (.getPDF pdf))))
 
-(defmethod ig/init-key :yki.util/pdf [_ {:keys [url-helper]}]
-  (->PdfTemplateRendererImpl url-helper))
+(defmethod ig/init-key :yki.util/pdf [_ _]
+  (->PdfTemplateRendererImpl ))

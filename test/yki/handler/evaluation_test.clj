@@ -40,9 +40,7 @@
   (base/insert-base-data)
   (base/insert-evaluation-data)
   (with-routes!
-    {"/lokalisointi/cxf/rest/v1/localisation" {:status       200
-                                               :content-type "application/json"
-                                               :body         (slurp "test/resources/localisation.json")}}
+    {}
     (let [handler (create-handler port)]
       (let [request            (mock/request :get (str routing/evaluation-root))
             response           (handler request)
@@ -73,10 +71,7 @@
   (base/insert-base-data)
   (base/insert-evaluation-data)
   (with-routes!
-    {"/lokalisointi/cxf/rest/v1/localisation" {:status       200
-                                               :content-type "application/json"
-                                               :body         (slurp "test/resources/localisation.json")}}
-
+    {}
     (let [open-evaluation-id   (:id (base/select-evaluation-by-date (base/two-weeks-ago)))
           closed-evaluation-id (:id (base/select-evaluation-by-date "2019-05-02"))
           handler              (create-handler port)]

@@ -20,7 +20,7 @@
   (registration->payment [this tx registration language amount]))
 
 (defn- registration->payment-description
-  [url-helper registration]
+  [registration]
   (let [sb          (StringBuilder.)
         {language-code           :language_code
          level-code              :level_code
@@ -34,8 +34,8 @@
     (append-line "Yleinen kielitutkinto (YKI): Tutkintomaksu")
     ; Exam language and level
     (append-line
-      (template-util/get-language url-helper language-code "fi")
-      (template-util/get-level url-helper level-code "fi"))
+      (template-util/get-language language-code "fi")
+      (template-util/get-level level-code "fi"))
     ; Exam location and date
     (append-line location-name exam-date)
     ; Participant name
@@ -72,7 +72,7 @@
                       "units"         1
                       "vatPercentage" 0
                       "productCode"   (str exam-session-id)
-                      "description"   (registration->payment-description url-helper registration)}]}))
+                      "description"   (registration->payment-description registration)}]}))
 
 (defrecord NewPaymentHelper [db url-helper payment-config]
   PaymentHelper

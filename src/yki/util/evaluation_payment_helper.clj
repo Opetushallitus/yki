@@ -14,7 +14,7 @@
   (subtest->price [this subtest]))
 
 (defn- subtest->description
-  [url-helper evaluation-order subtest]
+  [evaluation-order subtest]
   (let [sb          (StringBuilder.)
         {language-code :language_code
          level-code    :level_code
@@ -27,21 +27,21 @@
     (append-line "Yleinen kielitutkinto (YKI): Tarkistusarviointi")
     ; Exam language, level and subtest
     (append-line
-      (template-util/get-language url-helper language-code "fi")
-      (template-util/get-level url-helper level-code "fi")
-      (template-util/get-subtest url-helper subtest "fi"))
+      (template-util/get-language language-code "fi")
+      (template-util/get-level level-code "fi")
+      (template-util/get-subtest subtest "fi"))
     ; Exam date
     (append-line (str "Tutkintopäivä: " exam-date))
     ; Participant name
     (append-line last-name first-names)
     (.toString sb)))
 
-(defn- subtests->items [payment-helper url-helper evaluation-order-data]
+(defn- subtests->items [payment-helper evaluation-order-data]
   (->> (for [subtest (:subtests evaluation-order-data)]
          {"unitPrice"     (:paytrail (subtest->price payment-helper subtest))
           "units"         1
           "productCode"   subtest
-          "description"   (subtest->description url-helper evaluation-order-data subtest)
+          "description"   (subtest->description evaluation-order-data subtest)
           "vatPercentage" 0})
        (into [])))
 
@@ -52,7 +52,7 @@
         {order-number :order_number
          amount       :amount
          language     :lang} payment-data
-        items         (subtests->items payment-helper url-helper evaluation-order-data)
+        items         (subtests->items payment-helper evaluation-order-data)
         callback-urls {"success" (url-helper :evaluation-payment-new.success-callback language)
                        "cancel"  (url-helper :evaluation-payment-new.error-callback language)}]
     {"stamp"        (random-uuid)
