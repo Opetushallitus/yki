@@ -33,7 +33,7 @@
                                          :password "{{host_postgresql_yki_app_password}}"}}}
 
   :yki.job.scheduled-tasks/participants-sync-handler {:db #ig/ref :duct.database/sql
-                                                      :disabled {{yki_register_sync_disabled}}
+                                                      :disabled {{yki_register_participant_sync_disabled}}
                                                       :basic-auth {:user "{{yki_register_user}}"
                                                                    :password "{{yki_register_password}}"}
                                                       :url-helper #ig/ref :yki.util/url-helper
@@ -41,7 +41,7 @@
 
 :yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
                                                  :db #ig/ref :duct.database/sql
-                                                 :disabled {{yki_register_sync_disabled}}
+                                                 :disabled {{yki_register_exam_session_sync_disabled}}
                                                  :basic-auth {:user "{{yki_register_user}}"
                                                               :password "{{yki_register_password}}"}
                                                  :url-helper #ig/ref :yki.util/url-helper
@@ -60,6 +60,13 @@
                             :auth #ig/ref :yki.middleware.auth/with-authentication
                             :onr-client #ig/ref :yki.boundary.onr/onr-client
                             :access-log #ig/ref :yki.middleware.access-log/with-logging}
+
+ :yki.handler/yki-register-debug  {:access-log #ig/ref :yki.middleware.access-log/with-logging
+                                   :auth       #ig/ref :yki.middleware.auth/with-authentication
+                                   :basic-auth {:user     "{{yki_register_user}}"
+                                                :password "{{yki_register_password}}"}
+                                   :db         #ig/ref :duct.database/sql
+                                   :url-helper #ig/ref :yki.util/url-helper}
 
   :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                 :cas-creds {:username "{{yki_cas_username}}"
