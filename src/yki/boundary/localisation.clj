@@ -2,16 +2,13 @@
   (:require
     [clojure.data.json :as json]
     [clojure.java.io :as io]
-    [clojure.tools.logging :as log])
-  (:import (java.io FileReader)))
-
+    [clojure.tools.logging :as log]))
 
 (defn read-translations [lang]
-  (let [f (-> (str "yki/localisations/" lang ".json")
+  (let [json (-> (str "yki/localisations/" lang ".json")
               (io/resource)
-              (io/file))]
-    (with-open [rdr (FileReader. f)]
-      (json/read rdr))))
+              (slurp))]
+    (json/read-str json)))
 
 (defonce translations {"fi" (read-translations "fi")
                        "en" (read-translations "en")
