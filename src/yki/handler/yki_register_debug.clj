@@ -4,7 +4,7 @@
     [compojure.api.sweet :refer [api context GET POST]]
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
-    [ring.util.http-response :refer [ok]]
+    [ring.util.http-response :refer [internal-server-error ok]]
     [yki.handler.routing :as routing]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.yki-register :refer [return-exam-session-participants-csv
@@ -35,11 +35,15 @@
         (POST "/:id" _
           :path-params [id :- ::ys/id]
           (log/info "Manually forcing exam session" id "to be synced to Solki")
-          (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-            (sync-exam-session-and-organizer db url-helper basic-auth false {:type         "CREATED"
-                                                                             :exam-session exam-session
-                                                                             :created      (System/currentTimeMillis)})))
-        (POST "/participants/:id" _
+          (if-let [exam-session (exam-session-db/get-exam-session-by-id db id)]
+            (if (sync-exam-session-and-organizer db url-helper basic-auth false {:type         "CREATED"
+                                                                                 :exam-session exam-session})
+              (ok {:success true})
+              (internal-server-error))
+            (log/error "Exam session with id" id "not found")))
+        (POST "/:id/participants" _
           :path-params [id :- ::ys/id]
           (log/info "Manually forcing participants off exam session" id "to be synced to Solki")
-          (sync-exam-session-participants db url-helper basic-auth false id))))))
+          (if (sync-exam-session-participants db url-helper basic-auth false id)
+            (ok {:success true})
+            (internal-server-error)))))))
