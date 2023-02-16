@@ -67,19 +67,20 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :payment.error-redirect lang (:exam_session_id registration))))
 
-(defn- payment->json [{:keys [amount exam_date form language_code level_code organizer_name paid_at reference]}]
-  {:organizer     organizer_name
-   :paid_at       (format-datetime-for-export paid_at)
-   :exam_date     exam_date
-   :exam_language (template-util/get-language language_code "fi")
-   :exam_level    (template-util/get-level level_code "fi")
-   :name          (str/join ", " [(:last_name form) (:first_name form)])
-   :email         (:email form)
-   :amount        (->>
-                    (/ amount 100)
-                    (double)
-                    (format "%.2f"))
-   :reference     reference})
+(defn- payment->json [{:keys [amount exam_date form language_code level_code organizer_name paid_at reference original_exam_date]}]
+  {:organizer          organizer_name
+   :paid_at            (format-datetime-for-export paid_at)
+   :exam_date          exam_date
+   :exam_language      (template-util/get-language language_code "fi")
+   :exam_level         (template-util/get-level level_code "fi")
+   :original_exam_date original_exam_date
+   :name               (str/join ", " [(:last_name form) (:first_name form)])
+   :email              (:email form)
+   :amount             (->>
+                         (/ amount 100)
+                         (double)
+                         (format "%.2f"))
+   :reference          reference})
 
 (defn- with-organizer-names [url-helper payments]
   (when (seq payments)

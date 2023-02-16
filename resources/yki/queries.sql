@@ -1492,12 +1492,15 @@ SELECT
   es.language_code,
   es.level_code,
   ed.exam_date,
-  o.oid
+  o.oid,
+  oed.exam_date AS original_exam_date
 FROM exam_payment_new epn
 INNER JOIN registration r ON epn.registration_id = r.id
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 INNER JOIN organizer o on es.organizer_id = o.id
+LEFT JOIN exam_session oes ON r.original_exam_session_id = oes.id
+LEFT JOIN exam_date oed ON oes.exam_date_id = oed.id
 WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= epn.paid_at AND
       epn.paid_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
 
