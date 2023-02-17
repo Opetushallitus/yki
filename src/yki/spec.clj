@@ -315,10 +315,12 @@
 (s/def ::form ::registration)
 (s/def ::kind ::registration-kind)
 (s/def ::original_exam_session_id (s/nilable ::id))
+(s/def ::original_exam_date (s/nilable ::exam_date))
 (s/def ::exam-session-participant (s/keys :req-un [::created
                                                    ::form
                                                    ::registration_id
                                                    ::original_exam_session_id
+                                                   ::original_exam_date
                                                    ::kind
                                                    ::state]))
 (s/def :exam-session/participants (s/coll-of ::exam-session-participant))

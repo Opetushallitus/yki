@@ -959,9 +959,12 @@ SELECT
   r.state,
   r.id as registration_id,
   r.kind,
-  r.original_exam_session_id
+  r.original_exam_session_id,
+  oed.exam_date AS original_exam_date
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
+LEFT JOIN exam_session oes ON oes.id = r.original_exam_session_id
+LEFT JOIN exam_date oed ON oed.id = oes.exam_date_id
 WHERE es.id = :id
 AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
 AND r.state != 'STARTED'
