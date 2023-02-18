@@ -24,13 +24,10 @@
   (fn [oid]
     (context "/" []
       (GET "/" []
-        :query-params [{from :- ::ys/date-type nil} {days :- ::ys/days nil}]
+        :query-params [{from :- ::ys/date-type nil}]
         :return ::ys/exam-sessions-response
-        (let [from-date     (if from (c/from-long from) (t/now))
-              history-date  (if days (-> from-date
-                                         (t/minus (t/days days))) from-date)
-              new-from-date (f/unparse (f/formatter "yyyy-MM-dd") history-date)
-              sessions      (exam-session-db/get-exam-sessions db oid new-from-date)]
+        (let [from-date (if from (c/from-long from) (t/now))
+              sessions  (exam-session-db/get-exam-sessions db oid from-date)]
           (response {:exam_sessions sessions})))
 
       (POST "/" request
