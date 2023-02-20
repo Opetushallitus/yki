@@ -2,7 +2,6 @@
   (:require
     [clj-time.core :as t]
     [clj-time.coerce :as c]
-    [clj-time.format :as f]
     [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [context GET POST PUT DELETE]]
     [integrant.core :as ig]
@@ -12,7 +11,8 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
     [yki.spec :as ys]
-    [yki.util.audit-log :as audit-log]))
+    [yki.util.audit-log :as audit-log]
+    [yki.util.common :refer [string->date]]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
   #(pgq/put data-sync-q {:type         type
@@ -26,9 +26,8 @@
       (GET "/" []
         :query-params [{from :- ::ys/date-type nil}]
         :return ::ys/exam-sessions-response
-        (let [from-date (if from (c/from-long from) (t/now))
-              sessions  (exam-session-db/get-exam-sessions db oid from-date)]
-          (response {:exam_sessions sessions})))
+        (let [from-date (string->date from)]
+          (response {:exam_sessions (exam-session-db/get-exam-sessions db oid from-date)})))
 
       (POST "/" request
         :body [exam-session ::ys/exam-session]

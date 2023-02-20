@@ -36,17 +36,17 @@
         (let [contact         (assoc contact-meta :oid oid)
               session-id      {:exam_session_id exam-session-id}
               get-link-params (fn [contact-id] (assoc session-id :contact_id contact-id))]
-           ; For now exam session is allowed to have only one contact so deleting old contact link
+          ; For now exam session is allowed to have only one contact so deleting old contact link
           (q/delete-exam-session-contact-by-session-id! tx session-id)
           (if-let [contact-id (->> contact
                                    (q/select-contact-id-with-details spec)
                                    (first)
                                    (:id))]
-             ; Contact exists, creating a link
+            ; Contact exists, creating a link
             (when-not (:id (q/select-exam-session-contact-id tx (get-link-params contact-id)))
               (q/insert-exam-session-contact<! tx (get-link-params contact-id)))
 
-             ; Creating a contact and a link
+            ; Creating a contact and a link
             (let [new-contact-id (:id (q/insert-contact<! tx contact))]
               (q/insert-exam-session-contact<! tx (get-link-params new-contact-id)))))))
 
@@ -87,16 +87,16 @@
     [{:keys [spec]} oid exam-session send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-       tx
-       #(let [converted (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid))
-              result (q/insert-exam-session<! tx converted)
-              exam-session-id (:id result)]
-          (doseq [loc (:location exam-session)]
-            (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))
+        tx
+        #(let [converted       (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid))
+               result          (q/insert-exam-session<! tx converted)
+               exam-session-id (:id result)]
+           (doseq [loc (:location exam-session)]
+             (q/insert-exam-session-location! tx (assoc loc :exam_session_id exam-session-id)))
 
-          (add-and-link-contact tx spec oid exam-session-id (:contact exam-session))
-          (send-to-queue-fn)
-          exam-session-id))))
+           (add-and-link-contact tx spec oid exam-session-id (:contact exam-session))
+           (send-to-queue-fn)
+           exam-session-id))))
   (init-participants-sync-status!
     [{:keys [spec]} exam-session-id]
     (jdbc/with-db-transaction [tx spec]
@@ -120,7 +120,7 @@
     (jdbc/with-db-transaction [tx spec]
       (int->boolean (q/update-registration-exam-session! tx {:exam_session_id to-exam-session-id
                                                              :registration_id registration-id
-                                                             :oid oid}))))
+                                                             :oid             oid}))))
   (set-registration-status-to-cancelled!
     [{:keys [spec]} registration-id oid]
     (jdbc/with-db-transaction [tx spec]
@@ -129,26 +129,26 @@
     [{:keys [spec]} oid id exam-session]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-       tx
-       #(do
-          (q/delete-exam-session-location! tx {:id id})
-          (doseq [location (:location exam-session)]
-            (q/insert-exam-session-location! tx (assoc location :exam_session_id id)))
-          (add-and-link-contact tx spec oid id (:contact exam-session))
-          (let [updated (int->boolean (q/update-exam-session!
-                                       tx
-                                       (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid :id id))))]
-            updated)))))
+        tx
+        #(do
+           (q/delete-exam-session-location! tx {:id id})
+           (doseq [location (:location exam-session)]
+             (q/insert-exam-session-location! tx (assoc location :exam_session_id id)))
+           (add-and-link-contact tx spec oid id (:contact exam-session))
+           (let [updated (int->boolean (q/update-exam-session!
+                                         tx
+                                         (merge {:office_oid nil} (assoc (convert-dates exam-session) :oid oid :id id))))]
+             updated)))))
   (delete-exam-session! [{:keys [spec]} id oid send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-       tx
-       #(let [_ (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
-              _ (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id id})
-              deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
-          (when deleted
-            (send-to-queue-fn))
-          deleted))))
+        tx
+        #(let [_       (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
+               _       (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id id})
+               deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
+           (when deleted
+             (send-to-queue-fn))
+           deleted))))
   (get-exam-session-with-location [{:keys [spec]} id lang]
     (first (q/select-exam-session-with-location spec {:id id :lang lang})))
   (get-exam-session-by-id [{:keys [spec]} id]
@@ -162,11 +162,11 @@
   (get-completed-exam-session-participants [{:keys [spec]} id]
     (q/select-completed-exam-session-participants spec {:id id}))
   (get-exam-sessions [{:keys [spec]} oid from]
-    (q/select-exam-sessions spec {:oid oid
-                                  :from (string->date from)}))
+    (q/select-exam-sessions spec {:oid  oid
+                                  :from from}))
 
   (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
-    (int->boolean (:count (first (q/select-email-added-to-queue spec {:email email
+    (int->boolean (:count (first (q/select-email-added-to-queue spec {:email           email
                                                                       :exam_session_id exam-session-id})))))
 
   (get-exam-sessions-with-queue [{:keys [spec]}]
@@ -175,23 +175,23 @@
     [{:keys [spec]} email lang exam-session-id]
     (jdbc/with-db-transaction [tx spec]
       (q/insert-exam-session-queue! tx {:exam_session_id exam-session-id
-                                        :lang lang
-                                        :email email})))
+                                        :lang            lang
+                                        :email           email})))
   (update-exam-session-queue-last-notified-at!
     [{:keys [spec]} email exam-session-id]
     (jdbc/with-db-transaction [tx spec]
       (q/update-exam-session-queue-last-notified-at! tx {:exam_session_id exam-session-id
-                                                         :email email})))
+                                                         :email           email})))
   (remove-from-exam-session-queue!
     [{:keys [spec]} email exam-session-id]
     (jdbc/with-db-transaction [tx spec]
       (q/delete-from-exam-session-queue! tx {:exam_session_id exam-session-id
-                                             :email email})))
+                                             :email           email})))
 
   (set-post-admission-active!
     [{:keys [spec]} id quota]
     (jdbc/with-db-transaction [tx spec]
-      (q/activate-exam-session-post-admission! tx {:exam_session_id id
+      (q/activate-exam-session-post-admission! tx {:exam_session_id      id
                                                    :post_admission_quota quota})))
 
   (set-post-admission-deactive!
@@ -205,5 +205,5 @@
 
   (get-exam-session-location-extra-information
     [{:keys [spec]} id lang]
-    (first (q/select-exam-session-extra-information spec {:id id
+    (first (q/select-exam-session-extra-information spec {:id   id
                                                           :lang lang}))))

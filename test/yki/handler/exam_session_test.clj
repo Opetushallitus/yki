@@ -127,7 +127,6 @@
 (deftest exam-session-history-test
   (base/insert-organizer (:oid base/organizer))
   (base/insert-languages (:oid base/organizer))
-
   (let [exam-dates         [["2040-06-01" "2040-03-01" "2040-05-30"]
                             ["2040-04-01" "2040-03-01" "2040-03-30"]
                             ["2039-12-01" "2040-11-01" "2040-11-30"]
@@ -139,18 +138,20 @@
         insert-dates       (fn [dates] (let [[exam-date reg-start reg-end] dates]
                                          (base/insert-custom-exam-date exam-date reg-start reg-end)
                                          (base/insert-exam-session (date-id exam-date) (:oid base/organizer) 5)
-                                         (base/insert-exam-session-location-by-date exam-date "fi")))
-        iterate-exam-dates (fn [dates] (for [d dates] (insert-dates d)))]
-    (doall (iterate-exam-dates exam-dates)))
+                                         (base/insert-exam-session-location-by-date exam-date "fi")))]
+    (doseq [date-triplet exam-dates]
+      (insert-dates date-triplet)))
 
-  (testing "exam session endpoint with 'days' parameter should return sessions from past days"
-    (let [request       (mock/request :get (str exam-session-route "?from=2040-06-01T00:00:00Z&days=100"))
+  (testing "exam session endpoint should return exams with exam date at or after supplied from date"
+    (let [request       (mock/request :get (str exam-session-route "?from=2040-04-01"))
           response      (base/send-request-with-tx request)
           response-body (base/body-as-json response)]
       (is (= (get (:headers response) "Content-Type") "application/json; charset=utf-8"))
       (is (= (:status response) 200))
+      (is (= (get-exam-date response-body "2040-06-01") "2040-06-01"))
       (is (= (get-exam-date response-body "2040-04-01") "2040-04-01"))
-      (is (= (get-exam-date response-body "2039-12-01") nil)))))
+      (is (= (get-exam-date response-body "2039-12-01") nil))
+      (is (= (get-exam-date response-body "2039-10-01") nil)))))
 
 (deftest exam-session-update-max-participants-fail-test
   (base/insert-base-data)
