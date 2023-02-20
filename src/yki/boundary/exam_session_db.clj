@@ -6,7 +6,6 @@
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
-            [yki.util.common :refer [string->date]]
             [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 
