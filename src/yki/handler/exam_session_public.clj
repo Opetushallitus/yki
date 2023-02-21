@@ -6,7 +6,8 @@
     [ring.util.http-response :refer [ok not-found conflict]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
-    [yki.spec :as ys]))
+    [yki.spec :as ys]
+    [yki.util.common :refer [string->date]]))
 
 (defn- get-exam-fee
   [payment-config exam-session]
@@ -19,7 +20,8 @@
     (GET "/" []
       :query-params [{from :- ::ys/date-type nil}]
       :return ::ys/exam-sessions-response
-      (let [exam-sessions (exam-session-db/get-exam-sessions db nil from)
+      (let [from-date     (string->date from)
+            exam-sessions (exam-session-db/get-exam-sessions db nil from-date)
             with-fee      (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
         (ok {:exam_sessions with-fee})))
 
