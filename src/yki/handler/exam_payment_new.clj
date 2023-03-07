@@ -135,7 +135,7 @@
                 result             (->> completed-payments
                                         (with-organizer-names url-helper)
                                         (map payment->json)
-                                        (sort-by (juxt :organizer :paid_at)))]
+                                        (sort-by (juxt :organizer :last_name :first_name)))]
             (ok {:payments result}))
           (catch Exception e
             (log/error e "Failed to generate payment report from" from "to" to)
