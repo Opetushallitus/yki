@@ -1,10 +1,8 @@
-# YKI - Yleinen Kielitutkinto · [![Build Status](https://github.com/Opetushallitus/yki/actions/workflows/yki.yml/badge.svg)](https://github.com/Opetushallitus/yki/actions/workflows/yki.yml)
+# YKI - Yleiset kielitutkinnot · [![Build Status](https://github.com/Opetushallitus/yki/actions/workflows/yki.yml/badge.svg)](https://github.com/Opetushallitus/yki/actions/workflows/yki.yml)
 
-Registration system for National Certificates of Language Proficiency (YKI).
+Backend for YKI application. Original frontend is located under <https://github.com/Opetushallitus/yki-frontend> while the new frontend can be found with the other KIOS applications under <https://github.com/Opetushallitus/kieli-ja-kaantajatutkinnot>.
 
-## Developing
-
-### **Setup**
+## Environment setup
 
 When you first clone this repository, run:
 
@@ -15,50 +13,47 @@ lein duct setup
 This will create files for local configuration, and prep your system
 for the project.
 
-### **Environment**
+&nbsp;
 
-Before launching local development environment start PostgreSQL in docker container.
+Before launching local development environment start PostgreSQL in docker container
 
 ```sh
 docker run --name postgres-yki -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -p 5432:5432 -d postgres:10.4
 ```
-
-Create yki database.
-
+and create yki database
 ```sh
 psql -h localhost -U admin -c 'create database yki'
 ```
 
-Create local.edn with correct username and password.
+&nbsp;
 
-```clojure
-{:yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
-                               :cas-creds {:username "replace_with_secret"
-                                           :password "replace_with_password"}}}
-```
+## Development
 
 To begin developing, start with a REPL.
 
 ```sh
 lein repl
 ```
-
-Then load the development environment.
-
+and load the development environment
 ```clojure
 user=> (dev)
 :loaded
 ```
-
-Run `go` to prep and initiate the system.
-
+and finally run `go` to prep and initiate the system
 ```clojure
 dev=> (go)
 :duct.server.http.jetty/starting-server {:port 8080}
 :initiated
 ```
 
-By default this creates a web server at <http://localhost:8080>.
+&nbsp;
+
+This creates a web server at <http://localhost:8080> and runs the migrations defined under `resources/yki/migrations` unless they have been run before. After the migrations are run you may want to initialise the database by running `dev/init.sql` script for example from the root directory as
+```sh
+psql -h localhost -U admin -d yki -c '\i dev/init.sql'
+```
+
+&nbsp;
 
 When you make changes to your source files, use `reset` to reload any
 modified files and reset the server.
@@ -69,18 +64,11 @@ dev=> (reset)
 :resumed
 ```
 
-### **Local configuration and development**
+### Local configuration
 
-Since some endpoints are still under development, it is a good idea to manually add some data to following tables to enable further testing:
+Local.edn example template can be found under [local-configuration](local-configuration/local.edn.template). This template does not use user authentication and has a set hard coded user. It also has all the sync jobs disabled.
 
-- organizer
-- exam_date
-- exam_date_language
-- exam_language
-
-Local.edn example template can be found in [local-configuations](local-configuration/local.edn.template). This template does not use user authentication and has a set hard coded user. It also has all the sync jobs disabled.
-
-### **Postman collection**
+### Postman collection
 
 Project has a postman collection to ease up development. Collection and environment can be found [here](docs/postman) and need to be manually imported. Tables mentioned in the "Local configuration and development" should have some dummy data in them. Referencing to this data, following Postman environment variables should be updated to correspond these values:
 
@@ -93,41 +81,44 @@ Rest of the environment variables are updated as follows:
 * When creating a new exam session, set date_id is referenced and returned session id is set to variable {{session_id}}. Other 'Virkailija: Exam session management' operations are referencing to this session id.
 * When 'oppija' registration is initialized, set session_id is referenced and returned registration id is set to variable {{registration_id}}
 
-### **External development credentials**
+### External development credentials
 
 [Suomi.fi](https://palveluhallinta.suomi.fi/fi/tuki/artikkelit/5a82ef7ab03cdc41de664a2b)
 
 [Paytrail](https://docs.paytrail.com/credentials/)
 
 
-### **Testing**
+### Testing
 
-Testing is fastest through the REPL, as you avoid environment startup
-time.
-
+Testing is the fastest through the REPL, as you avoid environment startup time:
 ```clojure
 dev=> (test)
 ...
 ```
 
-But you can also run tests through Leiningen.
-
+But you can also run all tests through Leiningen as
 ```sh
 lein test
 ```
+or run tests just for a single file as
+```sh
+lein test :only yki.handler.exam-date-test
+```
+where `yki.handler.exam-date-test` as an example stands for the namespace defined under `test/yki/handler/exam_date_test.clj`.
 
-Rerun tests on file change.
+&nbsp;
 
+To rerun tests on file change:
 ```sh
 lein test-refresh
 ```
 
-Test coverage reporting.
+Test coverage reporting:
 
 ```sh
 lein cloverage
 ```
-### **Formatting**
+### Formatting
 
 ```sh
 lein cljfmt check
@@ -180,7 +171,7 @@ lein kibit
 lein bikeshed
 ```
 
-### **Release**
+### Release
 
 ```sh
 lein release :major, :minor or :patch
@@ -194,7 +185,7 @@ lein release :major, :minor or :patch
 
 ## Architecture
 
-### **Job Queues**
+### Job Queues
 
 YKI uses database backed job queues to prevent certain tasks from running more than once. The queues themselves are implemented using [pgqueue](https://github.com/layerware/pgqueue) and it is recommended to familiarize yourself with how this library works to understand the rest of the job queue code.
 
