@@ -74,7 +74,8 @@
    :exam_language      (template-util/get-language language_code "fi")
    :exam_level         (template-util/get-level level_code "fi")
    :original_exam_date original_exam_date
-   :name               (str/join ", " [(:last_name form) (:first_name form)])
+   :last_name          (:last_name form)
+   :first_name         (:first_name form)
    :email              (:email form)
    :amount             (->>
                          (/ amount 100)
@@ -134,7 +135,7 @@
                 result             (->> completed-payments
                                         (with-organizer-names url-helper)
                                         (map payment->json)
-                                        (sort-by (juxt :organizer :paid_at)))]
+                                        (sort-by (juxt :organizer :last_name :first_name)))]
             (ok {:payments result}))
           (catch Exception e
             (log/error e "Failed to generate payment report from" from "to" to)
