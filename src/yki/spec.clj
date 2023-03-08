@@ -250,7 +250,8 @@
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
                             :opt-un [::user_data
-                                     ::registration_url]))
+                                     ::registration_url
+                                     ::registration_expired_url]))
 
 ;; registration
 
@@ -282,7 +283,9 @@
                                  ::phone_number
                                  ::email]
                         :opt-un [::gender
-                                 ::nationality_desc]))
+                                 ::nationality_desc
+                                 ::payment_url
+                                 ::payment_link_expired_url]))
 
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 

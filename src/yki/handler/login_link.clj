@@ -31,17 +31,20 @@
        (log/info "Login link requested for: " login-link)
        (let [participant-id   (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                    :email (:email login-link)}))
-             exam-session-id  (:exam_session_id login-link)
-             registration-url (if (:registration_url login-link)
-                                (:registration_url login-link)
-                                (url-helper :exam-session.redirect exam-session-id lang))
-             exam-session     (exam-session-db/get-exam-session-with-location db exam-session-id lang)]
-         (when (registration/create-and-send-link db url-helper email-q lang
-                                                  (assoc login-link
-                                                         :participant_id participant-id
-                                                         :type "LOGIN"
-                                                         :expires_at (c/date-from-now 1)
-                                                         :expired_link_redirect (url-helper :link-expired.redirect lang)
-                                                         :success_redirect registration-url
-                                                         :registration_id nil) exam-session)
+             exam-session-id          (:exam_session_id login-link)
+             registration-url         (if (:registration_url login-link)
+                                        (:registration_url login-link)
+                                        (url-helper :exam-session.redirect exam-session-id lang))
+             registration-expired-url (if (:registration_expired_url login-link)
+                                        (:registration_expired_url login-link)
+                                        (url-helper :link-expired.redirect lang))
+
+             link                     (assoc login-link :participant_id participant-id
+                                                        :type "LOGIN"
+                                                        :expires_at (c/date-from-now 1)
+                                                        :expired_link_redirect registration-expired-url
+                                                        :success_redirect registration-url
+                                                        :registration_id nil)
+             exam-session             (exam-session-db/get-exam-session-with-location db exam-session-id lang)]
+         (when (registration/create-and-send-link db url-helper email-q lang link exam-session)
            (ok {:success true})))))))
