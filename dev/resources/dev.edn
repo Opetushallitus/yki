@@ -18,7 +18,6 @@
                                           :tunnistus-host      "tunnistus.untuvaopintopolku.fi"
                                           :oppija-host         "untuvaopintopolku.fi"
                                           :oppija-sub-domain   "yki."
-                                          :yki-ui-sub-domain   "beta-yki."
                                           :yki-register-host   "http://localhost:8080"
                                           :yki-host-virkailija "http://localhost:8080"}
 
