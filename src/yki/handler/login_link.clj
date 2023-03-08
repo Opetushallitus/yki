@@ -32,6 +32,9 @@
        (let [participant-id   (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                    :email (:email login-link)}))
              exam-session-id  (:exam_session_id login-link)
+             registration-url (if (:registration_url login-link)
+                                (:registration_url login-link)
+                                (url-helper :exam-session.redirect exam-session-id lang))
              exam-session     (exam-session-db/get-exam-session-with-location db exam-session-id lang)]
          (when (registration/create-and-send-link db url-helper email-q lang
                                                   (assoc login-link
@@ -39,6 +42,6 @@
                                                          :type "LOGIN"
                                                          :expires_at (c/date-from-now 1)
                                                          :expired_link_redirect (url-helper :link-expired.redirect lang)
-                                                         :success_redirect (url-helper :exam-session.redirect exam-session-id lang)
+                                                         :success_redirect registration-url
                                                          :registration_id nil) exam-session)
            (ok {:success true})))))))

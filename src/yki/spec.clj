@@ -249,7 +249,8 @@
 
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
-                            :opt-un [::user_data]))
+                            :opt-un [::user_data
+                                     ::registration_url]))
 
 ;; registration
 
