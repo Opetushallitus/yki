@@ -39,6 +39,8 @@
                  ;; these two are necessary for Scala Cas Client
                  [oph/clj-cas "0.6.3-SNAPSHOT"]
                  [fi.vm.sade/scala-cas_2.12 "2.2.2-SNAPSHOT"]
+                 ;; Or just the single java-cas dependency if foregoing use of clj-cas
+                 [fi.vm.sade.java-utils/java-cas "1.0.7-SNAPSHOT"]
                  [org.http4s/http4s-blaze-client_2.12 "0.16.6a"]
                  [org.http4s/blaze-http_2.12 "0.12.11"]
                  [fi.vm.sade/auditlogger "8.3.0-SNAPSHOT"]

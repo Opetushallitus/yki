@@ -4,7 +4,7 @@
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
     [jsonista.core :as json]
-    [yki.boundary.cas :as cas]))
+    [yki.boundary.cas-access :as cas]))
 
 (defn- extract-nationalities
   [nationalities]

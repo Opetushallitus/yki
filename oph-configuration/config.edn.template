@@ -72,6 +72,11 @@
   :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                 :cas-creds {:username "{{yki_cas_username}}"
                                             :password "{{yki_cas_password}}"}}
+
+  :yki.boundary.cas-rewrite/cas-client {:url-helper #ig/ref :yki.util/url-helper
+                                        :cas-creds {:username "{{yki_cas_username}}"
+                                                    :password "{{yki_cas_password}}"}}
+
   :yki.middleware.auth/with-authentication
     {:url-helper #ig/ref :yki.util/url-helper
      :session-config {:key "{{yki_session_cookie_secret}}"

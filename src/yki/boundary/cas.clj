@@ -4,14 +4,8 @@
     [clojure.data.json :as json]
     [integrant.core :as ig]
     [org.httpkit.client :as http]
+    [yki.boundary.cas-access :refer [CasAccess]]
     [yki.util.http-util :as http-util]))
-
-(defprotocol CasAccess
-  (validate-ticket [this ticket])
-  (validate-oppija-ticket [this ticket callback-url])
-  (get-cas-session [this])
-  (cas-authenticated-post [this url body])
-  (cas-authenticated-get [this url]))
 
 (defn- request-with-json-body [request body]
   (-> request
@@ -60,15 +54,9 @@
     (cas-http cas-client cas-params :get url))
 
   (cas-authenticated-post [_ url body]
-    (cas-http cas-client cas-params :post url body))
-
-  (get-cas-session [_]
-    (-> cas-client
-        (.fetchCasSession cas-params "JSESSIONID")
-        (.run))))
+    (cas-http cas-client cas-params :post url body)))
 
 (defmethod ig/init-key :yki.boundary.cas/cas-client [_ {:keys [url-helper cas-creds]}]
   (let [cas-client (cas/cas-client (url-helper :cas-client) "1.2.246.562.10.00000000001.yki")]
     (fn [service]
       (->CasClient cas-client url-helper (cas/cas-params service (:username cas-creds) (:password cas-creds))))))
-
