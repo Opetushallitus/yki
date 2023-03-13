@@ -158,4 +158,5 @@
         (log/error "ONR get-person-by-oid error:" status)))))
 
 (defmethod ig/init-key :yki.boundary.onr/onr-client [_ {:keys [url-helper cas-client]}]
-  (->OnrClient url-helper (cas-client "/oppijanumerorekisteri-service")))
+  (let [onr-cas-client (cas-client (url-helper :onr-service))]
+    (->OnrClient url-helper onr-cas-client)))
