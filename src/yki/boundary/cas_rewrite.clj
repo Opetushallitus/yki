@@ -5,10 +5,15 @@
     [integrant.core :as ig]
     [clojure.tools.logging :as log])
   (:import
-    (fi.vm.sade.javautils.nio.cas CasClient CasConfig CasConfig$CasConfigBuilder CasClientBuilder CasClientHelper)))
+    (fi.vm.sade.javautils.nio.cas CasClient CasConfig CasConfig$CasConfigBuilder CasClientBuilder CasClientHelper)
+    (org.asynchttpclient.netty NettyResponse)))
 
 (def csrf-token "csrf")
 (def caller-id "1.2.246.562.10.00000000001.yki")
+
+(defn process-response [^NettyResponse response]
+  {:status (.getStatusCode response)
+   :body   (.getResponseBody response)})
 
 (defrecord NewCasClient [^CasClient cas-client url-helper]
   CasAccess
@@ -29,13 +34,15 @@
   (cas-authenticated-get [_ url]
     (log/info "cas-authenticated-get called with url" url)
     (let [helper   (CasClientHelper. cas-client)
-          response (.doGetSync helper url)]
+          response (-> (.doGetSync helper url)
+                       (process-response))]
       (log/info "got response" response)
       response))
   (cas-authenticated-post [_ url body]
     (log/info "cas-authenticated-post called with url" url "and body" body)
     (let [helper   (CasClientHelper. cas-client)
-          response (.doPostSync helper url (json/write-str body))]
+          response (-> (.doPostSync helper url (json/write-str body))
+                       (process-response))]
       (log/info "got response" response)
       response)))
 
