@@ -47,9 +47,7 @@
       response)))
 
 (defn create-cas-client [{:keys [username password]} url-helper service-url]
-  (let [cas-config (-> (CasConfig$CasConfigBuilder. username password (url-helper :cas-client) service-url csrf-token caller-id "")
-                       (.setJsessionName "JSESSIONID")
-                       (.build))
+  (let [cas-config (CasConfig/SpringSessionCasConfig username password (url-helper :cas-client) service-url csrf-token caller-id)
         cas-client (CasClientBuilder/build cas-config)]
     (->NewCasClient
       cas-client
