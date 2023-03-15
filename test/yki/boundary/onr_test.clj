@@ -3,7 +3,7 @@
     [clojure.string :as str]
     [clojure.test :refer [deftest is testing]]
     [jsonista.core :as json]
-    [yki.boundary.cas-access :refer [CasAccess cas-authenticated-post]]
+    [yki.boundary.cas :refer [CasAccess]]
     [yki.boundary.onr :refer [->OnrClient get-or-create-person normalize-identifier]]
     [yki.handler.base-test :as base]))
 

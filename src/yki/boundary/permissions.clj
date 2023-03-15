@@ -1,7 +1,7 @@
 (ns yki.boundary.permissions
   (:require
    [integrant.core :as ig]
-   [yki.boundary.cas-access :as cas]
+   [yki.boundary.cas :as cas]
    [jsonista.core :as json]))
 
 (defprotocol Permissions

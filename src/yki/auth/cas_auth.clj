@@ -3,13 +3,13 @@
             [clojure.string :as str]
             [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [ok found see-other]]
-            [yki.boundary.cas-access :as cas]
+            [yki.boundary.cas :as cas]
             [yki.boundary.cas-ticket-db :as cas-ticket-db]
             [yki.boundary.onr :as onr]
             [yki.boundary.permissions :as permissions]
             [yki.middleware.auth :as auth])
   (:import [java.util UUID]
-           [fi.vm.sade.utils.cas CasLogout]
+           [fi.vm.sade.javautils.nio.cas CasLogout]
            [clojure.data.xml Element]))
 
 (def unauthorized {:status  401
@@ -100,7 +100,7 @@
 (defn process-attributes [attributes]
   (into {} (for [m attributes
                  [k v] m]
-             [k (clojure.string/join " " v)])))
+             [k (str/join " " v)])))
 
 (defn process-cas-attributes [response]
   (let [xml-response (-> response
@@ -190,7 +190,8 @@
 (defn cas-logout
   [db logout-request]
   (info "cas-initiated logout")
-  (let [ticket (CasLogout/parseTicketFromLogoutRequest logout-request)]
+  (let [ticket (-> (CasLogout.)
+                   (.parseTicketFromLogoutRequest logout-request))]
     (if (.isEmpty ticket)
       (error "Could not parse ticket from CAS request")
       (cas-ticket-db/delete-ticket! db (.get ticket)))

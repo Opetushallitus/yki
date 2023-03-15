@@ -1,62 +1,73 @@
 (ns yki.boundary.cas
   (:require
-    [clj-cas.cas :as cas]
     [clojure.data.json :as json]
-    [integrant.core :as ig]
     [org.httpkit.client :as http]
-    [yki.boundary.cas-access :refer [CasAccess]]
-    [yki.util.http-util :as http-util]))
+    [integrant.core :as ig]
+    [clojure.tools.logging :as log])
+  (:import
+    (fi.vm.sade.javautils.nio.cas CasClient CasConfig CasConfig$CasConfigBuilder CasClientBuilder CasClientHelper)
+    (org.asynchttpclient.netty NettyResponse)))
 
-(defn- request-with-json-body [request body]
-  (-> request
-      (assoc-in [:headers "Content-Type"] "application/json")
-      (assoc :body (json/write-str body))))
+(defprotocol CasAccess
+  (validate-ticket [this ticket])
+  (validate-oppija-ticket [this ticket callback-url])
+  (cas-authenticated-post [this url body])
+  (cas-authenticated-get [this url]))
 
-(defn- create-params [cas-session-id body]
-  (cond-> {:headers          {"Cookie" (str "JSESSIONID=" cas-session-id)}
-           :caller-id        {"Caller-Id" "1.2.246.562.10.00000000001.yki"}
-           :follow-redirects false}
-          (some? body)
-          (request-with-json-body body)))
 
-(defn- cas-http [^fi.vm.sade.utils.cas.CasClient cas-client cas-params method url & [body]]
-  (let [cas-session    (.fetchCasSession cas-client cas-params "JSESSIONID")
-        cas-session-id (.run cas-session)
-        request!       (fn [session-id]
-                         (http-util/do-request (merge {:url url :method method}
-                                                      (create-params session-id body))))
-        resp           (request! cas-session-id)]
-    (if (= 302 (:status resp))
-      (let [new-cas-session-id (.run (.fetchCasSession cas-client cas-params "JSESSIONID"))]
-        (request! new-cas-session-id))
-      resp)))
+(def csrf-token "csrf")
+(def caller-id "1.2.246.562.10.00000000001.yki")
 
-(defn- cas-oppija-ticket-validation [ticket validate-service-url callback-url]
-  (let [{:keys [status body]} @(http/get validate-service-url {:query-params {:ticket  ticket
-                                                                              :service callback-url}
-                                                               :headers      {"Caller-Id" "1.2.246.562.10.00000000001.yki"}})]
-    (when (= status 200)
-      body)))
+(defn process-response [^NettyResponse response]
+  {:status (.getStatusCode response)
+   :body   (.getResponseBody response)})
 
-(defrecord CasClient [^fi.vm.sade.utils.cas.CasClient cas-client url-helper cas-params]
+(defn- cas-oppija-ticket-validation [url-helper ticket callback-url]
+  (let [validate-service-url (url-helper :cas-oppija.validate-service)]
+    @(http/get validate-service-url {:query-params {:ticket  ticket
+                                                    :service callback-url}
+                                     :headers      {"Caller-Id" caller-id}})))
+
+(defrecord YkiCasClient [^CasClient cas-client url-helper]
   CasAccess
   (validate-ticket [_ ticket]
-    (-> cas-client
-        (.validateServiceTicketWithVirkailijaUsername (url-helper :yki.cas.login-success) ticket)
-        (.run)))
-
+    (log/info "validate-ticket called for ticket" ticket "and service-url" (url-helper :yki.cas.login-success))
+    (let [validation-response (-> cas-client
+                                  (.validateServiceTicketWithVirkailijaUsername (url-helper :yki.cas.login-success) ticket)
+                                  (.get))]
+      (log/info "validate-ticket returned with:" validation-response)
+      validation-response))
   (validate-oppija-ticket [_ ticket callback-url]
-    (let [validate-service-url  (url-helper :cas-oppija.validate-service)
-          cas-validate-response (cas-oppija-ticket-validation ticket validate-service-url callback-url)]
-      cas-validate-response))
-
+    (log/info "validate-oppija-ticket called for ticket" ticket "and callback-url" callback-url)
+    (let [{:keys [status body]} (cas-oppija-ticket-validation url-helper ticket callback-url)]
+      (log/info "validate-oppija-ticket returned with status" status "and body" body)
+      (when (= status 200)
+        body)))
   (cas-authenticated-get [_ url]
-    (cas-http cas-client cas-params :get url))
-
+    (log/info "cas-authenticated-get called with url" url)
+    (try
+      (let [helper   (CasClientHelper. cas-client)
+            response (-> (.doGetSync helper url)
+                         (process-response))]
+        (log/info "cas-authenticated-get returned with:" response)
+        response)
+      (catch Exception e
+        (log/error e "cas-authenticated-get failed!"))))
   (cas-authenticated-post [_ url body]
-    (cas-http cas-client cas-params :post url body)))
+    (log/info "cas-authenticated-post called with url" url "and body" body)
+    (let [helper   (CasClientHelper. cas-client)
+          response (-> (.doPostSync helper url (json/write-str body))
+                       (process-response))]
+      (log/info "cas-authenticated-post returned with:" response)
+      response)))
+
+(defn create-cas-client [{:keys [username password]} url-helper service-url]
+  (let [cas-config (CasConfig/SpringSessionCasConfig username password (url-helper :cas-client) service-url csrf-token caller-id)
+        cas-client (CasClientBuilder/build cas-config)]
+    (->YkiCasClient
+      cas-client
+      url-helper)))
 
 (defmethod ig/init-key :yki.boundary.cas/cas-client [_ {:keys [url-helper cas-creds]}]
-  (let [cas-client (cas/cas-client (url-helper :cas-client) "1.2.246.562.10.00000000001.yki")]
-    (fn [service]
-      (->CasClient cas-client url-helper (cas/cas-params service (:username cas-creds) (:password cas-creds))))))
+  (fn [service-url]
+    (create-cas-client cas-creds url-helper service-url)))

@@ -10,7 +10,7 @@
     [jsonista.core :as j]
     [muuntaja.middleware :as middleware]
     [peridot.core :as peridot]
-    [yki.boundary.cas-rewrite]
+    [yki.boundary.cas]
     [yki.embedded-db :as embedded-db]
     [yki.handler.auth]
     [yki.handler.exam-date]
@@ -106,9 +106,9 @@
                                                 :domain    "localhost"
                                                 :path      "/yki"}}}))
 (defn cas-client [url-helper]
-  (ig/init-key :yki.boundary.cas-rewrite/cas-client {:url-helper url-helper
-                                                     :cas-creds  {:username "username"
-                                                                  :password "password"}}))
+  (ig/init-key :yki.boundary.cas/cas-client {:url-helper url-helper
+                                             :cas-creds  {:username "username"
+                                                          :password "password"}}))
 (defn onr-client [url-helper]
   (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
                                              :cas-client (cas-client url-helper)}))
