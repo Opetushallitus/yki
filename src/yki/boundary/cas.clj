@@ -29,12 +29,13 @@
                                                     :service callback-url}
                                      :headers      {"Caller-Id" caller-id}})))
 
-(defn- json-request [data]
+(defn- json-request [^String method url data]
   (let [json-str        (json/write-str data)
-        request-builder (RequestBuilder.)]
+        request-builder (RequestBuilder. method)]
     (doto request-builder
       (.addHeader "Content-Type" "application/json")
-      (.setBody json-str))
+      (.setBody json-str)
+      (.setUrl url))
     (.build request-builder)))
 
 (defrecord YkiCasClient [^CasClient cas-client url-helper]
@@ -64,12 +65,14 @@
         (log/error e "cas-authenticated-get failed!"))))
   (cas-authenticated-post [_ url body]
     (log/info "cas-authenticated-post called with url" url "and body" body)
-    (let [helper   (CasClientHelper. cas-client)
-          response (->> (json-request body)
-                        (.doPostSync helper url)
-                        (process-response))]
-      (log/info "cas-authenticated-post returned with:" response)
-      response)))
+    (try
+      (let [response (->> (json-request "POST" url body)
+                          (.executeBlocking cas-client)
+                          (process-response))]
+        (log/info "cas-authenticated-post returned with:" response)
+        response)
+      (catch Exception e
+        (log/error e "cas-authenticated-post failed!")))))
 
 (defn create-cas-client [{:keys [username password]} url-helper service-url]
   (let [cas-config (CasConfig/SpringSessionCasConfig username password (url-helper :cas-client) service-url csrf-token caller-id)
