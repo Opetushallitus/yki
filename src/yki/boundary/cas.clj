@@ -6,7 +6,8 @@
     [clojure.tools.logging :as log])
   (:import
     (fi.vm.sade.javautils.nio.cas CasClient CasConfig CasConfig$CasConfigBuilder CasClientBuilder CasClientHelper)
-    (org.asynchttpclient.netty NettyResponse)))
+    (org.asynchttpclient Response)
+    (org.asynchttpclient RequestBuilder)))
 
 (defprotocol CasAccess
   (validate-ticket [this ticket])
@@ -18,7 +19,7 @@
 (def csrf-token "csrf")
 (def caller-id "1.2.246.562.10.00000000001.yki")
 
-(defn process-response [^NettyResponse response]
+(defn process-response [^Response response]
   {:status (.getStatusCode response)
    :body   (.getResponseBody response)})
 
@@ -27,6 +28,14 @@
     @(http/get validate-service-url {:query-params {:ticket  ticket
                                                     :service callback-url}
                                      :headers      {"Caller-Id" caller-id}})))
+
+(defn- json-request [data]
+  (let [json-str        (json/write-str data)
+        request-builder (RequestBuilder.)]
+    (doto request-builder
+      (.addHeader "Content-Type" "application/json")
+      (.setBody json-str))
+    (.build request-builder)))
 
 (defrecord YkiCasClient [^CasClient cas-client url-helper]
   CasAccess
@@ -56,8 +65,9 @@
   (cas-authenticated-post [_ url body]
     (log/info "cas-authenticated-post called with url" url "and body" body)
     (let [helper   (CasClientHelper. cas-client)
-          response (-> (.doPostSync helper url (json/write-str body))
-                       (process-response))]
+          response (->> (json-request body)
+                        (.doPostSync helper url)
+                        (process-response))]
       (log/info "cas-authenticated-post returned with:" response)
       response)))
 
