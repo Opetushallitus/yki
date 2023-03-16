@@ -41,36 +41,26 @@
 (defrecord YkiCasClient [^CasClient cas-client url-helper]
   CasAccess
   (validate-ticket [_ ticket]
-    (log/info "validate-ticket called for ticket" ticket "and service-url" (url-helper :yki.cas.login-success))
     (let [validation-response (-> cas-client
                                   (.validateServiceTicketWithVirkailijaUsername (url-helper :yki.cas.login-success) ticket)
                                   (.get))]
-      (log/info "validate-ticket returned with:" validation-response)
       validation-response))
   (validate-oppija-ticket [_ ticket callback-url]
-    (log/info "validate-oppija-ticket called for ticket" ticket "and callback-url" callback-url)
     (let [{:keys [status body]} (cas-oppija-ticket-validation url-helper ticket callback-url)]
-      (log/info "validate-oppija-ticket returned with status" status "and body" body)
       (when (= status 200)
         body)))
   (cas-authenticated-get [_ url]
-    (log/info "cas-authenticated-get called with url" url)
     (try
-      (let [helper   (CasClientHelper. cas-client)
-            response (-> (.doGetSync helper url)
-                         (process-response))]
-        (log/info "cas-authenticated-get returned with:" response)
-        response)
+      (let [helper (CasClientHelper. cas-client)]
+        (-> (.doGetSync helper url)
+            (process-response)))
       (catch Exception e
         (log/error e "cas-authenticated-get failed!"))))
   (cas-authenticated-post [_ url body]
-    (log/info "cas-authenticated-post called with url" url "and body" body)
     (try
-      (let [response (->> (json-request "POST" url body)
-                          (.executeBlocking cas-client)
-                          (process-response))]
-        (log/info "cas-authenticated-post returned with:" response)
-        response)
+      (->> (json-request "POST" url body)
+           (.executeBlocking cas-client)
+           (process-response))
       (catch Exception e
         (log/error e "cas-authenticated-post failed!")))))
 
