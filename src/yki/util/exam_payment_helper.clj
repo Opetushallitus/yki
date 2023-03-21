@@ -15,7 +15,6 @@
          (bigdec))))
 
 (defprotocol PaymentHelper
-  (get-payment-redirect-url [this registration-id lang])
   (get-payment-amount-for-registration [this registration-details])
   (registration->payment [this tx registration language amount]))
 
@@ -76,8 +75,6 @@
 
 (defrecord NewPaymentHelper [db url-helper payment-config]
   PaymentHelper
-  (get-payment-redirect-url [_ registration-id lang]
-    (url-helper :payment-link.new.redirect registration-id lang))
   (get-payment-amount-for-registration [_ registration-details]
     (let [amount (registration->payment-amount payment-config registration-details)]
       {:email-template amount

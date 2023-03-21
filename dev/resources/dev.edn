@@ -14,11 +14,12 @@
                                                            :password    "admin"}}}
 
  :yki.util/url-helper                    {:virkailija-host     "virkailija.untuvaopintopolku.fi"
-                                          :oppija-host         "untuvaopintopolku.fi"
-                                          :oppija-sub-domain   "yki."
-                                          :yki-register-host   "http://localhost:8080"
                                           :alb-host            "https://virkailija.untuvaopintopolku.fi"
                                           :tunnistus-host      "tunnistus.untuvaopintopolku.fi"
+                                          :oppija-host         "untuvaopintopolku.fi"
+                                          :oppija-sub-domain   "yki."
+                                          :yki-ui-sub-domain   "beta-yki."
+                                          :yki-register-host   "http://localhost:8080"
                                           :yki-host-virkailija "http://localhost:8080"}
 
  :yki.util/exam-payment-helper           {:payment-config {:merchant-id     "375917"
@@ -44,12 +45,12 @@
                                                                     :WRITING   "50.00"
                                                                     :SPEAKING  "50.00"}}}
 
- :yki.handler/registration               {:db             #ig/ref :duct.database/sql
-                                          :auth           #ig/ref :yki.middleware.auth/with-authentication
-                                          :url-helper     #ig/ref :yki.util/url-helper
-                                          :email-q        #ig/ref :yki.job.job-queue/email-q
-                                          :onr-client     #ig/ref :yki.boundary.onr/onr-client
-                                          :access-log     #ig/ref :yki.middleware.access-log/with-logging}
+ :yki.handler/registration               {:db         #ig/ref :duct.database/sql
+                                          :auth       #ig/ref :yki.middleware.auth/with-authentication
+                                          :url-helper #ig/ref :yki.util/url-helper
+                                          :email-q    #ig/ref :yki.job.job-queue/email-q
+                                          :onr-client #ig/ref :yki.boundary.onr/onr-client
+                                          :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
  :yki.handler/exam-session-public        {:db             #ig/ref :duct.database/sql
                                           :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"

@@ -12,6 +12,7 @@
                         :tunnistus-host      "{{host_tunnistus}}"
                         :oppija-host         "{{host_oppija}}"
                         :oppija-sub-domain   "yki."
+                        :yki-ui-sub-domain   "beta-yki."
                         :yki-register-host   "{{yki_register_host}}"
                         :yki-host-virkailija "{{host_ilb}}"}
   :yki.util/exam-payment-helper {:payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"

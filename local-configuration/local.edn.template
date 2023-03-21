@@ -5,14 +5,14 @@
 
 ; For local endpoint testing, only required opintopolku url-helper host is "alb-host"
 {:yki.util/url-helper {:virkailija-host        "https://virkailija.untuvaopintopolku.fi"
-                       :oppija-host            "localhost:3000"
+                       :oppija-host            ""
                        :yki-register-host      "https://virkailija.untuvaopintopolku.fi"
                        :alb-host               "https://virkailija.untuvaopintopolku.fi"
                        :tunnistus-host         "https://virkailija.untuvaopintopolku.fi"
                        :yki-host-virkailija    "https://virkailija.untuvaopintopolku.fi"
-                       :oppija-sub-domain      ""
+                       :oppija-sub-domain      "localhost:3000"
+                       :yki-ui-sub-domain      "localhost:4003"
                        :scheme                 "http"}
-
 
  :yki.handler/registration {:db #ig/ref :duct.database/sql
                             :auth #ig/ref :yki.middleware.no-auth/with-authentication
