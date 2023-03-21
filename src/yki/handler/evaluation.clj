@@ -84,17 +84,19 @@
           (if (some? validation-error)
             validation-error
             (if-let [order-id (evaluation-db/create-evaluation-order! db id order)]
-              (let [subtest-price     (fn [subtest] (get (subtest-price-config price-config) (keyword subtest)))
-                    final-price       (->> order
-                                           :subtests
-                                           (map subtest-price)
-                                           (reduce (fn [^BigDecimal acc ^double val]
-                                                     (.add acc (BigDecimal/valueOf val))) BigDecimal/ZERO))
-                    init-payment-data {:evaluation_order_id order-id
-                                       :lang                (or lang "fi")
-                                       :amount              final-price}]
-                (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data)
+              (let [subtest-price           (fn [subtest] (get (subtest-price-config price-config) (keyword subtest)))
+                    final-price             (->> order
+                                                 :subtests
+                                                 (map subtest-price)
+                                                 (reduce (fn [^BigDecimal acc ^double val]
+                                                           (.add acc (BigDecimal/valueOf val))) BigDecimal/ZERO))
+                    init-payment-data       {:evaluation_order_id order-id
+                                             :lang                (or lang "fi")
+                                             :amount              final-price}
+                    evaluation-payment-data (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data)]
+                (log/info "Inserted evaluation payment data:" evaluation-payment-data)
                 (ok {:evaluation_order_id order-id
-                     :signature           (sign-string (:payment-config payment-helper) (str order-id))}))
+                     :signature           (sign-string (:payment-config payment-helper) (str order-id))
+                     :redirect            (:href evaluation-payment-data)}))
               (internal-server-error {:success false
                                       :error   "Failed to create a new evaluation order"}))))))))
