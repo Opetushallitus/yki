@@ -10,7 +10,7 @@
 
 (defprotocol EvaluationPaymentHelper
   (order-id->payment-data [this id])
-  (insert-initial-payment-data! [this tx payment-data redirect-urls])
+  (insert-initial-payment-data! [this tx payment-data])
   (subtest->price [this subtest]))
 
 (defn- subtest->description
@@ -45,7 +45,7 @@
           "vatPercentage" 0})
        (into [])))
 
-(defn create-payment-data [payment-helper url-helper evaluation-order-data payment-data redirect-urls]
+(defn create-payment-data [payment-helper url-helper evaluation-order-data payment-data]
   (let [{email       :email
          first-names :first_names
          last-name   :last_name} evaluation-order-data
@@ -53,8 +53,8 @@
          amount       :amount
          language     :lang} payment-data
         items         (subtests->items payment-helper evaluation-order-data)
-        callback-urls {"success" (or (:success-url redirect-urls) (url-helper :evaluation-payment-new.success-callback language))
-                       "cancel"  (or (:cancel-url redirect-urls) (url-helper :evaluation-payment-new.error-callback language))}]
+        callback-urls {"success" (url-helper :evaluation-payment-new.success-callback language)
+                       "cancel"  (url-helper :evaluation-payment-new.error-callback language)}]
     {"stamp"        (random-uuid)
      ; Order reference
      "reference"    order-number
@@ -74,10 +74,10 @@
   EvaluationPaymentHelper
   (order-id->payment-data [_ id]
     (first (q/select-new-evaluation-payment-by-order-id (:spec db) {:evaluation_order_id id})))
-  (insert-initial-payment-data! [this tx payment-data redirect-urls]
+  (insert-initial-payment-data! [this tx payment-data]
     (let [id                      (:evaluation_order_id payment-data)
           evaluation-order-data   (first (q/select-evaluation-order-with-subtests-by-order-id tx {:evaluation_order_id id}))
-          paytrail-request-data   (create-payment-data this url-helper evaluation-order-data payment-data redirect-urls)
+          paytrail-request-data   (create-payment-data this url-helper evaluation-order-data payment-data)
           paytrail-response       (create-paytrail-payment! payment-config paytrail-request-data)
           response-body           (-> paytrail-response
                                       (:body))

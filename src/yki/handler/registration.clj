@@ -31,7 +31,7 @@
          :body [registration ::ys/registration]
          :path-params [id :- ::ys/id]
          :query-params [lang :- ::ys/language-code
-                        use-yki-ui :- ::ys/use-yki-ui]
+                        {use-yki-ui :- ::ys/use-yki-ui nil}]
          :return ::ys/response
          (let [{:keys [oid error]} (registration/submit-registration db
                                                                      url-helper

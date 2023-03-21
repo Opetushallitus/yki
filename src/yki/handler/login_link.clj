@@ -27,7 +27,7 @@
      (POST "/" request
        :body [login-link ::ys/login-link]
        :query-params [lang :- ::ys/language-code
-                      use-yki-ui :- ::ys/use-yki-ui]
+                      {use-yki-ui :- ::ys/use-yki-ui nil}]
        :return ::ys/response
        (log/info "Login link requested for: " login-link)
        (let [participant-id           (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)

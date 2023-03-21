@@ -37,7 +37,7 @@
 (s/def ::oid (s/and string? #(re-matches oid-regex %)))
 (s/def ::id pos-int?)
 (s/def ::email ::email-type)
-(s/def ::use-yki-ui (s/nilable boolean?))
+(s/def ::use-yki-ui boolean?)
 
 ;; organizer
 (s/def ::agreement_start_date ::date-type)
@@ -386,9 +386,7 @@
                                      ::last_name
                                      ::email
                                      ::birthdate
-                                     ::subtests]
-                            :opt-un [::payment-success-url
-                                     ::payment-cancel-url]))
+                                     ::subtests]))
 
 (s/def ::evaluation_order_id pos-int?)
 (s/def ::signature ::non-blank-string)
