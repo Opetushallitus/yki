@@ -145,39 +145,39 @@
                        (onr/get-or-create-person
                          onr-client
                          (assoc form-with-email :registration_id registration-id)))]
-        (let [amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
+        (let [amount                   (get-payment-amount-for-registration payment-helper exam-session-registration)
               ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
-              unified-participant-id  (or (:participant_id registration-data) session-participant-id)
-              update-registration     {:id             registration-id
-                                       :form           form-with-email
-                                       :oid            oid
-                                       :form_version   1
-                                       :participant_id unified-participant-id}
-              expiration-date         (registration->expiration-date registration-data)
+              unified-participant-id   (or (:participant_id registration-data) session-participant-id)
+              update-registration      {:id             registration-id
+                                        :form           form-with-email
+                                        :oid            oid
+                                        :form_version   1
+                                        :participant_id unified-participant-id}
+              expiration-date          (registration->expiration-date registration-data)
 
               payment-url              (or (:payment_url form) (get-payment-redirect-url payment-helper registration-id lang))
               payment-link-expired-url (or (:payment_link_expired_url form) (url-helper :payment-link-expired.redirect lang))
 
-              payment-link            {:participant_id        unified-participant-id
-                                       :exam_session_id       nil
-                                       :registration_id       registration-id
-                                       :expires_at            expiration-date
-                                       :expired_link_redirect payment-link-expired-url
-                                       :success_redirect      payment-url
-                                       :type                  "PAYMENT"}
-              create-and-send-link-fn #(create-and-send-link db
-                                                             url-helper
-                                                             email-q
-                                                             lang
-                                                             payment-link
-                                                             (assoc registration-data
-                                                               :amount (:email-template amount)
-                                                               :language (template-util/get-language (:language_code registration-data) lang)
-                                                               :level (template-util/get-level (:level_code registration-data) lang)
-                                                               :expiration-date (common/format-date-to-finnish-format expiration-date)))
-              success                 (registration-db/update-registration-details! db
-                                                                                    update-registration
-                                                                                    create-and-send-link-fn)]
+              payment-link             {:participant_id        unified-participant-id
+                                        :exam_session_id       nil
+                                        :registration_id       registration-id
+                                        :expires_at            expiration-date
+                                        :expired_link_redirect payment-link-expired-url
+                                        :success_redirect      payment-url
+                                        :type                  "PAYMENT"}
+              create-and-send-link-fn  #(create-and-send-link db
+                                                              url-helper
+                                                              email-q
+                                                              lang
+                                                              payment-link
+                                                              (assoc registration-data
+                                                                :amount (:email-template amount)
+                                                                :language (template-util/get-language (:language_code registration-data) lang)
+                                                                :level (template-util/get-level (:level_code registration-data) lang)
+                                                                :expiration-date (common/format-date-to-finnish-format expiration-date)))
+              success                  (registration-db/update-registration-details! db
+                                                                                     update-registration
+                                                                                     create-and-send-link-fn)]
           (if success
             (do
               (log/info "END: Registration id" registration-id "submitted successfully")
