@@ -155,12 +155,8 @@
                                        :participant_id unified-participant-id}
               expiration-date         (registration->expiration-date registration-data)
 
-              payment-url              (if (:payment_url form)
-                                         (:payment_url form)
-                                         (get-payment-redirect-url payment-helper registration-id lang))
-              payment-link-expired-url (if (:payment_link_expired_url form)
-                                         (:payment_link_expired_url form)
-                                         (url-helper :payment-link-expired.redirect lang))
+              payment-url              (or (:payment_url form) (get-payment-redirect-url payment-helper registration-id lang))
+              payment-link-expired-url (or (:payment_link_expired_url form) (url-helper :payment-link-expired.redirect lang))
 
               payment-link            {:participant_id        unified-participant-id
                                        :exam_session_id       nil
