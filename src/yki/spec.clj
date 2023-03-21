@@ -37,6 +37,7 @@
 (s/def ::oid (s/and string? #(re-matches oid-regex %)))
 (s/def ::id pos-int?)
 (s/def ::email ::email-type)
+(s/def ::use-new-ui boolean?)
 
 ;; organizer
 (s/def ::agreement_start_date ::date-type)
@@ -249,9 +250,7 @@
 
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
-                            :opt-un [::user_data
-                                     ::registration_url
-                                     ::registration_expired_url]))
+                            :opt-un [::user_data]))
 
 ;; registration
 

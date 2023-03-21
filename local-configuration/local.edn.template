@@ -11,6 +11,7 @@
                        :tunnistus-host         "https://virkailija.untuvaopintopolku.fi"
                        :yki-host-virkailija    "https://virkailija.untuvaopintopolku.fi"
                        :oppija-sub-domain      "localhost:3000"
+                       :yki-ui-sub-domain      "localhost:4003"
                        :scheme                 "http"}
 
  :yki.handler/registration {:db #ig/ref :duct.database/sql

@@ -26,19 +26,24 @@
      ; to email, as an alternative to Suomi.fi-authentication.
      (POST "/" request
        :body [login-link ::ys/login-link]
-       :query-params [lang :- ::ys/language-code]
+       :query-params [lang :- ::ys/language-code
+                      use-new-ui :- ::ys/use-new-ui nil]
        :return ::ys/response
        (log/info "Login link requested for: " login-link)
-       (let [participant-id   (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
-                                                                                   :email (:email login-link)}))
+       (let [participant-id           (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
+                                                                                           :email            (:email login-link)}))
              exam-session-id          (:exam_session_id login-link)
-             registration-url         (or (:registration_url login-link) (url-helper :exam-session.redirect exam-session-id lang))
-             registration-expired-url (or (:registration_expired_url login-link) (url-helper :link-expired.redirect lang))
+             registration-url         (if use-new-ui
+                                        (url-helper :yki-ui.exam-session-registration.url exam-session-id)
+                                        (url-helper :exam-session.redirect exam-session-id lang))
+             registration-expired-url (if use-new-ui
+                                        (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
+                                        (url-helper :link-expired.redirect lang))
              link                     (assoc login-link :participant_id participant-id
                                                         :type "LOGIN"
                                                         :expires_at (c/date-from-now 1)
-                                                        :expired_link_redirect registration-expired-url
                                                         :success_redirect registration-url
+                                                        :expired_link_redirect registration-expired-url
                                                         :registration_id nil)
              exam-session             (exam-session-db/get-exam-session-with-location db exam-session-id lang)]
          (when (registration/create-and-send-link db url-helper email-q lang link exam-session)
