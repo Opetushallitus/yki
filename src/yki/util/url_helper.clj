@@ -11,7 +11,7 @@
 (defmethod ig/init-key
   :yki.util/url-helper
   [_ {:keys [virkailija-host oppija-host oppija-sub-domain yki-ui-sub-domain yki-register-host tunnistus-host yki-host-virkailija alb-host scheme]
-      :or   {virkailija-host "" tunnistus-host "" oppija-host "" oppija-sub-domain "" yki-register-host "" yki-host-virkailija "" alb-host "" scheme "https"}}]
+      :or   {virkailija-host "" tunnistus-host "" oppija-host "" oppija-sub-domain "" yki-ui-sub-domain "" yki-register-host "" yki-host-virkailija "" alb-host "" scheme "https"}}]
   (reset! url-properties
           (doto (OphProperties. (into-array String ["/yki/yki-oph.properties"]))
             (.addDefault "scheme" scheme)

@@ -30,7 +30,8 @@
        (POST "/submit" request
          :body [registration ::ys/registration]
          :path-params [id :- ::ys/id]
-         :query-params [lang :- ::ys/language-code]
+         :query-params [lang :- ::ys/language-code
+                        use-yki-ui :- ::ys/use-yki-ui]
          :return ::ys/response
          (let [{:keys [oid error]} (registration/submit-registration db
                                                                      url-helper
@@ -40,7 +41,8 @@
                                                                      (or user-config (:session request))
                                                                      id
                                                                      registration
-                                                                     onr-client)]
+                                                                     onr-client
+                                                                     use-yki-ui)]
            (if oid
              (do
                (audit/log-participant {:request request

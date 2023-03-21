@@ -37,7 +37,7 @@
 (s/def ::oid (s/and string? #(re-matches oid-regex %)))
 (s/def ::id pos-int?)
 (s/def ::email ::email-type)
-(s/def ::use-new-ui boolean?)
+(s/def ::use-yki-ui (s/nilable boolean?))
 
 ;; organizer
 (s/def ::agreement_start_date ::date-type)
@@ -282,9 +282,7 @@
                                  ::phone_number
                                  ::email]
                         :opt-un [::gender
-                                 ::nationality_desc
-                                 ::payment_url
-                                 ::payment_link_expired_url]))
+                                 ::nationality_desc]))
 
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 

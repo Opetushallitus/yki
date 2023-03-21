@@ -11,7 +11,7 @@
             [yki.boundary.onr :as onr]
             [yki.boundary.registration-db :as registration-db]
             [yki.util.common :as common]
-            [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration get-payment-redirect-url]]
+            [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration]]
             [yki.util.template-util :as template-util]))
 
 (defn sha256-hash [code]
@@ -29,7 +29,7 @@
                                                        :email            nil})))
 
 (defn- sanitized-form [form]
-  (let [text-fields (dissoc form :nationalities :registration_url :registration_expired_url)
+  (let [text-fields (dissoc form :nationalities)
         sanitizer   (partial common/sanitized-string "_")
         sanitized   (update-vals text-fields sanitizer)]
     (merge form sanitized)))
@@ -128,7 +128,7 @@
       registration-end-date)))
 
 (defn submit-registration-abstract-flow
-  [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
+  [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration use-yki-ui]
   (let [form                   (sanitized-form raw-form)
         identity               (:identity session)
         form-with-email        (if (= (:auth-method session) "EMAIL")
@@ -155,15 +155,19 @@
                                         :participant_id unified-participant-id}
               expiration-date          (registration->expiration-date registration-data)
 
-              payment-url              (or (:payment_url form) (get-payment-redirect-url payment-helper registration-id lang))
-              payment-link-expired-url (or (:payment_link_expired_url form) (url-helper :payment-link-expired.redirect lang))
+              payment-success-url      (if use-yki-ui
+                                         (url-helper :yki-ui.registration.payment-success.url registration-id)
+                                         (url-helper :payment-link.new.redirect registration-id lang))
+              payment-link-expired-url (if use-yki-ui
+                                         (url-helper :yki-ui.registration.payment-link-expired-success.url registration-id)
+                                         (url-helper :payment-link-expired.redirect lang))
 
               payment-link             {:participant_id        unified-participant-id
                                         :exam_session_id       nil
                                         :registration_id       registration-id
                                         :expires_at            expiration-date
+                                        :success_redirect      payment-success-url
                                         :expired_link_redirect payment-link-expired-url
-                                        :success_redirect      payment-url
                                         :type                  "PAYMENT"}
               create-and-send-link-fn  #(create-and-send-link db
                                                               url-helper
@@ -191,13 +195,13 @@
       {:error (if started? {:closed true} {:expired true})})))
 
 (defn submit-registration
-  [db url-helper payment-helper email-q lang session registration-id form onr-client]
+  [db url-helper payment-helper email-q lang session registration-id form onr-client use-yki-ui]
   (log/info "START: Submitting registration id" registration-id)
   (let [exam-session-registration (exam-session-db/get-exam-session-registration-by-registration-id db registration-id)]
     (if
       (or
         (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
         (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id))
-      (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration)
+      (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration use-yki-ui)
       ; registration is already full, cannot add new
       {:error {:full true}})))
