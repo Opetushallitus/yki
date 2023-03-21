@@ -23,7 +23,7 @@
              amount-config))
 
 (defn- sanitize-order [raw-order]
-  (let [text-fields (dissoc raw-order :subtests)
+  (let [text-fields (dissoc raw-order :subtests :payment-success-url :payment-cancel-url)
         sanitizer   (partial common/sanitized-string "_")
         sanitized   (update-vals text-fields sanitizer)]
     (merge raw-order sanitized)))
@@ -92,8 +92,10 @@
                                                      (.add acc (BigDecimal/valueOf val))) BigDecimal/ZERO))
                     init-payment-data {:evaluation_order_id order-id
                                        :lang                (or lang "fi")
-                                       :amount              final-price}]
-                (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data)
+                                       :amount              final-price}
+                    redirect-urls     {:success-url (:payment-success-url order)
+                                       :cancel-url  (:payment-cancel-url order)}]
+                (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data redirect-urls)
                 (ok {:evaluation_order_id order-id
                      :signature           (sign-string (:payment-config payment-helper) (str order-id))}))
               (internal-server-error {:success false

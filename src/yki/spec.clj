@@ -389,7 +389,9 @@
                                      ::last_name
                                      ::email
                                      ::birthdate
-                                     ::subtests]))
+                                     ::subtests]
+                            :opt-un [::payment-success-url
+                                     ::payment-cancel-url]))
 
 (s/def ::evaluation_order_id pos-int?)
 (s/def ::signature ::non-blank-string)
