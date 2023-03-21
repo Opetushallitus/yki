@@ -10,7 +10,7 @@
 
 (defprotocol EvaluationPaymentHelper
   (order-id->payment-data [this id])
-  (insert-initial-payment-data! [this tx payment-data])
+  (insert-initial-payment-data! [this tx payment-data use-new-yki-ui?])
   (subtest->price [this subtest]))
 
 (defn- subtest->description
@@ -45,16 +45,22 @@
           "vatPercentage" 0})
        (into [])))
 
-(defn create-payment-data [payment-helper url-helper evaluation-order-data payment-data]
+(defn- callback-urls [url-helper language use-new-yki-ui?]
+  (if use-new-yki-ui?
+    {"success" (url-helper :evaluation-payment-v3.success-callback language)
+     "cancel"  (url-helper :evaluation-payment-v3.error-callback language)}
+    {"success" (url-helper :evaluation-payment-new.success-callback language)
+     "cancel"  (url-helper :evaluation-payment-new.error-callback language)}))
+
+(defn create-payment-data [payment-helper url-helper evaluation-order-data payment-data use-new-yki-ui?]
   (let [{email       :email
          first-names :first_names
          last-name   :last_name} evaluation-order-data
         {order-number :order_number
          amount       :amount
          language     :lang} payment-data
-        items         (subtests->items payment-helper evaluation-order-data)
-        callback-urls {"success" (url-helper :evaluation-payment-new.success-callback language)
-                       "cancel"  (url-helper :evaluation-payment-new.error-callback language)}]
+        items           (subtests->items payment-helper evaluation-order-data)
+        callback-urls   (callback-urls url-helper language use-new-yki-ui?)]
     {"stamp"        (random-uuid)
      ; Order reference
      "reference"    order-number
@@ -74,10 +80,10 @@
   EvaluationPaymentHelper
   (order-id->payment-data [_ id]
     (first (q/select-new-evaluation-payment-by-order-id (:spec db) {:evaluation_order_id id})))
-  (insert-initial-payment-data! [this tx payment-data]
+  (insert-initial-payment-data! [this tx payment-data use-new-yki-ui?]
     (let [id                      (:evaluation_order_id payment-data)
           evaluation-order-data   (first (q/select-evaluation-order-with-subtests-by-order-id tx {:evaluation_order_id id}))
-          paytrail-request-data   (create-payment-data this url-helper evaluation-order-data payment-data)
+          paytrail-request-data   (create-payment-data this url-helper evaluation-order-data payment-data use-new-yki-ui?)
           paytrail-response       (create-paytrail-payment! payment-config paytrail-request-data)
           response-body           (-> paytrail-response
                                       (:body))
