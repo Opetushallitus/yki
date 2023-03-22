@@ -59,8 +59,8 @@
         {order-number :order_number
          amount       :amount
          language     :lang} payment-data
-        items           (subtests->items payment-helper evaluation-order-data)
-        callback-urls   (callback-urls url-helper language use-new-yki-ui?)]
+        items         (subtests->items payment-helper evaluation-order-data)
+        callback-urls (callback-urls url-helper language use-new-yki-ui?)]
     {"stamp"        (random-uuid)
      ; Order reference
      "reference"    order-number
