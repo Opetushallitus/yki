@@ -80,16 +80,18 @@
             order-id         (response-body "evaluation_order_id")
             order            (base/select-one (str "SELECT * FROM evaluation_order WHERE id=" order-id))
             order-subtests   (base/select (str "SELECT subtest FROM evaluation_order_subtest WHERE evaluation_order_id=" order-id))
-            payment-id       (base/select-one (str "SELECT id FROM evaluation_payment_new WHERE evaluation_order_id=" order-id))
+            {:keys [id href]} (base/select-one (str "SELECT id, href FROM evaluation_payment_new WHERE evaluation_order_id=" order-id))
             order-comparison (map (fn [x] (= (order x) (mock-evaluation-order x))) [:first_names :last_name :email :birthdate])]
 
         (testing "can post a valid evaluation order"
           (is (= (:status response) 200))
-          (is (= response-body {"evaluation_order_id" order-id
-                                "signature"           (sign-string base/new-evaluation-payment-config (str order-id))}))
+          (is (= response-body
+                 {"evaluation_order_id" order-id
+                  "signature"           (sign-string base/new-evaluation-payment-config (str order-id))
+                  "redirect"            href}))
           (is (every? true? order-comparison))
           (is (= (count (:subtests mock-evaluation-order)) (count order-subtests)))
-          (is (some? payment-id))))
+          (is (some? id))))
 
       (let [response      (evaluation-order-post handler closed-evaluation-id mock-evaluation-order)
             response-body (base/body-as-json response)]

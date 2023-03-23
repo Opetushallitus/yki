@@ -390,8 +390,10 @@
 
 (s/def ::evaluation_order_id pos-int?)
 (s/def ::signature ::non-blank-string)
+(s/def ::redirect ::non-blank-string)
 (s/def ::evaluation-order-response (s/keys :req-un [::evaluation_order_id
-                                                    ::signature]))
+                                                    ::signature
+                                                    ::redirect]))
 
 (s/def ::evaluation-response (s/keys
                                :req-un [::id

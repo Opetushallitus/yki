@@ -19,27 +19,33 @@
 
 (require-sql ["yki/queries.sql" :as q])
 
-(defn- success-redirect [url-helper lang order-id]
-  (let [redirect-url (url-helper :evaluation-payment.success-redirect lang order-id)]
+(defn- success-redirect [url-helper lang order-id use-new-yki-ui?]
+  (let [redirect-url (if use-new-yki-ui?
+                       (url-helper :yki-ui.evaluation-payment.success-redirect lang order-id)
+                       (url-helper :evaluation-payment.success-redirect lang order-id))]
     (log/info "Evaluation payment success, redirecting to:" redirect-url)
     (found redirect-url)))
 
-(defn- error-redirect [url-helper lang order-id]
-  (let [redirect-url (url-helper :evaluation-payment.error-redirect lang order-id)]
+(defn- error-redirect [url-helper lang order-id use-new-yki-ui?]
+  (let [redirect-url (if use-new-yki-ui?
+                       (url-helper :yki-ui.evaluation-payment.error-redirect lang order-id)
+                       (url-helper :evaluation-payment.error-redirect lang order-id))]
     (log/info "Evaluation payment error, redirecting to:" redirect-url)
     (found redirect-url)))
 
-(defn- cancel-redirect [url-helper lang order-id]
-  (let [redirect-url (url-helper :evaluation-payment.cancel-redirect lang order-id)]
+(defn- cancel-redirect [url-helper lang order-id use-new-yki-ui?]
+  (let [redirect-url (if use-new-yki-ui?
+                       (url-helper :yki-ui.evaluation-payment.cancel-redirect lang order-id)
+                       (url-helper :evaluation-payment.cancel-redirect lang order-id))]
     (log/info "Evaluation payment cancelled, redirecting to:" redirect-url)
     (found redirect-url)))
 
-(defn- handle-exceptions [url-helper f lang order-id]
+(defn- handle-exceptions [url-helper f lang order-id use-new-yki-ui?]
   (try
     (f)
     (catch Exception e
       (log/error e "Payment handling failed")
-      (error-redirect url-helper lang order-id))))
+      (error-redirect url-helper lang order-id use-new-yki-ui?))))
 
 (defn send-evaluation-order-completed-emails! [email-q payment-helper pdf-renderer order-data lang]
   (let [order-time    (:created order-data)
@@ -58,7 +64,51 @@
     ;; Kirjaamo email
     (registration-email/send-kirjaamo-evaluation-registration-completed-email! email-q lang order-time "kirjaamo@oph.fi" template-data)))
 
-(defmethod ig/init-key :yki.handler/evaluation-payment-new [_ {:keys [db auth access-log payment-helper pdf-renderer url-helper email-q]}]
+(defn- handle-success [{:keys [db email-q payment-helper pdf-renderer url-helper]} lang request use-new-yki-ui?]
+  (let [{transaction-id "checkout-transaction-id"
+         amount         "checkout-amount"
+         payment-status "checkout-status"} (:query-params request)
+        payment-details     (evaluation-db/get-new-payment-by-transaction-id db transaction-id)
+        evaluation-order-id (:evaluation_order_id payment-details)]
+    (if (and payment-details
+             (= (* 100 (int (:amount payment-details)))
+                (Integer/parseInt amount))
+             (= "ok" payment-status))
+      (let [payment-id      (:id payment-details)
+            order-data      (first (q/select-evaluation-order-with-subtests-by-order-id (:spec db) {:evaluation_order_id evaluation-order-id}))
+            updated-payment (evaluation-db/complete-new-payment! db payment-id)
+            handle-payment  #(do
+                               (audit/log {:request   request
+                                           :target-kv {:k audit/evaluation-payment
+                                                       :v (:reference payment-details)}
+                                           :change    {:type audit/create-op
+                                                       :new  (:params request)}})
+                               ; Paytrail may call success endpoint multiple times.
+                               ; Only send email on the first invocation.
+                               ; Always redirect to payment success page, as otherwise the user
+                               ; might be redirected to an error page even though the payment went through!
+                               (when updated-payment
+                                 (send-evaluation-order-completed-emails! email-q payment-helper pdf-renderer (merge updated-payment order-data) lang))
+                               (success-redirect url-helper lang evaluation-order-id use-new-yki-ui?))]
+        (handle-exceptions url-helper handle-payment lang evaluation-order-id use-new-yki-ui?))
+      (do
+        (log/error "Success callback invoked with unexpected parameters for transaction-id" transaction-id
+                   "corresponding to evaluation order with id" evaluation-order-id
+                   "; amount:" amount "; payment-status:" payment-status)
+        (error-redirect url-helper lang nil use-new-yki-ui?)))))
+
+(defn- handle-error [{:keys [db url-helper]} request lang use-new-yki-ui?]
+  (let [{transaction-id "checkout-transaction-id"
+         payment-status "checkout-status"} (:query-params request)
+        payment-details (evaluation-db/get-new-payment-by-transaction-id db transaction-id)]
+    (log/info "Error callback invoked for transaction-id" transaction-id "with payment-status" payment-status)
+    (if-let [evaluation-order-id (:evaluation_order_id payment-details)]
+      (cancel-redirect url-helper lang evaluation-order-id use-new-yki-ui?)
+      (error-redirect url-helper lang nil use-new-yki-ui?))))
+
+(defmethod ig/init-key :yki.handler/evaluation-payment-new
+  [_ {:keys [db auth access-log payment-helper pdf-renderer url-helper email-q]
+      :as   ctx}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? payment-helper) (some? url-helper) (some? pdf-renderer) (some? email-q)]}
   (api
     (context routing/evaluation-payment-new-root []
@@ -66,6 +116,8 @@
       :no-doc true
       :middleware [auth access-log wrap-params]
       (GET "/:id/redirect" _
+      ; This redirect endpoint is not used by the new UI implementation
+      ; and can be removed once the old UI is no longer needed.
         :path-params [id :- ::ys/registration_id]
         :query-params [signature :- ::ys/non-blank-string]
         (if (= signature (sign-string (:payment-config payment-helper) (str id)))
@@ -84,43 +136,17 @@
       :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
-        (let [{transaction-id "checkout-transaction-id"
-               amount         "checkout-amount"
-               payment-status "checkout-status"} (:query-params request)
-              payment-details     (evaluation-db/get-new-payment-by-transaction-id db transaction-id)
-              evaluation-order-id (:evaluation_order_id payment-details)]
-          (if (and payment-details
-                   (= (* 100 (int (:amount payment-details)))
-                      (Integer/parseInt amount))
-                   (= "ok" payment-status))
-            (let [payment-id      (:id payment-details)
-                  order-data      (first (q/select-evaluation-order-with-subtests-by-order-id (:spec db) {:evaluation_order_id evaluation-order-id}))
-                  updated-payment (evaluation-db/complete-new-payment! db payment-id)
-                  handle-payment  #(do
-                                     (audit/log {:request   request
-                                                 :target-kv {:k audit/evaluation-payment
-                                                             :v (:reference payment-details)}
-                                                 :change    {:type audit/create-op
-                                                             :new  (:params request)}})
-                                     ; Paytrail may call success endpoint multiple times.
-                                     ; Only send email on the first invocation.
-                                     ; Always redirect to payment success page, as otherwise the user
-                                     ; might be redirected to an error page even though the payment went through!
-                                     (when updated-payment
-                                       (send-evaluation-order-completed-emails! email-q payment-helper pdf-renderer (merge updated-payment order-data) lang))
-                                     (success-redirect url-helper lang evaluation-order-id))]
-              (handle-exceptions url-helper handle-payment lang evaluation-order-id))
-            (do
-              (log/error "Success callback invoked with unexpected parameters for transaction-id" transaction-id
-                         "corresponding to evaluation order with id" evaluation-order-id
-                         "; amount:" amount "; payment-status:" payment-status)
-              (error-redirect url-helper lang nil)))))
-      (GET "/:lang/error" {query-params :query-params}
+        (handle-success ctx lang request false))
+      (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
-        (let [{transaction-id "checkout-transaction-id"
-               payment-status "checkout-status"} query-params
-              payment-details (evaluation-db/get-new-payment-by-transaction-id db transaction-id)]
-          (log/info "Error callback invoked for transaction-id" transaction-id "with payment-status" payment-status)
-          (if-let [evaluation-order-id (:evaluation_order_id payment-details)]
-            (cancel-redirect url-helper lang evaluation-order-id)
-            (error-redirect url-helper lang nil)))))))
+        (handle-error ctx request lang false)))
+    (context routing/evaluation-payment-for-new-ui-root []
+      :coercion :spec
+      :no-doc true
+      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      (GET "/:lang/success" request
+        :path-params [lang :- ::ys/language-code]
+        (handle-success ctx lang request true))
+      (GET "/:lang/error" request
+        :path-params [lang :- ::ys/language-code]
+        (handle-error ctx request lang true)))))
