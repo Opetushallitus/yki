@@ -5,7 +5,7 @@
     [integrant.core :as ig]
     [clojure.tools.logging :as log])
   (:import
-    (fi.vm.sade.javautils.nio.cas CasClient CasConfig CasConfig$CasConfigBuilder CasClientBuilder CasClientHelper)
+    (fi.vm.sade.javautils.nio.cas CasClient CasConfig CasClientBuilder CasClientHelper)
     (org.asynchttpclient Response)
     (org.asynchttpclient RequestBuilder)))
 
