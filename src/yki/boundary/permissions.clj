@@ -24,4 +24,5 @@
                          ", body: " body)))))))
 
 (defmethod ig/init-key :yki.boundary.permissions/permissions-client [_ {:keys [url-helper cas-client]}]
-  (->PermissionsClient url-helper (cas-client "/kayttooikeus-service")))
+  (let [permissions-cas-client (cas-client (url-helper :kayttooikeus-service))]
+    (->PermissionsClient url-helper permissions-cas-client)))

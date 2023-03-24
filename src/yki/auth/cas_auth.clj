@@ -9,7 +9,7 @@
             [yki.boundary.permissions :as permissions]
             [yki.middleware.auth :as auth])
   (:import [java.util UUID]
-           [fi.vm.sade.utils.cas CasLogout]
+           [fi.vm.sade.javautils.nio.cas CasLogout]
            [clojure.data.xml Element]))
 
 (def unauthorized {:status  401
@@ -39,21 +39,22 @@
 (defn login [ticket request cas-client permissions-client onr-client url-helper db]
   (try
     (if ticket
-      (let [username      (cas/validate-ticket (cas-client "/") ticket)
-            _             (cas-ticket-db/create-ticket! db ticket)
-            permissions   (permissions/virkailija-by-username permissions-client username)
-            person-oid    (:oidHenkilo permissions)
-            person        (onr/get-person-by-oid onr-client person-oid)
-            lang          (or (some #{(get-in person ["asiointiKieli" "kieliKoodi"])}
-                                    ["fi" "sv"])
-                              "fi")
-            organizations (get-organizations-with-yki-permissions (:organisaatiot permissions))
-            oph-admin?    (auth/oph-admin? organizations)
-            session       (:session request)
-            redirect-uri  (if (:success-redirect session)
-                            (str (:success-redirect session) "?lang=" lang)
-                            (url-helper (if oph-admin? :yki.admin.cas.login-success.redirect
-                                                       :yki.organizer.cas.login-success.redirect) lang))]
+      (let [auth-cas-client (cas-client (url-helper :root-cas-service))
+            username        (cas/validate-ticket auth-cas-client ticket)
+            _               (cas-ticket-db/create-ticket! db ticket)
+            permissions     (permissions/virkailija-by-username permissions-client username)
+            person-oid      (:oidHenkilo permissions)
+            person          (onr/get-person-by-oid onr-client person-oid)
+            lang            (or (some #{(get-in person ["asiointiKieli" "kieliKoodi"])}
+                                      ["fi" "sv"])
+                                "fi")
+            organizations   (get-organizations-with-yki-permissions (:organisaatiot permissions))
+            oph-admin?      (auth/oph-admin? organizations)
+            session         (:session request)
+            redirect-uri    (if (:success-redirect session)
+                              (str (:success-redirect session) "?lang=" lang)
+                              (url-helper (if oph-admin? :yki.admin.cas.login-success.redirect
+                                                         :yki.organizer.cas.login-success.redirect) lang))]
         (info "User" username "logged in")
         (if (empty? organizations)
           unauthorized
@@ -99,7 +100,7 @@
 (defn process-attributes [attributes]
   (into {} (for [m attributes
                  [k v] m]
-             [k (clojure.string/join " " v)])))
+             [k (str/join " " v)])))
 
 (defn process-cas-attributes [response]
   (let [xml-response (-> response
@@ -170,13 +171,14 @@
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
       (let [{:strs [examSessionId]} (:query-params request)
-            lang           (str/lower-case (or (some #{(-> request :route-params :*)}
-                                                     ["FI" "SV" "EN"])
-                                               "fi"))
-            callback-uri   (url-helper (str "cas-oppija.login-success." lang) examSessionId)
-            cas-response   (cas/validate-oppija-ticket (cas-client "/") ticket callback-uri)
-            cas-attributes (process-cas-attributes cas-response)
-            session        (:session request)]
+            lang              (str/lower-case (or (some #{(-> request :route-params :*)}
+                                                        ["FI" "SV" "EN"])
+                                                  "fi"))
+            callback-uri      (url-helper (str "cas-oppija.login-success." lang) examSessionId)
+            oppija-cas-client (cas-client (url-helper :root-cas-service))
+            cas-response      (cas/validate-oppija-ticket oppija-cas-client ticket callback-uri)
+            cas-attributes    (process-cas-attributes cas-response)
+            session           (:session request)]
         (if (:success? cas-attributes)
           (oppija-login-response examSessionId lang session cas-attributes url-helper onr-client)
           (validation-failed-response (:failureMessage cas-attributes) examSessionId lang url-helper)))
@@ -188,7 +190,8 @@
 (defn cas-logout
   [db logout-request]
   (info "cas-initiated logout")
-  (let [ticket (CasLogout/parseTicketFromLogoutRequest logout-request)]
+  (let [ticket (-> (CasLogout.)
+                   (.parseTicketFromLogoutRequest logout-request))]
     (if (.isEmpty ticket)
       (error "Could not parse ticket from CAS request")
       (cas-ticket-db/delete-ticket! db (.get ticket)))

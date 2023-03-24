@@ -10,6 +10,7 @@
     [jsonista.core :as j]
     [muuntaja.middleware :as middleware]
     [peridot.core :as peridot]
+    [yki.boundary.cas]
     [yki.embedded-db :as embedded-db]
     [yki.handler.auth]
     [yki.handler.exam-date]
@@ -22,7 +23,7 @@
     [yki.job.job-queue]
     [yki.middleware.no-auth]
     [yki.util.common :as c]
-    [yki.util.pdf :refer [PdfTemplateRenderer template+data->pdf-bytes]]
+    [yki.util.pdf :refer [PdfTemplateRenderer]]
     [yki.util.template-util :as template-util]
     [yki.util.url-helper]))
 
@@ -421,9 +422,6 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
             VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " select-participant ", " select-exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
-
-(defn insert-cas-ticket []
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO cas_ticketstore (ticket) VALUES ('ST-15126') ON CONFLICT (ticket) DO NOTHING")))
 
 (defn get-exam-session-id []
   (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))
