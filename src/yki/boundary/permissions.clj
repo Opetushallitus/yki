@@ -12,7 +12,8 @@
   (virkailija-by-username [_ username]
     (let [url (url-helper :kayttooikeus-service.kayttooikeus.kayttaja
                           {"username" username})
-          {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
+          {:keys [status body]
+           :as response} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
         (if-let [virkailija (first (json/read-value body (json/object-mapper {:decode-key-fn true})))]
           virkailija
@@ -20,8 +21,7 @@
                       (str "No virkailija found by username " username))))
         (throw (new RuntimeException
                     (str "Could not get virkailija by username " username
-                         ", status: " status
-                         ", body: " body)))))))
+                         ", response: " response)))))))
 
 (defmethod ig/init-key :yki.boundary.permissions/permissions-client [_ {:keys [url-helper cas-client]}]
   (let [permissions-cas-client (cas-client (url-helper :kayttooikeus-service))]
