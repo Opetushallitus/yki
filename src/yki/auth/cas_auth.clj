@@ -200,7 +200,7 @@
 (defn logout
   [session url-helper]
   (info "user" (-> session :identity :username) "logged out")
-  (assoc (found (url-helper :cas.logout)) :session nil))
+  (assoc (found (url-helper :cas.logout.yki)) :session nil))
 
 (defn cas-oppija-logout
   [url-helper]
