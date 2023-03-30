@@ -36,13 +36,15 @@
 
 (defn- create-init-response
   [db session exam_session_id registration-id payment-config]
-  (let [exam-session (exam-session-db/get-exam-session-by-id db exam_session_id)
-        email        (when (= (:auth-method session) "EMAIL") (:external-user-id (:identity session)))
-        user         (assoc (:identity session) :email email)
-        exam_fee     (get-in payment-config [:amount (keyword (:level_code exam-session))])]
-    {:exam_session    (assoc exam-session :exam_fee exam_fee)
-     :user            user
-     :registration_id registration-id}))
+  (let [exam-session            (exam-session-db/get-exam-session-by-id db exam_session_id)
+        authenticated-by-email? (= (:auth-method session) "EMAIL")
+        email                   (when authenticated-by-email? (:external-user-id (:identity session)))
+        user                    (assoc (:identity session) :email email)
+        exam_fee                (get-in payment-config [:amount (keyword (:level_code exam-session))])]
+    {:exam_session           (assoc exam-session :exam_fee exam_fee)
+     :is_strongly_identified (not authenticated-by-email?)
+     :registration_id        registration-id
+     :user                   user}))
 
 (defn- error-response [space-left? not-registered? exam_session_id]
   (let [error {:error {:full       (not space-left?)

@@ -53,6 +53,7 @@
     ],
     "exam_fee": "135.00"
   },
+  "is_strongly_identified": false,
   "user": {
     "external-user-id": "test@user.com",
     "email": "test@user.com"

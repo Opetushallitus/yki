@@ -307,7 +307,10 @@
                                :user/street_address
                                :user/email]))
 
+(s/def ::is_strongly_identified boolean?)
+
 (s/def ::registration-init-response (s/keys :req-un [::exam_session
+                                                     ::is_strongly_identified
                                                      ::user
                                                      ::registration_id]))
 
