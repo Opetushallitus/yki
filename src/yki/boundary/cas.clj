@@ -24,8 +24,7 @@
 (defn- process-response [^Response response]
   {:status         (.getStatusCode response)
    :body           (.getResponseBody response)
-   :headers        (.getHeaders response)
-   :is-redirected? (.isRedirected response)})
+   :headers        (.getHeaders response)})
 
 (defn- cas-oppija-ticket-validation [url-helper ticket callback-url]
   (let [validate-service-url (url-helper :cas-oppija.validate-service)]
