@@ -71,7 +71,7 @@
 (defn- redirect-to-cas
   [request url-helper]
   (assoc
-    (found (url-helper :cas.login))
+    (found (url-helper :cas.login.yki))
     :session
     {:success-redirect ((:query-params request) "success-redirect")}))
 
