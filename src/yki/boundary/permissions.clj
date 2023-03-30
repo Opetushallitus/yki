@@ -1,8 +1,8 @@
 (ns yki.boundary.permissions
   (:require
-   [integrant.core :as ig]
-   [yki.boundary.cas :as cas]
-   [jsonista.core :as json]))
+    [integrant.core :as ig]
+    [yki.boundary.cas :as cas]
+    [jsonista.core :as json]))
 
 (defprotocol Permissions
   (virkailija-by-username [this username]))
@@ -13,7 +13,7 @@
     (let [url (url-helper :kayttooikeus-service.kayttooikeus.kayttaja
                           {"username" username})
           {:keys [status body]
-           :as response} (cas/cas-authenticated-get cas-client url)]
+           :as   response} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
         (if-let [virkailija (first (json/read-value body (json/object-mapper {:decode-key-fn true})))]
           virkailija
