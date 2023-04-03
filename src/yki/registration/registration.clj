@@ -35,27 +35,29 @@
     (merge form sanitized)))
 
 (defn- create-init-response
-  [db session exam_session_id registration-id payment-config]
-  (let [exam-session (exam-session-db/get-exam-session-by-id db exam_session_id)
-        email        (when (= (:auth-method session) "EMAIL") (:external-user-id (:identity session)))
-        user         (assoc (:identity session) :email email)
-        exam_fee     (get-in payment-config [:amount (keyword (:level_code exam-session))])]
-    {:exam_session    (assoc exam-session :exam_fee exam_fee)
-     :user            user
-     :registration_id registration-id}))
+  [db session exam-session-id registration-id payment-config]
+  (let [exam-session            (exam-session-db/get-exam-session-by-id db exam-session-id)
+        authenticated-by-email? (= (:auth-method session) "EMAIL")
+        email                   (when authenticated-by-email? (:external-user-id (:identity session)))
+        user                    (assoc (:identity session) :email email)
+        exam-fee                (get-in payment-config [:amount (keyword (:level_code exam-session))])]
+    {:exam_session           (assoc exam-session :exam_fee exam-fee)
+     :is_strongly_identified (not authenticated-by-email?)
+     :registration_id        registration-id
+     :user                   user}))
 
-(defn- error-response [space-left? not-registered? exam_session_id]
+(defn- error-response [space-left? not-registered? exam-session-id]
   (let [error {:error {:full       (not space-left?)
                        :registered (not not-registered?)}}]
-    (log/warn "END: Init exam session" exam_session_id "failed with error" error)
+    (log/warn "END: Init exam session" exam-session-id "failed with error" error)
     (conflict error)))
 
-(defn- create-registration [db exam_session_id participant-id session payment-config]
-  (let [registration-id (registration-db/create-registration! db {:exam_session_id exam_session_id
+(defn- create-registration [db exam-session-id participant-id session payment-config]
+  (let [registration-id (registration-db/create-registration! db {:exam_session_id exam-session-id
                                                                   :participant_id  participant-id
                                                                   :started_at      (t/now)})
-        response        (create-init-response db session exam_session_id registration-id payment-config)]
-    (log/info "END: Init exam session" exam_session_id "registration success" registration-id)
+        response        (create-init-response db session exam-session-id registration-id payment-config)]
+    (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
     (ok response)))
 
 (defn init-registration
