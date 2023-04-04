@@ -13,8 +13,9 @@
 (defn- int->boolean [value]
   (= value 1))
 
-(defn- convert-date [quarantine]
-  (update-in quarantine [:end_date] f/parse))
+(defn- convert-dates [quarantine]
+  (assoc quarantine :start_date (f/parse (:start_date quarantine))
+                    :end_date (f/parse (:end_date quarantine))))
 
 (defn- without-nils [kvs]
   (->> kvs
@@ -41,13 +42,13 @@
       (q/insert-quarantine<!
         tx
         (-> quarantine
-            (convert-date)
+            (convert-dates)
             (with-placeholders-for-optional-values)))))
   (update-quarantine! [{:keys [spec]} id quarantine]
     (jdbc/with-db-transaction [tx spec]
       (q/update-quarantine<! tx (-> quarantine
                                     (assoc :id id)
-                                    (convert-date)
+                                    (convert-dates)
                                     (with-placeholders-for-optional-values)))))
   (delete-quarantine! [{:keys [spec]} id]
     (jdbc/with-db-transaction [tx spec]

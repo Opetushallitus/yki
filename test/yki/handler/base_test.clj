@@ -178,6 +178,7 @@
                                        :phone_number     "+3584012347"})
 
 (def quarantine-form {:language_code "fin"
+                      :start_date    "2040-06-29"
                       :end_date      "2040-12-30"
                       :birthdate     "1999-01-27"
                       :ssn           "301079-900U"
@@ -194,7 +195,7 @@
   (first (select query)))
 
 (defn insert-quarantine [quarantine]
-  (let [columns     [:language_code :end_date :birthdate :ssn :first_name :last_name :email :phone_number :diary_number]
+  (let [columns     [:language_code :start_date :end_date :birthdate :ssn :first_name :last_name :email :phone_number :diary_number]
         columns-str (->> columns
                          (map name)
                          (str/join ","))
