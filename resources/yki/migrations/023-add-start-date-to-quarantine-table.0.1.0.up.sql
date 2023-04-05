@@ -1,3 +1,5 @@
-ALTER TABLE quarantine ADD COLUMN IF NOT EXISTS start_date DATE NOT NULL DEFAULT '1900-01-01';
+ALTER TABLE quarantine ADD COLUMN IF NOT EXISTS start_date DATE;
 
-ALTER TABLE quarantine ALTER COLUMN start_date DROP DEFAULT;
+UPDATE quarantine SET start_date = created;
+
+ALTER TABLE quarantine ALTER COLUMN start_date SET NOT NULL;

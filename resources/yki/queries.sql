@@ -203,7 +203,7 @@ WHERE r.state IN ('SUBMITTED', 'COMPLETED')
   AND es.language_code = q.language_code
   -- Filter out possible matches that have been reviewed after quarantine was last updated
   AND NOT EXISTS (SELECT qr.id FROM quarantine_review qr WHERE qr.registration_id = r.id AND qr.quarantine_id = q.id AND q.updated <= qr.updated)
-  AND ed.exam_date BETWEEN q.created AND q.end_date
+  AND ed.exam_date BETWEEN q.start_date AND q.end_date
   AND q.deleted_at IS NULL
 ORDER BY q.id DESC, r.id;
 
