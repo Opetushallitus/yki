@@ -78,11 +78,13 @@
                           :opt-un [::error]))
 
 ;; quarantine
+(s/def ::start_date ::date-type)
 (s/def ::end_date ::date-type)
 (s/def ::is_quarantined boolean?)
 (s/def ::quarantined (s/keys :req-un [::is_quarantined]))
 (s/def ::diary_number (s/and string? (complement str/blank?)))
 (s/def ::quarantine-type (s/keys :req-un [::language_code
+                                          ::start_date
                                           ::end_date
                                           ::birthdate
                                           ::first_name
@@ -97,7 +99,6 @@
 (s/def ::quarantine-response (s/keys :req-un [::quarantines]))
 
 (s/def ::quarantine-match (s/keys :req-un [::language_code
-                                           ::end_date
                                            ::birthdate
                                            ::first_name
                                            ::last_name
@@ -117,7 +118,6 @@
                                  ::quarantine_id
                                  ::registration_id
                                  ::exam_date
-                                 ::end_date
                                  ::language_code
                                  ::birthdate
                                  ::first_name

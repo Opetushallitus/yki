@@ -428,10 +428,11 @@ FROM generate_series(1, 3) AS i,
 -- Insert some quarantines
 TRUNCATE quarantine CASCADE;
 
-INSERT INTO quarantine(language_code, end_date, birthdate, first_name, last_name, diary_number, ssn, phone_number)
+INSERT INTO quarantine(language_code, start_date, end_date, birthdate, first_name, last_name, diary_number, ssn, phone_number)
 VALUES(
   'eng',
-  NOW() + INTERVAL '30 DAYS',
+  NOW() - INTERVAL '11 MONTHS',
+  NOW() + INTERVAL '1 MONTH',
   '2000-01-01',
   'Teppo',
   'Testinen',
@@ -441,10 +442,11 @@ VALUES(
 );
 
 -- Has related registration based on birthdate
-INSERT INTO quarantine(language_code, end_date, birthdate, first_name, last_name, diary_number, email, phone_number)
+INSERT INTO quarantine(language_code, start_date, end_date, birthdate, first_name, last_name, diary_number, email, phone_number)
 VALUES(
   'fin',
-  NOW() + INTERVAL '60 DAYS',
+  NOW() - INTERVAL '4 MONTHS',
+  NOW() + INTERVAL '2 MONTHS',
   '1999-09-09',
   'Markus',
   'Aurelius',

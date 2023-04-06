@@ -117,6 +117,7 @@ UPDATE quarantine SET deleted_at=current_timestamp WHERE id = :id AND deleted_at
 SELECT
   q.id,
   q.language_code,
+  q.start_date,
   q.end_date,
   q.birthdate,
   q.ssn,
@@ -138,6 +139,7 @@ WHERE q.id = :id AND deleted_at IS NULL;
 -- name: insert-quarantine<!
 INSERT INTO quarantine (
   language_code,
+  start_date,
   end_date,
   birthdate,
   ssn,
@@ -148,6 +150,7 @@ INSERT INTO quarantine (
   diary_number
 ) VALUES (
   :language_code,
+  :start_date,
   :end_date,
   :birthdate,
   :ssn,
@@ -161,6 +164,7 @@ INSERT INTO quarantine (
 -- name: update-quarantine<!
 UPDATE quarantine
 SET language_code = :language_code,
+    start_date = :start_date,
     end_date = :end_date,
     birthdate = :birthdate,
     first_name = :first_name,
@@ -176,7 +180,6 @@ WHERE id = :id AND deleted_at IS NULL;
 SELECT
   q.id,
   q.language_code AS quarantine_lang,
-  q.end_date,
   q.birthdate,
   q.created,
   q.ssn,
@@ -200,7 +203,7 @@ WHERE r.state IN ('SUBMITTED', 'COMPLETED')
   AND es.language_code = q.language_code
   -- Filter out possible matches that have been reviewed after quarantine was last updated
   AND NOT EXISTS (SELECT qr.id FROM quarantine_review qr WHERE qr.registration_id = r.id AND qr.quarantine_id = q.id AND q.updated <= qr.updated)
-  AND ed.exam_date BETWEEN q.created AND q.end_date
+  AND ed.exam_date BETWEEN q.start_date AND q.end_date
   AND q.deleted_at IS NULL
 ORDER BY q.id DESC, r.id;
 
@@ -217,7 +220,6 @@ SELECT
   q.ssn,
   q.email,
   q.phone_number,
-  q.end_date,
   r.form,
   r.state
 FROM quarantine_review qr

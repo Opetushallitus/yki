@@ -70,7 +70,7 @@
       (testing "initially no matches should be returned"
         (is (= (get-matches) [])))
       (testing "match if registration birth date matches and exam date is between quarantine start and end dates"
-        (base/update-exam-date! 1 "2030-01-01")
+        (base/update-exam-date! 1 (:start_date base/quarantine-form))
         (base/update-registration-form! 1 "birthdate" (:birthdate base/quarantine-form))
         (is (= (-> (get-matches)
                    (count))
