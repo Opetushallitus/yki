@@ -156,12 +156,11 @@
                                         :form_version   1
                                         :participant_id unified-participant-id}
               expiration-date          (registration->expiration-date registration-data)
-
               payment-success-url      (if use-yki-ui
-                                         (url-helper :yki-ui.registration.payment-success.url registration-id)
+                                         (url-helper :exam-payment-v3.redirect registration-id lang)
                                          (url-helper :payment-link.new.redirect registration-id lang))
               payment-link-expired-url (if use-yki-ui
-                                         (url-helper :yki-ui.registration.payment-link-expired-success.url registration-id)
+                                         (url-helper :yki-ui.registration.payment-link-expired.url)
                                          (url-helper :payment-link-expired.redirect lang))
 
               payment-link             {:participant_id        unified-participant-id

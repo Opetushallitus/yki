@@ -16,7 +16,7 @@
 
 (defprotocol PaymentHelper
   (get-payment-amount-for-registration [this registration-details])
-  (registration->payment [this tx registration language amount]))
+  (registration->payment [this tx registration language use-yki-ui? amount]))
 
 (defn- registration->payment-description
   [registration]
@@ -41,14 +41,18 @@
     (append-line last-name first-name)
     (.toString sb)))
 
-(defn create-payment-data [url-helper registration language amount]
+(defn create-payment-data [url-helper registration language use-yki-ui? amount]
   (let [{registration-id   :id
          exam-session-id   :exam_session_id
          organizer-id      :organizer_id
          email             :email
          registration-form :form} registration
-        callback-urls {"success" (url-helper :exam-payment-new.success-callback language)
-                       "cancel"  (url-helper :exam-payment-new.error-callback language)}]
+        callback-urls {"success" (if use-yki-ui?
+                                   (url-helper :exam-payment-v3.success-callback language)
+                                   (url-helper :exam-payment-new.success-callback language))
+                       "cancel"  (if use-yki-ui?
+                                   (url-helper :exam-payment-v3.error-callback language)
+                                   (url-helper :exam-payment-new.error-callback language))}]
     {"stamp"        (random-uuid)
      ; Order reference
      "reference"    (str/join "-"
@@ -81,12 +85,12 @@
        ; Unit of returned amount is EUR.
        ; Return corresponding amount in minor unit, ie. cents.
        :paytrail       (* 100 (int amount))}))
-  (registration->payment [_ tx registration language amount]
+  (registration->payment [_ tx registration language use-yki-ui? amount]
     (if-let [existing-payment-redirect-url (->> (q/select-unpaid-new-exam-payments-by-registration-id tx {:registration_id (:id registration)})
                                                 (first)
                                                 (:href))]
       {"href" existing-payment-redirect-url}
-      (let [payment-data      (create-payment-data url-helper registration language amount)
+      (let [payment-data      (create-payment-data url-helper registration language use-yki-ui? amount)
             paytrail-response (create-paytrail-payment! payment-config payment-data)
             response-body     (:body paytrail-response)
             exam-payment-data {:registration_id (:id registration)

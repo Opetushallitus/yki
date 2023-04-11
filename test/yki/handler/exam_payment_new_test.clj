@@ -207,7 +207,7 @@
           registration-id       1
           participant-email     "test@user.com"
           registration-data     (registration-db/get-registration-data-for-new-payment db registration-id participant-email)
-          paytrail-payment-data (create-payment-data url-helper registration-data language amount)
+          paytrail-payment-data (create-payment-data url-helper registration-data language false amount)
           callback-urls         {"success" (url-helper :exam-payment-new.success-callback language)
                                  "cancel"  (url-helper :exam-payment-new.error-callback language)}
           customer-data         {"email"     (:email registration-data)
