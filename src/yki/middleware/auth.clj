@@ -161,7 +161,13 @@
     :handler any-access}
    {:pattern #".*/api/payment/v2/.*/redirect"
     :handler participant-authenticated}
+   {:pattern #".*/api/payment/v3/paytrail/.*"
+    :handler any-access}
+   {:pattern #".*/api/payment/v3/.*/redirect"
+    :handler participant-authenticated}
    {:pattern #".*/api/evaluation-payment/v2/.*"
+    :handler any-access}
+   {:pattern #".*/api/evaluation-payment/v3/.*"
     :handler any-access}
    {:pattern #".*/api/yki-register-debug/.*"
     :handler oph-admin-access}
