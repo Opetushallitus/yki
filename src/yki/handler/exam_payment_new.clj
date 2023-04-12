@@ -108,12 +108,12 @@
 
 (defn- error-redirect [url-helper lang exam-session-id use-yki-ui?]
   (if use-yki-ui?
-    (found (url-helper :yki-ui.registration.payment-cancel.url exam-session-id))
+    (found (url-helper :yki-ui.registration.payment-error.url exam-session-id))
     (found (url-helper :payment.error-redirect lang exam-session-id))))
 
 (defn- cancel-redirect [url-helper lang exam-session-id use-yki-ui?]
   (if use-yki-ui?
-    (found (url-helper :yki-ui.registration.payment-error.url exam-session-id))
+    (found (url-helper :yki-ui.registration.payment-cancel.url exam-session-id))
     (found (url-helper :payment.cancel-redirect lang exam-session-id))))
 
 (defn- handle-success-callback [db email-q pdf-renderer url-helper lang request use-yki-ui?]
