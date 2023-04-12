@@ -55,7 +55,9 @@
 (defn- registration-redirect [db payment-helper url-helper lang use-yki-ui? registration]
   (case (:state registration)
     "COMPLETED"
-    (url-helper :payment.success-redirect lang (:exam_session_id registration))
+    (if use-yki-ui?
+      (url-helper :yki-ui.registration.payment-success.url (:exam_session_id registration))
+      (url-helper :payment.success-redirect lang (:exam_session_id registration)))
     "SUBMITTED"
     (jdbc/with-db-transaction [tx (:spec db)]
       (rollback-on-exception
