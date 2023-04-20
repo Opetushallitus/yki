@@ -27,7 +27,7 @@
       (f/parse maybe-date)))
 
 (s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))
-(s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION" "OTHER"})
+(s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION"})
 (s/def ::date-type (st/spec
                      {:spec                (partial date?)
                       :type                :date-time

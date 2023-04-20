@@ -354,7 +354,7 @@ SELECT
     WHERE exam_session_id = e.id) >= 50) as queue_full,
   (SELECT COUNT(1)
     FROM registration re
-    WHERE re.exam_session_id = e.id AND re.kind IN ('ADMISSION', 'OTHER') AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
+    WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
   (SELECT COUNT(1)
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
@@ -420,13 +420,12 @@ SELECT
   FROM exam_session_queue
   WHERE exam_session_id = e.id) >= 50) as queue_full,
 (SELECT COUNT(1)
-    FROM registration re
-    WHERE re.exam_session_id = e.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-) AS participants,
-  (SELECT COUNT(1)
-    FROM registration re
-    WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
-  o.oid as organizer_oid,
+  FROM registration re
+  WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants,
+(SELECT COUNT(1)
+  FROM registration re
+  WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
+o.oid as organizer_oid,
 (
   SELECT array_to_json(array_agg(contact_row))
   FROM (
