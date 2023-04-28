@@ -49,8 +49,8 @@
   (if use-new-yki-ui?
     {"success" (url-helper :evaluation-payment-v3.success-callback language)
      "cancel"  (url-helper :evaluation-payment-v3.error-callback language)}
-    {"success" (url-helper :evaluation-payment-new.success-callback language)
-     "cancel"  (url-helper :evaluation-payment-new.error-callback language)}))
+    {"success" (url-helper :evaluation-payment-v2.success-callback language)
+     "cancel"  (url-helper :evaluation-payment-v2.error-callback language)}))
 
 (defn create-payment-data [payment-helper url-helper evaluation-order-data payment-data use-new-yki-ui?]
   (let [{email       :email
