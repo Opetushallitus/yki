@@ -224,7 +224,7 @@
         :path-params [id :- ::ys/registration_id]
         :query-params [lang :- ::ys/language-code]
         (redirect-to-paytrail db payment-helper url-helper lang session true id)))
-    (context routing/paytrail-payment-root []
+    (context routing/paytrail-payment-v2-root []
       :coercion :spec
       :no-doc true
       :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]

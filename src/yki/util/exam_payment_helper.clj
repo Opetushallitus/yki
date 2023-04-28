@@ -49,10 +49,10 @@
          registration-form :form} registration
         callback-urls {"success" (if use-yki-ui?
                                    (url-helper :exam-payment-v3.success-callback language)
-                                   (url-helper :exam-payment-new.success-callback language))
+                                   (url-helper :exam-payment-v2.success-callback language))
                        "cancel"  (if use-yki-ui?
                                    (url-helper :exam-payment-v3.error-callback language)
-                                   (url-helper :exam-payment-new.error-callback language))}]
+                                   (url-helper :exam-payment-v2.error-callback language))}]
     {"stamp"        (random-uuid)
      ; Order reference
      "reference"    (str/join "-"

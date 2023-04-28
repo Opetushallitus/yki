@@ -85,7 +85,7 @@
           (is (= {:redirect expected-redirect-url} (response->body redirect-response))))))))
 
 (defn- success [session lang query-params]
-  (let [success-endpoint-url (str routing/paytrail-payment-root "/" lang "/success")
+  (let [success-endpoint-url (str routing/paytrail-payment-v2-root "/" lang "/success")
         query-params-str     (->> (for [[k v] query-params]
                                     (str k "=" v))
                                   (str/join "&"))]
@@ -207,9 +207,9 @@
           registration-id       1
           participant-email     "test@user.com"
           registration-data     (registration-db/get-registration-data-for-new-payment db registration-id participant-email)
-          paytrail-payment-data (create-payment-data url-helper registration-data language false amount)
-          callback-urls         {"success" (url-helper :exam-payment-new.success-callback language)
-                                 "cancel"  (url-helper :exam-payment-new.error-callback language)}
+          paytrail-payment-data (create-payment-data url-helper registration-data language true amount)
+          callback-urls         {"success" (url-helper :exam-payment-v3.success-callback language)
+                                 "cancel"  (url-helper :exam-payment-v3.error-callback language)}
           customer-data         {"email"     (:email registration-data)
                                  "firstName" (:first_name (:form registration-data))
                                  "lastName"  (:last_name (:form registration-data))}

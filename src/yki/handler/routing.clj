@@ -21,7 +21,7 @@
 (def payment-v2-root (str api-root "/payment/v2"))
 (def payment-v3-root (str api-root "/payment/v3"))
 
-(def paytrail-payment-root (str payment-v2-root "/paytrail"))
+(def paytrail-payment-v2-root (str payment-v2-root "/paytrail"))
 (def paytrail-payment-v3-root (str payment-v3-root "/paytrail"))
 
 (def evaluation-payment-new-root (str api-root "/evaluation-payment/v2"))

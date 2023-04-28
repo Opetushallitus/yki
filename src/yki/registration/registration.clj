@@ -130,7 +130,7 @@
       registration-end-date)))
 
 (defn submit-registration-abstract-flow
-  [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration use-yki-ui]
+  [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration use-yki-ui?]
   (let [form                   (sanitized-form raw-form)
         identity               (:identity session)
         form-with-email        (if (= (:auth-method session) "EMAIL")
@@ -156,10 +156,10 @@
                                         :form_version   1
                                         :participant_id unified-participant-id}
               expiration-date          (registration->expiration-date registration-data)
-              payment-success-url      (if use-yki-ui
+              payment-success-url      (if use-yki-ui?
                                          (url-helper :exam-payment-v3.redirect registration-id lang)
                                          (url-helper :payment-link.new.redirect registration-id lang))
-              payment-link-expired-url (if use-yki-ui
+              payment-link-expired-url (if use-yki-ui?
                                          (url-helper :yki-ui.registration.payment-link-expired.url)
                                          (url-helper :payment-link-expired.redirect lang))
 
