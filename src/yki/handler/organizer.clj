@@ -27,6 +27,11 @@
     (context routing/organizer-api-root []
       :middleware [auth access-log]
       :coercion :spec
+      (GET "/" {session :session}
+        :return ::ys/organizers-response
+        (if (auth/oph-admin? (auth/get-organizations-from-session session))
+          (response {:organizers (organizer-db/get-organizers db)})
+          (response {:organizers (organizer-db/get-organizers-by-oids db (get-oids session))})))
       (POST "/" request
         :body [organizer ::ys/organizer-type]
         :return ::ys/response
@@ -37,11 +42,6 @@
              :target-kv {:k audit-log/organizer, :v (:oid organizer)}
              :change    {:type audit-log/create-op, :new organizer}})
           (response {:success true})))
-      (GET "/" {session :session}
-        :return ::ys/organizers-response
-        (if (auth/oph-admin? (auth/get-organizations-from-session session))
-          (response {:organizers (organizer-db/get-organizers db)})
-          (response {:organizers (organizer-db/get-organizers-by-oids db (get-oids session))})))
       (context "/:oid" [oid]
         (PUT "/" request
           :body [organizer ::ys/organizer-type]
