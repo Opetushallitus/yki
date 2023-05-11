@@ -103,7 +103,7 @@
              {:recipients [email]
               :created    (System/currentTimeMillis)
               :subject    (template-util/subject link-type lang template-data)
-              :body       (template-util/render link-type lang (assoc template-data :login-url login-url))})))
+              :body       (template-util/render link-type lang (assoc template-data :login_url login-url))})))
 
 ;; Get registration data with participant found in session
 ;; In a case user has two different registration forms open and a non matching session,
@@ -177,7 +177,7 @@
                                                                 :amount (:email-template amount)
                                                                 :language (template-util/get-language (:language_code registration-data) lang)
                                                                 :level (template-util/get-level (:level_code registration-data) lang)
-                                                                :expiration-date (common/format-date-to-finnish-format expiration-date)))
+                                                                :expiration_date (common/format-date-to-finnish-format expiration-date)))
               success                  (registration-db/update-registration-details! db
                                                                                      update-registration
                                                                                      create-and-send-link-fn)]
