@@ -1,4 +1,4 @@
-{% extends "yki/templates/base.html" %} {% block content %}
+{% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
     {% i18n email.evaluation_payment_kirjaamo.content.line1 %}
@@ -49,11 +49,6 @@
 <tr>
   <td style="padding-left: 20px">
     {% i18n email.evaluation_payment.content.total %}: {{amount}} €
-  </td>
-</tr>
-<tr>
-  <td style="padding-left: 20px; padding-top: 20px">
-    {% i18n email.payment.content.line5 %}
   </td>
 </tr>
 {% endblock %}

@@ -91,16 +91,14 @@
         :else
         (conflict {:error {:closed true}})))))
 
-(defn create-and-send-link [db url-helper email-q lang login-link template-data]
+(defn create-and-send-link [db url-helper email-q lang payment-link template-data]
   (let [code      (str (random-uuid))
         login-url (url-helper :yki.login-link.url code)
-        email     (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
-        link-type (:type login-link)
+        email     (:email (registration-db/get-participant-by-id db (:participant_id payment-link)))
+        link-type (:type payment-link)
         hashed    (sha256-hash code)]
-    (login-link-db/create-login-link! db
-                                      (assoc login-link
-                                        :code hashed))
-    (log/info "Login link created for " email ". Adding to email queue")
+    (login-link-db/create-login-link! db (assoc payment-link :code hashed))
+    (log/info "Payment link created for " email ". Adding to email queue")
     (pgq/put email-q
              {:recipients [email]
               :created    (System/currentTimeMillis)

@@ -1,4 +1,4 @@
-{% extends "yki/templates/base.html" %} {% block content %}
+{% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
     {% i18n email.examSession.queue.content.line1 %}:
@@ -29,11 +29,6 @@
     <a style="color: #0093C4;" href="{{exam-session-url}}" target="_blank"
       >{% i18n common.registration %}</a
     >
-  </td>
-</tr>
-<tr>
-  <td style="padding-left: 20px; padding-top: 20px;">
-    {% i18n email.payment.content.line5 %}
   </td>
 </tr>
 {% endblock %}

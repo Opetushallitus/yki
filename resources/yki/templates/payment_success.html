@@ -1,4 +1,4 @@
-{% extends "yki/templates/base.html" %} {% block content %}
+{% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
     {% i18n email.payment_success.content.line1 %}:
@@ -70,11 +70,6 @@
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
     <a href="{% i18n registration.examDetails.readInstructions.url %}">{% i18n registration.examDetails.readInstructions.url %}</a>
-  </td>
-</tr>
-<tr>
-  <td style="padding-left: 20px; padding-top: 20px">
-    {% i18n email.payment.content.line5 %}
   </td>
 </tr>
 {% endblock %}

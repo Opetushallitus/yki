@@ -5,9 +5,18 @@
     [yki.util.template-util :as template-util]))
 
 (deftest render-login-link-email-test
-  (let [rendered (template-util/render "LOGIN" "fi" {:login-url "http://localhost:8080/login"})]
-    (testing "result contains login link"
-      (is (s/includes? rendered "Kirjaudu"))
+  (let [rendered (template-util/render "LOGIN" "fi" {:language "Suomi"
+                                                     :level "Ylin taso"
+                                                     :exam_date "2024-05-16"
+                                                     :street_address "Katutie 13"
+                                                     :zip "00500"
+                                                     :post_office "Helsinki"
+                                                     :name "Järjestäjä Oy"
+                                                     :login_url "http://localhost:8080/login"})]
+    (testing "result contains proper content"
+      (is (s/includes? rendered "Tutkinto: Suomi ylin taso"))
+      (is (s/includes? rendered "Testipäivä: 16.5.2024"))
+      (is (s/includes? rendered "Testipaikka: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
       (is (s/includes? rendered "http://localhost:8080/login")))))
 
 (deftest render-payment-link-email-test
