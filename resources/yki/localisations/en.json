@@ -37,6 +37,7 @@
   "email.examSession.queue.content.line2": "Use the attached link to register.",
   "email.login.content.line1": "You are registering for the following YKI test",
   "email.login.content.line2": "Register for the test via this link",
+  "email.login.link_text": "Link to the registration form",
   "email.login.subject": "Registration (YKI)",
   "email.payment.content.line1.part1": "Check that you are registering for the correct YKI test (including language and proficiency level).",
   "email.payment.content.line1.part2": "If you have registered for a test in the wrong language or level, please contact your test centre.",

@@ -37,6 +37,7 @@
   "email.examSession.queue.content.line2": "Pääset ilmoittautumaan oheisen linkin kautta.",
   "email.login.content.line1": "Olet ilmoittautumassa seuraavaan yleiseen kielitutkintoon (YKI)",
   "email.login.content.line2": "Ilmoittaudu testiin tämän linkin kautta",
+  "email.login.link_text": "Linkki ilmoittautumislomakkeelle",
   "email.login.subject": "Ilmoittautuminen (YKI)",
   "email.payment.content.line1.part1": "Tarkista ennen maksamista, että olet ilmoittautunut oikean kielen ja tason testiin!",
   "email.payment.content.line1.part2": "Jos olet ilmoittautunut väärän kielen tai tason testiin, ota yhteyttä testin järjestäjään.",

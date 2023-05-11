@@ -37,6 +37,7 @@
   "email.examSession.queue.content.line2": "Du kan anmäla dig via den bifogade länken.",
   "email.login.content.line1": "Du håller på att anmäla dig till följande YKI-testet",
   "email.login.content.line2": "Anmäl dig till testet genom den här länken",
+  "email.login.link_text": "Länk till anmälningsblankett",
   "email.login.subject": "Anmälning (YKI)",
   "email.payment.content.line1.part1": "Kontrollera att du anmäler dig till ett test på rätt språk och nivå före du betalar!",
   "email.payment.content.line1.part2": "Om du har anmält dig till ett test på fel språk eller nivå, kontakta ditt testställe.",
