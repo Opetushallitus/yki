@@ -1,44 +1,65 @@
 {% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
-    {% i18n email.evaluation_payment_success.content.line1 %}
-  </td>
-</tr>
-<tr>
-  <td style="padding-left: 20px; padding-top: 20px">
-    {{language}} {{level|lower}}
-  </td>
-</tr>
-<tr>
-  <td style="padding-left: 20px; padding-bottom: 20px">
-    {{exam_date|date-format-with-dots}}
+  <td style="padding-left: 20px;">
+    {% i18n email.evaluation_payment_success.content.line1 %}:
   </td>
 </tr>
 
+<tr>
+  <td style="padding-left: 20px; padding-top: 10px;">
+    {% i18n common.test %}: {{language}} {{level|lower}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n common.testDay %}: {{exam_date|date-format-with-dots}}
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    <b>{% i18n email.evaluation_payment.content.heading.partialExams %}:</b>
+  </td>
+</tr>
 {% for test in subtests %}
 <tr>
-  <td style="padding-left: 20px">{{test}}</td>
+  <td style="padding-left: 20px;">
+    <li style="padding-left: 10px;">{{test}}</li>
+  </td>
 </tr>
 {% endfor %}
+
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
-    {% i18n email.evaluation_payment.content.paid %}:
-    {{order_time|date-format-with-dots-from-long}}
+  <td style="padding-left: 20px; padding-top: 20px;">
+    <b>{% i18n email.evaluation_payment.content.heading.evaluationFee %}</b>
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px">
-    {% i18n email.evaluation_payment.content.total %}: {{amount}} €
+  <td style="padding-left: 20px;">
+    {% i18n email.evaluation_payment.content.paid %}: {{order_time|date-format-with-dots-from-long}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
+  <td style="padding-left: 20px;">
+    {% i18n email.evaluation_payment.content.total %}: {{amount|replace-dot-with-comma}} €
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
     {% i18n email.evaluation_payment_success.content.line2 %}
   </td>
 </tr>
+
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
+  <td style="padding-left: 20px; padding-top: 20px;">
     {% i18n email.evaluation_payment_success.content.line3 %}
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.evaluation_payment_success.content.line4 %}: <a href="mailto:kielitutkinnot@oph.fi">kielitutkinnot@oph.fi</a>
   </td>
 </tr>
 {% endblock %}

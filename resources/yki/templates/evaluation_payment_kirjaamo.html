@@ -1,54 +1,57 @@
 {% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
-    {% i18n email.evaluation_payment_kirjaamo.content.line1 %}
+  <td style="padding-left: 20px;">
+    {% i18n email.evaluation_payment_kirjaamo.content.line1 %}:
   </td>
 </tr>
+
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
+  <td style="padding-left: 20px; padding-top: 10px;">
     {{language}} {{level|lower}}, {{exam_date|date-format-with-dots}}
   </td>
 </tr>
 
 {% for test in subtests %}
 <tr>
-  <td style="padding-left: 20px">{{test}}</td>
+  <td style="padding-left: 20px;">{{test}}</td>
 </tr>
 {% endfor %}
+
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
+  <td style="padding-left: 20px; padding-top: 20px;">
     {% i18n common.lastName %}: {{last_name}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px">
+  <td style="padding-left: 20px;">
     {% i18n common.firstNames %}: {{first_names}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px">
+  <td style="padding-left: 20px;">
     {% i18n common.birthdate %}: {{birthdate|date-format-with-dots}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px">
+  <td style="padding-left: 20px;">
     {% i18n common.email %}: {{email}}
   </td>
 </tr>
+
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
+  <td style="padding-left: 20px; padding-top: 20px;">
     {% i18n email.evaluation_payment.content.orderNumber %}: {{order_number}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px">
+  <td style="padding-left: 20px;">
     {% i18n email.evaluation_payment.content.paid %}:
     {{order_time|date-format-with-dots-from-long}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px">
-    {% i18n email.evaluation_payment.content.total %}: {{amount}} €
+  <td style="padding-left: 20px;">
+    {% i18n email.evaluation_payment.content.total %}: {{amount|replace-dot-with-comma}} €
   </td>
 </tr>
 {% endblock %}
