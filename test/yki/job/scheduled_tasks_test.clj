@@ -203,7 +203,7 @@
     (if (t/within? at-eight-am at-nine-pm now)
       (do
         (testing "should send notification"
-          (is (str/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 Espoo")))
+          (is (str/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 ESPOO")))
         (testing "should set last_notified_at timestamp"
           (is (some? (:last_notified_at queue))))
         (testing "should send notification only once a day"

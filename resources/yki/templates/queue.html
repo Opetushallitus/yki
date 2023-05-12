@@ -1,0 +1,35 @@
+{% extends "yki/templates/base_message.html" %} {% block content %}
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n email.queue.content.line1 %}
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 10px">
+    {% i18n common.test %}: {{language}} {{level|lower}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n common.testDay %}: {{exam_date|date-format-with-dots}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n common.testCentre %}: {{name}}, {{street_address}}, {{zip}} {{post_office|upper}}
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.queue.content.line2 %}:
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    <a style="color: #0093C4;" href="{{exam_session_url}}" target="_blank">{% i18n email.queue.link_text %}</a>
+  </td>
+</tr>
+{% endblock %}
