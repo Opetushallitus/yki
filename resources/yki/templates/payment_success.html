@@ -1,22 +1,26 @@
 {% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
+  <td style="padding-left: 20px;">
     {% i18n email.payment_success.content.line1 %}:
   </td>
 </tr>
+
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px">
-    {{language}} {{level|lower}}
+  <td style="padding-left: 20px; padding-top: 10px">
+    {% i18n common.test %}: {{language}} {{level|lower}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px">{{exam_date|date-format-with-dots}}</td>
-</tr>
-<tr>
-  <td style="padding-left: 20px">
-    {{name}}, {{street_address}}, {{zip}} {{post_office}}
+  <td style="padding-left: 20px;">
+    {% i18n common.testDay %}: {{exam_date|date-format-with-dots}}
   </td>
 </tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n common.testCentre %}: {{name}}, {{street_address}}, {{zip}} {{post_office|upper}}
+  </td>
+</tr>
+
 {% if extra_information %}
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
@@ -29,6 +33,7 @@
   </td>
 </tr>
 {% endif %}
+
 {% if contact_info %}
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
@@ -57,19 +62,41 @@
 </tr>
 {% endif %}
 {% endif %}
+
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
-    {% i18n registration.examDetails.futureInfo %}
+    {% i18n email.payment_success.content.line2 %}
   </td>
 </tr>
+
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
-    {% i18n registration.examDetails.readInstructions.prompt %}:
+    <b>{% i18n email.payment_success.content.line3.part1 %}</b> {% i18n email.payment_success.content.line3.part2 %}:
   </td>
 </tr>
+<tr style="padding-left: 20px;">
+  <li>{% i18n email.payment_success.idDocument.bulletPoint1 %}</li>
+  <li>{% i18n email.payment_success.idDocument.bulletPoint2 %}</li>
+  <li>{% i18n email.payment_success.idDocument.bulletPoint3 %}</li>
+  <li>{% i18n email.payment_success.idDocument.bulletPoint4 %}</li>
+  <li>{% i18n email.payment_success.idDocument.bulletPoint5 %}</li>
+</tr>
+
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
-    <a href="{% i18n registration.examDetails.readInstructions.url %}">{% i18n registration.examDetails.readInstructions.url %}</a>
+    {% i18n email.payment_success.content.line4.part1 %}: <a href="{% i18n email.payment_success.content.line4.part2 %}" target="_blank">{% i18n email.payment_success.content.line4.part2 %}</a>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n email.payment_success.content.line5.part1 %}: <a href="{% i18n email.payment_success.content.line5.part2 %}" target="_blank">{% i18n email.payment_success.content.line5.part2 %}</a>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n email.payment_success.content.line6 %}
   </td>
 </tr>
 {% endblock %}
