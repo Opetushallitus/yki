@@ -26,7 +26,7 @@
   "email.evaluation_payment.content.heading.partialExams": "Subtests",
   "email.evaluation_payment.content.orderNumber": "Order number",
   "email.evaluation_payment.content.paid": "Paid",
-  "email.evaluation_payment.content.total": "Amount",
+  "email.evaluation_payment.content.total": "Total amount",
   "email.evaluation_payment_kirjaamo.content.line1": "The person has requested a reassessment of the following National language proficiency examination performance",
   "email.evaluation_payment_success.content.line1": "You have submitted a request for reassessment with the following information",
   "email.evaluation_payment_success.content.line2": "The Finnish National Agency for Education will process your request. The average processing time is approximately three months. The results of the reassessment will be sent to you by e-mail.",
