@@ -126,19 +126,22 @@
     :request-method :get}
    {:pattern #".*/api/evaluation.*"
     :handler any-access}
+   {:pattern        #".*/api/virkailija/organizer/.*/exam-date.*"
+    :handler        (partial virkailija-authenticated db)
+    :request-method :get}
+   {:pattern        #".*/api/virkailija/organizer/.*/exam-date.*"
+    :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
+    :request-method #{:post :put :delete}}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
-   {:pattern #".*/api/virkailija/organizer/.*/exam-date.*"
-    :handler (partial virkailija-authenticated db)}
+   {:pattern        #".*/api/virkailija/organizer/.*/file.*"
+    :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}}
    {:pattern        #".*/api/virkailija/organizer"
-    :handler        (partial virkailija-authenticated db)   ; authorized on database level
+    :handler        (partial virkailija-authenticated db)
     :request-method :get}
    {:pattern        #".*/api/virkailija/organizer.*"
     :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
     :request-method #{:post :put :delete}}
-   {:pattern        #".*/api/virkailija/organizer/.*/file.*"
-    :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
-    :request-method :get}
    {:pattern #".*/api/virkailija/quarantine.*"
     :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
    {:pattern        #".*/auth/cas.*"
