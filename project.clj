@@ -36,7 +36,8 @@
                  [ring-logger "1.1.1"]
                  [ch.qos.logback/logback-classic "1.2.11"]
                  [org.clojure/data.xml "0.0.8"]
-                 [fi.vm.sade.java-utils/java-cas "1.0.7-SNAPSHOT"]
+                 [fi.vm.sade.java-utils/java-cas "1.0.7-SNAPSHOT"
+                  :exclusions [org.slf4j/slf4j-simple]]
                  [fi.vm.sade/auditlogger "8.3.0-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]
                  [com.github.jhonnymertz/java-wkhtmltopdf-wrapper "1.1.14-RELEASE"]]
