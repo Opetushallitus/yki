@@ -1,5 +1,5 @@
 {
-  "baseMessage.automaticReply": "Please, don't reply this message - it is generated automatically.",
+  "baseMessage.automaticReply": "Please, don't reply to this message - it is generated automatically.",
   "baseMessage.signature.line1": "Kind regards",
   "baseMessage.signature.line2": "Finnish National Agency for Education",
   "common.birthdate": "Birthdate",
