@@ -15,15 +15,20 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
+    <logger name="yki.middleware.no-auth" level="OFF" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
+    <!-- Suppress most logging for testcontainers -->
+    <logger name="tc" level="ERROR" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
     <logger name="org.testcontainers" level="WARN" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
 
     <logger name="com.opentable.db.postgres.embedded.EmbeddedPostgres" level="WARN" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-
-    <logger name="yki.middleware.no-auth" level="OFF" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
 
