@@ -52,8 +52,7 @@
                                                                                  :url-helper url-helper
                                                                                  :exam-session-handler exam-session-handler
                                                                                  :exam-date-handler exam-date-handler
-                                                                                 :auth auth
-                                                                                 :file-handler {}}))
+                                                                                 :auth auth}))
         auth-handler (base/auth-handler auth url-helper)]
     (routes org-handler auth-handler)))
 
