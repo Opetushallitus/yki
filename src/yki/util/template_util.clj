@@ -68,6 +68,10 @@
         language (get-language (:language_code params) lang)]
     (parser/render "{{subject}}: {{language}} {{level|lower}} - {{name}}, {{exam_date|date-format-with-dots}}" (assoc params :subject subject :level level :language language))))
 
+(defn login-subject
+  [params]
+  (parser/render "{{subject}}: {{language}} {{level|lower}} - {{name}}, {{exam_date|date-format-with-dots}}" params))
+
 (defn evaluation-subject
   [params]
   (parser/render "{{subject}} {{language}} {{level|lower}}, {{exam_date|date-format-with-dots}}" params))

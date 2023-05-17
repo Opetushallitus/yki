@@ -119,12 +119,12 @@
                  (pgq/put email-q
                           {:recipients [email]
                            :created    (System/currentTimeMillis)
-                           :subject    (template-util/subject "queue_notification" lang exam-session)
+                           :subject    (template-util/subject "queue" lang exam-session)
                            :body       (template-util/render
-                                         "queue_notification"
+                                         "queue"
                                          lang
                                          (assoc exam-session
-                                           :exam-session-url exam-session-url
+                                           :exam_session_url exam-session-url
                                            :language language
                                            :level level))})
                  (exam-session-db/update-exam-session-queue-last-notified-at! db email exam-session-id)))

@@ -1,47 +1,51 @@
-{% extends "yki/templates/base.html" %} {% block content %}
+{% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
-    <td style="padding-left: 20px; padding-top: 20px;">
-      {% i18n email.payment.content.line1 %} {{expiration-date}} {% i18n email.payment.content.line1.end %}
-    </td>
+  <td style="padding-left: 20px;">
+    <b>{% i18n email.payment.content.line1.part1 %}</b> {% i18n email.payment.content.line1.part2 %}
+  </td>
 </tr>
-<tr>
-    <td style="padding-left: 20px; padding-top: 20px;">
-      {% i18n email.payment.content.line2 %}:
-    </td>
-</tr>
-<tr>
-    <td style="padding-left: 20px; padding-top: 20px;">
-      {{language}} {{level|lower}}
-    </td>
-</tr>
-<tr>
-    <td style="padding-left: 20px;">
-      {{exam_date|date-format-with-dots}}
-    </td>
-</tr>
-<tr>
-    <td style="padding-left: 20px;">
-      {{name}}, {{street_address}}, {{zip}} {{post_office}}
-    </td>
-</tr>
+
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    {% i18n email.payment.content.line3 %} {{amount|replace-dot-with-comma}} €
+    {% i18n email.payment.content.line2 %}:
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 10px;">
+    {% i18n common.test %}: {{language}} {{level|lower}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px;">
-    {% i18n email.payment.content.line4 %}
+  <td style="padding-left: 20px;">
+    {% i18n common.testDay %}: {{exam_date|date-format-with-dots}}
   </td>
 </tr>
 <tr>
-  <td style="padding-left: 20px; padding-top: 20px;">
-    <a style="color: #0093C4;" href="{{login-url}}" target="_blank">{% i18n email.payment.link_text %}</a>
+  <td style="padding-left: 20px;">
+    {% i18n common.testCentre %}: {{name}}, {{street_address}}, {{zip}} {{post_office|upper}}
   </td>
 </tr>
 <tr>
+  <td style="padding-left: 20px;">
+    {% i18n common.testFee %}: {{amount|replace-dot-with-comma}} €
+  </td>
+</tr>
+
+<tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    {% i18n email.payment.content.line5 %}
+    {% i18n email.payment.content.line3.part1 %} {{expiration_date}}{% i18n email.payment.content.line3.or %} {% i18n email.payment.content.line3.part2 %}
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment.content.line4 %}:
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <a style="color: #0093C4;" href="{{login_url}}" target="_blank">{% i18n email.payment.link_text %}</a>
   </td>
 </tr>
 {% endblock %}

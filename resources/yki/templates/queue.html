@@ -1,12 +1,12 @@
 {% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
   <td style="padding-left: 20px;">
-    {% i18n email.login.content.line1 %}:
+    {% i18n email.queue.content.line1 %}
   </td>
 </tr>
 
 <tr>
-  <td style="padding-left: 20px; padding-top: 10px;">
+  <td style="padding-left: 20px; padding-top: 20px;">
     {% i18n common.test %}: {{language}} {{level|lower}}
   </td>
 </tr>
@@ -23,12 +23,12 @@
 
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    {% i18n email.login.content.line2 %}:
+    {% i18n email.queue.content.line2 %}:
   </td>
 </tr>
 <tr>
   <td style="padding-left: 20px;">
-    <a style="color: #0093C4;" href="{{login_url}}" target="_blank">{% i18n email.login.link_text %}</a>
+    <a style="color: #0093C4;" href="{{exam_session_url}}" target="_blank">{% i18n email.queue.link_text %}</a>
   </td>
 </tr>
 {% endblock %}

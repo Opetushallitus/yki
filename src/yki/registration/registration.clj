@@ -91,21 +91,19 @@
         :else
         (conflict {:error {:closed true}})))))
 
-(defn create-and-send-link [db url-helper email-q lang login-link template-data]
+(defn create-and-send-link [db url-helper email-q lang payment-link template-data]
   (let [code      (str (random-uuid))
         login-url (url-helper :yki.login-link.url code)
-        email     (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
-        link-type (:type login-link)
+        email     (:email (registration-db/get-participant-by-id db (:participant_id payment-link)))
+        link-type (:type payment-link)
         hashed    (sha256-hash code)]
-    (login-link-db/create-login-link! db
-                                      (assoc login-link
-                                        :code hashed))
-    (log/info "Login link created for " email ". Adding to email queue")
+    (login-link-db/create-login-link! db (assoc payment-link :code hashed))
+    (log/info "Payment link created for " email ". Adding to email queue")
     (pgq/put email-q
              {:recipients [email]
               :created    (System/currentTimeMillis)
               :subject    (template-util/subject link-type lang template-data)
-              :body       (template-util/render link-type lang (assoc template-data :login-url login-url))})))
+              :body       (template-util/render link-type lang (assoc template-data :login_url login-url))})))
 
 ;; Get registration data with participant found in session
 ;; In a case user has two different registration forms open and a non matching session,
@@ -179,7 +177,7 @@
                                                                 :amount (:email-template amount)
                                                                 :language (template-util/get-language (:language_code registration-data) lang)
                                                                 :level (template-util/get-level (:level_code registration-data) lang)
-                                                                :expiration-date (common/format-date-to-finnish-format expiration-date)))
+                                                                :expiration_date (common/format-date-to-finnish-format expiration-date)))
               success                  (registration-db/update-registration-details! db
                                                                                      update-registration
                                                                                      create-and-send-link-fn)]

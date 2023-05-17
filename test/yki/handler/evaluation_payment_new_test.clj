@@ -155,7 +155,7 @@
                         exam-date      (base/two-weeks-ago)]
                     (testing "Emails are sent to customer and kirjaamo after successful payment"
                       (is (= {:recipients ["anne-marie.jones@testi.fi"]
-                              :subject    (str/join ", " ["Tarkistusarviointi: Suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
+                              :subject    (str/join ", " ["Yleiset kielitutkinnot (YKI), tarkistusarviointipyyntö: Suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
                              (select-keys customer-email [:recipients :subject])))
                       (testing "Customer email has PDF receipt as attachment"
                         (is (= 1 (count (:attachments customer-email))))
