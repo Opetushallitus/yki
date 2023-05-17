@@ -85,5 +85,7 @@
                                    [eftest "0.5.9"]
                                    [peridot "0.5.4"]
                                    [se.haleby/stub-http "0.2.12"]
-                                   [com.opentable.components/otj-pg-embedded "1.0.0"]
-                                   [kerodon "0.9.1"]]}})
+                                   [com.opentable.components/otj-pg-embedded "1.0.1"]
+                                   [kerodon "0.9.1"]]
+                  :managed-dependencies [[org.testcontainers/testcontainers "1.18.1"]
+                                         [org.testcontainers/postgresql "1.18.1"]]}})
