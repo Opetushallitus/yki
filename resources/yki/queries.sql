@@ -7,19 +7,8 @@ SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.co
       FROM exam_language
       WHERE organizer_id = o.id
     ) lang
-  ) AS languages,
-    (
-    SELECT array_to_json(array_agg(attachment))
-    FROM (
-      SELECT external_id, created
-      FROM attachment_metadata
-      WHERE organizer_id = o.id
-      ORDER BY created DESC
-    ) attachment
-  ) AS attachments,
-  json_build_object('merchant_id', pc.merchant_id)::jsonb || json_build_object('merchant_secret', pc.merchant_secret)::jsonb as merchant
+  ) AS languages
 FROM organizer o
-LEFT JOIN payment_config pc ON pc.organizer_id = o.id
 WHERE deleted_at IS NULL;
 
 -- name: select-organizers-by-oids
@@ -31,19 +20,8 @@ SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.co
       FROM exam_language
       WHERE organizer_id = o.id
     ) lang
-  ) AS languages,
-  (
-    SELECT array_to_json(array_agg(attachment))
-    FROM (
-      SELECT external_id, created
-      FROM attachment_metadata
-      WHERE organizer_id = o.id
-      ORDER BY created DESC
-    ) attachment
-  ) AS attachments,
-  json_build_object('merchant_id', pc.merchant_id)::jsonb || json_build_object('merchant_secret', pc.merchant_secret)::jsonb as merchant
+  ) AS languages
 FROM organizer o
-LEFT JOIN payment_config pc ON pc.organizer_id = o.id
 WHERE o.deleted_at IS NULL
   AND o.oid IN (:oids);
 
@@ -256,25 +234,6 @@ UPDATE registration SET
             ELSE 'CANCELLED'::registration_state
         END
 WHERE id = :id;
-
--- name: insert-attachment-metadata!
-INSERT INTO attachment_metadata (
-  external_id,
-  organizer_id,
-  type
-) VALUES (
-  :external_id,
-  (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL),
-  :type
-);
-
--- name: select-attachment-metadata
-SELECT
-  external_id,
-  type
-FROM attachment_metadata
-WHERE external_id = :external_id
-  AND organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL);
 
 -- name: insert-exam-session<!
 INSERT INTO exam_session (

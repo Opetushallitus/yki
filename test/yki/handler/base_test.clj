@@ -15,7 +15,6 @@
     [yki.handler.auth]
     [yki.handler.exam-date]
     [yki.handler.exam-session]
-    [yki.handler.file]
     [yki.handler.organizer]
     [yki.handler.login-link :as login-link]
     [yki.handler.quarantine]
@@ -513,10 +512,8 @@
 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
 
-        file-store           (ig/init-key :yki.boundary.files/liiteri-file-store {:url-helper url-helper})
         auth                 (no-auth-middleware db url-helper)
         auth-handler         (auth-handler auth url-helper)
-        file-handler         (ig/init-key :yki.handler/file {:db db :file-store file-store})
         quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:access-log (access-log)
                                                                                            :auth       auth
                                                                                            :db         db
@@ -527,8 +524,7 @@
                                                                                           :access-log           (access-log)
                                                                                           :url-helper           url-helper
                                                                                           :exam-session-handler exam-session-handler
-                                                                                          :exam-date-handler    exam-date-handler
-                                                                                          :file-handler         file-handler}))]
+                                                                                          :exam-date-handler    exam-date-handler}))]
     (routes organizer-handler quarantine-handler auth-handler)))
 
 (defn send-request-with-tx

@@ -52,16 +52,14 @@
 (s/def ::contact_shared_email (s/nilable ::email-type))
 (s/def ::extra (s/and (s/nilable string?) #(<= (count %) 1024)))
 (s/def ::contact_phone_number (s/and string? #(<= (count %) 256)))
-(s/def ::external_id (s/and string? #(<= (count %) 64)))
-(s/def ::external-id-type (s/keys :req-un [::external_id]))
+
 (s/def ::language (s/keys :req-un [::language_code]
                           :opt-un [::level_code]))
 (s/def ::exam-date-language (s/keys :req-un [::language_code
                                              ::level_code]))
-(s/def ::attachment (s/keys :req-un [::external_id
-                                     ::created]))
+
 (s/def ::languages (s/or :null nil? :array (s/coll-of ::language)))
-(s/def ::attachments (s/or :null nil? :array (s/coll-of ::attachment)))
+
 
 (s/def ::organizer-type (s/keys :req-un [::oid
                                          ::agreement_start_date
