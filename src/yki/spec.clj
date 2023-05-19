@@ -60,7 +60,6 @@
 
 (s/def ::languages (s/or :null nil? :array (s/coll-of ::language)))
 
-
 (s/def ::organizer-type (s/keys :req-un [::oid
                                          ::agreement_start_date
                                          ::agreement_end_date

@@ -9,7 +9,7 @@ SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.co
     ) lang
   ) AS languages
 FROM organizer o
-WHERE deleted_at IS NULL;
+WHERE o.deleted_at IS NULL;
 
 -- name: select-organizers-by-oids
 SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.extra,
@@ -22,8 +22,7 @@ SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.co
     ) lang
   ) AS languages
 FROM organizer o
-WHERE o.deleted_at IS NULL
-  AND o.oid IN (:oids);
+WHERE o.deleted_at IS NULL AND o.oid IN (:oids);
 
 -- name: select-organizer
 SELECT
