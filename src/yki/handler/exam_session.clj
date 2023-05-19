@@ -12,7 +12,8 @@
     [yki.handler.routing :as routing]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]
-    [yki.util.common :refer [string->date]]))
+    [yki.util.common :refer [string->date]]
+    [yki.middleware.auth :as auth]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
   #(pgq/put data-sync-q {:type         type
@@ -144,15 +145,20 @@
             (DELETE "/" request
               :path-params [registration-id :- ::ys/id]
               :return ::ys/response
-              (if (exam-session-db/set-registration-status-to-cancelled! db registration-id oid)
-                (do
-                  (audit-log/log {:request   request
-                                  :target-kv {:k audit-log/registration
-                                              :v registration-id}
-                                  :change    {:type audit-log/delete-op}})
-                  (response {:success true}))
-                (not-found {:success false
-                            :error   "Registration not found"})))
+              (let [cancelled-registration
+                    (if (auth/oph-admin-access request)
+                      (exam-session-db/cancel-registration! db registration-id oid)
+                      ; If user is not an OPH-admin but rather an exam organizer, only allow cancelling unpaid registrations
+                      (exam-session-db/cancel-unpaid-registration! db registration-id oid))]
+                (if cancelled-registration
+                  (do
+                    (audit-log/log {:request   request
+                                    :target-kv {:k audit-log/registration
+                                                :v registration-id}
+                                    :change    {:type audit-log/delete-op}})
+                    (response {:success true}))
+                  (not-found {:success false
+                              :error   "Registration not found"}))))
             (POST "/relocate" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]

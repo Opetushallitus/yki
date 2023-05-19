@@ -944,6 +944,18 @@ AND exam_session_id IN (SELECT id
                             FROM organizer
                             WHERE oid = :oid));
 
+--name: cancel-unpaid-registration-for-organizer!
+UPDATE registration
+SET state = 'CANCELLED'
+WHERE id = :id
+  AND state NOT IN ('COMPLETED', 'PAID_AND_CANCELLED')
+  AND exam_session_id IN (SELECT id
+                          FROM exam_session
+                          WHERE organizer_id IN
+                                (SELECT id
+                                 FROM organizer
+                                 WHERE oid = :oid));
+
 -- name: select-exam-dates
 SELECT ed.id, ed.exam_date, ed.registration_start_date, ed.registration_end_date, ed.post_admission_end_date,
 (

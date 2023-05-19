@@ -60,7 +60,8 @@
   (init-relocated-participants-sync-status! [db exam-session-id])
   (set-participants-sync-to-success! [db exam-session-id])
   (set-participants-sync-to-failed! [db exam-session-id retry-duration])
-  (set-registration-status-to-cancelled! [db registration-id oid])
+  (cancel-registration! [db registration-id oid])
+  (cancel-unpaid-registration! [db registration-id oid])
   (update-registration-exam-session! [db to-exam-session-id registration-id oid])
   (get-exam-session-by-id [db id])
   (get-exam-session-registration-by-registration-id [db registration-id])
@@ -120,10 +121,14 @@
       (int->boolean (q/update-registration-exam-session! tx {:exam_session_id to-exam-session-id
                                                              :registration_id registration-id
                                                              :oid             oid}))))
-  (set-registration-status-to-cancelled!
+  (cancel-registration!
     [{:keys [spec]} registration-id oid]
     (jdbc/with-db-transaction [tx spec]
       (int->boolean (q/cancel-registration-for-organizer! tx {:id registration-id :oid oid}))))
+  (cancel-unpaid-registration!
+    [{:keys [spec]} registration-id oid]
+    (jdbc/with-db-transaction [tx spec]
+      (int->boolean (q/cancel-unpaid-registration-for-organizer! tx {:id registration-id :oid oid}))))
   (update-exam-session!
     [{:keys [spec]} oid id exam-session]
     (jdbc/with-db-transaction [tx spec]

@@ -79,7 +79,7 @@
   [organizations]
   (allowed-organization-for-role? organizations oph-oid admin-role))
 
-(defn- oph-admin-access
+(defn oph-admin-access
   "Checks if user has YKI admin role for OPH organization"
   [request]
   (oph-admin? (get-organizations-from-session (:session request))))
