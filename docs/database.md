@@ -6,16 +6,6 @@ Generated with [make-postgres-markdown](https://github.com/cazzer/make-postgres-
 
 # Tables
 
-## attachment_metadata
-
-column | comment | type | default | constraints | values
---- | --- | --- | --- | --- | ---
-external_id |  | text |  | NOT NULL |
-organizer_id |  | bigint | nextval('attachment_metadata_organizer_id_seq'::regclass) | NOT NULL, [organizer_id](#organizer) |
-type |  | text |  |  |
-deleted_at |  | timestamp with time zone |  |  |
-created |  | timestamp with time zone | CURRENT_TIMESTAMP |  |
-
 ## cas_ticketstore
 
 column | comment | type | default | constraints | values

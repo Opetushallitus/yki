@@ -21,8 +21,8 @@
                           :type          "DELETE"
                           :created       (System/currentTimeMillis)})))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth file-handler exam-session-handler exam-date-handler data-sync-q access-log]}]
-  {:pre [(some? db) (some? url-helper) (some? auth) (some? file-handler) (some? exam-session-handler) (some? exam-date-handler) (some? data-sync-q) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth exam-session-handler exam-date-handler data-sync-q access-log]}]
+  {:pre [(some? db) (some? url-helper) (some? auth) (some? exam-session-handler) (some? exam-date-handler) (some? data-sync-q) (some? access-log)]}
   (api
     (context routing/organizer-api-root []
       :middleware [auth access-log]
@@ -75,8 +75,6 @@
               (log/warn "Organizer not found" oid)
               (not-found {:success false
                           :error   "Organizer not found"}))))
-        (context routing/file-uri []
-          (file-handler oid))
         (context routing/exam-session-uri []
           (exam-session-handler oid))
         (context routing/exam-date-uri []

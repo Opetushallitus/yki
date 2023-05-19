@@ -44,8 +44,6 @@
 
 (def status-api-root (str api-root "/status"))
 
-(def file-uri "/file")
-
 (def exam-session-uri "/exam-session")
 
 (def registration-uri "/registration")

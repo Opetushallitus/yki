@@ -19,9 +19,7 @@
   (delete-organizer! [db oid send-to-queue-fn])
   (update-organizer! [db oid organizer])
   (get-organizers [db])
-  (get-organizers-by-oids [db oids])
-  (get-attachment-metadata [db external-id oid])
-  (create-attachment-metadata! [db oid attachment-type external-id]))
+  (get-organizers-by-oids [db oids]))
 
 (extend-protocol Organizers
   Boundary
@@ -32,10 +30,6 @@
       (doseq [lang (:languages organizer)]
         (q/insert-organizer-language! tx (merge lang {:oid (:oid organizer)})))
       true))
-  (create-attachment-metadata!
-    [{:keys [spec]} oid attachment-type external-id]
-    (jdbc/with-db-transaction [tx spec]
-      (q/insert-attachment-metadata! tx {:oid oid :external_id external-id :type attachment-type})))
   (delete-organizer!
     [{:keys [spec]} oid send-to-queue-fn]
     (jdbc/with-db-transaction [tx spec]
@@ -56,7 +50,5 @@
   (get-organizers [{:keys [spec]}]
     (q/select-organizers spec))
   (get-organizers-by-oids [{:keys [spec]} oids]
-    (q/select-organizers-by-oids spec {:oids oids}))
-  (get-attachment-metadata [{:keys [spec]} external-id oid]
-    (q/select-attachment-metadata spec {:external_id external-id :oid oid})))
+    (q/select-organizers-by-oids spec {:oids oids})))
 
