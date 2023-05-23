@@ -171,7 +171,12 @@ SELECT
   es.language_code
 FROM quarantine q
 INNER JOIN registration r
-  ON q.birthdate = r.form->>'birthdate'
+  ON (q.birthdate = r.form->>'birthdate'
+      OR
+      -- Form may not contain birthdate in which case we need to
+      -- compare the date part of ssn with birthdate registered for quarantine.
+      -- We achieve that by converting q.birthdate into a regex of suitable form.
+      r.form->>'ssn' LIKE to_char(to_date(q.birthdate, 'YYYY-MM-DD'), 'DDMMYY%'))
 INNER JOIN exam_session es
   ON r.exam_session_id = es.id
 INNER JOIN exam_date ed
