@@ -232,7 +232,7 @@ UPDATE registration SET
         CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
             ELSE 'CANCELLED'::registration_state
         END
-WHERE id = :id;
+WHERE id = :id AND state NOT IN ('CANCELLED', 'PAID_AND_CANCELLED');
 
 -- name: insert-exam-session<!
 INSERT INTO exam_session (
@@ -929,20 +929,6 @@ AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
 AND r.state != 'STARTED'
 AND r.form IS NOT NULL
 ORDER BY r.created ASC;
-
---name: cancel-registration-for-organizer!
-UPDATE registration
-SET state =
-  CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state
-       ELSE 'PAID_AND_CANCELLED'::registration_state
-  END
-WHERE id = :id
-AND exam_session_id IN (SELECT id
-                        FROM exam_session
-                        WHERE organizer_id IN
-                          (SELECT id
-                            FROM organizer
-                            WHERE oid = :oid));
 
 --name: cancel-unpaid-registration-for-organizer!
 UPDATE registration

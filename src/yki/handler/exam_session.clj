@@ -7,13 +7,13 @@
     [integrant.core :as ig]
     [pgqueue.core :as pgq]
     [ring.util.http-response :refer [conflict internal-server-error]]
-    [ring.util.response :refer [response not-found]]
+    [ring.util.response :refer [bad-request not-found response]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
+    [yki.middleware.auth :as auth]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]
-    [yki.util.common :refer [string->date]]
-    [yki.middleware.auth :as auth]))
+    [yki.util.common :refer [string->date]]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
   #(pgq/put data-sync-q {:type         type
@@ -147,7 +147,7 @@
               :return ::ys/response
               (let [cancelled-registration
                     (if (auth/oph-admin-access request)
-                      (exam-session-db/cancel-registration! db registration-id oid)
+                      (exam-session-db/cancel-registration! db registration-id)
                       ; If user is not an OPH-admin but rather an exam organizer, only allow cancelling unpaid registrations
                       (exam-session-db/cancel-unpaid-registration! db registration-id oid))]
                 (if cancelled-registration
@@ -157,8 +157,8 @@
                                                 :v registration-id}
                                     :change    {:type audit-log/delete-op}})
                     (response {:success true}))
-                  (not-found {:success false
-                              :error   "Registration not found"}))))
+                  (bad-request {:success false
+                                :error   "Registration couldn't be cancelled"}))))
             (POST "/relocate" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]
