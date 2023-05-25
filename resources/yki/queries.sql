@@ -232,7 +232,7 @@ UPDATE registration SET
         CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
             ELSE 'CANCELLED'::registration_state
         END
-WHERE id = :id;
+WHERE id = :id AND state NOT IN ('CANCELLED', 'PAID_AND_CANCELLED');
 
 -- name: insert-exam-session<!
 INSERT INTO exam_session (
@@ -930,19 +930,17 @@ AND r.state != 'STARTED'
 AND r.form IS NOT NULL
 ORDER BY r.created ASC;
 
---name: cancel-registration-for-organizer!
+--name: cancel-unpaid-registration-for-organizer!
 UPDATE registration
-SET state =
-  CASE WHEN state = 'SUBMITTED'::registration_state THEN 'CANCELLED'::registration_state
-       ELSE 'PAID_AND_CANCELLED'::registration_state
-  END
+SET state = 'CANCELLED'
 WHERE id = :id
-AND exam_session_id IN (SELECT id
-                        FROM exam_session
-                        WHERE organizer_id IN
-                          (SELECT id
-                            FROM organizer
-                            WHERE oid = :oid));
+  AND state NOT IN ('COMPLETED', 'PAID_AND_CANCELLED')
+  AND exam_session_id IN (SELECT id
+                          FROM exam_session
+                          WHERE organizer_id IN
+                                (SELECT id
+                                 FROM organizer
+                                 WHERE oid = :oid));
 
 -- name: select-exam-dates
 SELECT ed.id, ed.exam_date, ed.registration_start_date, ed.registration_end_date, ed.post_admission_end_date,

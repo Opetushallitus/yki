@@ -6,7 +6,8 @@
     [ring.mock.request :as mock]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
-    [yki.handler.routing :as routing]))
+    [yki.handler.routing :as routing]
+    [yki.middleware.auth :as auth]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 (use-fixtures :each embedded-db/with-transaction)
@@ -70,13 +71,19 @@
       (is (= registration-state "CANCELLED")))))
 
 (deftest exam-session-participant-delete-paid-test
-  (testing "delete exam session participant should set registration state to PAID_AND_CANCELLED when registration is paid"
-    (base/insert-base-data)
-    (base/insert-registrations "COMPLETED")
-    (let [registration-id    (:id (base/select-one "SELECT id from registration"))
-          exam-session-route (get-exam-session-route)
-          request            (mock/request :delete (str exam-session-route "/registration/" registration-id))
-          response           (base/send-request-with-tx request)
-          registration-state (:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
-      (is (= (:status response) 200))
-      (is (= registration-state "PAID_AND_CANCELLED")))))
+  (base/insert-base-data)
+  (base/insert-registrations "COMPLETED")
+  (let [registration-id        (:id (base/select-one "SELECT id from registration"))
+        exam-session-route     (get-exam-session-route)
+        request                (mock/request :delete (str exam-session-route "/registration/" registration-id))
+        get-registration-state #(:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
+    (testing "cancelling paid registration should fail if cancelling user is not OPH admin"
+      (with-redefs [auth/oph-admin-access (constantly false)]
+        (let [response (base/send-request-with-tx request)]
+          (is (= (:status response) 400))
+          (is (= (get-registration-state) "COMPLETED")))))
+    (testing "cancelling paid registration should set registration state to PAID_AND_CANCELLED if user is OPH admin"
+      (with-redefs [auth/oph-admin-access (constantly true)]
+        (let [response (base/send-request-with-tx request)]
+          (is (= (:status response) 200))
+          (is (= (get-registration-state) "PAID_AND_CANCELLED")))))))

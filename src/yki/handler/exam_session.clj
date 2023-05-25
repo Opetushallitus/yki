@@ -7,9 +7,10 @@
     [integrant.core :as ig]
     [pgqueue.core :as pgq]
     [ring.util.http-response :refer [conflict internal-server-error]]
-    [ring.util.response :refer [response not-found]]
+    [ring.util.response :refer [bad-request not-found response]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
+    [yki.middleware.auth :as auth]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]
     [yki.util.common :refer [string->date]]))
@@ -144,15 +145,20 @@
             (DELETE "/" request
               :path-params [registration-id :- ::ys/id]
               :return ::ys/response
-              (if (exam-session-db/set-registration-status-to-cancelled! db registration-id oid)
-                (do
-                  (audit-log/log {:request   request
-                                  :target-kv {:k audit-log/registration
-                                              :v registration-id}
-                                  :change    {:type audit-log/delete-op}})
-                  (response {:success true}))
-                (not-found {:success false
-                            :error   "Registration not found"})))
+              (let [cancelled-registration
+                    (if (auth/oph-admin-access request)
+                      (exam-session-db/cancel-registration! db registration-id)
+                      ; If user is not an OPH-admin but rather an exam organizer, only allow cancelling unpaid registrations
+                      (exam-session-db/cancel-unpaid-registration! db registration-id oid))]
+                (if cancelled-registration
+                  (do
+                    (audit-log/log {:request   request
+                                    :target-kv {:k audit-log/registration
+                                                :v registration-id}
+                                    :change    {:type audit-log/delete-op}})
+                    (response {:success true}))
+                  (bad-request {:success false
+                                :error   "Registration couldn't be cancelled"}))))
             (POST "/relocate" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]
