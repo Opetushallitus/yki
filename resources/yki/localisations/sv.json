@@ -67,7 +67,7 @@
   "email.payment_success.organizer_contact.label": "Testställets kontaktuppgifter",
   "email.payment_success.organizer_contact.name": "Namn",
   "email.payment_success.organizer_contact.phoneNumber": "Telefon",
-  "email.payment_success.special_arrangements.info": "Om du behöver specialarrangemang, skicka en ansökan följande Utbildningsstyrelsens anvisningar så fort som möjligt. Anvisningar finns på Utbildningsstyrelsens webbsidor",
+  "email.payment_success.special_arrangements.info": "Om du behöver specialarrangemang, skicka en ansökan enligt Utbildningsstyrelsens anvisningar så fort som möjligt. Anvisningar finns på Utbildningsstyrelsens webbsidor",
   "email.payment_success.special_arrangements.link.text": "Behöver du specialarrangemang?",
   "email.payment_success.special_arrangements.link.url": "https://www.oph.fi/sv/koulutus-ja-tutkinnot/kieli-ja-kaantajatutkinnot/yleiset-kielitutkinnot-yki/ilmoittautuminen-yki-testiin#anchor-behover-du-specialarrangemang",
   "email.payment_success.subject": "Anmälning lyckades",
