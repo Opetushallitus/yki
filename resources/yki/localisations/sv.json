@@ -33,7 +33,7 @@
   "email.evaluation_payment_success.content.line3": "Avgiften återbetalas om bedömningen av delprovet ändrar i samband med kontrollbedömningen. Beslut som gäller kontrollbedömningen får inte överklagas genom besvär.",
   "email.evaluation_payment_success.content.line4": "Mer information",
   "email.evaluation_payment_success.subject": "Allmänna språkexamina (YKI), begäran om kontrollbedömning",
-  "email.login.content.line1": "Du håller på att anmäla dig till följande YKI-testet",
+  "email.login.content.line1": "Du håller på att anmäla dig till följande YKI-test",
   "email.login.content.line2": "Anmäl dig till testet genom den här länken",
   "email.login.link_text": "Länk till anmälningsblankett",
   "email.login.subject": "Anmälning (YKI)",
