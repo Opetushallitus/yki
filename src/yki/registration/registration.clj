@@ -142,9 +142,9 @@
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration use-yki-ui?]
   (let [form                   (sanitized-form raw-form)
         identity               (:identity session)
-        form-to-persist        (-> form
-                                   (with-session-details session)
-                                   (with-birthdate))
+        form-to-persist        (->> form
+                                    (with-session-details session)
+                                    (with-birthdate))
         session-participant-id (get-participant-id db identity)
         email                  (:email form)
         started?               (= (:state exam-session-registration) "STARTED")]
