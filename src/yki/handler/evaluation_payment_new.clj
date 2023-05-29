@@ -50,7 +50,7 @@
 (defn send-evaluation-order-completed-emails! [email-q payment-helper pdf-renderer order-data lang]
   (let [order-time    (:created order-data)
         template-data (assoc order-data
-                        :subject (str (localisation/get-translation lang (str "email.evaluation_payment_success.subject")) ":")
+                        :subject (str (localisation/get-translation lang "email.evaluation_payment_success.subject") ":")
                         :language (template-util/get-language (:language_code order-data) lang)
                         :level (template-util/get-level (:level_code order-data) lang)
                         :order_time order-time
