@@ -10,6 +10,7 @@
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
             [yki.boundary.registration-db :as registration-db]
+            [yki.spec :refer [ssn->date]]
             [yki.util.common :as common]
             [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration]]
             [yki.util.template-util :as template-util]))
@@ -127,13 +128,23 @@
       ongoing-registration-expiration
       registration-end-date)))
 
+(defn with-session-details [{:keys [auth-method identity]} form]
+  (if (= auth-method "EMAIL")
+    (assoc form :email (:external-user-id identity))
+    (assoc form :ssn (:ssn identity))))
+
+(defn with-birthdate [form]
+  (if (:birthdate form)
+    form
+    (assoc form :birthdate (ssn->date (:ssn form)))))
+
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration use-yki-ui?]
   (let [form                   (sanitized-form raw-form)
         identity               (:identity session)
-        form-with-email        (if (= (:auth-method session) "EMAIL")
-                                 (assoc form :email (:external-user-id identity))
-                                 (assoc form :ssn (:ssn identity)))
+        form-to-persist        (-> form
+                                   (with-session-details session)
+                                   (with-birthdate))
         session-participant-id (get-participant-id db identity)
         email                  (:email form)
         started?               (= (:state exam-session-registration) "STARTED")]
@@ -144,12 +155,12 @@
       (if-let [oid (or (:oid identity)
                        (onr/get-or-create-person
                          onr-client
-                         (assoc form-with-email :registration_id registration-id)))]
+                         (assoc form-to-persist :registration_id registration-id)))]
         (let [amount                   (get-payment-amount-for-registration payment-helper exam-session-registration)
               ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
               unified-participant-id   (or (:participant_id registration-data) session-participant-id)
               update-registration      {:id             registration-id
-                                        :form           form-with-email
+                                        :form           form-to-persist
                                         :oid            oid
                                         :form_version   1
                                         :participant_id unified-participant-id}
