@@ -1,5 +1,5 @@
 {
-  "baseMessage.automaticReply": "Älä vastaa tähän viestiin - viesti on lähetetty automaattisesti.",
+  "baseMessage.automaticReply": "Tämä on automaattinen viesti. Älä vastaa tähän viestiin.",
   "baseMessage.signature.line1": "Ystävällisin terveisin",
   "baseMessage.signature.line2": "Opetushallitus",
   "common.birthdate": "Syntymäaika",

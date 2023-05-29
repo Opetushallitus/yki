@@ -1,5 +1,5 @@
 {
-  "baseMessage.automaticReply": "Svara inte till detta meddelande, det har skickats automatiskt.",
+  "baseMessage.automaticReply": "Det här är ett automatiskt meddelande. Svara inte på meddelandet.",
   "baseMessage.signature.line1": "Med vänlig hälsning",
   "baseMessage.signature.line2": "Utbildningsstyrelsen",
   "common.birthdate": "Födelsedatum",
