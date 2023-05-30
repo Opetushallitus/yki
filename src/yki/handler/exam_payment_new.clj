@@ -243,12 +243,12 @@
         (handle-success-callback db email-q pdf-renderer url-helper lang request true))
       (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
-        (handle-error-callback db url-helper lang request true)))
-    ; Report generation callback
-    (POST "/report" req
-      (let [body         (:body req)
-            headers      (:headers req)
-            content-type (infer-content-type headers)]
-        (log/info "REPORT callback invoked with headers:" headers)
-        (store-report! content-type body)
-        (ok {})))))
+        (handle-error-callback db url-helper lang request true))
+      ; Report generation callback
+      (POST "/report" req
+        (let [body         (:body req)
+              headers      (:headers req)
+              content-type (infer-content-type headers)]
+          (log/info "REPORT callback invoked with headers:" headers)
+          (store-report! content-type body)
+          (ok {}))))))
