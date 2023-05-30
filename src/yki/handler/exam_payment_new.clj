@@ -251,4 +251,9 @@
               content-type (infer-content-type headers)]
           (log/info "REPORT callback invoked with headers:" headers)
           (store-report! content-type body)
-          (ok {}))))))
+          (ok {})))
+      ; Temporary refund callback handlers
+      (GET "/refund/success" _
+        (ok {}))
+      (GET "/refund/error" _
+        (ok {})))))
