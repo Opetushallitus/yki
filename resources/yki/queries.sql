@@ -234,6 +234,19 @@ UPDATE registration SET
         END
 WHERE id = :id AND state NOT IN ('CANCELLED', 'PAID_AND_CANCELLED');
 
+-- name: cancel-registration-to-upcoming-exam!
+UPDATE registration r SET
+    state =
+        CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
+             ELSE 'CANCELLED'::registration_state
+            END
+WHERE r.id = :id
+  AND r.state NOT IN ('CANCELLED', 'PAID_AND_CANCELLED')
+  AND now() < (
+      SELECT ed.exam_date FROM exam_date ed
+      INNER JOIN exam_session es ON ed.id = es.exam_date_id
+      WHERE es.id = r.exam_session_id);
+
 -- name: insert-exam-session<!
 INSERT INTO exam_session (
   organizer_id,

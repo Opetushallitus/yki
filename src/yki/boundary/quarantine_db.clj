@@ -67,7 +67,7 @@
         tx
         #(do
            (when quarantined
-             (q/cancel-registration! tx {:id registration-id}))
+             (q/cancel-registration-to-upcoming-exam! tx {:id registration-id}))
            (q/upsert-quarantine-review<! tx {:quarantine_id   quarantine-id
                                              :registration_id registration-id
                                              :quarantined     quarantined
