@@ -1,6 +1,8 @@
 (ns yki.handler.paytrail-payment-report
   (:require
     [clj-time.core :as t]
+    [clojure.data.csv :as csv]
+    [clojure.data.json :as json]
     [clojure.java.io :as jio]
     [clojure.string :as str]
     [clojure.tools.logging :as log]
@@ -9,9 +11,7 @@
     [ring.middleware.params :refer [wrap-params]]
     [ring.util.http-response :refer [ok]]
     [yki.handler.routing :as routing]
-    [yki.middleware.payment :refer [with-request-validation]]
-    [clojure.data.csv :as csv]
-    [clojure.data.json :as json])
+    [yki.middleware.payment :refer [with-request-validation]])
   (:import (java.io FileOutputStream InputStream)))
 
 (defn- infer-content-type [headers]
