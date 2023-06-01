@@ -5,10 +5,9 @@
     [clojure.java.jdbc :as jdbc]
     [clojure.string :as str]
     [clojure.tools.logging :as log]
-    [compojure.api.sweet :refer [api context GET POST]]
+    [compojure.api.sweet :refer [api context GET]]
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
-    [ring.middleware.file]
     [ring.util.http-response :refer [bad-request found internal-server-error ok]]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.exam-payment-new-db :as payment-db]
@@ -23,34 +22,8 @@
     [yki.util.audit-log :as audit]
     [yki.util.common :refer [format-datetime-for-export]]
     [yki.util.template-util :as template-util])
-  (:import (java.io FileOutputStream InputStream)
-           (java.time LocalDate)))
-
-(defn- infer-content-type [headers]
-  (let [content-type-string (headers "content-type")]
-    (when content-type-string
-      (cond
-        (str/starts-with? content-type-string "text/csv")
-        :csv
-        (str/starts-with? content-type-string "application/json")
-        :edn))))
-
-(defn report-file-path ^String [content-type]
-  (case content-type
-    :csv
-    (str "/tmp/yki/report/csv/" (t/now) ".csv")
-    :edn
-    (str "/tmp/yki/report/edn/" (t/now) ".edn")))
-
-(defn- store-report! [content-type report-contents]
-  (let [path-to-report (report-file-path content-type)]
-    (jio/make-parents path-to-report)
-    (with-open [fos (FileOutputStream. path-to-report)]
-      (if (instance? InputStream report-contents)
-        (.transferTo ^InputStream report-contents fos)
-        ; Else report-contents is likely a map or string
-        ; -> try to just spit it.
-        (spit fos report-contents)))))
+  (:import
+    (java.time LocalDate)))
 
 (defn- registration-redirect [db payment-helper url-helper lang use-yki-ui? registration]
   (case (:state registration)
@@ -243,17 +216,4 @@
         (handle-success-callback db email-q pdf-renderer url-helper lang request true))
       (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
-        (handle-error-callback db url-helper lang request true))
-      ; Report generation callback
-      (POST "/report" req
-        (let [body         (:body req)
-              headers      (:headers req)
-              content-type (infer-content-type headers)]
-          (log/info "REPORT callback invoked with headers:" headers)
-          (store-report! content-type body)
-          (ok {})))
-      ; Temporary refund callback handlers
-      (GET "/refund/success" _
-        (ok {}))
-      (GET "/refund/error" _
-        (ok {})))))
+        (handle-error-callback db url-helper lang request true)))))

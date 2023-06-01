@@ -25,10 +25,10 @@
 (def paytrail-payment-v3-root (str payment-v3-root "/paytrail"))
 
 (def evaluation-payment-new-root (str api-root "/evaluation-payment/v2"))
-
 (def evaluation-payment-new-paytrail-callback-root (str evaluation-payment-new-root "/paytrail"))
-
 (def evaluation-payment-for-new-ui-root (str api-root "/evaluation-payment/v3/paytrail"))
+
+(def paytrail-payment-report-root (str api-root "/payment-report/paytrail"))
 
 (def registration-api-root (str api-root "/registration"))
 
