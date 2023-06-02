@@ -170,13 +170,25 @@
                                                          :put
                                                          {:is_quarantined quarantined?}))
           select-quarantine-details-for-registration #(base/select-one
-                                                        (str "SELECT r.id, r.state, qr.quarantine_id, qr.quarantined FROM registration r INNER JOIN quarantine_review qr ON r.id = qr.registration_id WHERE r.id = " % ";"))]
-      (testing "set quarantine endpoint should return 200 and cancel registration"
-        (is (= {:body   {:success true}
-                :status 200}
-               (set-registration-quarantine-state 1 1 true)))
-        (is (= {:id 1 :state "CANCELLED" :quarantine_id 1 :quarantined true}
-               (select-quarantine-details-for-registration 1)))
+                                                        (str "SELECT r.id, r.state, qr.quarantine_id, qr.quarantined FROM registration r INNER JOIN quarantine_review qr ON r.id = qr.registration_id WHERE r.id = " % ";"))
+          update-registration-exam-date! (fn [registration-id new-exam-date]
+                                          (base/execute! (str "UPDATE exam_date SET exam_date='" new-exam-date "' WHERE id IN (SELECT ed.id FROM exam_date ed INNER JOIN exam_session es ON ed.id = es.exam_date_id INNER JOIN registration r ON es.id = r.exam_session_id WHERE r.id=" registration-id ");")))]
+      (testing "set quarantine endpoint should return 200"
+        (testing "confirming a quarantine must not cancel registration if the exam date is in the past"
+          (is (= {:body   {:success true}
+                  :status 200}
+                 (set-registration-quarantine-state 1 1 true)))
+          (is (= {:id 1 :state "SUBMITTED" :quarantine_id 1 :quarantined true}
+                 (select-quarantine-details-for-registration 1))))
+        ; Move exam to a future date. Registrations 1 to 5 share the same exam date, so the following call suffices
+        ; to ensure all registrations in this test can be cancelled going forward by the "confirm quarantine" functionality.
+        (update-registration-exam-date! 1 "2035-12-31")
+        (testing "confirming a quarantine before the exam date must cancel the corresponding registration"
+          (is (= {:body   {:success true}
+                  :status 200}
+                 (set-registration-quarantine-state 1 1 true)))
+          (is (= {:id 1 :state "CANCELLED" :quarantine_id 1 :quarantined true}
+                 (select-quarantine-details-for-registration 1))))
         (is (= {:body   {:success true}
                 :status 200}
                (set-registration-quarantine-state 2 1 true)))
