@@ -173,6 +173,11 @@ FROM quarantine q
 INNER JOIN registration r
   ON (q.birthdate = r.form->>'birthdate'
       OR
+      -- TODO Remove this OR branch once all registrations to be inspected
+      -- are guaranteed to have birthdates - probably after summer 2023, as
+      -- it is expected that some participation bans are submitted (and handled)
+      -- then.
+      --
       -- Form may not contain birthdate in which case we need to
       -- compare the date part of ssn with birthdate registered for quarantine.
       -- We achieve that by converting q.birthdate into a regex of suitable form.
