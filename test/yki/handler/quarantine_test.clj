@@ -85,6 +85,7 @@
                      (count))
                  1))))
       (testing "one quarantine can produce multiple matches and ssn on registration form can be matched against quarantine birthdate as well"
+        (base/update-registration-form! 2 "birthdate" nil)
         (base/update-registration-form! 2 "ssn" "270199-999C")
         (is (= (-> (get-matches)
                    (count))
