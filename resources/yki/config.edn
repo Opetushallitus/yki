@@ -31,7 +31,8 @@
                                                        #ig/ref :yki.handler/evaluation
                                                        #ig/ref :yki.handler/exam-payment-new
                                                        #ig/ref :yki.handler/evaluation-payment-new
-                                                       #ig/ref :yki.handler/yki-register-debug]
+                                                       #ig/ref :yki.handler/yki-register-debug
+                                                       #ig/ref :yki.handler/fallback]
 
   :yki/migrations                                     {}
 
@@ -105,6 +106,8 @@
                                                        :access-log         #ig/ref :yki.middleware.access-log/with-logging
                                                        :db                 #ig/ref :duct.database/sql
                                                        :url-helper         #ig/ref :yki.util/url-helper}
+
+  :yki.handler/fallback                               {}
 
   :yki.handler/exam-session-public                    {:db             #ig/ref :duct.database/sql
                                                        :payment-config {}}
