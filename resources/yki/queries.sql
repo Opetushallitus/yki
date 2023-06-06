@@ -189,6 +189,7 @@ SELECT
   qr.quarantined AS is_quarantined,
   qr.quarantine_id,
   qr.registration_id,
+  qr.updated,
   ed.exam_date,
   es.language_code,
   q.birthdate,
