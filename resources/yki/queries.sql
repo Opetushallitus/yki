@@ -176,7 +176,8 @@ INNER JOIN registration r
       -- Form may not contain birthdate in which case we need to
       -- compare the date part of ssn with birthdate registered for quarantine.
       -- We achieve that by converting q.birthdate into a regex of suitable form.
-      r.form->>'ssn' LIKE to_char(to_date(q.birthdate, 'YYYY-MM-DD'), 'DDMMYY%'))
+      (r.form->>'birthdate' IS NULL AND
+       r.form->>'ssn' LIKE to_char(to_date(q.birthdate, 'YYYY-MM-DD'), 'DDMMYY%')))
 INNER JOIN exam_session es
   ON r.exam_session_id = es.id
 INNER JOIN exam_date ed

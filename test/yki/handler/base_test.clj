@@ -214,8 +214,9 @@
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET exam_date='" new-exam-date "' WHERE id=" exam-date-id ";")))
 
 (defn update-registration-form! [registration-id attr val]
-  {:pre [(pos-int? registration-id) (string? attr) (string? val)]}
-  (jdbc/execute! @embedded-db/conn (str "UPDATE registration SET form = JSONB_SET(form, '{" attr "}', '\"" val "\"') WHERE id=" registration-id ";")))
+  {:pre [(pos-int? registration-id) (string? attr) (or (string? val)
+                                                       (nil? val))]}
+  (jdbc/execute! @embedded-db/conn (str "UPDATE registration SET form = JSONB_SET(form, '{" attr "}', '" (if val (str "\"" val "\"") "null") "') WHERE id=" registration-id ";")))
 
 (defn update-registration-state! [registration-id state]
   (jdbc/execute! @embedded-db/conn (str "UPDATE registration SET state='" state "' WHERE id=" registration-id ";")))
