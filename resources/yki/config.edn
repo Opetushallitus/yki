@@ -32,6 +32,12 @@
                                                        #ig/ref :yki.handler/exam-payment-new
                                                        #ig/ref :yki.handler/evaluation-payment-new
                                                        #ig/ref :yki.handler/yki-register-debug
+                                                       ; Important!
+                                                       ; The fallback handler *must* be the last handler on this list!
+                                                       ; Compojure attempts to match requests to handlers
+                                                       ; in the order they are defined here, and the fallback handler
+                                                       ; will match any request (to a path starting with /yki/api)
+                                                       ; routed to the application.
                                                        #ig/ref :yki.handler/fallback]
 
   :yki/migrations                                     {}
