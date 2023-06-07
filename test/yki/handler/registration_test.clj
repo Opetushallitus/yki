@@ -12,6 +12,8 @@
                                                       common-route-specs
                                                       fill-exam-session
                                                       insert-common-base-data
+                                                      registration-form-data
+                                                      registration-form-with-ssn
                                                       registration-success-redirect]]
             [yki.handler.routing :as routing]))
 
@@ -31,17 +33,17 @@
   (insert-initial-data!)
   (with-routes!
     common-route-specs
-    (let [{session                :session
-           init-response          :init-response
-           init-response-body     :init-response-body
-           registration           :registration
-           registration-id        :registration-id
-           create-twice-response  :create-twice-response
-           submit-response        :submit-response
-           payment                :payment
-           payment-link           :payment-link
-           submitted-registration :submitted-registration
-           email-request          :email-request} (common-bindings server)]
+    (let [{session                    :session
+           init-response              :init-response
+           init-response-body         :init-response-body
+           registration               :registration
+           registration-id            :registration-id
+           create-twice-response      :create-twice-response
+           submit-form!               :submit-form!
+           get-payment                :get-payment
+           get-payment-link           :get-payment-link
+           get-submitted-registration :get-submitted-registration
+           get-email-request          :get-email-request} (common-bindings server)]
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
         (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))
@@ -54,23 +56,26 @@
           (is (= create-twice-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))))
 
       (testing "post submit endpoint should return status 200, but payment should not yet be created"
-        (is (= (get-in submit-response [:response :status]) 200))
-        (is (nil? payment)))
+        (is (= (get-in (submit-form! registration-form-data) [:response :status]) 200))
+        (is (nil? (get-payment))))
 
       (testing "and send email with payment link"
-        (is (= (:subject email-request) "Maksulinkki (YKI): Suomi perustaso - Omenia, 27.1.2018"))
-        (is (s/includes? (:body email-request) "135,00 €"))
-        (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 ESPOO"))
-        (is (= (:type payment-link) "PAYMENT"))
-        (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port))))
+        (let [email-request (get-email-request)
+              payment-link  (get-payment-link)]
+          (is (= (:subject email-request) "Maksulinkki (YKI): Suomi perustaso - Omenia, 27.1.2018"))
+          (is (s/includes? (:body email-request) "135,00 €"))
+          (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 ESPOO"))
+          (is (= (:type payment-link) "PAYMENT"))
+          (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port)))))
 
-      (testing "and set registration status to SUBMITTED"
-        (is (= (:state submitted-registration) "SUBMITTED"))
-        (is (map? (:form submitted-registration)))
-        (is (some? (:started_at submitted-registration))))
+      (let [submitted-registration (get-submitted-registration)]
+        (testing "and set registration status to SUBMITTED"
+          (is (= (:state submitted-registration) "SUBMITTED"))
+          (is (map? (:form submitted-registration)))
+          (is (some? (:started_at submitted-registration))))
 
-      (testing "sanitize registration input"
-        (is (= (get-in submitted-registration [:form :post_office]) "Helsinki_")))
+        (testing "sanitize registration input"
+          (is (= (get-in submitted-registration [:form :post_office]) "Helsinki_"))))
 
       (testing "and delete item from exam session queue"
         (is (= {:count 0}
@@ -105,3 +110,19 @@
                                                          :request-method :post))]
           (is (= (get-in session-full-response [:response :status]) 409))
           (is (= (get-in (base/body-as-json (:response session-full-response)) ["error" "full"]) true)))))))
+
+(deftest registration-create-with-ssn
+  (insert-initial-data!)
+  (with-routes!
+    common-route-specs
+    (let [{submit-form!               :submit-form!
+           get-submitted-registration :get-submitted-registration} (common-bindings server)
+          ssn                "010170-999R"
+          inferred-birthdate "1970-01-01"]
+      (testing "submitting form with SSN but no birthdate should result in birthdate inferred from SSN"
+        (is (= ssn (:ssn registration-form-with-ssn)))
+        (is (= nil (:birthdate registration-form-with-ssn)))
+        (submit-form! registration-form-with-ssn)
+        (let [submitted-registration (get-submitted-registration)]
+          (is (= ssn (get-in submitted-registration [:form :ssn])))
+          (is (= inferred-birthdate (get-in submitted-registration [:form :birthdate]))))))))

@@ -136,7 +136,10 @@
 (defn with-birthdate [form]
   (if (:birthdate form)
     form
-    (assoc form :birthdate (ssn->date (:ssn form)))))
+    (assoc form :birthdate (some-> form
+                                   :ssn
+                                   ssn->date
+                                   common/format-date-for-db))))
 
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration use-yki-ui?]
