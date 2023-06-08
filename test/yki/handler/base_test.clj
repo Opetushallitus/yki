@@ -193,6 +193,9 @@
 (defn select-one [query]
   (first (select query)))
 
+(defn execute! [statement]
+  (jdbc/execute! @embedded-db/conn statement))
+
 (defn insert-quarantine [quarantine]
   (let [columns     [:language_code :start_date :end_date :birthdate :ssn :first_name :last_name :email :phone_number :diary_number]
         columns-str (->> columns
