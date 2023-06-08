@@ -38,11 +38,12 @@
 (s/def ::id pos-int?)
 (s/def ::email ::email-type)
 (s/def ::use-yki-ui boolean?)
+(s/def ::created ::date-type)
+(s/def ::updated ::date-type)
 
 ;; organizer
 (s/def ::agreement_start_date ::date-type)
 (s/def ::agreement_end_date ::date-type)
-(s/def ::created ::date-type)
 (s/def ::contact_name (s/and string? #(<= (count %) 256)))
 (s/def ::language_code ::exam-language-code)
 (s/def ::level_code (s/and string? #(<= (count %) 16)))
@@ -114,6 +115,7 @@
 (s/def ::review (s/keys :req-un [::is_quarantined
                                  ::quarantine_id
                                  ::registration_id
+                                 ::updated
                                  ::exam_date
                                  ::language_code
                                  ::birthdate
