@@ -89,7 +89,11 @@
         (base/update-registration-form! 2 "ssn" "270199-999C")
         (is (= (-> (get-matches)
                    (count))
-               2)))
+               2))
+        (testing "missing birthdate on registration form is replaced by value converted from SSN"
+          (is (= ["1999-01-27" "1999-01-27"]
+                 (->> (get-matches)
+                      (map (comp :birthdate :form)))))))
       (testing "multiple quarantines can match same registration"
         (base/insert-quarantine (-> base/quarantine-form
                                     (dissoc :ssn)
@@ -172,8 +176,8 @@
                                                          {:is_quarantined quarantined?}))
           select-quarantine-details-for-registration #(base/select-one
                                                         (str "SELECT r.id, r.state, qr.quarantine_id, qr.quarantined FROM registration r INNER JOIN quarantine_review qr ON r.id = qr.registration_id WHERE r.id = " % ";"))
-          update-registration-exam-date! (fn [registration-id new-exam-date]
-                                          (base/execute! (str "UPDATE exam_date SET exam_date='" new-exam-date "' WHERE id IN (SELECT ed.id FROM exam_date ed INNER JOIN exam_session es ON ed.id = es.exam_date_id INNER JOIN registration r ON es.id = r.exam_session_id WHERE r.id=" registration-id ");")))]
+          update-registration-exam-date!             (fn [registration-id new-exam-date]
+                                                       (base/execute! (str "UPDATE exam_date SET exam_date='" new-exam-date "' WHERE id IN (SELECT ed.id FROM exam_date ed INNER JOIN exam_session es ON ed.id = es.exam_date_id INNER JOIN registration r ON es.id = r.exam_session_id WHERE r.id=" registration-id ");")))]
       (testing "set quarantine endpoint should return 200"
         (testing "confirming a quarantine must not cancel registration if the exam date is in the past"
           (is (= {:body   {:success true}
