@@ -27,7 +27,7 @@
 (defn- with-placeholders-for-optional-values [quarantine]
   (merge {:ssn nil :phone_number nil :email nil} quarantine))
 
-(defn with-birthdate-in-form [quarantine-match]
+(defn- with-birthdate-in-form [quarantine-match]
   (update quarantine-match :form
           (fn [{:keys [birthdate ssn] :as form}]
             (if birthdate

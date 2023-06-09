@@ -42,21 +42,7 @@
    :birthdate        "1999-01-01"
    :certificate_lang "fi"
    :exam_lang        "fi"
-   :post_office      "Helsinki;"
-   :zip              "01000"
-   :street_address   "Ateläniitynpolku 29 G"
-   :phone_number     "04012345"
-   :email            "test@test.com"})
-
-(def registration-form-with-ssn
-  {:first_name       "Fuu"
-   :last_name        "Bar"
-   :gender           "1"
-   :nationalities    []
-   :ssn              "010170-999R"
-   :certificate_lang "fi"
-   :exam_lang        "fi"
-   :post_office      "Helsinki;"
+   :post_office      "Helsinki"
    :zip              "01000"
    :street_address   "Ateläniitynpolku 29 G"
    :phone_number     "04012345"

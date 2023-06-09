@@ -128,12 +128,12 @@
       ongoing-registration-expiration
       registration-end-date)))
 
-(defn with-session-details [{:keys [auth-method identity]} form]
+(defn- with-session-details [{:keys [auth-method identity]} form]
   (if (= auth-method "EMAIL")
     (assoc form :email (:external-user-id identity))
     (assoc form :ssn (:ssn identity))))
 
-(defn with-birthdate [form]
+(defn- with-birthdate [form]
   (if (:birthdate form)
     form
     (assoc form :birthdate (some-> form

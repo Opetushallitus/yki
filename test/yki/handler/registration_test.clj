@@ -13,7 +13,6 @@
                                                       fill-exam-session
                                                       insert-common-base-data
                                                       registration-form-data
-                                                      registration-form-with-ssn
                                                       registration-success-redirect]]
             [yki.handler.routing :as routing]))
 
@@ -120,9 +119,9 @@
           ssn                "010170-999R"
           inferred-birthdate "1970-01-01"]
       (testing "submitting form with SSN but no birthdate should result in birthdate inferred from SSN"
-        (is (= ssn (:ssn registration-form-with-ssn)))
-        (is (= nil (:birthdate registration-form-with-ssn)))
-        (submit-form! registration-form-with-ssn)
+        (submit-form! (-> registration-form-data
+                          (dissoc :birthdate)
+                          (assoc :ssn ssn)))
         (let [submitted-registration (get-submitted-registration)]
           (is (= ssn (get-in submitted-registration [:form :ssn])))
           (is (= inferred-birthdate (get-in submitted-registration [:form :birthdate]))))))))
