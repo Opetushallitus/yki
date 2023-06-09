@@ -128,7 +128,7 @@
       ongoing-registration-expiration
       registration-end-date)))
 
-(defn- with-session-details [{:keys [auth-method identity]} form]
+(defn- with-session-details [form {:keys [auth-method identity]}]
   (if (= auth-method "EMAIL")
     (assoc form :email (:external-user-id identity))
     (assoc form :ssn (:ssn identity))))
@@ -145,9 +145,9 @@
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration use-yki-ui?]
   (let [form                   (sanitized-form raw-form)
         identity               (:identity session)
-        form-to-persist        (->> form
-                                    (with-session-details session)
-                                    (with-birthdate))
+        form-to-persist        (-> form
+                                   (with-session-details session)
+                                   (with-birthdate))
         session-participant-id (get-participant-id db identity)
         email                  (:email form)
         started?               (= (:state exam-session-registration) "STARTED")]
