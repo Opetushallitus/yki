@@ -42,3 +42,6 @@
 
 (defn format-datetime-for-export [datetime]
   (f/unparse export-datetime-formatter datetime))
+
+(defn format-date-for-db [date]
+  (f/unparse (f/formatter date-format) date))

@@ -3,20 +3,39 @@
     [clj-time.format :as f]
     [clojure.spec.alpha :as s]
     [clojure.string :as str]
-    [spec-tools.core :as st])
+    [spec-tools.core :as st]
+    [yki.util.common :refer [string->date]])
   (:import [org.joda.time DateTime]))
 
 ;; common
 (def email-regex #"^(?=^.{4,256}$)(.+@.+\.[a-zA-Z]{2,63})$")
 (def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
-(def ssn-regexp #"[\d]{6}[+\-A-Za-z][\d]{3}[\dA-Za-z]")
+(def ssn-regexp #"([\d]{2})([\d]{2})([\d]{2})([+\-ABCDEFUVWXY])[\d]{3}[\dA-Za-z]")
 (def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,30}|0)){3,13}$")
 
-(defn- empty-or-match [value regexp]
-  (or (str/blank? value) (re-matches regexp value)))
+(defn ssn->date
+  "Given a Finnish SSN string, returns a date corresponding to the date part and the intermediate character of the SSN.
+   If the supplied string does not match the structure of a Finnish SSN or the date extracted from the string
+   is not a valid date, returns nil instead.
 
-(s/def ::ssn (s/and (s/nilable string?) #(empty-or-match % ssn-regexp)))
+   Does not attempt to validate the last four characters of an SSN."
+  [ssn]
+  (when-let [[_ dd mm yy intermediate-char] (re-matches ssn-regexp ssn)]
+    (-> (case intermediate-char
+          ("A" "B" "C" "D" "E" "F") 20
+          ("-" "U" "V" "W" "X" "Y") 19
+          "+" 18)
+        (str yy "-" mm "-" dd)
+        string->date)))
+
+(defn- valid-ssn? [value]
+  (or (str/blank? value)
+      (ssn->date value)))
+
+(s/def ::ssn (s/and (s/nilable string?)
+                    valid-ssn?))
+
 (s/def ::amount (s/and string? #(re-matches amount-regexp %)))
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code #{"fi" "sv" "en"})

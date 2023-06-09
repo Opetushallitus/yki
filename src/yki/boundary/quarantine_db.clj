@@ -5,6 +5,8 @@
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
+            [yki.spec :refer [ssn->date]]
+            [yki.util.common :refer [format-date-for-db]]
             [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 
@@ -24,6 +26,15 @@
 
 (defn- with-placeholders-for-optional-values [quarantine]
   (merge {:ssn nil :phone_number nil :email nil} quarantine))
+
+(defn- with-birthdate-in-form [quarantine-match]
+  (update quarantine-match :form
+          (fn [{:keys [birthdate ssn] :as form}]
+            (if birthdate
+              form
+              (assoc form :birthdate (-> ssn
+                                         ssn->date
+                                         format-date-for-db))))))
 
 (defprotocol Quarantine
   (create-quarantine! [db quarantine])
@@ -60,6 +71,7 @@
     (first (q/select-quarantine spec {:id id})))
   (get-quarantine-matches [{:keys [spec]}]
     (->> (q/select-quarantine-matches spec)
+         (map with-birthdate-in-form)
          (map without-nils)))
   (set-registration-quarantine! [{:keys [spec]} quarantine-id registration-id quarantined reviewer-oid]
     (jdbc/with-db-transaction [tx spec]
@@ -74,4 +86,5 @@
                                              :reviewer_oid    reviewer-oid})))))
   (get-reviews [{:keys [spec]}]
     (->> (q/select-quarantine-reviews spec)
+         (map with-birthdate-in-form)
          (map without-nils))))

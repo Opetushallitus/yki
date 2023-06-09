@@ -75,26 +75,27 @@
                                                     :content-type "application/json"
                                                     :request-method :post))
         registration           (base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
-        submit-response        (-> session
-                                   (peridot/request (str routing/registration-api-root "/" registration-id "/submit" "?lang=fi")
-                                                    :body (j/write-value-as-string registration-form-data)
-                                                    :content-type "application/json"
-                                                    :request-method :post))
-        payment                (base/select-one (str "SELECT * FROM exam_payment_new WHERE registration_id = " registration-id))
-        payment-link           (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " registration-id))
-        submitted-registration (base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
-        email-request          (pgq/take email-q)]
-    {:session                session
-     :init-response          init-response
-     :init-response-body     init-response-body
-     :registration           registration
-     :registration-id        registration-id
-     :create-twice-response  create-twice-response
-     :submit-response        submit-response
-     :payment                payment
-     :payment-link           payment-link
-     :submitted-registration submitted-registration
-     :email-request          email-request}))
+        submit-form!           (fn [form]
+                                 (-> session
+                                     (peridot/request (str routing/registration-api-root "/" registration-id "/submit" "?lang=fi")
+                                                      :body (j/write-value-as-string form)
+                                                      :content-type "application/json"
+                                                      :request-method :post)))
+        get-payment                #(base/select-one (str "SELECT * FROM exam_payment_new WHERE registration_id = " registration-id))
+        get-payment-link           #(base/select-one (str "SELECT * FROM login_link WHERE registration_id = " registration-id))
+        get-submitted-registration #(base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
+        get-email-request          #(pgq/take email-q)]
+    {:session                    session
+     :init-response              init-response
+     :init-response-body         init-response-body
+     :registration               registration
+     :registration-id            registration-id
+     :create-twice-response      create-twice-response
+     :submit-form!               submit-form!
+     :get-payment                get-payment
+     :get-payment-link           get-payment-link
+     :get-submitted-registration get-submitted-registration
+     :get-email-request          get-email-request}))
 
 (defn registration-success-redirect [registration-id port]
   (str "http://yki.localhost:"
