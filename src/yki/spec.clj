@@ -100,6 +100,9 @@
 (s/def ::is_quarantined boolean?)
 (s/def ::quarantined (s/keys :req-un [::is_quarantined]))
 (s/def ::diary_number (s/and string? (complement str/blank?)))
+(s/def :quarantine/email (s/nilable ::email))
+(s/def :quarantine/phone_number (s/nilable ::phone_number))
+
 (s/def ::quarantine-type (s/keys :req-un [::language_code
                                           ::start_date
                                           ::end_date
@@ -110,8 +113,8 @@
                                  :opt-un [::created
                                           ::id
                                           ::ssn
-                                          ::email
-                                          ::phone_number]))
+                                          :quarantine/email
+                                          :quarantine/phone_number]))
 (s/def ::quarantines (s/coll-of ::quarantine-type))
 (s/def ::quarantine-response (s/keys :req-un [::quarantines]))
 
