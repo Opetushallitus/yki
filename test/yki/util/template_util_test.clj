@@ -19,7 +19,7 @@
       (is (s/includes? rendered "Tutkinto: Suomi ylin taso"))
       (is (s/includes? rendered "Testipäivä: 16.5.2024"))
       (is (s/includes? rendered "Testipaikka: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
-      (is (s/includes? rendered "Ilmoittaudu testiin tämän linkin kautta"))
+      (is (s/includes? rendered "Ilmoittaudu YKI-testiin tämän linkin kautta"))
       (is (s/includes? rendered "http://localhost:8080/login")))))
 
 (deftest render-payment-email-test
