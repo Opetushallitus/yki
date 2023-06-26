@@ -32,6 +32,7 @@
                                                        #ig/ref :yki.handler/exam-payment-new
                                                        #ig/ref :yki.handler/evaluation-payment-new
                                                        #ig/ref :yki.handler/yki-register-debug
+                                                       #ig/ref :yki.handler/paytrail-payment-report
                                                        ; Important!
                                                        ; The fallback handler *must* be the last handler on this list!
                                                        ; Compojure attempts to match requests to handlers
@@ -180,7 +181,9 @@
                                                        :auth       #ig/ref :yki.middleware.auth/with-authentication
                                                        :basic-auth {:user "user" :password "pass"}
                                                        :db         #ig/ref :duct.database/sql
-                                                       :url-helper #ig/ref :yki.util/url-helper}}
+                                                       :url-helper #ig/ref :yki.util/url-helper}
+
+  :yki.handler/paytrail-payment-report                {:payment-helper #ig/ref :yki.util/exam-payment-helper}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"
