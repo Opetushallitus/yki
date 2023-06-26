@@ -15,7 +15,7 @@
   "Checks whether the request signature matches the request body and authentication headers.
    Handles authentication headers passed as both actual HTTP headers or as part of query parameters.
 
-   If signature is valid, returns a map containing the (now exhausted) request body as a string.
+   If signature is valid, returns a map containing the (now consumed) request body as a string.
    Returns nil if signature is invalid."
   [payment-config request]
   (let [{headers      :headers

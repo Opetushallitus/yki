@@ -183,8 +183,7 @@
                                                        :db         #ig/ref :duct.database/sql
                                                        :url-helper #ig/ref :yki.util/url-helper}
 
-  :yki.handler/paytrail-payment-report                {:auth           #ig/ref :yki.middleware.auth/with-authentication
-                                                       :payment-helper #ig/ref :yki.util/exam-payment-helper}}
+  :yki.handler/paytrail-payment-report                {:payment-helper #ig/ref :yki.util/exam-payment-helper}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"

@@ -23,7 +23,7 @@
         (str/starts-with? content-type-string "application/json")
         :json))))
 
-(defn report-file-path ^String [content-type]
+(defn- report-file-path ^String [content-type]
   (case content-type
     :csv
     (str "/tmp/yki/report/csv/" (t/now) ".csv")
@@ -40,7 +40,7 @@
         ; -> try to just spit it.
         (spit fos report-contents)))))
 
-(defn content->records [content-type report-contents]
+(defn- content->records [content-type report-contents]
   (log/info "Trying to interpret records of type" content-type "with report-contents of class" (class report-contents))
   (case content-type
     :csv
@@ -50,8 +50,8 @@
     :json
     (json/read-str report-contents)))
 
-(defmethod ig/init-key :yki.handler/paytrail-payment-report [_ {:keys [auth payment-helper]}]
-  {:pre [(some? auth) (some? payment-helper)]}
+(defmethod ig/init-key :yki.handler/paytrail-payment-report [_ {:keys [payment-helper]}]
+  {:pre [(some? payment-helper)]}
   (api
     (context routing/paytrail-payment-report-root []
       :coercion :spec

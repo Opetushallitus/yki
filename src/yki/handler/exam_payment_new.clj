@@ -1,9 +1,6 @@
 (ns yki.handler.exam-payment-new
   (:require
-    [clj-time.core :as t]
-    [clojure.java.io :as jio]
     [clojure.java.jdbc :as jdbc]
-    [clojure.string :as str]
     [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET]]
     [integrant.core :as ig]
