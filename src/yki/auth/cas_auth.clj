@@ -129,7 +129,8 @@
                 kutsumanimi
                 oidHenkilo
                 kansalaisuus
-                asiointiKieli]} (onr/get-person-by-ssn onr-client nationalIdentificationNumber)
+                asiointiKieli]
+         :as   onr-attributes} (onr/get-person-by-ssn onr-client nationalIdentificationNumber)
 
         address      {:post_office    VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip            VakinainenKotimainenLahiosoitePostinumero
@@ -141,6 +142,8 @@
                        (str (:success-redirect session))
                        (url-helper :exam-session.redirect exam-session-id lang))]
     (info "Redirecting oppija to url: " redirect-uri)
+    (info "Got following cas-attributes:" cas-attributes)
+    (info "Got following onr-attributes:" onr-attributes)
     (if (and sn firstName nationalIdentificationNumber)
       (assoc
         (found redirect-uri)
