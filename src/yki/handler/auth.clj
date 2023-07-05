@@ -24,8 +24,6 @@
         (code-auth/login db code lang url-helper))
       (GET "/logout" {session :session}
         :query-params [{redirect :- ::ys/redirect-to nil}]
-        (log/info "session:" session)
-        (log/info "redirect-to:" redirect)
         (let [lang (or (get-in session [:identity :lang]) "fi")]
           (if (= "SUOMIFI" (:auth-method session))
             (if redirect
