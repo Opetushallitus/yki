@@ -34,6 +34,10 @@
             (code-auth/logout
               (or redirect
                   (url-helper :yki.default.logout.redirect lang))))))
+      (GET "/logout/cas/callback" _
+        :query-params [{redirect :- ::ys/redirect-to nil}]
+        (-> (found redirect)
+            (assoc :session nil)))
       (POST "/callback" request
         (cas-auth/cas-oppija-logout url-helper))
       (GET "/callback*" [ticket :as request]
