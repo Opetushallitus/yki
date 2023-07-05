@@ -208,7 +208,6 @@
     (info "Redirecting oppija to" redirect-url)
     (assoc (found redirect-url) :session nil)))
 
-(defn oppija-logout [url-helper lang]
-  (let [redirect-url (url-helper :cas-oppija.logout lang)]
-    (info "Sending cas oppija logout to" redirect-url)
-    (assoc (see-other redirect-url) :session nil)))
+(defn oppija-logout [redirect-url]
+  (info "Sending cas oppija logout to" redirect-url)
+  (assoc (see-other redirect-url) :session nil))
