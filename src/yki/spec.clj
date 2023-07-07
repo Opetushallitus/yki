@@ -427,3 +427,5 @@
                                         ::subtests
                                         ::lang
                                         ::amount]))
+
+(s/def ::redirect-to (s/nilable ::non-blank-string))
