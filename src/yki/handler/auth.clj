@@ -1,6 +1,5 @@
 (ns yki.handler.auth
   (:require
-    [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST]]
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]

@@ -424,8 +424,6 @@
                                         ::language_code
                                         ::level_code
                                         ::exam_date
-                                        ::subtests
-                                        ::lang
-                                        ::amount]))
+                                        ::subtests]))
 
 (s/def ::redirect-to (s/nilable ::non-blank-string))

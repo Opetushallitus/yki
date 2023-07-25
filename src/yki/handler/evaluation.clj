@@ -8,7 +8,6 @@
             [yki.handler.routing :as routing]
             [yki.spec :as ys]
             [yki.util.common :as common]
-            [yki.util.evaluation-payment-helper :refer [order-id->payment-data]]
             [yki.util.paytrail-payments :refer [sign-string]]))
 
 (defn- evaluation-not-found [evaluation_id]
@@ -40,15 +39,9 @@
     ; Called when rendering evaluation payment status
     (GET "/order/:id" []
       :path-params [id :- ::ys/id]
-      :query-params [lang :- ::ys/language-code]
-      ;; :return ::ys/evaluation-response
-      (let [lang         (or lang "fi")
-            order-data   (evaluation-db/get-evaluation-order-by-id db id)
-            payment-data (-> (order-id->payment-data payment-helper id)
-                             (select-keys [:state :amount]))]
-        (-> order-data
-            (merge payment-data)
-            (assoc :lang lang))))
+      :return ::ys/evaluation-response
+      (let [order-data    (evaluation-db/get-evaluation-order-by-id db id)]
+        (ok order-data)))
 
     (context "/:id" []
       (GET "/" []
