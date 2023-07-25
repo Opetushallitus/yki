@@ -41,7 +41,7 @@
     (GET "/order/:id" []
       :path-params [id :- ::ys/id]
       :query-params [lang :- ::ys/language-code]
-      ;:return ::ys/evaluation-response
+      :return ::ys/evaluation-response
       (let [lang         (or lang "fi")
             _            (log/info "Evaluation order details requested for order id" id)
             order-data   (evaluation-db/get-evaluation-order-by-id db id)
@@ -49,9 +49,9 @@
             payment-data (-> (order-id->payment-data payment-helper id)
                              (select-keys [:state :amount]))
             _            (log/info "Found corresponding payment-data" payment-data)]
-        (-> order-data
-            (merge payment-data)
-            (assoc :lang lang))))
+        (ok (-> order-data
+                (merge payment-data)
+                (assoc :lang lang)))))
 
     (context "/:id" []
       (GET "/" []
