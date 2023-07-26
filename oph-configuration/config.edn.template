@@ -7,14 +7,15 @@
                                :password "{{host_postgresql_yki_app_password}}"
                                :connection-timeout {{host_postgresql_yki_max_wait}}
                                :maximum-pool-size {{host_postgresql_yki_max_active}}}
-  :yki.util/url-helper {:virkailija-host     "{{host_virkailija}}"
-                        :alb-host            "{{host_alb}}"
-                        :oppija-host         "{{host_oppija}}"
-                        :oppija-sub-domain   "yki."
-                        :yki-ui-sub-domain   "beta-yki."
-                        :yki-register-host   "{{yki_register_host}}"
-                        :yki-host-virkailija "{{host_ilb}}"
-                        :ymparisto           "{{ymparisto}}"}
+  :yki.util/url-helper {:virkailija-host           "{{host_virkailija}}"
+                        :alb-host                  "{{host_alb}}"
+                        :oppija-host               "{{host_oppija}}"
+                        :oppija-sub-domain         "yki."
+                        :yki-ui-sub-domain         "beta-yki."
+                        :yki-register-host         "{{yki_register_host}}"
+                        :yki-host-virkailija       "{{host_ilb}}"
+                        :koodisto-service-base     "http://koodisto.{{ymparisto}}.internal:8080"
+                        :organisaatio-service-base "http://organisaatio.{{ymparisto}}.internal:8080"}
   :yki.util/exam-payment-helper {:payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"
                                                            :KESKI "{{yki_exam_session_fee_intermediate}}"
                                                            :YLIN  "{{yki_exam_session_fee_advanced}}"}

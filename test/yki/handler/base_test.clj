@@ -449,7 +449,17 @@
       (peridot/request (str routing/auth-root "/login?code=" code-ok))))
 
 (defn create-url-helper [uri]
-  (ig/init-key :yki.util/url-helper {:virkailija-host uri :oppija-host uri :yki-register-host uri :yki-host-virkailija uri :alb-host (str "http://" uri) :scheme "http" :oppija-sub-domain "yki."}))
+  (ig/init-key
+    :yki.util/url-helper
+    {:virkailija-host           uri
+     :oppija-host               uri
+     :yki-register-host         uri
+     :yki-host-virkailija       uri
+     :alb-host                  (str "http://" uri)
+     :scheme                    "http"
+     :oppija-sub-domain         "yki."
+     :koodisto-service-base     (str "http://" uri)
+     :organisaatio-service-base (str "http://" uri)}))
 
 (defn mock-pdf-renderer []
   (reify PdfTemplateRenderer
