@@ -9,7 +9,6 @@
                                :maximum-pool-size {{host_postgresql_yki_max_active}}}
   :yki.util/url-helper {:virkailija-host     "{{host_virkailija}}"
                         :alb-host            "{{host_alb}}"
-                        :tunnistus-host      "{{host_tunnistus}}"
                         :oppija-host         "{{host_oppija}}"
                         :oppija-sub-domain   "yki."
                         :yki-ui-sub-domain   "beta-yki."
