@@ -458,6 +458,7 @@
      :alb-host                  (str "http://" uri)
      :scheme                    "http"
      :oppija-sub-domain         "yki."
+     :cas-oppija-service-base   uri
      :koodisto-service-base     (str "http://" uri)
      :organisaatio-service-base (str "http://" uri)}))
 
