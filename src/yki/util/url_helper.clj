@@ -10,8 +10,8 @@
 
 (defmethod ig/init-key
   :yki.util/url-helper
-  [_ {:keys [virkailija-host oppija-host oppija-sub-domain yki-ui-sub-domain yki-register-host yki-host-virkailija alb-host scheme]
-      :or   {virkailija-host "" oppija-host "" oppija-sub-domain "" yki-ui-sub-domain "" yki-register-host "" yki-host-virkailija "" alb-host "" scheme "https"}}]
+  [_ {:keys [virkailija-host oppija-host oppija-sub-domain yki-ui-sub-domain yki-register-host yki-host-virkailija alb-host scheme ymparisto]
+      :or   {virkailija-host "" oppija-host "" oppija-sub-domain "" yki-ui-sub-domain "" yki-register-host "" yki-host-virkailija "" alb-host "" scheme "https" ymparisto ""}}]
   (reset! url-properties
           (doto (OphProperties. (into-array String ["/yki/yki-oph.properties"]))
             (.addDefault "scheme" scheme)
@@ -21,5 +21,6 @@
             (.addDefault "sub-domain-yki-ui" yki-ui-sub-domain)
             (.addDefault "host-alb" alb-host)
             (.addDefault "host-yki-register" yki-register-host)
-            (.addDefault "host-yki-virkailija" yki-host-virkailija)))
+            (.addDefault "host-yki-virkailija" yki-host-virkailija)
+            (.addDefault "ymparisto" ymparisto)))
   resolve-url)
