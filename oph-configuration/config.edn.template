@@ -16,6 +16,7 @@
                         :yki-host-virkailija       "{{host_ilb}}"
                         :cas-service-base          "http://cas.{{server_name}}.internal:8080"
                         :cas-oppija-service-base   "http://cas-oppija.{{server_name}}.internal:8080"
+                        :kayttooikeus-service-base "http://kayttooikeus.{{server_name}}.internal:8080"
                         :koodisto-service-base     "http://koodisto.{{server_name}}.internal:8080"
                         :onr-service-base          "http://oppijanumerorekisteri.{{server_name}}.internal:8080"
                         :organisaatio-service-base "http://organisaatio.{{server_name}}.internal:8080"}
