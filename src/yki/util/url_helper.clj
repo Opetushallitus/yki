@@ -10,8 +10,8 @@
 
 (defmethod ig/init-key
   :yki.util/url-helper
-  [_ {:keys [virkailija-host oppija-host oppija-sub-domain yki-ui-sub-domain yki-register-host yki-host-virkailija alb-host scheme cas-service-base cas-oppija-service-base koodisto-service-base organisaatio-service-base]
-      :or   {virkailija-host "" oppija-host "" oppija-sub-domain "" yki-ui-sub-domain "" yki-register-host "" yki-host-virkailija "" alb-host "" scheme "https" cas-service-base "" cas-oppija-service-base "" koodisto-service-base "" organisaatio-service-base ""}}]
+  [_ {:keys [virkailija-host oppija-host oppija-sub-domain yki-ui-sub-domain yki-register-host yki-host-virkailija alb-host scheme cas-service-base cas-oppija-service-base kayttooikeus-service-base koodisto-service-base onr-service-base organisaatio-service-base]
+      :or   {virkailija-host "" oppija-host "" oppija-sub-domain "" yki-ui-sub-domain "" yki-register-host "" yki-host-virkailija "" alb-host "" scheme "https" cas-service-base "" cas-oppija-service-base "" kayttooikeus-service-base "" koodisto-service-base "" onr-service-base "" organisaatio-service-base ""}}]
   (reset! url-properties
           (doto (OphProperties. (into-array String ["/yki/yki-oph.properties"]))
             (.addDefault "scheme" scheme)
@@ -24,6 +24,8 @@
             (.addDefault "host-yki-virkailija" yki-host-virkailija)
             (.addDefault "cas-service-base" cas-service-base)
             (.addDefault "cas-oppija-service-base" cas-oppija-service-base)
+            (.addDefault "kayttooikeus-service-base" kayttooikeus-service-base)
             (.addDefault "koodisto-service-base" koodisto-service-base)
+            (.addDefault "onr-service-base" onr-service-base)
             (.addDefault "organisaatio-service-base" organisaatio-service-base)))
   resolve-url)

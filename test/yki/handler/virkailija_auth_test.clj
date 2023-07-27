@@ -32,13 +32,15 @@
   [port]
   (let [uri                  (str "localhost:" port)
         db                   (duct.database.sql/->Boundary @embedded-db/conn)
-        url-helper           (ig/init-key :yki.util/url-helper {:virkailija-host     uri
-                                                                :oppija-host         uri
-                                                                :yki-register-host   uri
-                                                                :yki-host-virkailija ""
-                                                                :cas-service-base    (str "http://" uri)
-                                                                :alb-host            (str "http://" uri)
-                                                                :scheme              "http"})
+        url-helper           (ig/init-key :yki.util/url-helper {:virkailija-host           uri
+                                                                :oppija-host               uri
+                                                                :yki-register-host         uri
+                                                                :yki-host-virkailija       ""
+                                                                :cas-service-base          (str "http://" uri)
+                                                                :kayttooikeus-service-base (str "http://" uri)
+                                                                :onr-service-base          (str "http://" uri)
+                                                                :alb-host                  (str "http://" uri)
+                                                                :scheme                    "http"})
         auth                 (base/auth url-helper)
         exam-session-handler (ig/init-key :yki.handler/exam-session {:db          db
                                                                      :url-helper  url-helper

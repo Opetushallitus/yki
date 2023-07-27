@@ -17,6 +17,7 @@
                         :cas-service-base          "http://cas.{{server_name}}.internal:8080"
                         :cas-oppija-service-base   "http://cas-oppija.{{server_name}}.internal:8080"
                         :koodisto-service-base     "http://koodisto.{{server_name}}.internal:8080"
+                        :onr-service-base          "http://oppijanumerorekisteri.{{server_name}}.internal:8080"
                         :organisaatio-service-base "http://organisaatio.{{server_name}}.internal:8080"}
   :yki.util/exam-payment-helper {:payment-config {:amount {:PERUS "{{yki_exam_session_fee_basic}}"
                                                            :KESKI "{{yki_exam_session_fee_intermediate}}"
