@@ -366,7 +366,6 @@
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
 
-; TODO Could these be actual numbers instead?
 (s/def ::PERUS ::non-blank-string)
 (s/def ::KESKI ::non-blank-string)
 (s/def ::YLIN ::non-blank-string)
