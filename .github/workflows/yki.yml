@@ -43,7 +43,7 @@ jobs:
         id: wkhtmltopdf-cache
         with:
           path: "~/wkhtmltopdf"
-          key: ${{WKHTMLTOPDF_VERSION}}
+          key: ${{vars.WKHTMLTOPDF_VERSION}}
 
       - name: Install wkhtmltopdf
         run: |
