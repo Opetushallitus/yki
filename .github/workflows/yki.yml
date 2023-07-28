@@ -38,15 +38,33 @@ jobs:
       - name: Prepare Clojure env
         uses: ./.github/actions/prepare-clojure-env
 
+      - name: Cache wkthmltopdf
+        uses: actions/cache@v3
+        id: wkhtmltopdf-cache
+        with:
+          path: "~/wkhtmltopdf"
+          key: ${{WKHTMLTOPDF_VERSION}}
+
       - name: Install wkhtmltopdf
         run: |
           echo 'Updating apt-get package information'
           sudo apt-get update
           echo 'Installing wkhtmltopdf'
           sudo apt-get install wkhtmltopdf
-          echo 'Installed wkhtmltopdf, check that it works'
+          echo 'Copying installed files to cache'
+          mkdir -p ~/wkhtmltopdf
+          sudo dpkg -L wkhtmltopdf | while IFS= read -r f; do if test -f $f; then echo $f; fi; done | xargs cp --parents --target-directory ~/wkhtmltopdf/
+        shell: bash
+        if: steps.wkhtmltopdf-cache.outputs.cache-hit != 'true'
+
+      - name: Copy wkhtmltopdf from cache
+        run: |
+          sudo cp --verbose --force --recursive ~/wkhtmltopdf/* /
+        if: steps.wkhtmltopdf-cache.outputs.cache-hit == 'true'
+
+      - name: Verify wkhtmltopdf installation
+        run: |
           wkhtmltopdf --version
-          echo 'Installation of wkhtmltopdf completed'
         shell: bash
 
       - name: Run tests
