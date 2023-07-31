@@ -16,49 +16,52 @@
 
 (defn- get-mock-routes [port user]
   (merge
-   {"/kayttooikeus-service/kayttooikeus/kayttaja" {:status 200 :content-type "application/json"
-                                                   :body (slurp (str "test/resources/" user ".json"))}
-    "/oppijanumerorekisteri-service/henkilo/1.2.3.4.5/master" {:status 200 :content-type "application/json"
-                                                               :body (slurp "test/resources/onr_henkilo_by_hetu.json")}
-    "/kayttooikeus-service/j_spring_cas_security_check" {:status 200
-                                                         :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"
-                                                                   "Caller-Id" "1.2.246.562.10.00000000001.yki"}}
-    "/cas/serviceValidate" {:status 200 :content-type "application/xml;charset=UTF-8"
-                            :body (slurp "test/resources/serviceResponse.xml")
-                            :headers {"Caller-Id" "1.2.246.562.10.00000000001.yki"}}}
-   (base/cas-mock-routes port)))
+    {"/kayttooikeus-service/kayttooikeus/kayttaja"             {:status 200 :content-type "application/json"
+                                                                :body   (slurp (str "test/resources/" user ".json"))}
+     "/oppijanumerorekisteri-service/henkilo/1.2.3.4.5/master" {:status 200 :content-type "application/json"
+                                                                :body   (slurp "test/resources/onr_henkilo_by_hetu.json")}
+     "/kayttooikeus-service/j_spring_cas_security_check"       {:status  200
+                                                                :headers {"Set-Cookie" "JSESSIONID=eyJhbGciOiJIUzUxMiJ9"
+                                                                          "Caller-Id"  "1.2.246.562.10.00000000001.yki"}}
+     "/cas/serviceValidate"                                    {:status  200 :content-type "application/xml;charset=UTF-8"
+                                                                :body    (slurp "test/resources/serviceResponse.xml")
+                                                                :headers {"Caller-Id" "1.2.246.562.10.00000000001.yki"}}}
+    (base/cas-mock-routes port)))
 
 (defn- create-routes
   [port]
-  (let [uri (str "localhost:" port)
-        db (duct.database.sql/->Boundary @embedded-db/conn)
-        url-helper (ig/init-key :yki.util/url-helper {:virkailija-host uri
-                                                      :oppija-host uri
-                                                      :yki-register-host uri
-                                                      :yki-host-virkailija ""
-                                                      :alb-host (str "http://" uri)
-                                                      :scheme "http"})
-        auth (base/auth url-helper)
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db db
-                                                                     :url-helper url-helper
-                                                                     :email-q (base/email-q)
+  (let [uri                  (str "localhost:" port)
+        db                   (duct.database.sql/->Boundary @embedded-db/conn)
+        url-helper           (ig/init-key :yki.util/url-helper {:virkailija-host           uri
+                                                                :oppija-host               uri
+                                                                :yki-register-host         uri
+                                                                :yki-host-virkailija       ""
+                                                                :cas-service-base          (str "http://" uri)
+                                                                :kayttooikeus-service-base (str "http://" uri)
+                                                                :onr-service-base          (str "http://" uri)
+                                                                :alb-host                  (str "http://" uri)
+                                                                :scheme                    "http"})
+        auth                 (base/auth url-helper)
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db          db
+                                                                     :url-helper  url-helper
+                                                                     :email-q     (base/email-q)
                                                                      :data-sync-q (base/data-sync-q)})
 
-        exam-date-handler (ig/init-key :yki.handler/exam-date {:db db})
+        exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
 
-        org-handler (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db db
-                                                                                 :access-log (base/access-log)
-                                                                                 :data-sync-q  (base/data-sync-q)
-                                                                                 :url-helper url-helper
-                                                                                 :exam-session-handler exam-session-handler
-                                                                                 :exam-date-handler exam-date-handler
-                                                                                 :auth auth}))
-        auth-handler (base/auth-handler auth url-helper)]
+        org-handler          (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
+                                                                                          :access-log           (base/access-log)
+                                                                                          :data-sync-q          (base/data-sync-q)
+                                                                                          :url-helper           url-helper
+                                                                                          :exam-session-handler exam-session-handler
+                                                                                          :exam-date-handler    exam-date-handler
+                                                                                          :auth                 auth}))
+        auth-handler         (base/auth-handler auth url-helper)]
     (routes org-handler auth-handler)))
 
 (defn- login [port]
-  (let [routes (create-routes port)
-        session (peridot/session routes)
+  (let [routes   (create-routes port)
+        session  (peridot/session routes)
         response (-> session
                      (peridot/request routing/virkailija-auth-callback
                                       :request-method :get
@@ -66,51 +69,51 @@
     response))
 
 (defn- fire-requests [port]
-  (let [session (login port)
-        organizer-post (-> session
-                           (peridot/request routing/organizer-api-root
-                                            :body (j/write-value-as-string base/organizer)
-                                            :content-type "application/json"
-                                            :request-method :post))
-        organizer-put (-> session
-                          (peridot/request (str routing/organizer-api-root "/1.2.3.4")
-                                           :body (j/write-value-as-string base/organizer)
-                                           :content-type "application/json"
-                                           :request-method :put))
-        organizer-get (-> session
-                          (peridot/request routing/organizer-api-root
-                                           :request-method :get))
+  (let [session             (login port)
+        organizer-post      (-> session
+                                (peridot/request routing/organizer-api-root
+                                                 :body (j/write-value-as-string base/organizer)
+                                                 :content-type "application/json"
+                                                 :request-method :post))
+        organizer-put       (-> session
+                                (peridot/request (str routing/organizer-api-root "/1.2.3.4")
+                                                 :body (j/write-value-as-string base/organizer)
+                                                 :content-type "application/json"
+                                                 :request-method :put))
+        organizer-get       (-> session
+                                (peridot/request routing/organizer-api-root
+                                                 :request-method :get))
 
-        organizer-delete (-> session
-                             (peridot/request (str routing/organizer-api-root "/1.2.3.6")
-                                              :request-method :delete))
-        exam-session-post (-> session
-                              (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri)
-                                               :body base/exam-session
-                                               :content-type "application/json"
-                                               :request-method :post))
-        exam-session-id (if (= (-> exam-session-post :response :status) 200)
-                          ((base/body-as-json (:response exam-session-post)) "id")
-                          9999)
-        exam-session-put (-> session
-                             (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/" exam-session-id)
-                                              :body base/exam-session
-                                              :content-type "application/json"
-                                              :request-method :put))
-        exam-session-get (-> session
-                             (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri)
-                                              :request-method :get))
+        organizer-delete    (-> session
+                                (peridot/request (str routing/organizer-api-root "/1.2.3.6")
+                                                 :request-method :delete))
+        exam-session-post   (-> session
+                                (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri)
+                                                 :body base/exam-session
+                                                 :content-type "application/json"
+                                                 :request-method :post))
+        exam-session-id     (if (= (-> exam-session-post :response :status) 200)
+                              ((base/body-as-json (:response exam-session-post)) "id")
+                              9999)
+        exam-session-put    (-> session
+                                (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/" exam-session-id)
+                                                 :body base/exam-session
+                                                 :content-type "application/json"
+                                                 :request-method :put))
+        exam-session-get    (-> session
+                                (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri)
+                                                 :request-method :get))
         exam-session-delete (-> session
                                 (peridot/request (str routing/organizer-api-root "/1.2.3.4" routing/exam-session-uri "/" exam-session-id)
                                                  :request-method :delete))]
-    {:org {:post organizer-post
-           :put organizer-put
-           :delete organizer-delete
-           :get organizer-get}
-     :exam {:post exam-session-post
-            :put exam-session-put
+    {:org  {:post   organizer-post
+            :put    organizer-put
+            :delete organizer-delete
+            :get    organizer-get}
+     :exam {:post   exam-session-post
+            :put    exam-session-put
             :delete exam-session-delete
-            :get exam-session-get}}))
+            :get    exam-session-get}}))
 
 (defn- assert-status-code
   [response code]
@@ -120,16 +123,16 @@
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server) "user_with_organizer_role"))
-    (let [routes (create-routes port)
-          session (peridot/session routes)
-          response (-> session
-                       (peridot/request (str routing/auth-root routing/virkailija-auth-uri "?success-redirect=/yki/auth/user"))
-                       (peridot/request routing/virkailija-auth-callback
-                                        :request-method :get
-                                        :params {:ticket "ST-15126"})
-                       (peridot/follow-redirect))
+    (let [routes        (create-routes port)
+          session       (peridot/session routes)
+          response      (-> session
+                            (peridot/request (str routing/auth-root routing/virkailija-auth-uri "?success-redirect=/yki/auth/user"))
+                            (peridot/request routing/virkailija-auth-callback
+                                             :request-method :get
+                                             :params {:ticket "ST-15126"})
+                            (peridot/follow-redirect))
           response-body (j/read-value (slurp (:body (:response response)) :encoding "UTF-8"))
-          id (response-body  "identity")
+          id            (response-body "identity")
           organizations (id "organizations")]
       (testing "callback endpoint should set identity returned from cas client to session"
         (is (= (id "username") "test")))
@@ -142,8 +145,8 @@
                [{"oid" "1.2.3.4" "permissions" [{"oikeus" "JARJESTAJA" "palvelu" "YKI"}]}]))))))
 
 (deftest handle-authentication-callback-without-ticket-test
-  (let [handler (create-routes "")
-        session (peridot/session (routes handler))
+  (let [handler  (create-routes "")
+        session  (peridot/session (routes handler))
         response (-> session
                      (peridot/request routing/virkailija-auth-callback
                                       :request-method :get))]
@@ -154,8 +157,8 @@
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server) "user_with_organizer_role"))
-    (let [handler (create-routes port)
-          session (peridot/session (routes handler))
+    (let [handler  (create-routes port)
+          session  (peridot/session (routes handler))
           response (-> session
                        (peridot/request routing/virkailija-auth-callback
                                         :request-method :get
@@ -177,10 +180,10 @@
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server) "user_with_organizer_role"))
-    (let [responses (fire-requests port)
-          org-responses (:org responses)
+    (let [responses      (fire-requests port)
+          org-responses  (:org responses)
           exam-responses (:exam responses)
-          organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
+          organizers     ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "post organizer should not be allowed"
         (is (= (-> org-responses :post :response :status) 403)))
       (testing "put organizer should not be allowed"
@@ -206,10 +209,10 @@
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server) "user_with_admin_role"))
-    (let [responses (fire-requests port)
-          org-responses (:org responses)
+    (let [responses      (fire-requests port)
+          org-responses  (:org responses)
           exam-responses (:exam responses)
-          organizers ((base/body-as-json (-> org-responses :get :response)) "organizers")]
+          organizers     ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "should allow all operations on organizer"
         (assert-status-code (:get org-responses) 200)
         (is (= (count organizers) 2))
@@ -225,10 +228,10 @@
   (with-routes!
     (fn [server]
       (get-mock-routes (:port server) "no_permissions_user"))
-    (let [responses       (fire-requests port)
-          exam-responses  (:exam responses)
-          org-responses   (:org responses)
-          organizers      ((base/body-as-json (-> org-responses :get :response)) "organizers")]
+    (let [responses      (fire-requests port)
+          exam-responses (:exam responses)
+          org-responses  (:org responses)
+          organizers     ((base/body-as-json (-> org-responses :get :response)) "organizers")]
       (testing "should not allow any endpoints"
         (assert-status-code (:get org-responses) 200)
         (is (= (count organizers) 0))
@@ -241,8 +244,8 @@
         (assert-status-code (:post exam-responses) 403)))))
 
 (deftest unauthenticated-user-test
-  (let [routes (create-routes 8080)
-        session (peridot/session routes)
+  (let [routes   (create-routes 8080)
+        session  (peridot/session routes)
         response (-> session
                      (peridot/request routing/organizer-api-root
                                       :body (j/write-value-as-string base/organizer)
