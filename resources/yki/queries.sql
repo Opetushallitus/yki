@@ -665,12 +665,22 @@ WHERE re.id = :id
   AND re.state = 'SUBMITTED'
   AND p.external_user_id = :external_user_id;
 
--- name: update-started-registrations-to-expired<!
+-- name: select-started-registrations-to-expire
+SELECT id FROM registration
+WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp;
+
+-- submitted registration expires 8 days from creation at midnight
+-- name: select-submitted-registrations-to-expire
+SELECT id FROM registration
+WHERE state = 'SUBMITTED'
+  AND ((kind = 'ADMISSION' AND ts_older_than(created, interval '9 days'))
+    OR (kind = 'POST_ADMISSION' AND ts_older_than(created, interval '2 days')));
+
+-- name: expire-registrations-by-ids!
 UPDATE registration
 SET state = 'EXPIRED',
     modified = current_timestamp
-WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp
-RETURNING id as updated;
+WHERE id IN (:ids);
 
 -- name: update-registration-exam-session!
 UPDATE registration
@@ -682,16 +692,6 @@ AND EXISTS (SELECT id
             FROM exam_session
             WHERE id = :exam_session_id
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
-
--- submitted registration expires 8 days from creation at midnight
--- name: update-submitted-registrations-to-expired<!
-UPDATE registration
-SET state = 'EXPIRED',
-    modified = current_timestamp
-WHERE state = 'SUBMITTED'
-  AND ((kind = 'ADMISSION' AND ts_older_than(created, interval '9 days'))
-       OR (kind = 'POST_ADMISSION' AND ts_older_than(created, interval '2 days')))
-RETURNING id AS updated;
 
 -- name: select-registration-data
 SELECT re.state,
