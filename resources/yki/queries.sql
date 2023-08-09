@@ -171,18 +171,7 @@ SELECT
   es.language_code
 FROM quarantine q
 INNER JOIN registration r
-  ON (q.birthdate = r.form->>'birthdate'
-      OR
-      -- TODO Remove this OR branch once all registrations to be inspected
-      -- are guaranteed to have birthdates - probably after summer 2023, as
-      -- it is expected that some participation bans are submitted (and handled)
-      -- then.
-      --
-      -- Form may not contain birthdate in which case we need to
-      -- compare the date part of ssn with birthdate registered for quarantine.
-      -- We achieve that by converting q.birthdate into a regex of suitable form.
-      (r.form->>'birthdate' IS NULL AND
-       r.form->>'ssn' LIKE to_char(to_date(q.birthdate, 'YYYY-MM-DD'), 'DDMMYY%')))
+  ON (q.ssn = r.form->>'ssn' OR q.birthdate = r.form->>'birthdate')
 INNER JOIN exam_session es
   ON r.exam_session_id = es.id
 INNER JOIN exam_date ed
@@ -197,6 +186,7 @@ ORDER BY q.id DESC, r.id;
 
 -- name: select-quarantine-reviews
 SELECT
+  qr.id,
   qr.quarantined AS is_quarantined,
   qr.quarantine_id,
   qr.registration_id,
