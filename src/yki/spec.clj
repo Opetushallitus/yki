@@ -106,28 +106,26 @@
 (s/def ::quarantine-type (s/keys :req-un [::language_code
                                           ::start_date
                                           ::end_date
-                                          ::birthdate
+                                          (or ::birthdate ::ssn)
                                           ::first_name
                                           ::last_name
                                           ::diary_number]
                                  :opt-un [::created
                                           ::id
-                                          ::ssn
                                           :quarantine/email
                                           :quarantine/phone_number]))
 (s/def ::quarantines (s/coll-of ::quarantine-type))
 (s/def ::quarantine-response (s/keys :req-un [::quarantines]))
 
 (s/def ::quarantine-match (s/keys :req-un [::language_code
-                                           ::birthdate
+                                           (or ::birthdate ::sn)
                                            ::first_name
                                            ::last_name
                                            ::form
                                            ::registration_id
                                            ::id
                                            ::state]
-                                  :opt-un [::ssn
-                                           ::email
+                                  :opt-un [::email
                                            ::phone_number]))
 (s/def ::quarantine_matches (s/coll-of ::quarantine-match))
 (s/def ::quarantine-matches-response (s/keys :req-un [::quarantine_matches]))
@@ -140,13 +138,12 @@
                                  ::updated
                                  ::exam_date
                                  ::language_code
-                                 ::birthdate
+                                 (or ::birthdate ::ssn)
                                  ::first_name
                                  ::last_name
                                  ::form
                                  ::state]
-                        :opt-un [::ssn
-                                 ::email
+                        :opt-un [::email
                                  ::phone_number]))
 (s/def ::reviews (s/coll-of ::review))
 (s/def ::quarantine-reviews-response (s/keys :req-un [::reviews]))

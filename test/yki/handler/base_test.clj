@@ -141,7 +141,7 @@
                         :gender           "1"
                         :nationalities    ["180"]
                         :birthdate        "1999-01-01"
-                        :ssn              "201190-9012"
+                        :ssn              "010199-9012"
                         :certificate_lang "fi"
                         :exam_lang        "fi"
                         :post_office      "Ankkalinna"
@@ -180,7 +180,7 @@
                       :start_date    "2040-06-29"
                       :end_date      "2040-12-30"
                       :birthdate     "1999-01-27"
-                      :ssn           "301079-900U"
+                      :ssn           "270199-900U"
                       :first_name    "Max"
                       :last_name     "Syöttöpaine"
                       :email         "email@invalid.invalid"

@@ -86,7 +86,7 @@
                  1))))
       (testing "one quarantine can produce multiple matches and ssn on registration form can be matched against quarantine birthdate as well"
         (base/update-registration-form! 2 "birthdate" nil)
-        (base/update-registration-form! 2 "ssn" "270199-999C")
+        (base/update-registration-form! 2 "ssn" (:ssn base/quarantine-form))
         (is (= (-> (get-matches)
                    (count))
                2))
@@ -97,13 +97,23 @@
       (testing "multiple quarantines can match same registration"
         (base/insert-quarantine (-> base/quarantine-form
                                     (dissoc :ssn)
-                                    (assoc :diary_number "OPH-999-2023")))
+                                    (assoc :diary_number "OPH-2023-999")))
+        (base/insert-quarantine (-> base/quarantine-form
+                                    (assoc :ssn (:ssn base/registration-form))
+                                    (assoc :diary_number "OPH-2023-1001")))
         (is (= (->> (get-matches)
                     (map #(select-keys % [:id :registration_id]))
                     (into #{}))
-               #{{:id 1 :registration_id 1} {:id 1 :registration_id 2}
-                 {:id 2 :registration_id 1} {:id 2 :registration_id 2}})))
-      (testing "a reviewed quarantine+registration combination is not reported as a match"
+               #{; quarantine 1 matches registration 1 by birthdate
+                 {:id 1 :registration_id 1}
+                 ; quarantine 1 matches registration 2 by SSN
+                 {:id 1 :registration_id 2}
+                 ; quarantine 2 matches registration 1 by birthdate
+                 {:id 2 :registration_id 1}
+                 ; quarantine 3 matches registration 1 by SSN
+                 {:id 3 :registration_id 1}
+                 })))
+      (testing "a reviewed quarantine+registration combination is no longer reported as a match"
         (doseq [[id registration-id quarantined] [[1 1 false]
                                                   [2 2 true]]]
           (request-with-json-body
@@ -114,12 +124,14 @@
         (is (= (->> (get-matches)
                     (map #(select-keys % [:id :registration_id]))
                     (into #{}))
-               ; Note: only the below match should be returned,
+               ; Note: only the below matches should be returned,
                ; as confirming quarantine 2 for registration 2
                ; also cancels registration 2.
-               #{{:id 2 :registration_id 1}})))
+               #{{:id 2 :registration_id 1}
+                 {:id 3 :registration_id 1}})))
       (testing "exam language on registration and quarantine must be same for a match"
         (base/update-quarantine-language! 2 "swe")
+        (base/update-quarantine-language! 3 "sme")
         (is (empty? (get-matches))))
       (testing "if a quarantine is updated after it was reviewed, it can again be matched"
         (base/update-quarantine-language! 1 "fin")
@@ -142,19 +154,34 @@
 (deftest insert-quarantine-test
   (with-routes!
     {}
-    (let [handler  (create-handlers port)
-          session  (peridot/session handler)
-          response (request-with-json-body
-                     session
-                     routing/quarantine-api-root
-                     :post
-                     base/quarantine-form)]
+    (let [handler            (create-handlers port)
+          session            (peridot/session handler)
+          insert-quarantine! #(request-with-json-body
+                                session
+                                routing/quarantine-api-root
+                                :post
+                                %)]
       (testing "insert quarantine endpoint should return 200 and add new quarantine"
         (is (= {:status 200
-                :body   {:success true}} response))
+                :body   {:success true}} (insert-quarantine! base/quarantine-form)))
         (is (= (assoc base/quarantine-form :id 1)
                (-> (base/select-one "SELECT * FROM quarantine")
-                   (dissoc :created :updated :deleted_at))))))))
+                   (dissoc :created :updated :deleted_at)))))
+      (testing "if ssn is given"
+        (testing "missing birthdate should be inferred from ssn"
+          (is (= {:status 200
+                  :body   {:success true}}
+                 (insert-quarantine! (-> base/quarantine-form
+                                         (dissoc :birthdate)
+                                         (update :diary_number #(str % (random-uuid)))))))
+          (is (= (:birthdate base/quarantine-form)
+                 (:birthdate (base/select-one "SELECT * FROM quarantine WHERE id=2;")))))
+        (testing "mismatching birthdate should result in an error"
+          (is (= 500
+                 (:status (insert-quarantine! (-> base/quarantine-form
+                                                  (assoc :birthdate "1999-01-28"))))))
+          (is (= {:count 2}
+                 (base/select-one "SELECT COUNT(*) FROM quarantine;"))))))))
 
 (deftest set-quarantine-test
   (base/insert-base-data)
