@@ -58,6 +58,18 @@
     (testing "should set state of registration started over 1 hour ago to expired"
       (is (= (:state registration) "EXPIRED")))))
 
+(deftest handle-started-registration-not-yet-expired-test
+  (base/insert-base-data)
+  (jdbc/execute! @embedded-db/conn (str
+                                     "INSERT INTO registration(state, exam_session_id, participant_id, started_at) values
+                                     ('STARTED'," base/select-exam-session "," base/select-participant ", (current_timestamp - interval '29 minutes'))"))
+
+  (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (base/db)})
+        _                          (registration-state-handler)
+        registration               (base/select-one "SELECT * FROM registration")]
+    (testing "should leave registration state at STARTED when run just before the 30 min limit"
+      (is (= (:state registration) "STARTED")))))
+
 (deftest handle-submitted-registration-expired-test
   (base/insert-base-data)
   (base/insert-registrations "SUBMITTED")

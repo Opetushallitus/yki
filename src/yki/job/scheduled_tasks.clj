@@ -52,11 +52,11 @@
   #(try
      (when (job-db/try-to-acquire-lock! db registration-state-handler-conf)
        (log/debug "Check started registrations expiry")
-       (let [updated (registration-db/update-started-registrations-to-expired! db)]
-         (when updated (log/info "Started registrations set to expired" updated)))
+       (let [ids (registration-db/update-started-registrations-to-expired! db)]
+         (when ids (log/info "Started registrations set to expired" ids)))
        (log/debug "Check submitted registrations expiry")
-       (let [updated (registration-db/update-submitted-registrations-to-expired! db)]
-         (when updated (log/info "Submitted registrations set to expired" updated))))
+       (let [ids (registration-db/update-submitted-registrations-to-expired! db)]
+         (when ids (log/info "Submitted registrations set to expired" ids))))
      (catch Exception e
        (log/error e "Registration state handler failed"))))
 

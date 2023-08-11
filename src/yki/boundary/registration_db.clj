@@ -89,11 +89,19 @@
   (update-started-registrations-to-expired!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
-      (q/update-started-registrations-to-expired<! tx)))
+      (let [ids (->> (q/select-started-registrations-to-expire tx)
+                     (map :id))]
+        (when (seq ids)
+          (q/expire-registrations-by-ids! tx {:ids ids})
+          ids))))
   (update-submitted-registrations-to-expired!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
-      (q/update-submitted-registrations-to-expired<! tx)))
+      (let [ids (->> (q/select-submitted-registrations-to-expire tx)
+                     (map :id))]
+        (when (seq ids)
+          (q/expire-registrations-by-ids! tx {:ids ids})
+          ids))))
   (get-participant-data-by-registration-id
     [{:keys [spec]} registration-id]
     (first (q/select-participant-data-by-registration-id spec {:id registration-id})))
