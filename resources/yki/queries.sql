@@ -680,7 +680,7 @@ WHERE state = 'SUBMITTED'
 UPDATE registration
 SET state = 'EXPIRED',
     modified = current_timestamp
-WHERE id IN (:ids);
+WHERE id IN (:ids) AND state IN ('STARTED', 'SUBMITTED');
 
 -- name: update-registration-exam-session!
 UPDATE registration
