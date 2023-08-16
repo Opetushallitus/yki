@@ -11,7 +11,7 @@
     [yki.spec :as ys]
     [yki.util.common :refer [format-date-for-db string->date]]))
 
-(defn with-birthdate-from-ssn [{:keys [birthdate ssn] :as quarantine}]
+(defn- with-birthdate-from-ssn [{:keys [birthdate ssn] :as quarantine}]
   (cond
     (and birthdate ssn)
     (let [date-from-ssn       (ys/ssn->date ssn)
@@ -41,35 +41,33 @@
       (POST "/" request
         :body [quarantine ::ys/quarantine-type]
         :return ::ys/response
-        (let [created (->> quarantine
-                           (with-birthdate-from-ssn)
-                           (quarantine-db/create-quarantine! db))]
-          (when created
-            (audit-log/log {:request   request
-                            :target-kv {:k audit-log/quarantine
-                                        :v (:id created)}
-                            :change    {:type audit-log/create-op
-                                        :new  created}})
-            (ok {:success true}))))
+        (when-let [created (->> quarantine
+                                (with-birthdate-from-ssn)
+                                (quarantine-db/create-quarantine! db))]
+          (audit-log/log {:request   request
+                          :target-kv {:k audit-log/quarantine
+                                      :v (:id created)}
+                          :change    {:type audit-log/create-op
+                                      :new  created}})
+          (ok {:success true})))
       (PUT "/:id" request
         :path-params [id :- ::ys/id]
         :body [quarantine ::ys/quarantine-type]
         (if-let [existing (quarantine-db/get-quarantine db id)]
-          (let [updated (->> quarantine
-                             with-birthdate-from-ssn
-                             (quarantine-db/update-quarantine! db id))]
-            (if updated
-              (do
-                (audit-log/log {:request   request
-                                :target-kv {:k audit-log/quarantine
-                                            :v id}
-                                :change    {:type audit-log/update-op
-                                            :old  existing
-                                            :new  updated}})
-                (ok {:success true}))
-              (do
-                (log/error "Update failed for existing quarantine with id" id)
-                (bad-request))))
+          (if-let [updated (->> quarantine
+                                (with-birthdate-from-ssn)
+                                (quarantine-db/update-quarantine! db id))]
+            (do
+              (audit-log/log {:request   request
+                              :target-kv {:k audit-log/quarantine
+                                          :v id}
+                              :change    {:type audit-log/update-op
+                                          :old  existing
+                                          :new  updated}})
+              (ok {:success true}))
+            (do
+              (log/error "Update failed for existing quarantine with id" id)
+              (bad-request)))
           (do
             (log/error "Attempted to update non-existing quarantine with id" id)
             (not-found))))

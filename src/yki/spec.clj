@@ -132,7 +132,8 @@
 
 (s/def ::quarantine_id ::id)
 
-(s/def ::review (s/keys :req-un [::is_quarantined
+(s/def ::review (s/keys :req-un [::id
+                                 ::is_quarantined
                                  ::quarantine_id
                                  ::registration_id
                                  ::updated
