@@ -118,7 +118,7 @@
 (s/def ::quarantine-response (s/keys :req-un [::quarantines]))
 
 (s/def ::quarantine-match (s/keys :req-un [::language_code
-                                           (or ::birthdate ::sn)
+                                           (or ::birthdate ::ssn)
                                            ::first_name
                                            ::last_name
                                            ::form
