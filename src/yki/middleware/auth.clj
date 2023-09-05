@@ -8,8 +8,10 @@
     [integrant.core :as ig]
     [ring.middleware.session :refer [wrap-session]]
     [ring.middleware.session.cookie :refer [cookie-store]]
-    [ring.util.http-response :refer [found see-other]]
-    [yki.boundary.cas-ticket-db :as cas-ticket-db]))
+    [ring.middleware.session-timeout :refer [wrap-absolute-session-timeout]]
+    [ring.util.http-response :refer [found see-other unauthorized]]
+    [yki.boundary.cas-ticket-db :as cas-ticket-db]
+    [ring.middleware.session.store :as store]))
 
 (def backend (session-backend))
 
@@ -184,11 +186,14 @@
   (or value {:headers {}, :status 403, :body "Forbidden"}))
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
-  (fn with-authentication [handler]
-    (-> handler
-        (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
-        (wrap-authentication backend)
-        (wrap-authorization backend)
-        (wrap-session {:store        (cookie-store {:key (.getBytes ^String (:key session-config))})
-                       :cookie-name  "yki"
-                       :cookie-attrs (:cookie-attrs session-config)}))))
+  (let [{:keys [cookie-attrs key]} session-config]
+    (fn with-authentication [handler]
+      (-> handler
+          (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
+          (wrap-authentication backend)
+          (wrap-authorization backend)
+          (wrap-absolute-session-timeout {:timeout          (:max-age cookie-attrs)
+                                          :timeout-response (unauthorized)})
+          (wrap-session {:store        (cookie-store {:key (.getBytes ^String key)})
+                         :cookie-name  "yki"
+                         :cookie-attrs cookie-attrs})))))
