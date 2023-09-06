@@ -67,7 +67,7 @@
                                  (peridot/request (str routing/auth-root "/logout"))
                                  (peridot/request (str routing/auth-root "/user")))
         logout-response-body (base/body-as-json (:response logout-response))]
-    (testing "after successfull login link authentication session should contain user data"
+    (testing "after successful login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
       (is (= (id "external-user-id") "test@user.com")))
     (testing "after logout session should not contain user data"
