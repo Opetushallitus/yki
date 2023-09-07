@@ -40,8 +40,7 @@
                   :exclusions [org.slf4j/slf4j-simple]]
                  [fi.vm.sade/auditlogger "8.3.0-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]
-                 [com.github.jhonnymertz/java-wkhtmltopdf-wrapper "1.1.14-RELEASE"]
-                 [ring/ring-session-timeout "0.3.0"]]
+                 [com.github.jhonnymertz/java-wkhtmltopdf-wrapper "1.1.14-RELEASE"]]
   :exclusions [org.slf4j/slf4j-nop
                commons-logging]
   :cloverage {:ns-exclude-regex [#"dev" #"user" #"yki.main" #"yki.middleware.no-auth" #"yki.migrations"]}
