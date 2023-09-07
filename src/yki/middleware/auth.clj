@@ -8,8 +8,7 @@
     [integrant.core :as ig]
     [ring.middleware.session :refer [wrap-session]]
     [ring.middleware.session.cookie :refer [cookie-store]]
-    [ring.middleware.session-timeout :refer [wrap-absolute-session-timeout] :as session-timeout]
-    [ring.util.http-response :refer [found see-other unauthorized]]
+    [ring.util.http-response :refer [found see-other]]
     [yki.boundary.cas-ticket-db :as cas-ticket-db]
     [ring.middleware.session.store :as store]))
 
@@ -185,12 +184,22 @@
   [_request value]
   (or value {:headers {}, :status 403, :body "Forbidden"}))
 
-(defn- with-nil-session-instead-of-only-timeout [handler]
+(defn- wrap-session-timeout [handler timeout]
   (fn [request]
-    (let [response (handler request)]
-      (if (= [::session-timeout/absolute-timeout]
-             (keys (:session response)))
-        (assoc response :session nil)
+    (let [session-expiry (get-in request [:session :timeout])
+          now            (quot (System/currentTimeMillis) 1000)
+          ; Get response from downstream handler.
+          ; Strip away session details if session is expired (or doesn't contain expiry time).
+          response       (handler (cond-> request
+                                          (or (nil? session-expiry)
+                                              (< session-expiry now))
+                                          (dissoc :session)))]
+      (if-let [response-session (:session response)]
+        (if (:timeout response-session)
+          ; Don't renew time session timeout if a timeout is present in response
+          response
+          ; Add session timeout to response otherwise.
+          (assoc-in response [:session :timeout] (+ now timeout)))
         response))))
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
@@ -200,9 +209,7 @@
           (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
           (wrap-authentication backend)
           (wrap-authorization backend)
-          (wrap-absolute-session-timeout {:timeout          (:max-age cookie-attrs)
-                                          :timeout-response (unauthorized)})
-          (with-nil-session-instead-of-only-timeout)
+          (wrap-session-timeout (:max-age cookie-attrs))
           (wrap-session {:store        (cookie-store {:key (.getBytes ^String key)})
                          :cookie-name  "yki"
                          :cookie-attrs cookie-attrs})))))
