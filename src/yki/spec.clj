@@ -29,6 +29,24 @@
         (str yy "-" mm "-" dd)
         string->date)))
 
+(defn valid-email-local-part?
+  "Attempts to validate the local part of an email *without* allowing quoting,
+   thus simplifying the validation rules quite a bit.
+   Best effort, doesn't aim to allow all legal email addresses.
+
+   See https://datatracker.ietf.org/doc/html/rfc3696#section-3 for reference."
+  [email]
+  (when-let [[local-part] (str/split email #"@")]
+    (and
+      ; Local part consists of max 64 whitelisted characters.
+      (re-matches #"^[A-Za-z0-9\!#$%&'+\-\/=\?\^_`\.\{|\}~]{1,64}$" local-part)
+      ; Consecutive periods not allowed
+      (not (re-find #"\.\." local-part))
+      ; Local part must not start with a period
+      (not (str/starts-with? local-part "."))
+      ; Local part must not end with a period
+      (not (str/ends-with? local-part ".")))))
+
 (defn- valid-ssn? [value]
   (or (str/blank? value)
       (ssn->date value)))
@@ -52,7 +70,9 @@
                       :type                :date-time
                       :json-schema/default "2018-01-01T00:00:00Z"}))
 (s/def ::time (s/and string? #(re-matches time-regex %)))
-(s/def ::email-type (s/and string? #(re-matches email-regex %)))
+(s/def ::email-type (s/and string?
+                           #(re-matches email-regex %)
+                           valid-email-local-part?))
 (s/def ::oid (s/and string? #(re-matches oid-regex %)))
 (s/def ::id pos-int?)
 (s/def ::email ::email-type)
