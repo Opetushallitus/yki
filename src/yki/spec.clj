@@ -29,23 +29,32 @@
         (str yy "-" mm "-" dd)
         string->date)))
 
-(defn valid-email-local-part?
-  "Attempts to validate the local part of an email *without* allowing quoting,
+(defn valid-email?
+  "Attempts to validate an email address *without* allowing quoting,
    thus simplifying the validation rules quite a bit.
-   Best effort, doesn't aim to allow all legal email addresses.
+   Best effort, doesn't aim to cover all cases - might be simultaneously
+   too restrictive as well as too lax.
 
-   See https://datatracker.ietf.org/doc/html/rfc3696#section-3 for reference."
+   A proper validator such as the EmailValidator class from Apache Commons
+   could also be used. However, proper validators typically perform too strict
+   domain validation, rendering test addresses such as foo@test.invalid unusable.
+   This custom implementation was chosen as a suitable middle ground.
+
+   See https://datatracker.ietf.org/doc/html/rfc3696#section-3 for reference on
+   the syntax available for email addresses."
   [email]
-  (when-let [[local-part] (str/split email #"@")]
+  (when-let [[local-part domain-part] (str/split email #"@")]
     (and
-      ; Local part consists of max 64 whitelisted characters.
+      ; Local part consists of max 64 whitelisted characters
       (re-matches #"^[A-Za-z0-9\!#$%&'+\-\/=\?\^_`\.\{|\}~]{1,64}$" local-part)
       ; Consecutive periods not allowed
       (not (re-find #"\.\." local-part))
       ; Local part must not start with a period
       (not (str/starts-with? local-part "."))
       ; Local part must not end with a period
-      (not (str/ends-with? local-part ".")))))
+      (not (str/ends-with? local-part "."))
+      ; Domain part consists of max 255 whitelisted characters
+      (re-matches #"^[A-Za-z0-9\-\.]{1,255}" domain-part))))
 
 (defn- valid-ssn? [value]
   (or (str/blank? value)
@@ -72,7 +81,7 @@
 (s/def ::time (s/and string? #(re-matches time-regex %)))
 (s/def ::email-type (s/and string?
                            #(re-matches email-regex %)
-                           valid-email-local-part?))
+                           valid-email?))
 (s/def ::oid (s/and string? #(re-matches oid-regex %)))
 (s/def ::id pos-int?)
 (s/def ::email ::email-type)
