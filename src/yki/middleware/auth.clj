@@ -8,9 +8,9 @@
     [integrant.core :as ig]
     [ring.middleware.session :refer [wrap-session]]
     [ring.middleware.session.cookie :refer [cookie-store]]
+    [ring.middleware.session.store :as store]
     [ring.util.http-response :refer [found see-other]]
-    [yki.boundary.cas-ticket-db :as cas-ticket-db]
-    [ring.middleware.session.store :as store]))
+    [yki.boundary.cas-ticket-db :as cas-ticket-db]))
 
 (def backend (session-backend))
 

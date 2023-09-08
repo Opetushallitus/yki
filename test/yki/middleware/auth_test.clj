@@ -3,13 +3,13 @@
     [clojure.test :refer [deftest is testing]]
     [clj-time.core :as t]
     [compojure.api.sweet :refer [api context GET POST]]
+    [integrant.core :as ig]
     [ring.middleware.session.cookie :refer [cookie-store]]
     [ring.middleware.session.store :refer [write-session]]
+    [ring.mock.request :as mock]
     [ring.util.codec :refer [form-encode]]
     [ring.util.http-response :refer [ok]]
     [yki.handler.base-test :as base]
-    [integrant.core :as ig]
-    [ring.mock.request :as mock]
     [yki.handler.routing :as routing])
   (:import
     [org.joda.time DateTime Period]))
