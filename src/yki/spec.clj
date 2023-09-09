@@ -8,7 +8,6 @@
   (:import [org.joda.time DateTime]))
 
 ;; common
-(def email-regex #"^(?=^.{4,256}$)(.+@.+\.[a-zA-Z]{2,63})$")
 (def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"([\d]{2})([\d]{2})([\d]{2})([+\-ABCDEFUVWXY])[\d]{3}[\dA-Za-z]")
@@ -80,7 +79,6 @@
                       :json-schema/default "2018-01-01T00:00:00Z"}))
 (s/def ::time (s/and string? #(re-matches time-regex %)))
 (s/def ::email-type (s/and string?
-                           #(re-matches email-regex %)
                            valid-email?))
 (s/def ::oid (s/and string? #(re-matches oid-regex %)))
 (s/def ::id pos-int?)
