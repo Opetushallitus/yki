@@ -28,7 +28,7 @@
         (str yy "-" mm "-" dd)
         string->date)))
 
-(defn valid-email?
+(defn- valid-email?
   "Attempts to validate an email address *without* allowing quoting,
    thus simplifying the validation rules quite a bit.
    Best effort, doesn't aim to cover all cases - might be simultaneously
@@ -45,7 +45,7 @@
   (when-let [[local-part domain-part] (str/split email #"@")]
     (and
       ; Local part consists of max 64 whitelisted characters
-      (re-matches #"^[A-Za-z0-9\!#$%&'+\-\/=\?\^_`\.\{|\}~]{1,64}$" local-part)
+      (re-matches #"^[\p{L}0-9\!#$%&'+\-\/=\?\^_`\.\{|\}~]{1,64}$" local-part)
       ; Consecutive periods not allowed
       (not (re-find #"\.\." local-part))
       ; Local part must not start with a period
@@ -53,7 +53,7 @@
       ; Local part must not end with a period
       (not (str/ends-with? local-part "."))
       ; Domain part consists of max 255 whitelisted characters
-      (re-matches #"^[A-Za-z0-9\-\.]{1,255}" domain-part))))
+      (re-matches #"^[\p{L}0-9\-\.]{1,255}" domain-part))))
 
 (defn- valid-ssn? [value]
   (or (str/blank? value)
