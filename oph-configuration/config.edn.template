@@ -82,7 +82,7 @@
     {:url-helper #ig/ref :yki.util/url-helper
      :session-config {:key "{{yki_session_cookie_secret}}"
                       :cookie-attrs {:max-age 3600
-                                     :http-only false
+                                     :http-only true
                                      :secure true
                                      :domain "{{host_oppija}}"
                                      :path "/yki"}}}}
