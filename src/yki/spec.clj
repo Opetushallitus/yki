@@ -311,7 +311,6 @@
 (s/def ::zip ::non-blank-string)
 (s/def ::certificate_lang ::language-code)
 (s/def ::exam_lang ::language-code)
-(s/def ::email ::email-type)
 (s/def ::street_address ::non-blank-string)
 (s/def ::phone_number ::non-blank-string)
 
