@@ -183,12 +183,32 @@
   [_request value]
   (or value {:headers {}, :status 403, :body "Forbidden"}))
 
+(defn- wrap-session-timeout [handler timeout]
+  (fn [request]
+    (let [session-expiry (get-in request [:session :timeout])
+          now            (quot (System/currentTimeMillis) 1000)
+          ; Get response from downstream handler.
+          ; Strip away session details if session is expired (or doesn't contain expiry time).
+          response       (handler (cond-> request
+                                          (or (nil? session-expiry)
+                                              (< session-expiry now))
+                                          (dissoc :session)))]
+      (if-let [response-session (:session response)]
+        (if (:timeout response-session)
+          ; Don't renew time session timeout if a timeout is present in response
+          response
+          ; Add session timeout to response otherwise.
+          (assoc-in response [:session :timeout] (+ now timeout)))
+        response))))
+
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
-  (fn with-authentication [handler]
-    (-> handler
-        (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
-        (wrap-authentication backend)
-        (wrap-authorization backend)
-        (wrap-session {:store        (cookie-store {:key (.getBytes ^String (:key session-config))})
-                       :cookie-name  "yki"
-                       :cookie-attrs (:cookie-attrs session-config)}))))
+  (let [{:keys [cookie-attrs key]} session-config]
+    (fn with-authentication [handler]
+      (-> handler
+          (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
+          (wrap-authentication backend)
+          (wrap-authorization backend)
+          (wrap-session-timeout (:max-age cookie-attrs))
+          (wrap-session {:store        (cookie-store {:key (.getBytes ^String key)})
+                         :cookie-name  "yki"
+                         :cookie-attrs cookie-attrs})))))
