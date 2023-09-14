@@ -42,8 +42,11 @@
    See https://datatracker.ietf.org/doc/html/rfc3696#section-3 for reference on
    the syntax available for email addresses."
   [email]
-  (when-let [[local-part domain-part] (str/split email #"@")]
+  {:pre [(string? email)]}
+  (let [[local-part domain-part] (str/split email #"@")]
     (and
+      local-part
+      domain-part
       ; Local part consists of max 64 whitelisted characters
       (re-matches #"^[\p{L}0-9\!#$%&'+\-\/=\?\^_`\.\{|\}~]{1,64}$" local-part)
       ; Consecutive periods not allowed
@@ -52,8 +55,13 @@
       (not (str/starts-with? local-part "."))
       ; Local part must not end with a period
       (not (str/ends-with? local-part "."))
-      ; Domain part consists of max 255 whitelisted characters
-      (re-matches #"^[\p{L}0-9\-\.]{1,255}" domain-part))))
+      ; Domain part consists of at most 255 characters
+      (<= (count domain-part) 255)
+      ; Domain part consists of at least two subdomains
+      ; Each subdomain consists of max 63 whitelisted characters
+      (let [subdomains (str/split domain-part #"\.")]
+        (and (< 1 (count subdomains))
+             (every? #(re-matches #"^[\p{L}0-9\-]{1,63}$" %) subdomains))))))
 
 (defn- valid-ssn? [value]
   (or (str/blank? value)
