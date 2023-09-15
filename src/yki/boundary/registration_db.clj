@@ -30,7 +30,8 @@
   (get-registration [db registration-id external-user-id])
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
-  (update-submitted-registrations-to-expired! [db]))
+  (update-submitted-registrations-to-expired! [db])
+  (cancel-registration-for-participant! [db participant-id registration-id]))
 
 (defn- int->boolean [value]
   (pos? value))
@@ -134,4 +135,10 @@
                 updated-registration    (q/complete-registration<! tx {:id registration-id})]
             (when (= "COMPLETED" (:state updated-registration))
               (after-fn updated-payment-details))
-            updated-registration))))))
+            updated-registration)))))
+  (cancel-registration-for-participant! [{:keys [spec]} participant-id registration-id]
+    (int->boolean
+      (q/cancel-registration-for-participant!
+        spec
+        {:id             registration-id
+         :participant_id participant-id}))))
