@@ -1,13 +1,14 @@
 (ns yki.handler.registration
-  (:require [compojure.api.sweet :refer [api context POST]]
-            [yki.boundary.registration-db :as registration-db]
-            [yki.handler.routing :as routing]
-            [yki.registration.registration :as registration]
-            [yki.util.audit-log :as audit]
-            [ring.util.http-response :refer [ok bad-request internal-server-error]]
-            [yki.spec :as ys]
-            [clojure.tools.logging :as log]
-            [integrant.core :as ig]))
+  (:require
+    [clojure.tools.logging :as log]
+    [compojure.api.sweet :refer [api context POST]]
+    [integrant.core :as ig]
+    [ring.util.http-response :refer [ok bad-request internal-server-error]]
+    [yki.boundary.registration-db :as registration-db]
+    [yki.handler.routing :as routing]
+    [yki.registration.registration :as registration]
+    [yki.spec :as ys]
+    [yki.util.audit-log :as audit]))
 
 (defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client user-config]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? url-helper) (some? email-q) (some? onr-client)]}
@@ -57,10 +58,10 @@
                 (log/error "Registration id:" id "failed with error" error)
                 (internal-server-error {:success false
                                         :error   error})))))
-        (POST "/cancel" [session :as request]
+        (POST "/cancel" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if-let [participant-id (registration/get-participant-id db (:identity session))]
+          (if-let [participant-id (registration/get-participant-id db (get-in request [:session :identity]))]
             (if (registration-db/cancel-registration-for-participant! db participant-id id)
               (do
                 (audit/log-participant {:request   request

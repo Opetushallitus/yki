@@ -104,6 +104,7 @@
                                                 :secure    false
                                                 :domain    "localhost"
                                                 :path      "/yki"}}}))
+
 (defn cas-client [url-helper]
   (ig/init-key :yki.boundary.cas/cas-client {:url-helper url-helper
                                              :cas-creds  {:username "username"
