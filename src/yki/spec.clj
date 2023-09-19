@@ -43,7 +43,7 @@
    the syntax available for email addresses."
   [email]
   {:pre [(string? email)]}
-  (let [[local-part domain-part] (str/split email #"@")]
+  (let [[local-part domain-part] (str/split email #"@" 2)]
     (and
       local-part
       domain-part

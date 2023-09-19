@@ -21,7 +21,8 @@
       (is (not (s/valid? ::ys/email "watch\u231Aemoji@test.invalid")))
       (is (not (s/valid? ::ys/email ".starts.with.a.period@test.invalid")))
       (is (not (s/valid? ::ys/email "ends.with.a.period.@test.invalid")))
-      (is (not (s/valid? ::ys/email "consecutive..periods@test.invalid"))))
+      (is (not (s/valid? ::ys/email "consecutive..periods@test.invalid")))
+      (is (not (s/valid? ::ys/email "asd@sd.com@<script>i++</script>"))))
     (testing "domain part consists of at least two syntactically valid subdomains"
       (is (s/valid? ::ys/email "foo@bar.dev"))
       (is (s/valid? ::ys/email "foo@bar1-2.dev03"))
