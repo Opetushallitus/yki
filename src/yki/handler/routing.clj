@@ -55,3 +55,5 @@
 (def exam-date-uri "/exam-date")
 
 (def yki-register-debug-root (str api-root "/yki-register-debug"))
+
+(def debug-root (str virkailija-api-root "/debug"))

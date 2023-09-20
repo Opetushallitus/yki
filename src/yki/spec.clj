@@ -8,7 +8,6 @@
   (:import [org.joda.time DateTime]))
 
 ;; common
-(def email-regex #"^(?=^.{4,256}$)(.+@.+\.[a-zA-Z]{2,63})$")
 (def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"([\d]{2})([\d]{2})([\d]{2})([+\-ABCDEFUVWXY])[\d]{3}[\dA-Za-z]")
@@ -28,6 +27,41 @@
           "+" 18)
         (str yy "-" mm "-" dd)
         string->date)))
+
+(defn- valid-email?
+  "Attempts to validate an email address *without* allowing quoting,
+   thus simplifying the validation rules quite a bit.
+   Best effort, doesn't aim to cover all cases - might be simultaneously
+   too restrictive as well as too lax.
+
+   A proper validator such as the EmailValidator class from Apache Commons
+   could also be used. However, proper validators typically perform too strict
+   domain validation, rendering test addresses such as foo@test.invalid unusable.
+   This custom implementation was chosen as a suitable middle ground.
+
+   See https://datatracker.ietf.org/doc/html/rfc3696#section-3 for reference on
+   the syntax available for email addresses."
+  [email]
+  {:pre [(string? email)]}
+  (let [[local-part domain-part] (str/split email #"@" 2)]
+    (and
+      local-part
+      domain-part
+      ; Local part consists of max 64 whitelisted characters
+      (re-matches #"^[\p{L}0-9\!#$%&'+\-\/=\?\^_`\.\{|\}~]{1,64}$" local-part)
+      ; Consecutive periods not allowed
+      (not (re-find #"\.\." local-part))
+      ; Local part must not start with a period
+      (not (str/starts-with? local-part "."))
+      ; Local part must not end with a period
+      (not (str/ends-with? local-part "."))
+      ; Domain part consists of at most 255 characters
+      (<= (count domain-part) 255)
+      ; Domain part consists of at least two subdomains
+      ; Each subdomain consists of max 63 whitelisted characters
+      (let [subdomains (str/split domain-part #"\.")]
+        (and (< 1 (count subdomains))
+             (every? #(re-matches #"^[\p{L}0-9\-]{1,63}$" %) subdomains))))))
 
 (defn- valid-ssn? [value]
   (or (str/blank? value)
@@ -52,7 +86,8 @@
                       :type                :date-time
                       :json-schema/default "2018-01-01T00:00:00Z"}))
 (s/def ::time (s/and string? #(re-matches time-regex %)))
-(s/def ::email-type (s/and string? #(re-matches email-regex %)))
+(s/def ::email-type (s/and string?
+                           valid-email?))
 (s/def ::oid (s/and string? #(re-matches oid-regex %)))
 (s/def ::id pos-int?)
 (s/def ::email ::email-type)
@@ -284,7 +319,6 @@
 (s/def ::zip ::non-blank-string)
 (s/def ::certificate_lang ::language-code)
 (s/def ::exam_lang ::language-code)
-(s/def ::email ::email-type)
 (s/def ::street_address ::non-blank-string)
 (s/def ::phone_number ::non-blank-string)
 
