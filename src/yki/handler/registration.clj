@@ -1,7 +1,7 @@
 (ns yki.handler.registration
   (:require
     [clojure.tools.logging :as log]
-    [compojure.api.sweet :refer [api context POST]]
+    [compojure.api.sweet :refer [api context DELETE POST]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok bad-request internal-server-error]]
     [yki.boundary.registration-db :as registration-db]
@@ -64,7 +64,7 @@
                 (log/error "Registration id:" id "failed with error" error)
                 (internal-server-error {:success false
                                         :error   error})))))
-        (POST "/cancel" request
+        (DELETE "/" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [{:keys [auth-method identity]} (:session request)
