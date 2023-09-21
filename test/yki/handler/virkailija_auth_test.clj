@@ -42,10 +42,11 @@
                                                                 :alb-host                  (str "http://" uri)
                                                                 :scheme                    "http"})
         auth                 (base/auth url-helper)
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db          db
-                                                                     :url-helper  url-helper
-                                                                     :email-q     (base/email-q)
-                                                                     :data-sync-q (base/data-sync-q)})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db           db
+                                                                     :url-helper   url-helper
+                                                                     :email-q      (base/email-q)
+                                                                     :data-sync-q  (base/data-sync-q)
+                                                                     :pdf-renderer (base/mock-pdf-renderer)})
 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
 
