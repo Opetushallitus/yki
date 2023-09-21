@@ -595,8 +595,6 @@ WHERE
   AND state = 'STARTED'
   AND participant_id = :participant_id;
 
--- TODO Perhaps relax restriction that only 'STARTED'
---      registrations can be cancelled by participant.
 -- name: cancel-registration-for-participant!
 UPDATE registration SET
   state = 'CANCELLED',
