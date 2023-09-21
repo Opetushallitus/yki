@@ -6,22 +6,24 @@
     [compojure.api.sweet :refer [context GET POST PUT DELETE]]
     [integrant.core :as ig]
     [pgqueue.core :as pgq]
-    [ring.util.http-response :refer [conflict internal-server-error]]
+    [ring.util.http-response :refer [conflict internal-server-error ok]]
     [ring.util.response :refer [bad-request not-found response]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
     [yki.middleware.auth :as auth]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]
-    [yki.util.common :refer [string->date]]))
+    [yki.util.common :refer [string->date]]
+    [yki.registration.email :as registration-email]
+    [yki.boundary.registration-db :as registration-db]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
   #(pgq/put data-sync-q {:type         type
                          :exam-session exam-session
                          :created      (System/currentTimeMillis)}))
 
-(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q url-helper]}]
-  {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? url-helper)]}
+(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q pdf-renderer url-helper]}]
+  {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? pdf-renderer) (some? url-helper)]}
   (fn [oid]
     (context "/" []
       (GET "/" []
@@ -178,4 +180,35 @@
                     (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                     (response {:success true}))
                   (not-found {:success false
-                              :error   "Registration not found"}))))))))))
+                              :error   "Registration not found"}))))
+            (POST "/resend-confirmation-email" _
+              :path-params [id :- ::ys/id
+                            registration-id :- ::ys/id]
+              :query-params [lang :- ::ys/language-code]
+              :return ::ys/response
+              (if-let [registration-details (registration-db/get-completed-registration-data db id registration-id lang)]
+                (if-let [payment-details (registration-db/get-completed-payment-data-for-registration db registration-id)]
+                  (let [exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
+                        exam-session-extra-information (exam-session-db/get-exam-session-location-extra-information db id lang)
+                        email-template-data            (assoc registration-details
+                                                         :contact_info exam-session-contact-info
+                                                         :extra_information (:extra_information exam-session-extra-information))]
+                    (log/info "Resending confirmation email for registration with id" registration-id)
+                    (registration-email/send-exam-registration-completed-email!
+                      email-q
+                      pdf-renderer
+                      lang
+                      email-template-data
+                      payment-details)
+                    (ok {:success true}))
+                  (do
+                    (log/error "Could not resend confirmation email. No completed payment corresponding to registration found."
+                               {:registration-id registration-id})
+                    (bad-request {:success false
+                                  :error   :payment-not-found})))
+                (do
+                  (log/error "Could not resend confirmation email. No completed registration found for exam session."
+                             {:exam-session-id id
+                              :registration-id registration-id})
+                  (bad-request {:success false
+                                :error   :registration-not-found}))))))))))
