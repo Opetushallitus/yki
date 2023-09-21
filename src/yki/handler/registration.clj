@@ -10,6 +10,12 @@
     [yki.spec :as ys]
     [yki.util.audit-log :as audit]))
 
+(defn- sanitize-external-user-id [external-user-id]
+  (if (and (string? external-user-id)
+           (re-matches ys/ssn-regexp external-user-id))
+    (str (subs external-user-id 0 7) "****")
+    external-user-id))
+
 (defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client user-config]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? url-helper) (some? email-q) (some? onr-client)]}
   (api
@@ -61,15 +67,28 @@
         (POST "/cancel" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
-          (if-let [participant-id (registration/get-participant-id db (get-in request [:session :identity]))]
-            (if (registration-db/cancel-registration-for-participant! db participant-id id)
-              (do
-                (audit/log-participant {:request   request
-                                        :target-kv {:k audit/registration
-                                                    :v id}
-                                        :change    {:type audit/cancel-op}})
-                (ok {:success true}))
-              (do (log/warn "Cancelling registration for participant failed. participant-id " participant-id ", registration-id" id)
-                  (bad-request {:success false})))
-            (do (log/warn "Cancelling registration with id" id "failed. No participant found for session identity.")
-                (bad-request {:success false}))))))))
+          (let [{:keys [auth-method identity]} (:session request)
+                participant-id (registration/get-participant-id db identity)]
+            (if participant-id
+              (if (registration-db/cancel-registration-for-participant! db participant-id id)
+                (do
+                  (audit/log-participant {:request   request
+                                          :target-kv {:k audit/registration
+                                                      :v id}
+                                          :change    {:type audit/cancel-op}})
+                  (ok {:success true}))
+                (do (log/warn "Cancelling registration for participant failed."
+                              {:id               id
+                               :participant-id   participant-id
+                               :auth-method      auth-method
+                               :external-user-id (-> identity
+                                                     :external-user-id
+                                                     (sanitize-external-user-id))})
+                    (bad-request {:success false})))
+              (do (log/warn "Cancelling registration failed. No participant found for session identity."
+                            {:id               id
+                             :auth-method      auth-method
+                             :external-user-id (-> identity
+                                                   :external-user-id
+                                                   (sanitize-external-user-id))})
+                  (bad-request {:success false})))))))))
