@@ -35,17 +35,17 @@
   (insert-initial-data!)
   (with-routes!
     common-route-specs
-    (let [{session                    :session
-           init-response              :init-response
-           init-response-body         :init-response-body
-           registration               :registration
-           registration-id            :registration-id
-           create-twice-response      :create-twice-response
-           submit-form!               :submit-form!
-           get-payment                :get-payment
-           get-payment-link           :get-payment-link
-           get-submitted-registration :get-submitted-registration
-           get-email-request          :get-email-request} (common-bindings server)]
+    (let [{session               :session
+           init-response         :init-response
+           init-response-body    :init-response-body
+           registration          :registration
+           registration-id       :registration-id
+           create-twice-response :create-twice-response
+           submit-form!          :submit-form!
+           get-payment           :get-payment
+           get-payment-link      :get-payment-link
+           get-registration      :get-registration
+           get-email-request     :get-email-request} (common-bindings server)]
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
         (is (= init-response-body (j/read-value (slurp "test/resources/init_post_registration_response.json"))))
@@ -71,10 +71,10 @@
           (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port)))))
 
       (testing "and set registration status to SUBMITTED"
-        (let [submitted-registration (get-submitted-registration)]
-          (is (= (:state submitted-registration) "SUBMITTED"))
-          (is (map? (:form submitted-registration)))
-          (is (some? (:started_at submitted-registration)))))
+        (let [registration (get-registration)]
+          (is (= (:state registration) "SUBMITTED"))
+          (is (map? (:form registration)))
+          (is (some? (:started_at registration)))))
 
       (testing "and delete item from exam session queue"
         (is (= {:count 0}

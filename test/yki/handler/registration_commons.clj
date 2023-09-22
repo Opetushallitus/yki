@@ -59,43 +59,48 @@
                                                                               :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}}))
 
 (defn common-bindings [server]
-  (let [email-q                (base/email-q)
-        handlers               (create-handlers email-q (:port server))
-        session                (base/login-with-login-link (peridot/session handlers))
-        init-response          (-> session
-                                   (peridot/request (str routing/registration-api-root "/init")
-                                                    :body (j/write-value-as-string {:exam_session_id 1})
-                                                    :content-type "application/json"
-                                                    :request-method :post))
-        init-response-body     (base/body-as-json (:response init-response))
-        registration-id        (init-response-body "registration_id")
-        create-twice-response  (-> session
-                                   (peridot/request (str routing/registration-api-root "/init")
-                                                    :body (j/write-value-as-string {:exam_session_id 1})
-                                                    :content-type "application/json"
-                                                    :request-method :post))
-        registration           (base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
-        submit-form!           (fn [form]
-                                 (-> session
-                                     (peridot/request (str routing/registration-api-root "/" registration-id "/submit" "?lang=fi")
-                                                      :body (j/write-value-as-string form)
-                                                      :content-type "application/json"
-                                                      :request-method :post)))
-        get-payment                #(base/select-one (str "SELECT * FROM exam_payment_new WHERE registration_id = " registration-id))
-        get-payment-link           #(base/select-one (str "SELECT * FROM login_link WHERE registration_id = " registration-id))
-        get-submitted-registration #(base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
-        get-email-request          #(pgq/take email-q)]
-    {:session                    session
-     :init-response              init-response
-     :init-response-body         init-response-body
-     :registration               registration
-     :registration-id            registration-id
-     :create-twice-response      create-twice-response
-     :submit-form!               submit-form!
-     :get-payment                get-payment
-     :get-payment-link           get-payment-link
-     :get-submitted-registration get-submitted-registration
-     :get-email-request          get-email-request}))
+  (let [email-q               (base/email-q)
+        handlers              (create-handlers email-q (:port server))
+        session               (base/login-with-login-link (peridot/session handlers))
+        init-response         (-> session
+                                  (peridot/request (str routing/registration-api-root "/init")
+                                                   :body (j/write-value-as-string {:exam_session_id 1})
+                                                   :content-type "application/json"
+                                                   :request-method :post))
+        init-response-body    (base/body-as-json (:response init-response))
+        registration-id       (init-response-body "registration_id")
+        create-twice-response (-> session
+                                  (peridot/request (str routing/registration-api-root "/init")
+                                                   :body (j/write-value-as-string {:exam_session_id 1})
+                                                   :content-type "application/json"
+                                                   :request-method :post))
+        registration          (base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
+        submit-form!          (fn [form]
+                                (-> session
+                                    (peridot/request (str routing/registration-api-root "/" registration-id "/submit" "?lang=fi")
+                                                     :body (j/write-value-as-string form)
+                                                     :content-type "application/json"
+                                                     :request-method :post)))
+        cancel-registration!  #(-> session
+                                   (peridot/request
+                                     (str routing/registration-api-root "/" registration-id)
+                                     :request-method :delete))
+        get-payment           #(base/select-one (str "SELECT * FROM exam_payment_new WHERE registration_id = " registration-id))
+        get-payment-link      #(base/select-one (str "SELECT * FROM login_link WHERE registration_id = " registration-id))
+        get-registration      #(base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
+        get-email-request     #(pgq/take email-q)]
+    {:session               session
+     :init-response         init-response
+     :init-response-body    init-response-body
+     :registration          registration
+     :registration-id       registration-id
+     :create-twice-response create-twice-response
+     :submit-form!          submit-form!
+     :get-payment           get-payment
+     :get-payment-link      get-payment-link
+     :get-registration      get-registration
+     :get-email-request     get-email-request
+     :cancel-registration!  cancel-registration!}))
 
 (defn registration-success-redirect [registration-id port]
   (str "http://yki.localhost:"

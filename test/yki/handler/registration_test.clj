@@ -32,17 +32,17 @@
   (insert-initial-data!)
   (with-routes!
     common-route-specs
-    (let [{session                    :session
-           init-response              :init-response
-           init-response-body         :init-response-body
-           registration               :registration
-           registration-id            :registration-id
-           create-twice-response      :create-twice-response
-           submit-form!               :submit-form!
-           get-payment                :get-payment
-           get-payment-link           :get-payment-link
-           get-submitted-registration :get-submitted-registration
-           get-email-request          :get-email-request} (common-bindings server)]
+    (let [{session               :session
+           init-response         :init-response
+           init-response-body    :init-response-body
+           registration          :registration
+           registration-id       :registration-id
+           create-twice-response :create-twice-response
+           submit-form!          :submit-form!
+           get-payment           :get-payment
+           get-payment-link      :get-payment-link
+           get-registration      :get-registration
+           get-email-request     :get-email-request} (common-bindings server)]
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
         (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))
@@ -67,14 +67,14 @@
           (is (= (:type payment-link) "PAYMENT"))
           (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port)))))
 
-      (let [submitted-registration (get-submitted-registration)]
+      (let [registration (get-registration)]
         (testing "and set registration status to SUBMITTED"
-          (is (= (:state submitted-registration) "SUBMITTED"))
-          (is (map? (:form submitted-registration)))
-          (is (some? (:started_at submitted-registration))))
+          (is (= (:state registration) "SUBMITTED"))
+          (is (map? (:form registration)))
+          (is (some? (:started_at registration))))
 
         (testing "sanitize registration input"
-          (is (= (get-in submitted-registration [:form :post_office]) "Helsinki_"))))
+          (is (= (get-in registration [:form :post_office]) "Helsinki_"))))
 
       (testing "and delete item from exam session queue"
         (is (= {:count 0}
@@ -114,14 +114,36 @@
   (insert-initial-data!)
   (with-routes!
     common-route-specs
-    (let [{submit-form!               :submit-form!
-           get-submitted-registration :get-submitted-registration} (common-bindings server)
+    (let [{submit-form!     :submit-form!
+           get-registration :get-registration} (common-bindings server)
           ssn                "010170-999R"
           inferred-birthdate "1970-01-01"]
       (testing "submitting form with SSN but no birthdate should result in birthdate inferred from SSN"
         (submit-form! (-> registration-form-data
                           (dissoc :birthdate)
                           (assoc :ssn ssn)))
-        (let [submitted-registration (get-submitted-registration)]
-          (is (= ssn (get-in submitted-registration [:form :ssn])))
-          (is (= inferred-birthdate (get-in submitted-registration [:form :birthdate]))))))))
+        (let [registration (get-registration)]
+          (is (= ssn (get-in registration [:form :ssn])))
+          (is (= inferred-birthdate (get-in registration [:form :birthdate]))))))))
+
+(deftest registration-cancellation-test
+  (insert-initial-data!)
+  (with-routes!
+    common-route-specs
+    (let [{registration         :registration
+           get-registration     :get-registration
+           cancel-registration! :cancel-registration!} (common-bindings server)
+          reset-to-state! #(base/update-registration-state! (:id registration) %)]
+      (testing "participant can cancel their own registration if in STARTED state"
+        (is (= 200 (-> (cancel-registration!) :response :status)))
+        (is (= "CANCELLED" (:state (get-registration))))
+        (is (= 400 (-> (cancel-registration!) :response :status)))
+        (is (= "CANCELLED" (:state (get-registration))))
+        (reset-to-state! "STARTED"))
+      (testing "cannot cancel registration if it belongs to another participant"
+        (base/execute! (str "UPDATE registration SET participant_id=" (inc (:participant_id registration)) " WHERE id=" (:id registration)))
+        (is (= 400 (-> (cancel-registration!) :response :status)))
+        (is (= "STARTED" (:state (get-registration))))
+        (base/execute! (str "UPDATE registration SET participant_id=" (:participant_id registration) " WHERE id=" (:id registration)))
+        (is (= 200 (-> (cancel-registration!) :response :status)))
+        (is (= "CANCELLED" (:state (get-registration))))))))
