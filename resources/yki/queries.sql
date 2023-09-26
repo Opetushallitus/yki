@@ -602,7 +602,7 @@ UPDATE registration SET
 WHERE
   id = :id AND
   participant_id = :participant_id AND
-  state = 'STARTED';
+  state IN ('STARTED','SUBMITTED');
 
 -- name: select-exam-session-registration-open
 SELECT exam_session_registration_open(:exam_session_id) as exists;

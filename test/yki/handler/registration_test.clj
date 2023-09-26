@@ -134,13 +134,17 @@
            get-registration     :get-registration
            cancel-registration! :cancel-registration!} (common-bindings server)
           reset-to-state! #(base/update-registration-state! (:id registration) %)]
-      (testing "participant can cancel their own registration if in STARTED state"
-        (is (= 200 (-> (cancel-registration!) :response :status)))
-        (is (= "CANCELLED" (:state (get-registration))))
-        (is (= 400 (-> (cancel-registration!) :response :status)))
-        (is (= "CANCELLED" (:state (get-registration))))
-        (reset-to-state! "STARTED"))
+      (testing "participant can cancel their own registration if in state STARTED or SUBMITTED"
+        (doseq [cancellable-state ["STARTED" "SUBMITTED"]]
+          (reset-to-state! cancellable-state)
+          (is (= 200 (-> (cancel-registration!) :response :status)))
+          (is (= "CANCELLED" (:state (get-registration)))))
+        (doseq [non-cancellable-state ["COMPLETED" "CANCELLED" "EXPIRED" "PAID_AND_CANCELLED"]]
+          (reset-to-state! non-cancellable-state)
+          (is (= 400 (-> (cancel-registration!) :response :status)))
+          (is (= non-cancellable-state (:state (get-registration))))))
       (testing "cannot cancel registration if it belongs to another participant"
+        (reset-to-state! "STARTED")
         (base/execute! (str "UPDATE registration SET participant_id=" (inc (:participant_id registration)) " WHERE id=" (:id registration)))
         (is (= 400 (-> (cancel-registration!) :response :status)))
         (is (= "STARTED" (:state (get-registration))))
