@@ -1,7 +1,7 @@
 (ns yki.handler.registration
   (:require
     [clojure.tools.logging :as log]
-    [compojure.api.sweet :refer [api context DELETE POST]]
+    [compojure.api.sweet :refer [api context DELETE GET POST]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok bad-request internal-server-error]]
     [yki.boundary.registration-db :as registration-db]
@@ -34,6 +34,8 @@
                                         (or user-config (:session request))
                                         registration-init
                                         (:payment-config payment-helper)))
+      (GET "/open-registrations" request
+        (ok (registration/get-open-registrations-by-participant db (or user-config (:session request)))))
       (context "/:id" []
         (POST "/submit" request
           :body [registration ::ys/registration]
