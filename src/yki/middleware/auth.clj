@@ -178,6 +178,10 @@
     :handler any-access}
    {:pattern #".*/api/yki-register-debug/.*"
     :handler oph-admin-access}
+   {:pattern #".*/api/user/identity"
+    :handler any-access}
+   {:pattern #".*/api/user/.*"
+    :handler participant-authenticated}
    {:pattern #".*/api.*"
     :handler no-access}
    {:pattern #".*"

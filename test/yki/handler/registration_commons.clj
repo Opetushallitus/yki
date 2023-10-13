@@ -8,7 +8,9 @@
     [muuntaja.middleware :as middleware]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
+    [yki.handler.registration]
     [yki.handler.routing :as routing]
+    [yki.handler.user]
     [peridot.core :as peridot]
     [pgqueue.core :as pgq]))
 
@@ -20,6 +22,9 @@
         auth                 (base/auth url-helper)
         access-log           (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler         (base/auth-handler auth url-helper)
+        user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user         {:db             db
+                                                                                             :access-log     access-log
+                                                                                             :auth           auth}))
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db             db
                                                                                              :url-helper     url-helper
                                                                                              :payment-helper payment-helper
@@ -27,7 +32,7 @@
                                                                                              :access-log     access-log
                                                                                              :onr-client     (base/onr-client url-helper)
                                                                                              :auth           auth}))]
-    (core/routes registration-handler auth-handler)))
+    (core/routes registration-handler auth-handler user-handler)))
 
 (defn fill-exam-session [registrations kind]
   (dotimes [_ registrations]

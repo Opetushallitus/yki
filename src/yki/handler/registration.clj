@@ -34,8 +34,6 @@
                                         (or user-config (:session request))
                                         registration-init
                                         (:payment-config payment-helper)))
-      (GET "/open-registrations" request
-        (ok (registration/get-open-registrations-by-participant db (or user-config (:session request)))))
       (context "/:id" []
         (POST "/submit" request
           :body [registration ::ys/registration]

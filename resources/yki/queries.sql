@@ -773,7 +773,7 @@ WHERE re.id = :id
   AND esl.lang = :lang;
 
 -- name: select-open-registrations-by-participant
-SELECT re.exam_session_id
+SELECT re.exam_session_id, (started_at + interval '30 minutes') AS expires_at
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 WHERE p.external_user_id = :external_user_id
