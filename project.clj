@@ -5,10 +5,10 @@
                  ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
-  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.13.2"]
-                         [com.fasterxml.jackson.core/jackson-core "2.13.2"]
-                         [com.fasterxml.jackson.core/jackson-databind "2.13.2"]
-                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.13.2"]]
+  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.15.3"]
+                         [com.fasterxml.jackson.core/jackson-core "2.15.3"]
+                         [com.fasterxml.jackson.core/jackson-databind "2.15.3"]
+                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.15.3"]]
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/data.json "2.4.0"]
@@ -34,7 +34,7 @@
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.7.0"]
                  [ring-logger "1.1.1"]
-                 [ch.qos.logback/logback-classic "1.2.11"]
+                 [ch.qos.logback/logback-classic "1.4.11"]
                  [org.clojure/data.xml "0.0.8"]
                  [fi.vm.sade.java-utils/java-cas "1.0.7-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-simple]]
