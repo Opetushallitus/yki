@@ -144,10 +144,11 @@
                                                        :url-helper     #ig/ref :yki.util/url-helper
                                                        :pdf-renderer   #ig/ref :yki.util/pdf}
 
-  :yki.handler/exam-session                           {:db          #ig/ref :duct.database/sql
-                                                       :data-sync-q #ig/ref :yki.job.job-queue/data-sync-q
-                                                       :email-q     #ig/ref :yki.job.job-queue/email-q
-                                                       :url-helper  #ig/ref :yki.util/url-helper}
+  :yki.handler/exam-session                           {:db           #ig/ref :duct.database/sql
+                                                       :data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
+                                                       :email-q      #ig/ref :yki.job.job-queue/email-q
+                                                       :pdf-renderer #ig/ref :yki.util/pdf
+                                                       :url-helper   #ig/ref :yki.util/url-helper}
 
   :yki.handler/login-link                             {:db         #ig/ref :duct.database/sql
                                                        :url-helper #ig/ref :yki.util/url-helper
@@ -186,9 +187,9 @@
 
   :yki.handler/paytrail-payment-report                {:payment-helper #ig/ref :yki.util/exam-payment-helper}
 
-  :yki.handler/debug {:access-log #ig/ref :yki.middleware.access-log/with-logging
-                      :auth       #ig/ref :yki.middleware.auth/with-authentication
-                      :db         #ig/ref :duct.database/sql}}
+  :yki.handler/debug                                  {:access-log #ig/ref :yki.middleware.access-log/with-logging
+                                                       :auth       #ig/ref :yki.middleware.auth/with-authentication
+                                                       :db         #ig/ref :duct.database/sql}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"

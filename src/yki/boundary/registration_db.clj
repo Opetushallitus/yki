@@ -21,6 +21,8 @@
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
   (get-registration-data-by-participant [db registration-id participant-id lang])
+  (get-completed-registration-data [db exam-session-id registration-id lang])
+  (get-completed-payment-data-for-registration [db registration-id])
   (exam-session-space-left? [db exam-session-id registration-id])
   (exam-session-quota-left? [db exam-session-id registration-id])
   (exam-session-registration-open? [db exam-session-id])
@@ -115,6 +117,14 @@
   (get-registration-data-by-participant
     [{:keys [spec]} registration-id participant-id lang]
     (first (q/select-registration-data-by-participant spec {:id registration-id :participant_id participant-id :lang lang})))
+  (get-completed-registration-data
+    [{:keys [spec]} exam-session-id registration-id lang]
+    (first (q/select-completed-registration-details spec {:id              registration-id
+                                                          :exam_session_id exam-session-id
+                                                          :lang            lang})))
+  (get-completed-payment-data-for-registration
+    [{:keys [spec]} registration-id]
+    (first (q/select-completed-payment-details-for-registration spec {:registration_id registration-id})))
   (get-registration-data-for-new-payment
     [{:keys [spec]} registration-id external-user-id]
     (first (q/select-registration-details-for-new-payment spec {:id registration-id :external_user_id external-user-id})))

@@ -746,6 +746,32 @@ WHERE re.id = :id
          AND reg.state = 'STARTED'
          AND reg.exam_session_id = es.id);
 
+-- name: select-completed-registration-details
+SELECT re.state,
+       re.exam_session_id,
+       re.participant_id,
+       re.kind,
+       re.form->>'email' AS email,
+       re.form->>'last_name' AS last_name,
+       re.form->>'first_name' AS first_name,
+       es.language_code,
+       es.level_code,
+       ed.exam_date,
+       ed.registration_end_date,
+       ed.post_admission_end_date,
+       esl.street_address,
+       esl.post_office,
+       esl.zip,
+       esl.name
+FROM registration re
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+WHERE re.id = :id
+  AND re.exam_session_id = :exam_session_id
+  AND re.state = 'COMPLETED'
+  AND esl.lang = :lang;
+
 -- name: select-registration-details-for-new-payment
 SELECT re.id,
        re.exam_session_id,
@@ -778,6 +804,16 @@ SELECT p.id,
 FROM exam_payment_new p
 INNER JOIN registration r ON r.id = p.registration_id
 WHERE p.transaction_id = :transaction_id;
+
+--name: select-completed-payment-details-for-registration
+SELECT p.id,
+       p.amount,
+       p.reference,
+       p.transaction_id,
+       p.paid_at
+FROM exam_payment_new p
+WHERE p.state = 'PAID'
+AND p.registration_id = :registration_id;
 
 -- name: insert-new-exam-payment<!
 INSERT INTO exam_payment_new(

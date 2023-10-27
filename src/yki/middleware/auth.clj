@@ -134,6 +134,8 @@
    {:pattern        #".*/api/virkailija/organizer/.*/exam-date.*"
     :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
     :request-method #{:post :put :delete}}
+   {:pattern #".*/api/virkailija/.*/resend-confirmation-email"
+    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
    {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
     :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
    {:pattern        #".*/api/virkailija/organizer"
