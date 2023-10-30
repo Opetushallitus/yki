@@ -17,8 +17,6 @@
       :coercion :spec
       :no-doc true
       :middleware [auth access-log wrap-params]
-      (GET "/user" {session :session}
-        (ok (update-in session [:identity] dissoc :ticket)))
       (GET "/login" [code lang]
         (code-auth/login db code lang url-helper))
       (GET "/logout" {session :session}

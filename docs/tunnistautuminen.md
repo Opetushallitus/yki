@@ -29,4 +29,4 @@
     3. Henkilön tiedot tallennetaan käyttäjän sessioon
 9. Käyttäjä ohjataan joko success-redirectiin (asetettu session tietoihin kohdassa 2.ii) tai palautetaan `401 Unauthorized`
 10. Onnistuneen autentikaation jälkeen selain ohjataan ilmoittautumissivulle, joka esitäyttää käyttäjän tiedot lomakkeelle
-    1. Käyttäjän tietojen haku sessioon tallennetuista tiedoista: `GET /yki/auth/user`
+    1. Käyttäjän tietojen haku sessioon tallennetuista tiedoista: `GET /yki/user/identity`

@@ -116,8 +116,6 @@
     :handler any-access}
    {:pattern #".*/auth/initsession"
     :handler any-access}
-   {:pattern #".*/auth/user"
-    :handler any-access}
    {:pattern #".*/auth/callback"
     :handler any-access}
    {:pattern        #".*/auth/callback.*"
