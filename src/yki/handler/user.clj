@@ -8,7 +8,7 @@
     [yki.spec :as ys]
     [yki.util.audit-log :as audit]))
 
-(defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log user-config]}]
+(defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log]}]
   {:pre [(some? db) (some? auth) (some? access-log)]}
   (api
     (context routing/user-api-root []
@@ -16,7 +16,7 @@
       :middleware [auth access-log]
       (GET "/identity" {session :session}
         :return ::ys/user-identity-response
-        (ok (or user-config (update-in session [:identity] dissoc :ticket))))
+        (ok (update-in session [:identity] dissoc :ticket)))
       (GET "/open-registrations" request
         :return ::ys/user-open-registrations-response
-        (ok (registration/get-open-registrations-by-participant db (or user-config (:session request))))))))
+        (ok (registration/get-open-registrations-by-participant db (:session request)))))))

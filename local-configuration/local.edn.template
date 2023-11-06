@@ -15,26 +15,24 @@
                        :scheme                 "http"}
 
  :yki.handler/registration {:db #ig/ref :duct.database/sql
-                            :auth #ig/ref :yki.middleware.no-auth/with-authentication
+                            :auth #ig/ref :yki.middleware.no-auth/with-fake-session
                             :url-helper #ig/ref :yki.util/url-helper
                             :email-q #ig/ref :yki.job.job-queue/email-q
                             :onr-client #ig/ref :yki.boundary.onr/onr-client
                             :access-log #ig/ref :yki.middleware.access-log/with-logging
-                            ; User configuration. Changing the id will create a new participant.
-                            :user-config {:identity {:external-user-id "local_test@testi.fi"
-                                                     :email "local_test@testi.fi"
-                                                     :ssn "301079-900U"
-                                                     :oid "1.2.3.4"}}}
+                            }
 
  :yki.handler/user {:db #ig/ref :duct.database/sql
-                            :auth #ig/ref :yki.middleware.no-auth/with-authentication
-                            :url-helper #ig/ref :yki.util/url-helper
-                            :access-log #ig/ref :yki.middleware.access-log/with-logging
-                            ; User configuration. Changing the id will create a new participant.
-                            :user-config {:identity {:external-user-id "local_test@testi.fi"
-                                                     :email "local_test@testi.fi"
-                                                     :ssn "301079-900U"
-                                                     :oid "1.2.3.4"}}}
+                    :auth #ig/ref :yki.middleware.no-auth/with-fake-session
+                    :url-helper #ig/ref :yki.util/url-helper
+                    :access-log #ig/ref :yki.middleware.access-log/with-logging}
+
+ ; User configuration. Changing the id will create a new participant.
+ :yki.middleware.no-auth/with-fake-session    {:auth-method "EMAIL"
+                                               :identity {:external-user-id "local_test@testi.fi"
+                                                          :email "local_test@testi.fi"
+                                                          :ssn "301079-900U"
+                                                          :oid "1.2.3.4"}}
 
  :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
                                    :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
