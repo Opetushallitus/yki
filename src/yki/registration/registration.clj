@@ -115,7 +115,7 @@
     (registration-db/get-registration-data-by-participant db registration-id participant-id lang)))
 
 (defn get-open-registrations-by-participant [db user]
-  {:open-registrations (registration-db/get-open-registrations-by-participant
+  {:open_registrations (registration-db/get-open-registrations-by-participant
                         db
                         (get-in user [:identity :external-user-id]))})
 

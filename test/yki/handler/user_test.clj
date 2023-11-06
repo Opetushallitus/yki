@@ -44,5 +44,5 @@
         (let [user-open-registrations-response (base/body-as-json (:response (-> session
                                                                                  (peridot/request (str routing/user-api-root "/open-registrations")
                                                                                                   :content-type "application/json"))))]
-          (is (= (get-in user-open-registrations-response ["open-registrations" 0 "exam_session_id"]) 1))
-          (is (some? (get-in user-open-registrations-response ["open-registrations" 0 "expires_at"]))))))))
+          (is (= (get-in user-open-registrations-response ["open_registrations" 0 "exam_session_id"]) 1))
+          (is (some? (get-in user-open-registrations-response ["open_registrations" 0 "expires_at"]))))))))
