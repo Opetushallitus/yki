@@ -8,6 +8,11 @@
 
  :yki.middleware.access-log/with-logging {:env "dev"}
 
+ :yki.handler/user         {:db #ig/ref :duct.database/sql
+                            :auth #ig/ref :yki.middleware.no-auth/with-authentication
+                            :url-helper #ig/ref :yki.util/url-helper
+                            :access-log #ig/ref :yki.middleware.access-log/with-logging}
+
  :yki.job.job-queue/init                 {:db-config {:db {:subprotocol "postgresql"
                                                            :subname     "//localhost:5432/yki"
                                                            :user        "admin"

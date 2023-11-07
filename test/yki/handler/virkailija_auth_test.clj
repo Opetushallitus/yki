@@ -49,6 +49,7 @@
                                                                      :pdf-renderer (base/mock-pdf-renderer)})
 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
+        user-handler         (ig/init-key :yki.handler/user {:db db :auth auth :access-log (base/access-log)})
 
         org-handler          (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
                                                                                           :access-log           (base/access-log)
@@ -58,7 +59,7 @@
                                                                                           :exam-date-handler    exam-date-handler
                                                                                           :auth                 auth}))
         auth-handler         (base/auth-handler auth url-helper)]
-    (routes org-handler auth-handler)))
+    (routes org-handler auth-handler user-handler)))
 
 (defn- login [port]
   (let [routes   (create-routes port)
@@ -127,7 +128,7 @@
     (let [routes        (create-routes port)
           session       (peridot/session routes)
           response      (-> session
-                            (peridot/request (str routing/auth-root routing/virkailija-auth-uri "?success-redirect=/yki/auth/user"))
+                            (peridot/request (str routing/auth-root routing/virkailija-auth-uri "?success-redirect=/yki/api/user/identity"))
                             (peridot/request routing/virkailija-auth-callback
                                              :request-method :get
                                              :params {:ticket "ST-15126"})
@@ -255,4 +256,3 @@
 
     (testing "should return 401 for unauthenticated user"
       (is (= (get-in response [:response :status]) 401)))))
-

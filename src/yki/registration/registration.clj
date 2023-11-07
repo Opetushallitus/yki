@@ -114,6 +114,11 @@
     with-participant
     (registration-db/get-registration-data-by-participant db registration-id participant-id lang)))
 
+(defn get-open-registrations-by-participant [db user]
+  {:open_registrations (registration-db/get-open-registrations-by-participant
+                        db
+                        (get-in user [:identity :external-user-id]))})
+
 (defn- registration->expiration-date [registration]
   (let [post-admission?                 (= (:kind registration) "POST_ADMISSION")
         registration-end-date           (common/next-start-of-day

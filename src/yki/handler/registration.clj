@@ -1,7 +1,7 @@
 (ns yki.handler.registration
   (:require
     [clojure.tools.logging :as log]
-    [compojure.api.sweet :refer [api context DELETE POST]]
+    [compojure.api.sweet :refer [api context DELETE GET POST]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok bad-request internal-server-error]]
     [yki.boundary.registration-db :as registration-db]
@@ -16,7 +16,7 @@
     (str (subs external-user-id 0 7) "****")
     external-user-id))
 
-(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client user-config]}]
+(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? url-helper) (some? email-q) (some? onr-client)]}
   (api
     (context routing/registration-api-root []
@@ -31,7 +31,7 @@
                                 :change    {:type audit/create-op
                                             :new  registration-init}})
         (registration/init-registration db
-                                        (or user-config (:session request))
+                                        (:session request)
                                         registration-init
                                         (:payment-config payment-helper)))
       (context "/:id" []
@@ -46,7 +46,7 @@
                                                                       payment-helper
                                                                       email-q
                                                                       lang
-                                                                      (or user-config (:session request))
+                                                                      (:session request)
                                                                       id
                                                                       registration
                                                                       onr-client

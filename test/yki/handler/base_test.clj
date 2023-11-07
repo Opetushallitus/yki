@@ -19,6 +19,7 @@
     [yki.handler.login-link :as login-link]
     [yki.handler.quarantine]
     [yki.handler.routing :as routing]
+    [yki.handler.user]
     [yki.job.job-queue]
     [yki.middleware.no-auth]
     [yki.util.common :as c]
@@ -126,6 +127,11 @@
                                                           :access-log         (access-log)
                                                           :permissions-client (permissions-client url-helper)
                                                           :cas-client         (cas-client url-helper)})))
+(defn user-handler
+  [auth url-helper]
+  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth               auth
+                                                          :db                 (db)
+                                                          :access-log         (access-log)})))
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
   (ig/init-key :yki.job.job-queue/email-q {}))

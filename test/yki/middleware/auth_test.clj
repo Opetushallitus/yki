@@ -44,10 +44,10 @@
         db                 (base/db)
         auth               (auth-middleware db url-helper session-config)
         handler            (api
-                             (context routing/auth-root []
+                             (context routing/user-api-root []
                                :middleware [auth]
-                               ; /auth/user is an unauthenticated endpoint (see yki.middleware.auth/rules)
-                               (GET "/user" {session :session}
+                               ; /user/identity is an unauthenticated endpoint (see yki.middleware.auth/rules)
+                               (GET "/identity" {session :session}
                                  (-> (ok {})
                                      (assoc :session session))))
                              (context routing/registration-api-root []
@@ -62,7 +62,7 @@
                             :identity    {:last_name  "Testaaja"
                                           :first_name "Tero"}}]
     (testing "Endpoint that doesn't require authentication can be accessed with or without valid session details"
-      (let [url (str routing/auth-root "/user")]
+      (let [url (str routing/user-api-root "/identity")]
         (is (= 200 (:status (request-with-session handler :get url nil))))
         (is (= 200 (:status (request-with-session handler :get url (session->cookie cookie-store {})))))
         (is (= 200 (:status (request-with-session handler :get url (session->cookie cookie-store (assoc base-session :timeout half-hour-from-now))))))

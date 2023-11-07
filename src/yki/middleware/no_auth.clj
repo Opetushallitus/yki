@@ -20,3 +20,11 @@
       (-> request
           (assoc-in [:session :identity :oid] oid)
           (handler)))))
+
+(defmethod ig/init-key :yki.middleware.no-auth/with-fake-session [_ session]
+  (fn with-authentication [handler]
+    (warn "No authentication in use, using a constant session.")
+    (fn [request]
+      (-> request
+          (assoc-in [:session] session)
+          (handler)))))

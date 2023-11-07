@@ -255,6 +255,7 @@
 
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
+(s/def ::exam_session_id pos-int?)
 (s/def ::from-param (s/keys :opt-un [::from]))
 
 (s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_quota]))
@@ -459,3 +460,22 @@
                                         ::subtests]))
 
 (s/def ::redirect-to (s/nilable ::non-blank-string))
+
+(s/def ::auth-method #{"EMAIL" "SUOMIFI" "CAS"})
+(s/def ::external-user-id ::email-type)
+(s/def ::username ::non-blank-string)
+(s/def ::identity (s/or ::not-authenticated nil?
+                        ::email-identity (s/keys :req-un [::external-user-id])
+                        ::suomi-identity (s/keys :req-un [::first_name ::last_name ::ssn])
+                        ::cas-identity (s/keys :req-un [::username])))
+
+(s/def ::user-identity-response (s/keys
+                                 :req-un [::identity]
+                                 :opt-un [::auth-method]))
+
+(s/def ::exam_session_id pos-int?)
+(s/def ::expires_at ::date-type)
+(s/def ::open-registration (s/keys :req-un [::exam_session_id ::expires_at]))
+(s/def ::open_registrations (s/coll-of ::open-registration) )
+
+(s/def ::user-open-registrations-response (s/keys :req-un [::open_registrations]))

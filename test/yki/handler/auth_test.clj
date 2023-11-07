@@ -1,6 +1,7 @@
 (ns yki.handler.auth-test
   (:require [clj-time.local :as l]
             [clojure.test :refer [deftest use-fixtures testing is]]
+            [compojure.core :refer [routes]]
             [peridot.core :as peridot]
             [yki.boundary.onr]
             [yki.embedded-db :as embedded-db]
@@ -14,12 +15,13 @@
   (let [uri          (str "localhost:" port)
         url-helper   (base/create-url-helper uri)
         auth         (base/auth url-helper)
-        auth-handler (base/auth-handler auth url-helper)]
-    auth-handler))
+        auth-handler (base/auth-handler auth url-helper)
+        user-handler (base/user-handler auth url-helper)]
+    (routes auth-handler user-handler)))
 
 (deftest redirect-unauthenticated-user-to-authentication-test
-  (let [handler  (create-routes 8080)
-        session  (peridot/session handler)
+  (let [routes (create-routes 8080)
+        session  (peridot/session routes)
         response (-> session
                      (peridot/request routing/auth-root
                                       :request-method :get))]
@@ -56,16 +58,16 @@
   (base/insert-login-link base/code-ok "2038-01-01")
   (base/insert-login-link code-expired (l/format-local-time (l/local-now) :date))
 
-  (let [handler              (create-routes "")
-        session              (peridot/session handler)
+  (let [routes               (create-routes "")
+        session              (peridot/session routes)
         response             (-> session
                                  (peridot/request (str routing/auth-root "/login?code=" base/code-ok))
-                                 (peridot/request (str routing/auth-root "/user")))
+                                 (peridot/request (str routing/user-api-root "/identity")))
         response-body        (base/body-as-json (:response response))
         id                   (response-body "identity")
         logout-response      (-> response
                                  (peridot/request (str routing/auth-root "/logout"))
-                                 (peridot/request (str routing/auth-root "/user")))
+                                 (peridot/request (str routing/user-api-root "/identity")))
         logout-response-body (base/body-as-json (:response logout-response))]
     (testing "after successful login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
@@ -74,16 +76,16 @@
       (is (= (get-in logout-response [:response :status]) 200))
       (is (= (logout-response-body "identity") nil))))
 
-  (let [handler  (create-routes "")
-        session  (peridot/session handler)
+  (let [routes   (create-routes "")
+        session  (peridot/session routes)
         response (-> session
                      (peridot/request (str routing/auth-root "/login?code=" code-expired)))]
     (testing "when trying to login with expired code should redirect to expired url"
       (is (= (get-in response [:response :status]) 302))
       (is (= (get-in response [:response :headers]) {"Location" "http://localhost/expired"}))))
 
-  (let [handler  (create-routes "")
-        session  (peridot/session handler)
+  (let [routes   (create-routes "")
+        session  (peridot/session routes)
         response (-> session
                      (peridot/request (str routing/auth-root "/login?code=" "NOT_FOUND")))]
     (testing "when trying to login with non existing code should return 401"
