@@ -58,13 +58,23 @@
                 max-participants (:max_participants exam-session)]
             (if (<= participants max-participants)
               (if (exam-session-db/update-exam-session! db oid id exam-session)
-                (do
+                ; Read updated session details anew from the database to ensure
+                ; we record the actual logical changes into the audit log.
+                ; Note that this allows for a potential race condition
+                ; and a subsequent loss of audit trail in case multiple
+                ; updates happen during a short time span.
+                ;
+                ; As the update operation spans multiple tables,
+                ; we can't just rely on the JDBC driver returning a single updated
+                ; row and the current approach seems to be the best currently available
+                ; option for ensuring a reasonable audit log entry.
+                (let [updated-session (exam-session-db/get-exam-session-by-id db id)]
                   (audit-log/log {:request   request
                                   :target-kv {:k audit-log/exam-session
                                               :v id}
                                   :change    {:type audit-log/update-op
                                               :old  current
-                                              :new  exam-session}})
+                                              :new  updated-session}})
                   (response {:success true}))
                 (not-found {:success false
                             :error   "Exam session not found"}))
