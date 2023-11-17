@@ -1,13 +1,15 @@
 (ns yki.util.audit-log
   (:require
     [clj-json-patch.core :as patch]
+    [clj-json-patch.util :refer [apply-patch get-patch-value]]
     [clojure.string :as str]
     [clojure.tools.logging :as log]
+    [clojure.walk :refer [stringify-keys]]
     [jsonista.core :as json]
     [yki.util.log-util :as log-util])
   (:import [java.net InetAddress]
            [org.ietf.jgss Oid]
-           [com.google.gson JsonArray JsonParser]
+           [com.google.gson JsonArray JsonElement JsonParser]
            [com.fasterxml.jackson.datatype.joda JodaModule]
            [fi.vm.sade.auditlog Audit ApplicationType Logger Operation User Target$Builder Changes Changes$Builder]))
 
@@ -52,12 +54,57 @@
   (-> (subs path 1)
       (str/replace #"/" ".")))
 
+(defn- process-patch-array [value patch-array]
+  (try
+    (loop [current-value     value
+           patches           patch-array
+           processed-patches []
+           iteration         0]
+      (if (seq patches)
+        (if (< 100 iteration)
+          (throw (ex-info "Iteration limit reached!" {}))
+          (let [current-patch  (first patches)
+                {op             "op"
+                 path           "path"
+                 new-path-value "value"} current-patch
+                old-path-value (and
+                                 (#{"replace" "remove"} op)
+                                 (get-patch-value current-value (get current-patch "path")))]
+            (log-util/info (assoc current-patch "iteration" iteration))
+            (recur
+              (apply-patch current-value current-patch)
+              (rest patches)
+              (conj processed-patches {"newValue" new-path-value
+                                       "oldValue" old-path-value
+                                       "op"       op
+                                       "path"     path})
+              (inc iteration))))
+        processed-patches))
+    (catch Exception e
+      (log-util/error e "Post-processing patch array failed. Returning instead original patch array for audit logging: " patch-array)
+      patch-array)))
+
+(defn- log-and-return [stage value]
+  (log-util/info {:stage stage
+                  :value value})
+  value)
+
 (defn- update->json-array [old new]
-  (let [json-patch (->> (patch/diff old new)
-                        (mapv #(update % "path" format-json-path)))]
-    (->> json-patch
-         ->json-string
+  (let [old         (stringify-keys old)
+        new         (stringify-keys new)
+        _           (log-util/info {:old old, :new new})
+        patch-array (patch/diff old new)
+        _           (log-util/info {:diff patch-array})]
+    (->> patch-array
+         (log-and-return "after-patch-array")
+         (process-patch-array old)
+         (log-and-return "after-processed")
+         (mapv #(update % "path" format-json-path))
+         (log-and-return "after-mapv")
+         (->json-string)
+         ^String (log-and-return "after-json-string")
          (.parse jsonParser)
+         ^JsonElement (log-and-return "after-parse")
          (.getAsJsonArray))))
 
 (defn- create-changes ^JsonArray [change]

@@ -5,3 +5,4 @@
 
 (defn error [e error-text change]
   (log/error e error-text change))
+
