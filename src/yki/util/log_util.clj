@@ -3,5 +3,9 @@
 (ns yki.util.log-util
   (:require [clojure.tools.logging :as log]))
 
-(defn error [e error-text change]
-  (log/error e error-text change))
+(defn error
+  ([error-text]
+   (log/error error-text))
+  ([e error-text change]
+   (log/error e error-text change)))
+

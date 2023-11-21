@@ -22,6 +22,20 @@
                          :exam-session exam-session
                          :created      (System/currentTimeMillis)}))
 
+(defn- prepare-for-audit-logging [exam-session]
+  ; Updates to location data of exam sessions seem to cause
+  ; performance issues with the algorithm used for generating diffs
+  ; for audit logging as implemented by clj-json-patch.
+  ;
+  ; Taking diffs of even simple sequential collections of maps seems
+  ; to trigger an exponential slowdown with the patch generation algorithm.
+  ; Let us sidestep the issue by converting the locations array to
+  ; a map of language to location when sending events to audit log.
+  ; As a bonus, this should help in interpreting the audit log events.
+  (let [locations (:location exam-session)
+        lang->location (into {} (map (juxt :lang identity)) locations)]
+    (assoc exam-session :location lang->location)))
+
 (defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q pdf-renderer url-helper]}]
   {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? pdf-renderer) (some? url-helper)]}
   (fn [oid]
@@ -58,13 +72,23 @@
                 max-participants (:max_participants exam-session)]
             (if (<= participants max-participants)
               (if (exam-session-db/update-exam-session! db oid id exam-session)
-                (do
+                ; Read updated session details anew from the database to ensure
+                ; we record the actual logical changes into the audit log.
+                ; Note that this allows for a potential race condition
+                ; and a subsequent loss of audit trail in case multiple
+                ; updates happen during a short time span.
+                ;
+                ; As the update operation spans multiple tables,
+                ; we can't just rely on the JDBC driver returning a single updated
+                ; row and the current approach seems to be the best currently available
+                ; option for ensuring a reasonable audit log entry.
+                (let [updated-session (exam-session-db/get-exam-session-by-id db id)]
                   (audit-log/log {:request   request
                                   :target-kv {:k audit-log/exam-session
                                               :v id}
                                   :change    {:type audit-log/update-op
-                                              :old  current
-                                              :new  exam-session}})
+                                              :old  (prepare-for-audit-logging current)
+                                              :new  (prepare-for-audit-logging updated-session)}})
                   (response {:success true}))
                 (not-found {:success false
                             :error   "Exam session not found"}))
