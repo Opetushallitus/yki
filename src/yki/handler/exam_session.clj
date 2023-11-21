@@ -22,6 +22,20 @@
                          :exam-session exam-session
                          :created      (System/currentTimeMillis)}))
 
+(defn- prepare-for-audit-logging [exam-session]
+  ; Updates to location data of exam sessions seem to cause
+  ; performance issues with the algorithm used for generating diffs
+  ; for audit logging as implemented by clj-json-patch.
+  ;
+  ; Taking diffs of even simple sequential collections of maps seems
+  ; to trigger an exponential slowdown with the patch generation algorithm.
+  ; Let us sidestep the issue by converting the locations array to
+  ; a map of language to location when sending events to audit log.
+  ; As a bonus, this should help in interpreting the audit log events.
+  (let [locations (:location exam-session)
+        lang->location (into {} (map (juxt :lang identity)) locations)]
+    (assoc exam-session :location lang->location)))
+
 (defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q pdf-renderer url-helper]}]
   {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? pdf-renderer) (some? url-helper)]}
   (fn [oid]
@@ -73,8 +87,8 @@
                                   :target-kv {:k audit-log/exam-session
                                               :v id}
                                   :change    {:type audit-log/update-op
-                                              :old  current
-                                              :new  updated-session}})
+                                              :old  (prepare-for-audit-logging current)
+                                              :new  (prepare-for-audit-logging updated-session)}})
                   (response {:success true}))
                 (not-found {:success false
                             :error   "Exam session not found"}))
