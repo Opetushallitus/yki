@@ -41,7 +41,7 @@
                  [fi.vm.sade/auditlogger "9.2.4-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]
                  [com.github.jhonnymertz/java-wkhtmltopdf-wrapper "1.1.14-RELEASE"]
-                 [clj-json-patch "0.1.7"]]
+                 [org.clojars.pkoivisto/clj-json-patch "0.1.9"]]
   :exclusions [org.slf4j/slf4j-nop
                commons-logging]
   :cloverage {:ns-exclude-regex [#"dev" #"user" #"yki.main" #"yki.middleware.no-auth" #"yki.migrations"]}
