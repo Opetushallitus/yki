@@ -22,24 +22,20 @@
   (:import
     (java.time LocalDate)))
 
-(defn- registration-redirect [db payment-helper url-helper lang use-yki-ui? registration]
+(defn- registration-redirect [db payment-helper url-helper lang registration]
   (case (:state registration)
     "COMPLETED"
-    (if use-yki-ui?
-      (url-helper :yki-ui.registration.payment-success.url (:exam_session_id registration))
-      (url-helper :payment.success-redirect lang (:exam_session_id registration)))
+    (url-helper :yki-ui.registration.payment-success.url (:exam_session_id registration))
     "SUBMITTED"
     (jdbc/with-db-transaction [tx (:spec db)]
       (rollback-on-exception
         tx
         #(let [amount            (:paytrail (get-payment-amount-for-registration payment-helper registration))
-               paytrail-response (registration->payment payment-helper tx registration lang use-yki-ui? amount)
+               paytrail-response (registration->payment payment-helper tx registration lang amount)
                redirect-url      (paytrail-response "href")]
            redirect-url)))
     ; Other values are unexpected. Redirect to error page.
-    (if use-yki-ui?
-      (url-helper :yki-ui.registration.payment-error.url (:exam_session_id registration))
-      (url-helper :payment.error-redirect lang (:exam_session_id registration)))))
+    (url-helper :yki-ui.registration.payment-error.url (:exam_session_id registration))))
 
 (defn- payment->json [{:keys [amount exam_date form language_code level_code organizer_name paid_at reference original_exam_date]}]
   {:organizer          organizer_name
@@ -71,22 +67,16 @@
                                 (assoc val :organizer_name (oid->organizer-name oid)))]
       (map with-organizer-name payments))))
 
-(defn- success-redirect [url-helper lang exam-session-id use-yki-ui?]
-  (if use-yki-ui?
-    (found (url-helper :yki-ui.registration.payment-success.url exam-session-id))
-    (found (url-helper :payment.success-redirect lang exam-session-id))))
+(defn- success-redirect [url-helper exam-session-id]
+  (found (url-helper :yki-ui.registration.payment-success.url exam-session-id)))
 
-(defn- error-redirect [url-helper lang exam-session-id use-yki-ui?]
-  (if use-yki-ui?
-    (found (url-helper :yki-ui.registration.payment-error.url exam-session-id))
-    (found (url-helper :payment.error-redirect lang exam-session-id))))
+(defn- error-redirect [url-helper exam-session-id]
+  (found (url-helper :yki-ui.registration.payment-error.url exam-session-id)))
 
-(defn- cancel-redirect [url-helper lang exam-session-id use-yki-ui?]
-  (if use-yki-ui?
-    (found (url-helper :yki-ui.registration.payment-cancel.url exam-session-id))
-    (found (url-helper :payment.cancel-redirect lang exam-session-id))))
+(defn- cancel-redirect [url-helper exam-session-id]
+  (found (url-helper :yki-ui.registration.payment-cancel.url exam-session-id)))
 
-(defn- handle-success-callback [db email-q pdf-renderer url-helper lang request use-yki-ui?]
+(defn- handle-success-callback [db email-q pdf-renderer url-helper lang request]
   (let [{transaction-id "checkout-transaction-id"
          amount         "checkout-amount"
          payment-status "checkout-status"} (:query-params request)
@@ -123,13 +113,13 @@
               "PAID_AND_CANCELLED" (log/warn "Completed payment with transaction-id" transaction-id ", updated registration with id" registration-id "to PAID_AND_CANCELLED")
               (log/error "Completed payment with transaction-id" transaction-id ", but unexpectedly registration with id" registration-id "is in state" (:state updated-registration))))
           (log/info "Success callback invoked for transaction-id" transaction-id "corresponding to already completed registration with id" registration-id "; this is a no-op."))
-        (success-redirect url-helper lang exam-session-id use-yki-ui?))
+        (success-redirect url-helper exam-session-id))
       (do
         (log/error "Success callback invoked with unexpected parameters for transaction-id" transaction-id "corresponding to registration with id" registration-id
                    "; amount:" amount "; payment-status:" payment-status)
-        (error-redirect url-helper lang exam-session-id use-yki-ui?)))))
+        (error-redirect url-helper exam-session-id)))))
 
-(defn handle-error-callback [db url-helper lang request use-yki-ui?]
+(defn handle-error-callback [db url-helper request]
   (let [{transaction-id "checkout-transaction-id"
          payment-status "checkout-status"} (:query-params request)
         payment-details (registration-db/get-new-payment-details db transaction-id)]
@@ -139,20 +129,16 @@
     (when (= "UNPAID" (:state payment-details))
       (payment-db/mark-payment-as-cancelled! db (:id payment-details)))
     (if-let [exam-session-id (:exam_session_id payment-details)]
-      (cancel-redirect url-helper lang exam-session-id use-yki-ui?)
-      (error-redirect url-helper lang nil use-yki-ui?))))
+      (cancel-redirect url-helper exam-session-id)
+      (error-redirect url-helper nil))))
 
-(defn redirect-to-paytrail [db payment-helper url-helper lang session use-yki-ui? id]
+(defn redirect-to-paytrail [db payment-helper url-helper lang session id]
   (let [external-user-id     (get-in session [:identity :external-user-id])
         ;external-user-id     "local_test@testi.fi"
         registration-details (registration-db/get-registration-data-for-new-payment db id external-user-id)]
     (if registration-details
       ; Registration details found, redirect based on registration state.
-      (if use-yki-ui?
-        ; New YKI-UI: Redirect straight to Paytrail
-        (found (registration-redirect db payment-helper url-helper lang use-yki-ui? registration-details))
-        ; Legacy YKI frontend: return redirect address as data to frontend, let frontend do the redirect
-        (ok {:redirect (registration-redirect db payment-helper url-helper lang use-yki-ui? registration-details)}))
+      (found (registration-redirect db payment-helper url-helper lang registration-details))
       ; No registration matching given id and external-user-id from session.
       (bad-request {:reason :registration-not-found}))))
 
@@ -163,13 +149,10 @@
       :coercion :spec
       :no-doc true
       :middleware [auth access-log wrap-params]
-      (GET "/:id/redirect" {session :session}
-        :path-params [id :- ::ys/registration_id]
-        :query-params [lang :- ::ys/language-code]
-        (redirect-to-paytrail db payment-helper url-helper lang session false id))
       (GET "/report" _
         :query-params [from :- ::ys/date-type
                        to :- ::ys/date-type]
+        ; Endpoint called from the payment reports view of old yki-frontend.
         (try
           (let [from-inclusive     (LocalDate/parse from)
                 to-exclusive       (-> (LocalDate/parse to)
@@ -193,24 +176,26 @@
       (GET "/:id/redirect" {session :session}
         :path-params [id :- ::ys/registration_id]
         :query-params [lang :- ::ys/language-code]
-        (redirect-to-paytrail db payment-helper url-helper lang session true id)))
+        (redirect-to-paytrail db payment-helper url-helper lang session id)))
     (context routing/paytrail-payment-v2-root []
+      ; TODO Is it safe to delete this whole endpoint?
+      ; After removing support for redirecting to old UI, this is now identical to ...-v3-root
       :coercion :spec
       :no-doc true
       :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
-        (handle-success-callback db email-q pdf-renderer url-helper lang request false))
+        (handle-success-callback db email-q pdf-renderer url-helper lang request))
       (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
-        (handle-error-callback db url-helper lang request false)))
+        (handle-error-callback db url-helper request)))
     (context routing/paytrail-payment-v3-root []
       :coercion :spec
       :no-doc true
       :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
-        (handle-success-callback db email-q pdf-renderer url-helper lang request true))
+        (handle-success-callback db email-q pdf-renderer url-helper lang request))
       (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
-        (handle-error-callback db url-helper lang request true)))))
+        (handle-error-callback db url-helper request)))))

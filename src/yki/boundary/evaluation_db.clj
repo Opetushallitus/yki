@@ -20,7 +20,7 @@
   (get-new-payment-by-transaction-id [db transaction-id])
   (create-evaluation-order! [db evaluation-id evaluation-order])
   (create-evaluation! [db exam-date-languages evaluation])
-  (create-evaluation-payment! [db payment-helper payment use-new-yki-ui?])
+  (create-evaluation-payment! [db payment-helper payment])
   (complete-new-payment! [db payment-id]))
 
 (extend-protocol Evaluations
@@ -61,7 +61,7 @@
                                                      :evaluation_order_id evaluation-order-id}))
            evaluation-order-id))))
   (create-evaluation-payment!
-    [{:keys [spec]} payment-helper payment use-new-yki-ui?]
+    [{:keys [spec]} payment-helper payment]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
         tx
@@ -71,7 +71,7 @@
                                     (str)
                                     (subs 4))
                order-number     (str "YKI-EVAL" unix-ts-substr (format "%09d" order-number-seq))]
-           (insert-initial-payment-data! payment-helper tx (assoc payment :order_number order-number) use-new-yki-ui?)))))
+           (insert-initial-payment-data! payment-helper tx (assoc payment :order_number order-number))))))
   (complete-new-payment!
     [{:keys [spec]} payment-id]
     (jdbc/with-db-transaction [tx spec]

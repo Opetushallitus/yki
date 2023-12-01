@@ -115,9 +115,10 @@
     (registration-db/get-registration-data-by-participant db registration-id participant-id lang)))
 
 (defn get-open-registrations-by-participant [db user]
-  {:open_registrations (registration-db/get-open-registrations-by-participant
-                        db
-                        (get-in user [:identity :external-user-id]))})
+  {:open_registrations
+   (registration-db/get-open-registrations-by-participant
+     db
+     (get-in user [:identity :external-user-id]))})
 
 (defn- registration->expiration-date [registration]
   (let [post-admission?                 (= (:kind registration) "POST_ADMISSION")
@@ -147,7 +148,7 @@
                                    common/format-date-for-db))))
 
 (defn submit-registration-abstract-flow
-  [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration use-yki-ui?]
+  [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
   (let [form                   (sanitized-form raw-form)
         identity               (:identity session)
         form-to-persist        (-> form
@@ -173,13 +174,8 @@
                                         :form_version   1
                                         :participant_id unified-participant-id}
               expiration-date          (registration->expiration-date registration-data)
-              payment-success-url      (if use-yki-ui?
-                                         (url-helper :exam-payment-v3.redirect registration-id lang)
-                                         (url-helper :payment-link.new.redirect registration-id lang))
-              payment-link-expired-url (if use-yki-ui?
-                                         (url-helper :yki-ui.registration.payment-link-expired.url)
-                                         (url-helper :payment-link-expired.redirect lang))
-
+              payment-success-url      (url-helper :exam-payment-v3.redirect registration-id lang)
+              payment-link-expired-url (url-helper :yki-ui.registration.payment-link-expired.url)
               payment-link             {:participant_id        unified-participant-id
                                         :exam_session_id       nil
                                         :registration_id       registration-id
@@ -213,13 +209,13 @@
       {:error (if started? {:closed true} {:expired true})})))
 
 (defn submit-registration
-  [db url-helper payment-helper email-q lang session registration-id form onr-client use-yki-ui]
+  [db url-helper payment-helper email-q lang session registration-id form onr-client]
   (log/info "START: Submitting registration id" registration-id)
   (let [exam-session-registration (exam-session-db/get-exam-session-registration-by-registration-id db registration-id)]
     (if
       (or
         (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
         (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id))
-      (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration use-yki-ui)
+      (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration)
       ; registration is already full, cannot add new
       {:error {:full true}})))

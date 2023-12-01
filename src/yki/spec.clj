@@ -91,7 +91,6 @@
 (s/def ::oid (s/and string? #(re-matches oid-regex %)))
 (s/def ::id pos-int?)
 (s/def ::email ::email-type)
-(s/def ::use-yki-ui boolean?)
 (s/def ::created ::date-type)
 (s/def ::updated ::date-type)
 

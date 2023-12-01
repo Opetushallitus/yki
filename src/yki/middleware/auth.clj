@@ -88,14 +88,11 @@
   [{:keys [query-params]} url-helper]
   (log/info "Redirect to cas-oppija")
   (let [{exam-session-id "examSessionId"
-         query-lang      "lang"
-         use-new-yki-ui? "use-yki-ui"} query-params
+         query-lang      "lang"} query-params
         lang                     (or (#{"fi" "sv" "en"} query-lang)
                                      "fi")
         cas-success-redirect     (url-helper (str "cas-oppija.login-success." lang) exam-session-id)
-        session-success-redirect (if use-new-yki-ui?
-                                   (url-helper :yki-ui.exam-session-registration.url exam-session-id)
-                                   (url-helper :exam-session.redirect exam-session-id lang))
+        session-success-redirect (url-helper :yki-ui.exam-session-registration.url exam-session-id)
         login-url                (str (url-helper :cas-oppija.login lang) cas-success-redirect)]
     (assoc
       (see-other login-url)
