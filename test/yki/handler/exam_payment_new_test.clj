@@ -1,6 +1,5 @@
 (ns yki.handler.exam-payment-new-test
   (:require
-    [clojure.data.json :refer [read-str]]
     [clojure.string :as str]
     [clojure.test :refer [deftest is use-fixtures testing]]
     [compojure.core :as core]
@@ -47,16 +46,11 @@
     (core/routes exam-payment-new-handler auth-handler)))
 
 (defn- redirect [session registration-id lang]
-  (->> (str routing/payment-v2-root "/" registration-id "/redirect?lang=" lang)
+  (->> (str routing/payment-v3-root "/" registration-id "/redirect?lang=" lang)
        (peridot/request session)))
 
 (defn- response->status [response]
   (:status (:response response)))
-
-(defn- response->body [response]
-  (-> (:response response)
-      (base/body)
-      (read-str {:key-fn keyword})))
 
 (defn- select-payments-for-registration [registration-id]
   (base/select (str "SELECT * from exam_payment_new WHERE registration_id = " registration-id ";")))
@@ -72,7 +66,7 @@
               redirect-response (-> session
                                     (redirect registration-id lang))]
           (is (= 401 (response->status redirect-response)))))
-      (testing "Calling redirect url with correct session initiates payment and returns correct redirect URL"
+      (testing "Calling redirect url with correct session initiates payment and redirect user to correct URL"
         (is (empty? (select-payments-for-registration registration-id)))
         (let [session               (-> (peridot/session handler)
                                         (base/login-with-login-link))
@@ -80,12 +74,12 @@
                                         (redirect registration-id lang))
               payments              (select-payments-for-registration registration-id)
               expected-redirect-url (-> payments first :href)]
-          (is (= 200 (response->status redirect-response)))
+          (is (= 302 (response->status redirect-response)))
           (is (= 1 (count payments)))
-          (is (= {:redirect expected-redirect-url} (response->body redirect-response))))))))
+          (is (= expected-redirect-url (get-in redirect-response [:response :headers "Location"]))))))))
 
 (defn- success [session lang query-params]
-  (let [success-endpoint-url (str routing/paytrail-payment-v2-root "/" lang "/success")
+  (let [success-endpoint-url (str routing/paytrail-payment-v3-root "/" lang "/success")
         query-params-str     (->> (for [[k v] query-params]
                                     (str k "=" v))
                                   (str/join "&"))]
@@ -117,7 +111,7 @@
                                       (re-matches #".*status=payment-error.*" (get-in response [:headers "Location"]))))
           success-redirect?    (fn [{:keys [response]}]
                                  (and (= 302 (:status response))
-                                      (str/ends-with? (get-in response [:headers "Location"]) "status=payment-success&lang=fi&id=1")))
+                                      (str/ends-with? (get-in response [:headers "Location"]) "status=payment-success&id=1")))
           take-email           (fn [] (pgq/take (base/email-q)))]
       (base/insert-exam-payment-new registration-id amount reference transaction-id href)
       (testing "Invoking success callback with missing or incorrect signature yields 401 Unauthorized"
