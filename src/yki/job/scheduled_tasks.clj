@@ -112,7 +112,7 @@
                (let [lang             (:lang item)
                      email            (:email item)
                      exam-session-id  (:exam_session_id exam-session)
-                     exam-session-url (url-helper :exam-session.url exam-session-id lang)
+                     exam-session-url (url-helper :exam-session.url exam-session-id)
                      language         (template-util/get-language (:language_code exam-session) lang)
                      level            (template-util/get-level (:level_code exam-session) lang)]
                  (log/info "Sending notification to email" email)
