@@ -41,7 +41,7 @@
           email-request    (pgq/take email-q)]
       (testing "login link should be created with hashed code"
         (is (= (count code) 64))
-        (is (= success-redirect (str "http://localhost:" port "/yki/ilmoittautuminen/tutkintotilaisuus/1")))
+        (is (= success-redirect (str "http://yki.localhost:" port "/yki/ilmoittautuminen/tutkintotilaisuus/1")))
         (is (= (:status response) 200))
         (testing "email send request should be send to job queue"
           (is (= (:subject email-request) "Ilmoittautuminen (YKI): Suomi perustaso - Omenia, 27.1.2018"))
