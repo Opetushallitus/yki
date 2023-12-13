@@ -15,7 +15,7 @@
     [yki.handler.routing :as routing]
     [yki.handler.evaluation-payment-new]
     [yki.util.common :refer [format-date-string-to-finnish-format]]
-    [yki.util.paytrail-payments :refer [amount->paytrail-amount sign-request sign-string]]))
+    [yki.util.paytrail-payments :refer [amount->paytrail-amount sign-request]]))
 
 (def test-order {:first_names "Anne Marie"
                  :last_name   "Jones"
@@ -76,31 +76,6 @@
   (base/select-one
     (str "SELECT epn.amount, epn.evaluation_order_id, epn.state, epn.href, epn.transaction_id FROM evaluation_payment_new epn WHERE epn.evaluation_order_id = "
          evaluation-order-id ";")))
-
-(deftest paytrail-redirect-test
-  (with-routes!
-    {}
-    (let [handler             (create-handler port)
-          evaluation-order-id 1
-          payment-data        (order-id->payment-data evaluation-order-id)
-          expected-signature  (sign-string base/new-evaluation-payment-config (str evaluation-order-id))]
-      (testing "Calling redirect url without signature yields 400 Bad Request"
-        (is (= 400 (-> (redirect handler 1 nil)
-                       (response->status))))
-        (is (= 400 (-> (redirect handler 1 "")
-                       (response->status)))))
-      (testing "Calling redirect url with incorrect signature yields 401 Unauthorized"
-        (is (= 401 (-> (redirect handler 1 "foobar")
-                       (response->status))))
-        (is (= 401 (-> (redirect handler 1 (subs expected-signature 1))
-                       (response->status)))))
-      (testing "Calling redirect url with correct signature redirects user to Paytrail"
-        (let [response (redirect handler 1 expected-signature)]
-          (is (= 200 (-> response
-                         (response->status))))
-          (is (= (:href payment-data) (-> response
-                                          (base/body-as-json)
-                                          (get "redirect")))))))))
 
 (defn without-empty-lines [text]
   (remove str/blank? (str/split-lines text)))

@@ -19,33 +19,27 @@
 
 (require-sql ["yki/queries.sql" :as q])
 
-(defn- success-redirect [url-helper lang order-id use-new-yki-ui?]
-  (let [redirect-url (if use-new-yki-ui?
-                       (url-helper :yki-ui.evaluation-payment.success-redirect lang order-id)
-                       (url-helper :evaluation-payment.success-redirect lang order-id))]
+(defn- success-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :yki-ui.evaluation-payment.success-redirect lang order-id)]
     (log/info "Evaluation payment success, redirecting to:" redirect-url)
     (found redirect-url)))
 
-(defn- error-redirect [url-helper lang order-id use-new-yki-ui?]
-  (let [redirect-url (if use-new-yki-ui?
-                       (url-helper :yki-ui.evaluation-payment.error-redirect lang order-id)
-                       (url-helper :evaluation-payment.error-redirect lang order-id))]
+(defn- error-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :yki-ui.evaluation-payment.error-redirect lang order-id)]
     (log/info "Evaluation payment error, redirecting to:" redirect-url)
     (found redirect-url)))
 
-(defn- cancel-redirect [url-helper lang order-id use-new-yki-ui?]
-  (let [redirect-url (if use-new-yki-ui?
-                       (url-helper :yki-ui.evaluation-payment.cancel-redirect lang order-id)
-                       (url-helper :evaluation-payment.cancel-redirect lang order-id))]
+(defn- cancel-redirect [url-helper lang order-id]
+  (let [redirect-url (url-helper :yki-ui.evaluation-payment.cancel-redirect lang order-id)]
     (log/info "Evaluation payment cancelled, redirecting to:" redirect-url)
     (found redirect-url)))
 
-(defn- handle-exceptions [url-helper f lang order-id use-new-yki-ui?]
+(defn- handle-exceptions [url-helper f lang order-id]
   (try
     (f)
     (catch Exception e
       (log/error e "Payment handling failed")
-      (error-redirect url-helper lang order-id use-new-yki-ui?))))
+      (error-redirect url-helper lang order-id))))
 
 (defn send-evaluation-order-completed-emails! [email-q payment-helper pdf-renderer order-data lang]
   (let [order-time    (:created order-data)
@@ -64,7 +58,7 @@
     ;; Kirjaamo email
     (registration-email/send-kirjaamo-evaluation-registration-completed-email! email-q lang order-time "kirjaamo@oph.fi" template-data)))
 
-(defn- handle-success [{:keys [db email-q payment-helper pdf-renderer url-helper]} lang request use-new-yki-ui?]
+(defn- handle-success [{:keys [db email-q payment-helper pdf-renderer url-helper]} lang request]
   (let [{transaction-id "checkout-transaction-id"
          amount         "checkout-amount"
          payment-status "checkout-status"} (:query-params request)
@@ -89,64 +83,48 @@
                                ; might be redirected to an error page even though the payment went through!
                                (when updated-payment
                                  (send-evaluation-order-completed-emails! email-q payment-helper pdf-renderer (merge updated-payment order-data) lang))
-                               (success-redirect url-helper lang evaluation-order-id use-new-yki-ui?))]
-        (handle-exceptions url-helper handle-payment lang evaluation-order-id use-new-yki-ui?))
+                               (success-redirect url-helper lang evaluation-order-id))]
+        (handle-exceptions url-helper handle-payment lang evaluation-order-id))
       (do
         (log/error "Success callback invoked with unexpected parameters for transaction-id" transaction-id
                    "corresponding to evaluation order with id" evaluation-order-id
                    "; amount:" amount "; payment-status:" payment-status)
-        (error-redirect url-helper lang nil use-new-yki-ui?)))))
+        (error-redirect url-helper lang nil)))))
 
-(defn- handle-error [{:keys [db url-helper]} request lang use-new-yki-ui?]
+(defn- handle-error [{:keys [db url-helper]} request lang]
   (let [{transaction-id "checkout-transaction-id"
          payment-status "checkout-status"} (:query-params request)
         payment-details (evaluation-db/get-new-payment-by-transaction-id db transaction-id)]
     (log/info "Error callback invoked for transaction-id" transaction-id "with payment-status" payment-status)
     (if-let [evaluation-order-id (:evaluation_order_id payment-details)]
-      (cancel-redirect url-helper lang evaluation-order-id use-new-yki-ui?)
-      (error-redirect url-helper lang nil use-new-yki-ui?))))
+      (cancel-redirect url-helper lang evaluation-order-id)
+      (error-redirect url-helper lang nil))))
 
 (defmethod ig/init-key :yki.handler/evaluation-payment-new
   [_ {:keys [db auth access-log payment-helper pdf-renderer url-helper email-q]
       :as   ctx}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? payment-helper) (some? url-helper) (some? pdf-renderer) (some? email-q)]}
   (api
-    (context routing/evaluation-payment-new-root []
-      :coercion :spec
-      :no-doc true
-      :middleware [auth access-log wrap-params]
-      (GET "/:id/redirect" _
-      ; This redirect endpoint is not used by the new UI implementation
-      ; and can be removed once the old UI is no longer needed.
-        :path-params [id :- ::ys/registration_id]
-        :query-params [signature :- ::ys/non-blank-string]
-        (if (= signature (sign-string (:payment-config payment-helper) (str id)))
-          (if-let [{state :state
-                    href  :href} (order-id->payment-data payment-helper id)]
-            (if (= "UNPAID" state)
-              (ok {:redirect href})
-              (do (log/error "Payment not in unpaid state. Order id:" id "state:" state)
-                  (bad-request {:error "Payment not unpaid."})))
-            (do (log/error "Could not find payment data corresponding to evaluation order with id" id)
-                (bad-request {:error "Could not find payment data for order"})))
-          (unauthorized {:reason "Signature is not valid for request!"}))))
     (context routing/evaluation-payment-new-paytrail-callback-root []
+      ; TODO Can this whole (context ...) block be removed?
+      ; Was probably only used for the old yki-frontend.
+      ; After refactoring is now identical to the newer context block.
       :coercion :spec
       :no-doc true
       :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
-        (handle-success ctx lang request false))
+        (handle-success ctx lang request))
       (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
-        (handle-error ctx request lang false)))
+        (handle-error ctx request lang)))
     (context routing/evaluation-payment-for-new-ui-root []
       :coercion :spec
       :no-doc true
       :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
-        (handle-success ctx lang request true))
+        (handle-success ctx lang request))
       (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
-        (handle-error ctx request lang true)))))
+        (handle-error ctx request lang)))))

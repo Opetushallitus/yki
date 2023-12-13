@@ -128,18 +128,14 @@
                 sukunimi
                 kutsumanimi
                 oidHenkilo
-                kansalaisuus
-                asiointiKieli]} (onr/get-person-by-ssn onr-client nationalIdentificationNumber)
+                kansalaisuus]} (onr/get-person-by-ssn onr-client nationalIdentificationNumber)
 
         address      {:post_office    VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip            VakinainenKotimainenLahiosoitePostinumero
                       :street_address VakinainenKotimainenLahiosoiteS}
-        lang         (or language (some #{(get-in asiointiKieli ["kieliKoodi"])}
-                                        ["fi" "sv"])
-                         "fi")
         redirect-uri (if (:success-redirect session)
                        (str (:success-redirect session))
-                       (url-helper :exam-session.redirect exam-session-id lang))]
+                       (url-helper :yki-ui.exam-session-registration.url exam-session-id))]
     (info "Redirecting oppija to url: " redirect-uri)
     (if (and sn firstName nationalIdentificationNumber)
       (assoc

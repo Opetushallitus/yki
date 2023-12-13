@@ -47,19 +47,14 @@
      ; to email, as an alternative to Suomi.fi-authentication.
      (POST "/" request
        :body [login-link ::ys/login-link]
-       :query-params [lang :- ::ys/language-code
-                      {use-yki-ui :- ::ys/use-yki-ui nil}]
+       :query-params [lang :- ::ys/language-code]
        :return ::ys/response
        (log/info "Login link requested for: " login-link)
        (let [participant-id           (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                            :email            (:email login-link)}))
              exam-session-id          (:exam_session_id login-link)
-             registration-url         (if use-yki-ui
-                                        (url-helper :yki-ui.exam-session-registration.url exam-session-id)
-                                        (url-helper :exam-session.redirect exam-session-id lang))
-             registration-expired-url (if use-yki-ui
-                                        (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
-                                        (url-helper :link-expired.redirect lang))
+             registration-url         (url-helper :yki-ui.exam-session-registration.url exam-session-id)
+             registration-expired-url (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
              link                     (assoc login-link :participant_id participant-id
                                                         :type "LOGIN"
                                                         :expires_at (c/date-from-now 1)

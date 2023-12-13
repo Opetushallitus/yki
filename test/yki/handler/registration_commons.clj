@@ -110,6 +110,6 @@
 (defn registration-success-redirect [registration-id port]
   (str "http://yki.localhost:"
        port
-       "/yki/maksu/v2/ilmoittautuminen/"
+       "/yki/api/payment/v3/"
        registration-id
-       "?lang=fi"))
+       "/redirect?lang=fi"))

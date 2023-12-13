@@ -54,8 +54,7 @@
       (POST "/order" []
         :body [raw-order ::ys/evaluation-order]
         :path-params [id :- ::ys/id]
-        :query-params [lang :- ::ys/language-code
-                       {use-yki-ui :- ::ys/use-yki-ui nil}]
+        :query-params [lang :- ::ys/language-code]
         :return ::ys/evaluation-order-response
         (let [order            (sanitize-order raw-order)
               evaluation       (evaluation-db/get-evaluation-period-by-id db id)
@@ -87,7 +86,7 @@
                     init-payment-data       {:evaluation_order_id order-id
                                              :lang                (or lang "fi")
                                              :amount              final-price}
-                    evaluation-payment-data (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data use-yki-ui)]
+                    evaluation-payment-data (evaluation-db/create-evaluation-payment! db payment-helper init-payment-data)]
                 (log/info "Inserted evaluation payment data:" evaluation-payment-data)
                 (ok {:evaluation_order_id order-id
                      :signature           (sign-string (:payment-config payment-helper) (str order-id))
