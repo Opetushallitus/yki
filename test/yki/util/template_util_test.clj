@@ -32,7 +32,7 @@
                                                       :zip             "00500"
                                                       :post_office     "Helsinki"
                                                       :name            "Järjestäjä Oy"
-                                                      :amount          "100.00"
+                                                      :amount          100M
                                                       :expiration_date "24.4.2024"
                                                       :login_url       "http://localhost:8080/payment"})]
     (testing "result contains proper content"
@@ -104,7 +104,7 @@
                                                       :exam_date  "2024-05-16"
                                                       :subtests   ["Puhuminen" "Kirjoittaminen"]
                                                       :order_time 1716336000000 ; 22.5.2024
-                                                      :amount     "100.00"})]
+                                                      :amount     100M})]
     (testing "result contains proper content"
       (is (s/includes? rendered "<b>Tutkinto:</b> Suomi ylin taso"))
       (is (s/includes? rendered "<b>Testipäivä:</b> 16.5.2024"))
