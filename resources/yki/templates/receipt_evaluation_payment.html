@@ -7,7 +7,7 @@
       {% i18n email.receipt.evaluationPayment.title %}
     </td>
     <td class="cell" style="border-width: 1px 1px 0 0;">
-      {{ test.price.email-template|format-price }} €
+      {{ test.price.email-template }} €
     </td>
   </tr>
   <tr>
@@ -34,7 +34,7 @@
       {% i18n email.receipt.common.total %}
     </td>
     <td class="cell" style="border-width: 1px 1px 1px 0;">
-      {{ amount|format-price }} €
+      {{ amount }} €
     </td>
   </tr>
 </table>
