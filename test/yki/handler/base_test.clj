@@ -129,9 +129,9 @@
                                                           :cas-client         (cas-client url-helper)})))
 (defn user-handler
   [auth url-helper]
-  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth               auth
-                                                          :db                 (db)
-                                                          :access-log         (access-log)})))
+  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth       auth
+                                                          :db         (db)
+                                                          :access-log (access-log)})))
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
   (ig/init-key :yki.job.job-queue/email-q {}))
@@ -483,17 +483,17 @@
     :yki.util/exam-payment-helper
     {:db             db
      :url-helper     url-helper
-     :payment-config {:amount          {:PERUS "135.00"
-                                        :KESKI "155.00"
-                                        :YLIN  "195.00"}
+     :payment-config {:amount          {:PERUS 135
+                                        :KESKI 155
+                                        :YLIN  195}
                       :merchant-id     "375917"
                       :merchant-secret "SAIPPUAKAUPPIAS"}
      :pdf-renderer   (mock-pdf-renderer)}))
 
-(def new-evaluation-payment-config {:amount          {:READING   "50.00"
-                                                      :LISTENING "50.00"
-                                                      :WRITING   "50.00"
-                                                      :SPEAKING  "50.00"}
+(def new-evaluation-payment-config {:amount          {:READING   50
+                                                      :LISTENING 50
+                                                      :WRITING   50
+                                                      :SPEAKING  50}
                                     :merchant-id     "375917"
                                     :merchant-secret "SAIPPUAKAUPPIAS"})
 

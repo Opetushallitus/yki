@@ -6,7 +6,10 @@
     [selmer.parser :as parser]
     [selmer.util :refer [set-missing-value-formatter!]]
     [yki.boundary.localisation :as localisation]
-    [yki.util.common :as common]))
+    [yki.util.common :as common])
+  (:import
+    (java.util Locale)
+    (java.text DecimalFormat DecimalFormatSymbols)))
 
 (defn- template-name [name]
   (str (str/lower-case name) ".html"))
@@ -37,8 +40,15 @@
                      (fn [date-long]
                        (common/finnish-date-from-long date-long)))
 
-(filters/add-filter! :replace-dot-with-comma
-                     #(str/replace % "." ","))
+(def decimal-format
+  (let [decimal-format-symbols (DecimalFormatSymbols. (Locale/getDefault))
+        _                      (.setDecimalSeparator decimal-format-symbols \,)]
+    (DecimalFormat. "0.00" decimal-format-symbols)))
+
+(defn- format-price [amount]
+  (.format ^DecimalFormat decimal-format amount))
+
+(filters/add-filter! :format-price format-price)
 
 (defn missing-value-fn [tag _context-map]
   (log/warn "Missing template value:" (:tag-name tag) " " (:tag-value tag))

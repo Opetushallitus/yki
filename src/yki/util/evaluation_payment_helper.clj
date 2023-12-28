@@ -91,8 +91,8 @@
                                    :href                (response-body "href")}]
       (q/insert-initial-evaluation-payment-new<! tx evaluation-payment-data)))
   (subtest->price [_ subtest]
-    (let [price (Double/parseDouble (get-in payment-config [:amount (keyword subtest)]))]
-      {:email-template (int price)
+    (let [price (get-in payment-config [:amount (keyword subtest)])]
+      {:email-template price
        :paytrail       (amount->paytrail-amount price)})))
 
 (defmethod ig/init-key :yki.util/evaluation-payment-helper [_ {:keys [db payment-config url-helper]}]

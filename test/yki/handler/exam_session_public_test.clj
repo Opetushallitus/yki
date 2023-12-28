@@ -17,9 +17,9 @@
 
 (defn- send-request [request]
   (let [handler (api (ig/init-key :yki.handler/exam-session-public {:db             (base/db)
-                                                                    :payment-config {:amount {:PERUS "100.00"
-                                                                                              :KESKI "123.00"
-                                                                                              :YLIN  "160.00"}}}))]
+                                                                    :payment-config {:amount {:PERUS 100
+                                                                                              :KESKI 123
+                                                                                              :YLIN  160}}}))]
     (handler request)))
 
 (deftest get-exam-sessions-test
@@ -31,13 +31,13 @@
     (testing "get exam sessions endpoint should return 200"
       (is (= (:status response) 200))
       (is (= (count exam-sessions) 1))
-      (is (= ((first exam-sessions) "exam_fee") "100.00"))))
+      (is (= ((first exam-sessions) "exam_fee") 100))))
 
   (let [request       (mock/request :get (str routing/exam-session-public-api-root "/1"))
         response      (send-request request)
         response-body (base/body-as-json response)]
     (testing "get exam session endpoint should return 200"
-      (is (= (response-body "exam_fee") "100.00"))
+      (is (= (response-body "exam_fee") 100))
       (is (= (response-body "participants") 0))
       (is (= (:status response) 200))))
 
