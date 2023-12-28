@@ -15,12 +15,6 @@
   (not-found {:success false
               :error   "Evaluation not found"}))
 
-(defn subtest-price-config [amount-config]
-  (reduce-kv (fn [m k v]
-               (assoc m k (Double/parseDouble v)))
-             {}
-             amount-config))
-
 (defn- sanitize-order [raw-order]
   (let [text-fields (dissoc raw-order :subtests)
         sanitizer   (partial common/sanitized-string "_")
@@ -77,7 +71,7 @@
           (if (some? validation-error)
             validation-error
             (if-let [order-id (evaluation-db/create-evaluation-order! db id order)]
-              (let [subtest-price           (fn [subtest] (get (subtest-price-config price-config) (keyword subtest)))
+              (let [subtest-price           (fn [subtest] (get price-config (keyword subtest)))
                     final-price             (->> order
                                                  :subtests
                                                  (map subtest-price)
