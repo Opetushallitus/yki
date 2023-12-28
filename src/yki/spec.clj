@@ -8,7 +8,6 @@
   (:import [org.joda.time DateTime]))
 
 ;; common
-(def amount-regexp #"\d{0,3}.\d{2}")
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
 (def ssn-regexp #"([\d]{2})([\d]{2})([\d]{2})([+\-ABCDEFUVWXY])[\d]{3}[\dA-Za-z]")
 (def oid-regex #"^([1-9][0-9]{0,3}|0)(\.([1-9][0-9]{0,30}|0)){3,13}$")
@@ -70,7 +69,6 @@
 (s/def ::ssn (s/and (s/nilable string?)
                     valid-ssn?))
 
-(s/def ::amount (s/and string? #(re-matches amount-regexp %)))
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code #{"fi" "sv" "en"})
 (s/def ::gender-code #{"" "1" "2"})
@@ -220,7 +218,7 @@
 (s/def ::max_participants pos-int?)
 (s/def ::published_at (s/nilable ::date-type))
 (s/def ::participants int?)
-(s/def ::exam_fee ::amount)
+(s/def ::exam_fee pos-int?)
 (s/def ::open boolean?)
 (s/def ::queue_full boolean?)
 (s/def ::queue int?)
@@ -398,14 +396,13 @@
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
 
-; TODO Could these be actual numbers instead?
-(s/def ::PERUS ::non-blank-string)
-(s/def ::KESKI ::non-blank-string)
-(s/def ::YLIN ::non-blank-string)
-(s/def ::READING ::non-blank-string)
-(s/def ::LISTENING ::non-blank-string)
-(s/def ::WRITING ::non-blank-string)
-(s/def ::SPEAKING ::non-blank-string)
+(s/def ::PERUS pos-int?)
+(s/def ::KESKI pos-int?)
+(s/def ::YLIN pos-int?)
+(s/def ::READING pos-int?)
+(s/def ::LISTENING pos-int?)
+(s/def ::WRITING pos-int?)
+(s/def ::SPEAKING pos-int?)
 
 (s/def ::exam-prices (s/keys :req-un [::PERUS
                                       ::KESKI

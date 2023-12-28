@@ -8,10 +8,10 @@
 
  :yki.middleware.access-log/with-logging {:env "dev"}
 
- :yki.handler/user         {:db #ig/ref :duct.database/sql
-                            :auth #ig/ref :yki.middleware.no-auth/with-authentication
-                            :url-helper #ig/ref :yki.util/url-helper
-                            :access-log #ig/ref :yki.middleware.access-log/with-logging}
+ :yki.handler/user                       {:db         #ig/ref :duct.database/sql
+                                          :auth       #ig/ref :yki.middleware.no-auth/with-authentication
+                                          :url-helper #ig/ref :yki.util/url-helper
+                                          :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
  :yki.job.job-queue/init                 {:db-config {:db {:subprotocol "postgresql"
                                                            :subname     "//localhost:5432/yki"
@@ -29,26 +29,26 @@
 
  :yki.util/exam-payment-helper           {:payment-config {:merchant-id     "375917"
                                                            :merchant-secret "SAIPPUAKAUPPIAS"
-                                                           :amount          {:PERUS "135.00"
-                                                                             :KESKI "155.00"
-                                                                             :YLIN  "195.00"}}}
+                                                           :amount          {:PERUS 153
+                                                                             :KESKI 176
+                                                                             :YLIN  200}}}
 
  :yki.util/evaluation-payment-helper     {:payment-config {:merchant-id     "375917"
                                                            :merchant-secret "SAIPPUAKAUPPIAS"
-                                                           :amount          {:READING   "50.00"
-                                                                             :LISTENING "50.00"
-                                                                             :WRITING   "50.00"
-                                                                             :SPEAKING  "50.00"}}}
+                                                           :amount          {:READING   50
+                                                                             :LISTENING 50
+                                                                             :WRITING   50
+                                                                             :SPEAKING  50}}}
 
  :yki.handler/exam-payment-new           {:db         #ig/ref :duct.database/sql
                                           :auth       #ig/ref :yki.middleware.no-auth/with-authentication
                                           :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
  :yki.handler/evaluation                 {:db             #ig/ref :duct.database/sql
-                                          :payment-config {:amount {:READING   "50.00"
-                                                                    :LISTENING "50.00"
-                                                                    :WRITING   "50.00"
-                                                                    :SPEAKING  "50.00"}}}
+                                          :payment-config {:amount {:READING   50
+                                                                    :LISTENING 50
+                                                                    :WRITING   50
+                                                                    :SPEAKING  50}}}
 
  :yki.handler/registration               {:db         #ig/ref :duct.database/sql
                                           :auth       #ig/ref :yki.middleware.auth/with-authentication
@@ -60,13 +60,13 @@
  :yki.handler/exam-session-public        {:db             #ig/ref :duct.database/sql
                                           :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
                                                            :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                                           :amount          {:PERUS     "135.00"
-                                                                             :KESKI     "155.00"
-                                                                             :YLIN      "195.00"
-                                                                             :READING   "50.00"
-                                                                             :LISTENING "50.00"
-                                                                             :WRITING   "50.00"
-                                                                             :SPEAKING  "50.00"}}}
+                                                           :amount          {:PERUS     153
+                                                                             :KESKI     176
+                                                                             :YLIN      200
+                                                                             :READING   50
+                                                                             :LISTENING 50
+                                                                             :WRITING   50
+                                                                             :SPEAKING  50}}}
 
 
  :yki.middleware.auth/with-authentication
@@ -91,8 +91,8 @@
                                           :url-helper #ig/ref :yki.util/url-helper
                                           :access-log #ig/ref :yki.middleware.access-log/with-logging
                                           :auth       #ig/ref :yki.middleware.no-auth/with-fake-oid}
- :yki.handler/organizer                  {:db           #ig/ref :duct.database/sql
-                                          :url-helper   #ig/ref :yki.util/url-helper
-                                          :access-log   #ig/ref :yki.middleware.access-log/with-logging
-                                          :auth         #ig/ref :yki.middleware.no-auth/with-authentication}}
+ :yki.handler/organizer                  {:db         #ig/ref :duct.database/sql
+                                          :url-helper #ig/ref :yki.util/url-helper
+                                          :access-log #ig/ref :yki.middleware.access-log/with-logging
+                                          :auth       #ig/ref :yki.middleware.no-auth/with-authentication}}
 

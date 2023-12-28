@@ -37,8 +37,9 @@
                      (fn [date-long]
                        (common/finnish-date-from-long date-long)))
 
-(filters/add-filter! :replace-dot-with-comma
-                     #(str/replace % "." ","))
+(filters/add-filter! :format-price
+                     (fn [amount]
+                       (format "%.2f" amount)))
 
 (defn missing-value-fn [tag _context-map]
   (log/warn "Missing template value:" (:tag-name tag) " " (:tag-value tag))
