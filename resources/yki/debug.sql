@@ -77,3 +77,12 @@ WHERE exam_session_id IN
 AND state IN ('SUBMITTED', 'COMPLETED')
 AND form->>'zip' = :zip
 AND form->>'post_office' = :zip;
+
+-- name: select-count-of-post-offices-to-replace
+SELECT count(*)
+FROM registration
+WHERE exam_session_id IN
+      (SELECT es.id FROM exam_session es WHERE es.exam_date_id = :exam_date_id)
+AND state IN ('SUBMITTED', 'COMPLETED')
+AND form->>'zip' = :zip
+AND form->>'post_office' = :zip;

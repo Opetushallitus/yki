@@ -50,7 +50,8 @@
           (validate-emails-for-table db table get-emails-fn))
         (ok {}))
       (POST "/fix-post-office-data" _
-        :query-params [exam-date-id :- ::ys/id]
+        :query-params [exam-date-id :- ::ys/id
+                       do-update :- boolean?]
         (log/info "Request to fix post office data" {:exam-date-id exam-date-id})
         (let [post-codes        (codes/get-codes url-helper "posti")
               zip->office       (->> post-codes
@@ -61,7 +62,7 @@
                                      (into #{}))]
           (doseq [zip post-codes-to-fix]
             (if-let [post-office (zip->office zip)]
-              (let [updated (b/fix-post-office-for-zip-code! db exam-date-id zip post-office)]
-                (log/info "Updated" updated "registrations with zip code" zip "and post-office" post-office))
+              (let [updated (b/fix-post-office-for-zip-code! db exam-date-id zip post-office do-update)]
+                (log/info (if do-update "Updating" "NOT UPDATING, BUT LOGGING") updated "registrations with zip code" zip "and post-office" post-office))
               (log/warn "No post office found for zip code" zip))))
         (ok {})))))

@@ -54,16 +54,24 @@
 
 (defprotocol PostOfficeDebug
   (get-registrations-with-same-zip-code-and-post-office [db exam-date])
-  (fix-post-office-for-zip-code! [db exam-date-id zip-code post-office]))
+  (fix-post-office-for-zip-code! [db exam-date-id zip-code post-office do-update?]))
 
 (extend-protocol PostOfficeDebug
   Boundary
   (get-registrations-with-same-zip-code-and-post-office [db exam-date-id]
     (q/select-registrations-with-same-zip-code-and-post-office
       (:spec db) {:exam_date_id exam-date-id}))
-  (fix-post-office-for-zip-code! [db exam-date-id zip-code post-office]
-    (q/update-post-office-for-zip-code!
-      (:spec db)
-      {:exam_date_id exam-date-id
-       :zip     zip-code
-       :post_office  post-office})))
+  (fix-post-office-for-zip-code! [db exam-date-id zip-code post-office do-update?]
+    (if do-update?
+      (q/update-post-office-for-zip-code!
+        (:spec db)
+        {:exam_date_id exam-date-id
+         :zip          zip-code
+         :post_office  post-office})
+      (-> (q/select-count-of-post-offices-to-replace
+            (:spec db)
+            {:exam_date_id exam-date-id
+             :zip          zip-code
+             :post_office  post-office})
+          (first)
+          (:count)))))
