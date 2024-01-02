@@ -137,9 +137,9 @@
                                                        :onr-client     #ig/ref :yki.boundary.onr/onr-client
                                                        :access-log     #ig/ref :yki.middleware.access-log/with-logging}
 
-  :yki.handler/user                                   {:db             #ig/ref :duct.database/sql
-                                                       :auth           #ig/ref :yki.middleware.auth/with-authentication
-                                                       :access-log     #ig/ref :yki.middleware.access-log/with-logging}
+  :yki.handler/user                                   {:db         #ig/ref :duct.database/sql
+                                                       :auth       #ig/ref :yki.middleware.auth/with-authentication
+                                                       :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
   :yki.handler/exam-payment-new                       {:db             #ig/ref :duct.database/sql
                                                        :auth           #ig/ref :yki.middleware.auth/with-authentication
@@ -194,7 +194,8 @@
 
   :yki.handler/debug                                  {:access-log #ig/ref :yki.middleware.access-log/with-logging
                                                        :auth       #ig/ref :yki.middleware.auth/with-authentication
-                                                       :db         #ig/ref :duct.database/sql}}
+                                                       :db         #ig/ref :duct.database/sql
+                                                       :url-helper #ig/ref :yki.util/url-helper}}
 
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"
