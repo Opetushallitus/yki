@@ -46,10 +46,12 @@
         :query-params [lang :- ::ys/language-code]
         :body [request ::ys/to-queue-request]
         :return ::ys/response
-        (log/info "Adding email " (:email request) " to exam session " id " queue")
-        (if (exam-session-db/get-email-added-to-queue? db (:email request) id)
-          (conflict {:exists true})
-          (do
-            (exam-session-db/add-to-exam-session-queue! db (:email request) lang id)
-            (ok {:success true})))))))
+        (let [result (exam-session-db/add-to-exam-session-queue! db (:email request) lang id)]
+          (if (:success result)
+            (do
+              (log/info "Adding email" (:email request) "to exam session" id "queue")
+              (ok result))
+            (do
+              (log/warn "Failed to add" (:email request) "to exam session" id "queue. Result:" result)
+              (conflict result))))))))
 

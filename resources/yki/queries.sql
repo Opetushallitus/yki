@@ -1162,6 +1162,11 @@ UPDATE exam_date_language
     AND language_code = :language_code
     AND deleted_at IS NULL;
 
+-- name: select-exam-session-queue-count
+SELECT count(1)
+FROM exam_session_queue
+WHERE exam_session_id = :exam_session_id;
+
 -- name: insert-exam-session-queue!
 INSERT INTO exam_session_queue (
   email,
@@ -1170,11 +1175,7 @@ INSERT INTO exam_session_queue (
 ) VALUES (
   :email,
   :lang,
-  (SELECT id
-    FROM exam_session
-    WHERE id = :exam_session_id
-    GROUP BY id
-    HAVING (SELECT COUNT(1) FROM exam_session_queue WHERE exam_session_id = :exam_session_id) < 50)
+  :exam_session_id
 );
 
 -- send notification only once per day between 8 - 21 until registration ends

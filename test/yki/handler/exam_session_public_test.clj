@@ -48,20 +48,38 @@
 
 (deftest post-exam-session-queue-test
   (base/insert-base-data)
-  (let [id                 (:id (base/select-one "SELECT id from exam_session"))
-        request            (-> (mock/request :post (str routing/exam-session-public-api-root "/" id "/queue?lang=sv")
-                                             (j/write-value-as-string {:email "test@test.com"}))
-                               (mock/content-type "application/json; charset=UTF-8"))
-        twice-request      (-> (mock/request :post (str routing/exam-session-public-api-root "/" id "/queue?lang=sv")
-                                             (j/write-value-as-string {:email "Test@test.com"}))
-                               (mock/content-type "application/json; charset=UTF-8"))
-        response           (send-request request)
-        twice-response     (send-request twice-request)
-        exam-session-queue (base/select "SELECT * from exam_session_queue")]
+  (let [id                     (:id (base/select-one "SELECT id from exam_session"))
+        enroll-into-queue!     (fn [exam-session-id email]
+                                 (-> (mock/request :post (str routing/exam-session-public-api-root "/" exam-session-id "/queue?lang=sv")
+                                                   (j/write-value-as-string {:email email}))
+                                     (mock/content-type "application/json; charset=UTF-8")
+                                     (send-request)))
+        response               (enroll-into-queue! id "test@test.com")
+        twice-response         (enroll-into-queue! id "Test@test.com")
+        get-exam-session-queue #(base/select "SELECT * from exam_session_queue")]
     (testing "post exam session queue endpoint should add email to queue"
       (is (= (:status response) 200))
-      (is (= (count exam-session-queue) 1)))
+      (is (= (base/body-as-json response)
+             {"success" true}))
+      (is (= (count (get-exam-session-queue)) 1)))
     (testing "post with same email should return conflict"
-      (is (= (:status twice-response) 409)))))
-
-
+      (is (= (:status twice-response) 409))
+      (is (= (base/body-as-json twice-response)
+             {"exists" true
+              "full"   false})))
+    (testing "post with unique email to full queue should return error"
+      (let [queue-capacity 50]
+        (doseq [i (range queue-capacity)]
+          (base/execute!
+            (str "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ("
+                 "'test_" i "@test.invalid',"
+                 "'fi',"
+                 id
+                 ");")))
+        (is (< queue-capacity
+               (count (get-exam-session-queue)))))
+      (let [full-queue-response (enroll-into-queue! id "unique@test.invalid")]
+        (is (= (:status full-queue-response) 409))
+        (is (= (base/body-as-json full-queue-response)
+               {"exists" false
+                "full"   true}))))))
