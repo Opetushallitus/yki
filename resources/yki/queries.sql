@@ -361,7 +361,9 @@ SELECT
  ) as location,
 (SELECT post_admission_enabled FROM exam_date WHERE id = e.exam_date_id) AS post_admission_enabled,
   (within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-  OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE)) as open
+  OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE)) as open,
+(within_dt_range(now(), now(), ed.registration_end_date)) AS upcoming_admission,
+(e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE AND within_dt_range(now(), now(), ed.post_admission_end_date)) AS upcoming_post_admission
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -426,7 +428,9 @@ o.oid as organizer_oid,
   ) loc
 ) AS location,
 (within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-  OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active AND ed.post_admission_enabled)) as open
+  OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active AND ed.post_admission_enabled)) as open,
+(within_dt_range(now(), now(), ed.registration_end_date)) AS upcoming_admission,
+(e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE AND within_dt_range(now(), now(), ed.post_admission_end_date)) AS upcoming_post_admission
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id

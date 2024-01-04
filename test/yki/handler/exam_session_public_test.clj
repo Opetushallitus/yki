@@ -1,7 +1,6 @@
 (ns yki.handler.exam-session-public-test
   (:require
     [clojure.test :refer [deftest use-fixtures join-fixtures testing is]]
-    [clj-time.core :as t]
     [compojure.api.sweet :refer [api]]
     [duct.database.sql]
     [integrant.core :as ig]
@@ -11,8 +10,7 @@
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.handler.exam-session-public]
-    [yki.handler.routing :as routing]
-    [yki.util.common :as c]))
+    [yki.handler.routing :as routing]))
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration]))
 (use-fixtures :each embedded-db/with-transaction)
@@ -24,37 +22,24 @@
                                                                                               :YLIN  160}}}))]
     (handler request)))
 
-(defn- within-interval-from-now? [time interval]
-  (let [before (t/minus (t/now) interval)
-        after  (t/plus (t/now) interval)]
-    (and (t/before? before time)
-         (t/after? after time))))
-
 (deftest get-exam-sessions-test
   (base/insert-base-data)
   (let [request             (mock/request :get routing/exam-session-public-api-root)
         response            (send-request request)
         response-body       (base/body-as-json response)
-        exam-sessions       (response-body "exam_sessions")
-        server-time         (c/string->date (response-body "current_time"))
-        valid-time-interval (t/seconds 10)]
+        exam-sessions       (response-body "exam_sessions")]
     (testing "get exam sessions endpoint should return 200"
       (is (= (:status response) 200))
       (is (= (count exam-sessions) 1))
-      (is (= ((first exam-sessions) "exam_fee") 100))
-      (is (within-interval-from-now? server-time valid-time-interval))))
+      (is (= ((first exam-sessions) "exam_fee") 100))))
 
   (let [request             (mock/request :get (str routing/exam-session-public-api-root "/1"))
         response            (send-request request)
-        response-body       (base/body-as-json response)
-        exam-session        (response-body "exam_session")
-        server-time         (c/string->date (response-body "current_time"))
-        valid-time-interval (t/seconds 10)]
+        response-body       (base/body-as-json response)]
     (testing "get exam session endpoint should return 200"
-      (is (= (exam-session "exam_fee") 100))
-      (is (= (exam-session "participants") 0))
-      (is (= (:status response) 200))
-      (is (within-interval-from-now? server-time valid-time-interval))))
+      (is (= (response-body "exam_fee") 100))
+      (is (= (response-body "participants") 0))
+      (is (= (:status response) 200))))
 
   (let [request  (mock/request :get (str routing/exam-session-public-api-root "/123"))
         response (send-request request)]

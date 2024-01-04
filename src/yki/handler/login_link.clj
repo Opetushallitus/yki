@@ -52,6 +52,7 @@
        (log/info "Login link requested for: " login-link)
        (let [participant-id           (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                            :email            (:email login-link)}))
+             ; TODO Ensure registration (regular or post-admission) is open!
              exam-session-id          (:exam_session_id login-link)
              registration-url         (url-helper :yki-ui.exam-session-registration.url exam-session-id)
              registration-expired-url (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)

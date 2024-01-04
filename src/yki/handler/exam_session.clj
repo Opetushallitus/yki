@@ -47,7 +47,7 @@
           (response {:exam_sessions (exam-session-db/get-exam-sessions db oid from-date)})))
 
       (POST "/" request
-        :body [exam-session ::ys/exam_session]
+        :body [exam-session ::ys/exam-session]
         :return ::ys/id-response
         (when-let [exam-session-id (exam-session-db/create-exam-session!
                                      db oid exam-session
@@ -64,7 +64,7 @@
 
       (context "/:id" []
         (PUT "/" request
-          :body [exam-session ::ys/exam_session]
+          :body [exam-session ::ys/exam-session]
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [current          (exam-session-db/get-exam-session-by-id db id)

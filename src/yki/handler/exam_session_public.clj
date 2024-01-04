@@ -8,14 +8,11 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
     [yki.spec :as ys]
-    [yki.util.common :refer [format-datetime-with-server-locale string->date]]))
+    [yki.util.common :refer [string->date]]))
 
 (defn- get-exam-fee
   [payment-config exam-session]
   (get-in payment-config [:amount (keyword (:level_code exam-session))]))
-
-(defn- with-current-time [data]
-  (assoc data :current_time (format-datetime-with-server-locale (t/now))))
 
 (defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db payment-config]}]
   {:pre [(some? db) (some? payment-config)]}
@@ -27,15 +24,14 @@
       (let [from-date     (string->date from)
             exam-sessions (exam-session-db/get-exam-sessions db nil from-date)
             with-fee      (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
-        (ok (with-current-time {:exam_sessions with-fee}))))
+        (ok {:exam_sessions with-fee})))
 
     (context "/:id" []
       (GET "/" []
-        :return ::ys/exam-session-response
+        :return ::ys/exam-session
         :path-params [id :- ::ys/id]
         (if-let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-          (-> {:exam_session (assoc exam-session :exam_fee (get-exam-fee payment-config exam-session))}
-              (with-current-time)
+          (-> (assoc exam-session :exam_fee (get-exam-fee payment-config exam-session))
               (ok))
           (not-found "Exam session not found")))
 

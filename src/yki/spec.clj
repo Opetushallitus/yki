@@ -223,14 +223,16 @@
 (s/def ::queue_full boolean?)
 (s/def ::queue int?)
 (s/def ::from ::date-type)
+(s/def ::upcoming_admission boolean?)
 ; post admission extensions for exam-session
 (s/def ::post_admission_quota (s/nilable pos-int?))
 (s/def ::post_admission_start_date (s/nilable ::date-type))
 (s/def ::post_admission_end_date (s/nilable ::date-type))
 (s/def ::post_admission_active boolean?)
+(s/def ::upcoming_post_admission boolean?)
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
-(s/def ::exam_session (s/keys :req-un [::session_date
+(s/def ::exam-session (s/keys :req-un [::session_date
                                        ::language_code
                                        ::level_code
                                        ::max_participants
@@ -248,15 +250,12 @@
                                        ::post_admission_quota
                                        ::post_admission_start_date
                                        ::post_admission_end_date
-                                       ::post_admission_active]))
+                                       ::post_admission_active
+                                       ::upcoming_admission
+                                       ::upcoming_post_admission]))
 
-(s/def ::current_time ::date-type)
-(s/def ::exam-session-response (s/keys :req-un [::exam_session
-                                                ::current_time]))
-
-(s/def ::exam_sessions (s/coll-of ::exam_session))
-(s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]
-                                        :opt-un [::current_time]))
+(s/def ::exam_sessions (s/coll-of ::exam-session))
+(s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::exam_session_id pos-int?)
 (s/def ::from-param (s/keys :opt-un [::from]))
 
@@ -340,6 +339,7 @@
                         :opt-un [::gender
                                  ::nationality_desc]))
 
+(s/def ::exam_session ::exam-session)
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
 (s/def ::registration_id ::id)
