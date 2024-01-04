@@ -8,14 +8,14 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
     [yki.spec :as ys]
-    [yki.util.common :refer [string->date]]))
+    [yki.util.common :refer [format-datetime-with-server-locale string->date]]))
 
 (defn- get-exam-fee
   [payment-config exam-session]
   (get-in payment-config [:amount (keyword (:level_code exam-session))]))
 
 (defn- with-current-time [data]
-  (assoc data :current_time (t/now)))
+  (assoc data :current_time (format-datetime-with-server-locale (t/now))))
 
 (defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db payment-config]}]
   {:pre [(some? db) (some? payment-config)]}

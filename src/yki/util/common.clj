@@ -45,3 +45,8 @@
 
 (defn format-date-for-db [date]
   (f/unparse (f/formatter date-format) date))
+
+(defn format-datetime-with-server-locale [datetime]
+  (let [formatter (-> (f/formatters :date-time)
+                      (f/with-zone timezone))]
+    (f/unparse formatter datetime)))
