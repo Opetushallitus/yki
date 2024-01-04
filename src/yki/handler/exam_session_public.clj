@@ -1,5 +1,6 @@
 (ns yki.handler.exam-session-public
   (:require
+    [clj-time.core :as t]
     [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [context GET POST]]
     [integrant.core :as ig]
@@ -13,6 +14,9 @@
   [payment-config exam-session]
   (get-in payment-config [:amount (keyword (:level_code exam-session))]))
 
+(defn- with-current-time [data]
+  (assoc data :current_time (t/now)))
+
 (defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db payment-config]}]
   {:pre [(some? db) (some? payment-config)]}
   (context routing/exam-session-public-api-root []
@@ -23,14 +27,16 @@
       (let [from-date     (string->date from)
             exam-sessions (exam-session-db/get-exam-sessions db nil from-date)
             with-fee      (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
-        (ok {:exam_sessions with-fee})))
+        (ok (with-current-time {:exam_sessions with-fee}))))
 
     (context "/:id" []
       (GET "/" []
-        :return ::ys/exam-session
+        :return ::ys/exam-session-response
         :path-params [id :- ::ys/id]
         (if-let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-          (ok (assoc exam-session :exam_fee (get-exam-fee payment-config exam-session)))
+          (-> {:exam_session (assoc exam-session :exam_fee (get-exam-fee payment-config exam-session))}
+              (with-current-time)
+              (ok))
           (not-found "Exam session not found")))
 
       (POST "/queue" []

@@ -230,7 +230,7 @@
 (s/def ::post_admission_active boolean?)
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
-(s/def ::exam-session (s/keys :req-un [::session_date
+(s/def ::exam_session (s/keys :req-un [::session_date
                                        ::language_code
                                        ::level_code
                                        ::max_participants
@@ -250,8 +250,13 @@
                                        ::post_admission_end_date
                                        ::post_admission_active]))
 
-(s/def ::exam_sessions (s/coll-of ::exam-session))
-(s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
+(s/def ::current_time ::date-type)
+(s/def ::exam-session-response (s/keys :req-un [::exam_session
+                                                ::current_time]))
+
+(s/def ::exam_sessions (s/coll-of ::exam_session))
+(s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]
+                                        :opt-un [::current_time]))
 (s/def ::exam_session_id pos-int?)
 (s/def ::from-param (s/keys :opt-un [::from]))
 
@@ -337,7 +342,6 @@
 
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
-(s/def ::exam_session ::exam-session)
 (s/def ::registration_id ::id)
 
 (s/def :user/first_name (s/nilable string?))
