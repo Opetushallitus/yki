@@ -396,25 +396,6 @@
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
 
-(s/def ::PERUS pos-int?)
-(s/def ::KESKI pos-int?)
-(s/def ::YLIN pos-int?)
-(s/def ::READING pos-int?)
-(s/def ::LISTENING pos-int?)
-(s/def ::WRITING pos-int?)
-(s/def ::SPEAKING pos-int?)
-
-(s/def ::exam-prices (s/keys :req-un [::PERUS
-                                      ::KESKI
-                                      ::YLIN]))
-
-(s/def ::evaluation-prices (s/keys :req-un [::READING
-                                            ::LISTENING
-                                            ::WRITING
-                                            ::SPEAKING]))
-
-(s/def ::pricing-type (s/keys :req-un [::exam-prices
-                                       ::evaluation-prices]))
 ;; Re-evaluation period
 (s/def ::evaluation_start_date ::date-type)
 (s/def ::evaluation_end_date ::date-type)

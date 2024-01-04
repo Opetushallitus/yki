@@ -1,7 +1,7 @@
 (ns yki.handler.registration
   (:require
     [clojure.tools.logging :as log]
-    [compojure.api.sweet :refer [api context DELETE GET POST]]
+[compojure.api.sweet :refer [api context DELETE POST]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok bad-request internal-server-error]]
     [yki.boundary.registration-db :as registration-db]

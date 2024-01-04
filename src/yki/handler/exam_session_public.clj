@@ -25,14 +25,6 @@
             with-fee      (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
         (ok {:exam_sessions with-fee})))
 
-    ; TODO Remove; this is no longer needed since the old public UI was deprecated.
-    (GET "/pricing" []
-      :return ::ys/pricing-type
-      (let [prices     (:amount payment-config)
-            exam       (select-keys prices [:PERUS :KESKI :YLIN])
-            evaluation (select-keys prices [:READING :LISTENING :WRITING :SPEAKING])]
-        (ok {:exam-prices exam :evaluation-prices evaluation})))
-
     (context "/:id" []
       (GET "/" []
         :return ::ys/exam-session
