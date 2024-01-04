@@ -51,7 +51,9 @@
         "zip": "00240"
       }
     ],
-    "exam_fee": 135
+    "exam_fee": 135,
+    "upcoming_admission": true,
+    "upcoming_post_admission": false
   },
   "is_strongly_identified": false,
   "user": {

@@ -51,7 +51,9 @@
       "level_code": "PERUS",
       "open": false,
       "queue_full": false,
-      "queue": 0
+      "queue": 0,
+      "upcoming_admission": true,
+      "upcoming_post_admission": false
     }
   ]
 }
