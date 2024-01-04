@@ -65,8 +65,9 @@
     (testing "post with same email should return conflict"
       (is (= (:status twice-response) 409))
       (is (= (base/body-as-json twice-response)
-             {"exists" true
-              "full"   false})))
+             {"exists"  true
+              "full"    false
+              "success" false})))
     (testing "post with unique email to full queue should return error"
       (let [queue-capacity 50]
         (doseq [i (range queue-capacity)]
@@ -81,5 +82,18 @@
       (let [full-queue-response (enroll-into-queue! id "unique@test.invalid")]
         (is (= (:status full-queue-response) 409))
         (is (= (base/body-as-json full-queue-response)
-               {"exists" false
-                "full"   true}))))))
+               {"exists"  false
+                "full"    true
+                "success" false}))))
+    (testing "posting to queue of nonexistent session should return error"
+      (let [fake-exam-session-id 999
+            error-response       (enroll-into-queue! fake-exam-session-id "test@test.com")]
+        (is (= (:status error-response) 409))))
+    (testing "posting to queue outside of regular admission period should return error"
+      ; Ensure empty queue
+      (base/execute! "DELETE FROM exam_session_queue;")
+      ; Ensure enrolling into queue is successful before making any changes.
+      (is (= (:status (enroll-into-queue! id "test@test.com")) 200))
+      ; Update registration period end date to past
+      (base/execute! (str "UPDATE exam_date SET registration_end_date=(current_date - 1) WHERE id IN (SELECT exam_date_id FROM exam_session WHERE id=" id ");"))
+      (is (= (:status (enroll-into-queue! id "valid@email.com")) 409)))))

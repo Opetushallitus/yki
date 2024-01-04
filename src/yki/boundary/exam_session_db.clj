@@ -176,14 +176,21 @@
   (add-to-exam-session-queue!
     [{:keys [spec] :as db} email lang exam-session-id]
     (jdbc/with-db-transaction [tx spec]
-      (let [already-in-queue? (get-email-added-to-queue? db email exam-session-id)
-            queue-size        (-> (q/select-exam-session-queue-count spec {:exam_session_id exam-session-id})
-                                  (first)
-                                  (:count))
-            full-queue?       (<= 50 queue-size)]
-        (if (or already-in-queue? full-queue?)
-          {:exists already-in-queue?
-           :full   full-queue?}
+      (let [registration-not-open? (-> (q/select-exam-session-registration-open spec {:exam_session_id exam-session-id})
+                                       (first)
+                                       (:exists)
+                                       (not))
+            already-in-queue?      (get-email-added-to-queue? db email exam-session-id)
+            queue-size             (-> (q/select-exam-session-queue-count spec {:exam_session_id exam-session-id})
+                                       (first)
+                                       (:count))
+            full-queue?            (<= 50 queue-size)]
+        (if (or registration-not-open?
+                already-in-queue?
+                full-queue?)
+          {:exists  already-in-queue?
+           :full    full-queue?
+           :success false}
           (do
             (q/insert-exam-session-queue! tx {:exam_session_id exam-session-id
                                               :lang            lang
