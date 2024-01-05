@@ -1,6 +1,5 @@
 (ns yki.handler.exam-session-public
   (:require
-    [clj-time.core :as t]
     [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [context GET POST]]
     [integrant.core :as ig]
