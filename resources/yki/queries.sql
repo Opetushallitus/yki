@@ -458,7 +458,11 @@ SELECT
   esl.street_address,
   esl.post_office,
   esl.zip,
-  esl.name
+  esl.name,
+  (within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
+  OR (es.post_admission_active = TRUE
+    AND ed.post_admission_enabled = TRUE
+    AND within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date))) as open
 FROM exam_session es
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
