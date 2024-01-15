@@ -37,7 +37,7 @@
   "email.login.content.line2": "Ilmoittaudu YKI-testiin tämän linkin kautta",
   "email.login.link_text": "Linkki ilmoittautumislomakkeelle",
   "email.login.subject": "Ilmoittautuminen (YKI)",
-  "email.payment.content.line1.part1": "Tarkista ennen maksamista, että olet ilmoittautunut oikean kielen ja taitotason YKI-testiin!",
+  "email.payment.content.line1.part1": "Tarkista ennen maksamista, että olet ilmoittautunut oikean kielen ja tason YKI-testiin!",
   "email.payment.content.line1.part2": "Jos olet ilmoittautunut väärän kielen tai tason testiin, ota yhteyttä testin järjestäjään.",
   "email.payment.content.line2": "Olet ilmoittautumassa seuraavaan YKI-testiin",
   "email.payment.content.line3.part1": "Tärkeää! Maksa tutkintomaksu viimeistään",
