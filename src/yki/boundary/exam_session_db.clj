@@ -168,19 +168,34 @@
   (get-exam-sessions [{:keys [spec]} oid from]
     (q/select-exam-sessions spec {:oid  oid
                                   :from from}))
-
   (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
     (int->boolean (:count (first (q/select-email-added-to-queue spec {:email           email
                                                                       :exam_session_id exam-session-id})))))
-
   (get-exam-sessions-with-queue [{:keys [spec]}]
     (q/select-exam-sessions-with-queue spec))
   (add-to-exam-session-queue!
-    [{:keys [spec]} email lang exam-session-id]
+    [{:keys [spec] :as db} email lang exam-session-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/insert-exam-session-queue! tx {:exam_session_id exam-session-id
-                                        :lang            lang
-                                        :email           email})))
+      (let [registration-not-open? (-> (q/select-exam-session-registration-open spec {:exam_session_id exam-session-id})
+                                       (first)
+                                       (:exists)
+                                       (not))
+            already-in-queue?      (get-email-added-to-queue? db email exam-session-id)
+            queue-size             (-> (q/select-exam-session-queue-count spec {:exam_session_id exam-session-id})
+                                       (first)
+                                       (:count))
+            full-queue?            (<= 50 queue-size)]
+        (if (or registration-not-open?
+                already-in-queue?
+                full-queue?)
+          {:exists  already-in-queue?
+           :full    full-queue?
+           :success false}
+          (do
+            (q/insert-exam-session-queue! tx {:exam_session_id exam-session-id
+                                              :lang            lang
+                                              :email           email})
+            {:success true})))))
   (update-exam-session-queue-last-notified-at!
     [{:keys [spec]} email exam-session-id]
     (jdbc/with-db-transaction [tx spec]
