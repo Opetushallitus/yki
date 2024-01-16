@@ -223,11 +223,13 @@
 (s/def ::queue_full boolean?)
 (s/def ::queue int?)
 (s/def ::from ::date-type)
+(s/def ::upcoming_admission boolean?)
 ; post admission extensions for exam-session
 (s/def ::post_admission_quota (s/nilable pos-int?))
 (s/def ::post_admission_start_date (s/nilable ::date-type))
 (s/def ::post_admission_end_date (s/nilable ::date-type))
 (s/def ::post_admission_active boolean?)
+(s/def ::upcoming_post_admission boolean?)
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -248,7 +250,9 @@
                                        ::post_admission_quota
                                        ::post_admission_start_date
                                        ::post_admission_end_date
-                                       ::post_admission_active]))
+                                       ::post_admission_active
+                                       ::upcoming_admission
+                                       ::upcoming_post_admission]))
 
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
@@ -335,9 +339,9 @@
                         :opt-un [::gender
                                  ::nationality_desc]))
 
+(s/def ::exam_session ::exam-session)
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]))
 
-(s/def ::exam_session ::exam-session)
 (s/def ::registration_id ::id)
 
 (s/def :user/first_name (s/nilable string?))
@@ -396,25 +400,6 @@
 (s/def ::to_exam_session_id ::id)
 (s/def ::relocate-request (s/keys :req-un [::to_exam_session_id]))
 
-(s/def ::PERUS pos-int?)
-(s/def ::KESKI pos-int?)
-(s/def ::YLIN pos-int?)
-(s/def ::READING pos-int?)
-(s/def ::LISTENING pos-int?)
-(s/def ::WRITING pos-int?)
-(s/def ::SPEAKING pos-int?)
-
-(s/def ::exam-prices (s/keys :req-un [::PERUS
-                                      ::KESKI
-                                      ::YLIN]))
-
-(s/def ::evaluation-prices (s/keys :req-un [::READING
-                                            ::LISTENING
-                                            ::WRITING
-                                            ::SPEAKING]))
-
-(s/def ::pricing-type (s/keys :req-un [::exam-prices
-                                       ::evaluation-prices]))
 ;; Re-evaluation period
 (s/def ::evaluation_start_date ::date-type)
 (s/def ::evaluation_end_date ::date-type)

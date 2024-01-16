@@ -2,11 +2,10 @@
   (:require
     [compojure.api.sweet :refer [api context GET]]
     [integrant.core :as ig]
-    [ring.util.http-response :refer [ok bad-request internal-server-error]]
+    [ring.util.http-response :refer [ok]]
     [yki.handler.routing :as routing]
     [yki.registration.registration :as registration]
-    [yki.spec :as ys]
-    [yki.util.audit-log :as audit]))
+    [yki.spec :as ys]))
 
 (defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log]}]
   {:pre [(some? db) (some? auth) (some? access-log)]}

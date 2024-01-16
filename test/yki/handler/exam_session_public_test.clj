@@ -24,18 +24,18 @@
 
 (deftest get-exam-sessions-test
   (base/insert-base-data)
-  (let [request       (mock/request :get routing/exam-session-public-api-root)
-        response      (send-request request)
-        response-body (base/body-as-json response)
-        exam-sessions (response-body "exam_sessions")]
+  (let [request             (mock/request :get routing/exam-session-public-api-root)
+        response            (send-request request)
+        response-body       (base/body-as-json response)
+        exam-sessions       (response-body "exam_sessions")]
     (testing "get exam sessions endpoint should return 200"
       (is (= (:status response) 200))
       (is (= (count exam-sessions) 1))
       (is (= ((first exam-sessions) "exam_fee") 100))))
 
-  (let [request       (mock/request :get (str routing/exam-session-public-api-root "/1"))
-        response      (send-request request)
-        response-body (base/body-as-json response)]
+  (let [request             (mock/request :get (str routing/exam-session-public-api-root "/1"))
+        response            (send-request request)
+        response-body       (base/body-as-json response)]
     (testing "get exam session endpoint should return 200"
       (is (= (response-body "exam_fee") 100))
       (is (= (response-body "participants") 0))

@@ -81,21 +81,21 @@
                    post-start :post_admission_start_date
                    post-end   :post_admission_end_date} exam-date-update
 
-                  period          [reg-start reg-end post-start post-end date]
-                  existing-date   (first (exam-date-db/get-exam-dates-by-date db (c/from-long date)))
+                  period              [reg-start reg-end post-start post-end date]
+                  existing-date       (first (exam-date-db/get-exam-dates-by-date db (c/from-long date)))
 
-                  original-languages (set (:languages exam-date))
-                  provided-languages (set (:languages exam-date-update))
-                  new-languages (set/difference provided-languages original-languages)
+                  original-languages  (set (:languages exam-date))
+                  provided-languages  (set (:languages exam-date-update))
+                  new-languages       (set/difference provided-languages original-languages)
                   removable-languages (set/difference original-languages provided-languages)
 
-                  is-date-change (not= date (:exam_date exam-date))
-                  is-language-change (seq (concat new-languages removable-languages))
-                  has-exam-sessions (> (:count (exam-date-db/get-exam-date-session-count db id)) 0)]
+                  is-date-change      (not= date (:exam_date exam-date))
+                  is-language-change  (seq (concat new-languages removable-languages))
+                  has-exam-sessions   (> (:count (exam-date-db/get-exam-date-session-count db id)) 0)]
               (cond
                 (is-invalid-period (filter some? period)) (do (log/error "Invalid date period for exam date update" period)
                                                               (conflict {:success false
-                                                                          :error  "Invalid date period for exam date update"}))
+                                                                         :error   "Invalid date period for exam date update"}))
 
                 (and existing-date (not= id (:id existing-date)))
                 (do (log/error "Another exam date with date" date "already exists")
@@ -114,13 +114,13 @@
                       (log/info "Removing languages from exam date " id ": " removable-languages))
                     (if (exam-date-db/update-exam-date! db id exam-date-update new-languages removable-languages)
                       (let [updated-exam-date (exam-date-db/get-exam-date-by-id db id)]
-                        (do (audit-log/log {:request   request
-                                            :target-kv {:k audit-log/exam-date
-                                                        :v id}
-                                            :change    {:type audit-log/update-op
-                                                        :old  exam-date
-                                                        :new  updated-exam-date}})
-                            (ok {:success true})))
+                        (audit-log/log {:request   request
+                                        :target-kv {:k audit-log/exam-date
+                                                    :v id}
+                                        :change    {:type audit-log/update-op
+                                                    :old  exam-date
+                                                    :new  updated-exam-date}})
+                        (ok {:success true}))
                       (do (log/error "Updating exam date" id "failed")
                           (internal-server-error {:success false
                                                   :error   "Updating exam date failed"}))))))
@@ -135,15 +135,15 @@
           :return ::ys/response
           (cond
             (nil? (exam-date-db/get-exam-date-by-id db id))
-              (do (log/error "Exam date with id" id "not found")
-                  (not-found
-                    {:success false
-                     :error   "Exam date not found"}))
+            (do (log/error "Exam date with id" id "not found")
+                (not-found
+                  {:success false
+                   :error   "Exam date not found"}))
 
             (> (:count (exam-date-db/get-exam-date-session-count db id)) 0)
-              (do (log/error "Cannot delete exam date" id "because it has exam sessions assigned to it")
-                  (conflict {:success false
-                             :error   "Cannot delete exam date with assigned exam sessions"}))
+            (do (log/error "Cannot delete exam date" id "because it has exam sessions assigned to it")
+                (conflict {:success false
+                           :error   "Cannot delete exam date with assigned exam sessions"}))
             :else
             (do (log/info "Deleting exam date" id)
                 (if (exam-date-db/delete-exam-date! db id)
