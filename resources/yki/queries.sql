@@ -270,7 +270,7 @@ INSERT INTO exam_session (
     WHERE el.organizer_id = (SELECT id FROM organizer WHERE oid = :oid AND deleted_at IS NULL AND current_timestamp BETWEEN agreement_start_date AND agreement_end_date)
       AND el.language_code = :language_code
       AND el.level_code = :level_code),
-  (SELECT id from exam_date WHERE exam_date = :session_date),
+  (SELECT id from exam_date WHERE exam_date = :session_date AND deleted_at IS NULL),
   :max_participants,
   :office_oid,
   :published_at
