@@ -24,18 +24,28 @@
 
 (deftest get-exam-sessions-test
   (base/insert-base-data)
-  (let [request             (mock/request :get routing/exam-session-public-api-root)
-        response            (send-request request)
-        response-body       (base/body-as-json response)
-        exam-sessions       (response-body "exam_sessions")]
-    (testing "get exam sessions endpoint should return 200"
+  (testing "get exam sessions endpoint should return 200 along with a list of upcoming exam sessions"
+    (let [request       (mock/request :get routing/exam-session-public-api-root)
+          response      (send-request request)
+          response-body (base/body-as-json response)
+          exam-sessions (response-body "exam_sessions")]
+      (is (= (:status response) 200))
+      ; Initially, the single exam session is in the past
+      (is (= (count exam-sessions) 0)))
+    ; Update exam session to future and verify that endpoint now returns exam sessions
+    (let [future-exam-date (base/select-one "SELECT id from exam_date where exam_date >= current_timestamp;")
+          _                (base/execute! (str "UPDATE exam_session SET exam_date_id=" (:id future-exam-date) ";"))
+          request          (mock/request :get routing/exam-session-public-api-root)
+          response         (send-request request)
+          response-body    (base/body-as-json response)
+          exam-sessions    (response-body "exam_sessions")]
       (is (= (:status response) 200))
       (is (= (count exam-sessions) 1))
       (is (= ((first exam-sessions) "exam_fee") 100))))
 
-  (let [request             (mock/request :get (str routing/exam-session-public-api-root "/1"))
-        response            (send-request request)
-        response-body       (base/body-as-json response)]
+  (let [request       (mock/request :get (str routing/exam-session-public-api-root "/1"))
+        response      (send-request request)
+        response-body (base/body-as-json response)]
     (testing "get exam session endpoint should return 200"
       (is (= (response-body "exam_fee") 100))
       (is (= (response-body "participants") 0))
