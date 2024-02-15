@@ -37,13 +37,13 @@
  :yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
                                    :payment-config {:paytrail-host "https://payment.paytrail.com/e2"
                                                     :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
-                                                    :amount {:PERUS "135.00"
-                                                             :KESKI "155.00"
-                                                             :YLIN "195.00"
-                                                             :READING "50.00"
-                                                             :LISTENING "50.00"
-                                                             :WRITING "50.00"
-                                                             :SPEAKING "50.00"}}}
+                                                    :amount {:PERUS 153
+                                                             :KESKI 176
+                                                             :YLIN 200
+                                                             :READING 100
+                                                             :LISTENING 100
+                                                             :WRITING 100
+                                                             :SPEAKING 100}}}
 
  :yki.job.scheduled-tasks/email-queue-reader {:email-q #ig/ref :yki.job.job-queue/email-q
                                               :disabled true
@@ -66,10 +66,10 @@
                                                   :retry-duration-in-days 14}
 
  :yki.handler/evaluation {:db #ig/ref :duct.database/sql
-                          :payment-config {:amount {:READING "50.00"
-                                                    :LISTENING "50.00"
-                                                    :WRITING "50.00"
-                                                    :SPEAKING "50.00"}}}
+                          :payment-config {:amount {:READING 100
+                                                    :LISTENING 100
+                                                    :WRITING 100
+                                                    :SPEAKING 100}}}
 
  ;; Localhost is not acceptable redirect uri for paytrail atm. This is why when developing
  ;; on locahost, random name can be set to resolve to localhost (here example.coom) in the host file

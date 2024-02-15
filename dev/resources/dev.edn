@@ -35,20 +35,20 @@
 
  :yki.util/evaluation-payment-helper     {:payment-config {:merchant-id     "375917"
                                                            :merchant-secret "SAIPPUAKAUPPIAS"
-                                                           :amount          {:READING   50
-                                                                             :LISTENING 50
-                                                                             :WRITING   50
-                                                                             :SPEAKING  50}}}
+                                                           :amount          {:READING   100
+                                                                             :LISTENING 100
+                                                                             :WRITING   100
+                                                                             :SPEAKING  100}}}
 
  :yki.handler/exam-payment-new           {:db         #ig/ref :duct.database/sql
                                           :auth       #ig/ref :yki.middleware.no-auth/with-authentication
                                           :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
  :yki.handler/evaluation                 {:db             #ig/ref :duct.database/sql
-                                          :payment-config {:amount {:READING   50
-                                                                    :LISTENING 50
-                                                                    :WRITING   50
-                                                                    :SPEAKING  50}}}
+                                          :payment-config {:amount {:READING   100
+                                                                    :LISTENING 100
+                                                                    :WRITING   100
+                                                                    :SPEAKING  100}}}
 
  :yki.handler/registration               {:db         #ig/ref :duct.database/sql
                                           :auth       #ig/ref :yki.middleware.auth/with-authentication
