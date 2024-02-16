@@ -40,6 +40,7 @@
                                                                                :auth           auth
                                                                                :db             db
                                                                                :email-q        (base/email-q)
+                                                                               :error-boundary (base/error-boundary)
                                                                                :url-helper     url-helper
                                                                                :payment-helper payment-helper
                                                                                :pdf-renderer   pdf-renderer}))]

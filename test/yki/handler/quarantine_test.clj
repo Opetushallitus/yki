@@ -27,10 +27,11 @@
         url-helper         (base/create-url-helper (str "localhost" port))
         quarantine-handler (ig/init-key
                              :yki.handler/quarantine
-                             {:access-log access-log
-                              :auth       (base/no-auth-fake-session-oid-middleware session-virkailija-oid)
-                              :db         db
-                              :url-helper url-helper})]
+                             {:access-log     access-log
+                              :auth           (base/no-auth-fake-session-oid-middleware session-virkailija-oid)
+                              :db             db
+                              :error-boundary (base/error-boundary)
+                              :url-helper     url-helper})]
     (core/routes quarantine-handler)))
 
 (deftest get-quarantines-test
@@ -177,7 +178,7 @@
           (is (= (:birthdate base/quarantine-form)
                  (:birthdate (base/select-one "SELECT * FROM quarantine WHERE id=2;")))))
         (testing "mismatching birthdate should result in an error"
-          (is (= 500
+          (is (= 400
                  (:status (insert-quarantine! (-> base/quarantine-form
                                                   (assoc :birthdate "1999-01-28"))))))
           (is (= {:count 2}

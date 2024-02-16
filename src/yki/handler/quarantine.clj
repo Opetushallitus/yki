@@ -26,11 +26,11 @@
     birthdate
     quarantine))
 
-(defmethod ig/init-key :yki.handler/quarantine [_ {:keys [access-log auth db url-helper]}]
-  {:pre [(some? access-log) (some? auth) (some? db) (some? url-helper)]}
+(defmethod ig/init-key :yki.handler/quarantine [_ {:keys [access-log auth db error-boundary url-helper]}]
+  {:pre [(some? access-log) (some? auth) (some? db) (some? error-boundary) (some? url-helper)]}
   (api
     (context routing/quarantine-api-root []
-      :middleware [auth access-log]
+      :middleware [error-boundary auth access-log]
       :coercion :spec
       (GET "/" _
         :return ::ys/quarantine-response

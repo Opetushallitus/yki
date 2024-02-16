@@ -49,7 +49,10 @@
                                                                      :pdf-renderer (base/mock-pdf-renderer)})
 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
-        user-handler         (ig/init-key :yki.handler/user {:db db :auth auth :access-log (base/access-log)})
+        user-handler         (ig/init-key :yki.handler/user {:access-log     (base/access-log)
+                                                             :auth           auth
+                                                             :db             db
+                                                             :error-boundary (base/error-boundary)})
 
         org-handler          (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
                                                                                           :access-log           (base/access-log)
@@ -57,7 +60,8 @@
                                                                                           :url-helper           url-helper
                                                                                           :exam-session-handler exam-session-handler
                                                                                           :exam-date-handler    exam-date-handler
-                                                                                          :auth                 auth}))
+                                                                                          :auth                 auth
+                                                                                          :error-boundary       (base/error-boundary)}))
         auth-handler         (base/auth-handler auth url-helper)]
     (routes org-handler auth-handler user-handler)))
 

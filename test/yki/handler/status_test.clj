@@ -12,19 +12,20 @@
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction]))
 
 (defn- send-request [request]
-  (let [db (duct.database.sql/->Boundary @embedded-db/conn)
-        handler (middleware/wrap-format (ig/init-key :yki.handler/status {:db db}))]
+  (let [db      (duct.database.sql/->Boundary @embedded-db/conn)
+        handler (middleware/wrap-format (ig/init-key :yki.handler/status {:db             db
+                                                                          :error-boundary (base/error-boundary)}))]
     (handler request)))
 
 (deftest status-ok-test
-  (let [request (mock/request :get routing/status-api-root)
+  (let [request  (mock/request :get routing/status-api-root)
         response (send-request request)]
     (testing "get status endpoint should return 200 when db connection is ok"
       (is (= (:status response) 200)))))
 
 (deftest buildversion-test
-  (let [request (mock/request :get (str routing/status-api-root "/buildversion.txt"))
-        response (send-request request)
+  (let [request       (mock/request :get (str routing/status-api-root "/buildversion.txt"))
+        response      (send-request request)
         response-body (base/body-as-json response)]
     (testing "get buildversion.txt endpoint should return 200 and build version"
       (is (= (:status response) 200))

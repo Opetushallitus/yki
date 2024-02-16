@@ -18,10 +18,11 @@
 
 (defn- send-request [port request email-q]
   (let [db      (duct.database.sql/->Boundary @embedded-db/conn)
-        handler (middleware/wrap-format (ig/init-key :yki.handler/login-link {:db         db
-                                                                              :email-q    email-q
-                                                                              :access-log (base/access-log)
-                                                                              :url-helper (base/create-url-helper (str "localhost:" port))}))]
+        handler (middleware/wrap-format (ig/init-key :yki.handler/login-link {:db             db
+                                                                              :email-q        email-q
+                                                                              :error-boundary (base/error-boundary)
+                                                                              :access-log     (base/access-log)
+                                                                              :url-helper     (base/create-url-helper (str "localhost:" port))}))]
     (handler request)))
 
 (deftest login-link-create-test

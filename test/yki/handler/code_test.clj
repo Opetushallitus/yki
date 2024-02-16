@@ -9,7 +9,9 @@
             [yki.handler.code]))
 
 (defn- send-request [request url-helper]
-  (let [handler (api (ig/init-key :yki.handler/code {:url-helper url-helper}))]
+  (let [error-boundary (base/error-boundary)
+        handler        (api (ig/init-key :yki.handler/code {:error-boundary error-boundary
+                                                            :url-helper     url-helper}))]
     (handler request)))
 
 (deftest get-codes-test
@@ -19,12 +21,12 @@
       :content-type "application/json"
       :body         (slurp "test/resources/maatjavaltiot2_246.json")}}
     (let [url-helper (base/create-url-helper (str "localhost:" port))
-          req-codes (mock/request :get (str routing/code-api-root "/maatjavaltiot2"))
-          res-codes (send-request req-codes url-helper)
-          req-code (mock/request :get (str routing/code-api-root "/maatjavaltiot2/FIN"))
-          res-code (send-request req-code url-helper)
-          codes (base/body-as-json res-codes)
-          code (base/body-as-json res-code)]
+          req-codes  (mock/request :get (str routing/code-api-root "/maatjavaltiot2"))
+          res-codes  (send-request req-codes url-helper)
+          req-code   (mock/request :get (str routing/code-api-root "/maatjavaltiot2/FIN"))
+          res-code   (send-request req-code url-helper)
+          codes      (base/body-as-json res-codes)
+          code       (base/body-as-json res-code)]
       (testing "get codes endpoint should return 200 with codes"
         (is (= (:status res-codes) 200))
         (is (= (count codes) 3)))

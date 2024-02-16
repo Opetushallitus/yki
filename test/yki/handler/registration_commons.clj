@@ -22,16 +22,18 @@
         auth                 (base/auth url-helper)
         access-log           (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler         (base/auth-handler auth url-helper)
-        user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user         {:db             db
-                                                                                             :access-log     access-log
-                                                                                             :auth           auth}))
+        user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user {:db             db
+                                                                                     :access-log     access-log
+                                                                                     :auth           auth
+                                                                                     :error-boundary (base/error-boundary)}))
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db             db
                                                                                              :url-helper     url-helper
                                                                                              :payment-helper payment-helper
                                                                                              :email-q        email-q
                                                                                              :access-log     access-log
                                                                                              :onr-client     (base/onr-client url-helper)
-                                                                                             :auth           auth}))]
+                                                                                             :auth           auth
+                                                                                             :error-boundary (base/error-boundary)}))]
     (core/routes registration-handler auth-handler user-handler)))
 
 (defn fill-exam-session [registrations kind]

@@ -13,10 +13,11 @@
   [payment-config exam-session]
   (get-in payment-config [:amount (keyword (:level_code exam-session))]))
 
-(defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db payment-config]}]
-  {:pre [(some? db) (some? payment-config)]}
+(defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db error-boundary payment-config]}]
+  {:pre [(some? db) (some? error-boundary) (some? payment-config)]}
   (context routing/exam-session-public-api-root []
     :coercion :spec
+    :middleware [error-boundary]
     (GET "/" []
       :return ::ys/exam-sessions-response
       (let [from-date     (t/now)

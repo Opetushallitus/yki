@@ -37,12 +37,12 @@
               :subject    (template-util/login-subject template-data)
               :body       (template-util/render link-type lang template-data)})))
 
-(defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper access-log]}]
-  {:pre [(some? db) (some? email-q) (some? url-helper) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/login-link [_ {:keys [access-log db email-q error-boundary url-helper]}]
+  {:pre [(some? access-log) (some? db) (some? email-q) (some? error-boundary) (some? url-helper)]}
   (api
     (context routing/login-link-api-root []
       :coercion :spec
-      :middleware [access-log]
+      :middleware [error-boundary access-log]
       ; Handler only called when ordering registration link
       ; to email, as an alternative to Suomi.fi-authentication.
       (POST "/" _

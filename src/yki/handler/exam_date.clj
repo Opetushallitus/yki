@@ -16,6 +16,7 @@
   (not= period (sort period)))
 
 (defmethod ig/init-key :yki.handler/exam-date [_ {:keys [db]}]
+  {:pre [(some? db)]}
   (fn [_oid]
     (context "/" []
       (GET "/" []

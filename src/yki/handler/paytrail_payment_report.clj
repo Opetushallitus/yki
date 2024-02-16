@@ -50,13 +50,14 @@
     :json
     (json/read-str report-contents)))
 
-(defmethod ig/init-key :yki.handler/paytrail-payment-report [_ {:keys [payment-helper]}]
-  {:pre [(some? payment-helper)]}
+(defmethod ig/init-key :yki.handler/paytrail-payment-report [_ {:keys [error-boundary payment-helper]}]
+  {:pre [(some? error-boundary)
+         (some? payment-helper)]}
   (api
     (context routing/paytrail-payment-report-root []
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       ; Handler for writing requested payment report to disk
       (POST "/store" req
         (let [body         (:body req)

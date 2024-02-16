@@ -12,17 +12,18 @@
                                        sync-exam-session-participants]]
     [yki.spec :as ys]))
 
-(defmethod ig/init-key :yki.handler/yki-register-debug [_ {:keys [access-log auth basic-auth db url-helper]}]
+(defmethod ig/init-key :yki.handler/yki-register-debug [_ {:keys [access-log auth basic-auth db error-boundary url-helper]}]
   {:pre [(some? access-log)
          (some? auth)
          (some? basic-auth)
          (some? db)
+         (some? error-boundary)
          (some? url-helper)]}
   (api
     (context routing/yki-register-debug-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [error-boundary auth access-log wrap-params]
       (GET "/:id" _
         :path-params [id :- ::ys/id]
         (log/warn (str "Request yki-register CSV export for debug purposes for exam-session " id))
@@ -31,7 +32,7 @@
       (context "/sync/exam-session" []
         :coercion :spec
         :no-doc true
-        :middleware [auth access-log wrap-params]
+        ;:middleware [auth access-log wrap-params]
         (POST "/:id" _
           :path-params [id :- ::ys/id]
           (log/info "Manually forcing exam session" id "to be synced to Solki")

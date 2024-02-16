@@ -21,10 +21,11 @@
         sanitized   (update-vals text-fields sanitizer)]
     (merge raw-order sanitized)))
 
-(defmethod ig/init-key :yki.handler/evaluation [_ {:keys [db payment-helper]}]
-  {:pre [(some? db) (some? payment-helper)]}
+(defmethod ig/init-key :yki.handler/evaluation [_ {:keys [db error-boundary payment-helper]}]
+  {:pre [(some? db) (some? error-boundary) (some? payment-helper)]}
   (context routing/evaluation-root []
     :coercion :spec
+    :middleware [error-boundary]
     (GET "/" []
       :return ::ys/evaluation-periods-response
       (ok {:evaluation_periods (evaluation-db/get-upcoming-evaluation-periods db)}))
