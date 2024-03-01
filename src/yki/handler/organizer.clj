@@ -21,11 +21,11 @@
                           :type          "DELETE"
                           :created       (System/currentTimeMillis)})))
 
-(defmethod ig/init-key :yki.handler/organizer [_ {:keys [db url-helper auth exam-session-handler exam-date-handler data-sync-q access-log]}]
-  {:pre [(some? db) (some? url-helper) (some? auth) (some? exam-session-handler) (some? exam-date-handler) (some? data-sync-q) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/organizer [_ {:keys [access-log auth data-sync-q db error-boundary exam-date-handler exam-session-handler url-helper]}]
+  {:pre [(some? access-log) (some? auth) (some? data-sync-q) (some? db) (some? error-boundary) (some? exam-date-handler) (some? exam-session-handler) (some? url-helper)]}
   (api
     (context routing/organizer-api-root []
-      :middleware [auth access-log]
+      :middleware [error-boundary auth access-log]
       :coercion :spec
       (GET "/" {session :session}
         :return ::ys/organizers-response

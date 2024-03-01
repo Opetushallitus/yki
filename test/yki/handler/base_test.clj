@@ -21,6 +21,7 @@
     [yki.handler.routing :as routing]
     [yki.handler.user]
     [yki.job.job-queue]
+    [yki.middleware.error-boundary]
     [yki.middleware.no-auth]
     [yki.util.common :as c]
     [yki.util.pdf :refer [PdfTemplateRenderer]]
@@ -95,10 +96,14 @@
 (defn db []
   (sql/->Boundary @embedded-db/conn))
 
+(defn error-boundary []
+  (ig/init-key :yki.middleware.error-boundary/with-error-handling {}))
+
 (defn auth [url-helper]
   (ig/init-key :yki.middleware.auth/with-authentication
                {:url-helper     url-helper
                 :db             (db)
+                :error-boundary (error-boundary)
                 :session-config {:key          "ad7tbRZIG839gDo2"
                                  :cookie-attrs {:max-age   28800
                                                 :http-only true
@@ -122,6 +127,7 @@
   [auth url-helper]
   (middleware/wrap-format (ig/init-key :yki.handler/auth {:auth               auth
                                                           :db                 (db)
+                                                          :error-boundary     (error-boundary)
                                                           :onr-client         (onr-client url-helper)
                                                           :url-helper         url-helper
                                                           :access-log         (access-log)
@@ -129,9 +135,10 @@
                                                           :cas-client         (cas-client url-helper)})))
 (defn user-handler
   [auth url-helper]
-  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth       auth
-                                                          :db         (db)
-                                                          :access-log (access-log)})))
+  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth           auth
+                                                          :db             (db)
+                                                          :access-log     (access-log)
+                                                          :error-boundary (error-boundary)})))
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
   (ig/init-key :yki.job.job-queue/email-q {}))
@@ -501,6 +508,7 @@
   (ig/init-key
     :yki.util/evaluation-payment-helper
     {:db             db
+     :error-boundary (error-boundary)
      :url-helper     url-helper
      :payment-config new-evaluation-payment-config}))
 
@@ -533,17 +541,19 @@
 
         auth                 (no-auth-middleware db url-helper)
         auth-handler         (auth-handler auth url-helper)
-        quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:access-log (access-log)
-                                                                                           :auth       auth
-                                                                                           :db         db
-                                                                                           :url-helper url-helper}))
+        quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:access-log     (access-log)
+                                                                                           :auth           auth
+                                                                                           :db             db
+                                                                                           :url-helper     url-helper
+                                                                                           :error-boundary (error-boundary)}))
         organizer-handler    (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
                                                                                           :auth                 auth
                                                                                           :data-sync-q          (data-sync-q)
                                                                                           :access-log           (access-log)
                                                                                           :url-helper           url-helper
                                                                                           :exam-session-handler exam-session-handler
-                                                                                          :exam-date-handler    exam-date-handler}))]
+                                                                                          :exam-date-handler    exam-date-handler
+                                                                                          :error-boundary       (error-boundary)}))]
     (routes organizer-handler quarantine-handler auth-handler)))
 
 (defn send-request-with-tx

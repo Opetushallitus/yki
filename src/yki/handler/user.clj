@@ -7,12 +7,12 @@
     [yki.registration.registration :as registration]
     [yki.spec :as ys]))
 
-(defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log]}]
-  {:pre [(some? db) (some? auth) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/user [_ {:keys [access-log auth db error-boundary]}]
+  {:pre [(some? access-log) (some? auth) (some? db) (some? error-boundary)]}
   (api
     (context routing/user-api-root []
       :coercion :spec
-      :middleware [auth access-log]
+      :middleware [error-boundary auth access-log]
       (GET "/identity" {session :session}
         :return ::ys/user-identity-response
         (ok (update-in session [:identity] dissoc :ticket)))

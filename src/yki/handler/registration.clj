@@ -16,12 +16,12 @@
     (str (subs external-user-id 0 7) "****")
     external-user-id))
 
-(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? url-helper) (some? email-q) (some? onr-client)]}
+(defmethod ig/init-key :yki.handler/registration [_ {:keys [access-log auth db email-q error-boundary onr-client payment-helper url-helper]}]
+  {:pre [(some? access-log) (some? auth) (some? db) (some? email-q) (some? error-boundary) (some? onr-client) (some? url-helper)]}
   (api
     (context routing/registration-api-root []
       :coercion :spec
-      :middleware [auth access-log]
+      :middleware [error-boundary auth access-log]
       (POST "/init" request
         :body [registration-init ::ys/registration-init]
         :return ::ys/registration-init-response

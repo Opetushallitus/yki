@@ -28,16 +28,17 @@
        (first)
        (:nimi)))
 
-(defmethod ig/init-key :yki.handler/debug [_ {:keys [access-log auth db url-helper]}]
+(defmethod ig/init-key :yki.handler/debug [_ {:keys [access-log auth db error-boundary url-helper]}]
   {:pre [(some? access-log)
          (some? auth)
          (some? db)
+         (some? error-boundary)
          (some? url-helper)]}
   (api
     (context routing/debug-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [error-boundary auth access-log wrap-params]
       (POST "/emails/validate" _
         (doseq [[table get-emails-fn]
                 [["contact" b/get-contact-emails]

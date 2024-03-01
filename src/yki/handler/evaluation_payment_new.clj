@@ -99,9 +99,9 @@
       (error-redirect url-helper lang nil))))
 
 (defmethod ig/init-key :yki.handler/evaluation-payment-new
-  [_ {:keys [db auth access-log payment-helper pdf-renderer url-helper email-q]
+  [_ {:keys [db auth access-log error-boundary payment-helper pdf-renderer url-helper email-q]
       :as   ctx}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? payment-helper) (some? url-helper) (some? pdf-renderer) (some? email-q)]}
+  {:pre [(some? access-log) (some? auth) (some? db) (some? email-q) (some? error-boundary) (some? payment-helper) (some? pdf-renderer) (some? url-helper)]}
   (api
     (context routing/evaluation-payment-new-paytrail-callback-root []
       ; TODO Can this whole (context ...) block be removed?
@@ -109,7 +109,7 @@
       ; After refactoring is now identical to the newer context block.
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (handle-success ctx lang request))
@@ -119,7 +119,7 @@
     (context routing/evaluation-payment-for-new-ui-root []
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (handle-success ctx lang request))

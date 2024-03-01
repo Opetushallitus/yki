@@ -27,6 +27,7 @@
         url-helper     (base/create-url-helper (str "localhost:" port))
         payment-helper (base/create-evaluation-payment-helper db url-helper)]
     (api (ig/init-key :yki.handler/evaluation {:db             db
+                                               :error-boundary (base/error-boundary)
                                                :payment-helper payment-helper}))))
 
 (defn- evaluation-order-post [handler evaluation-id order]

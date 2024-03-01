@@ -142,13 +142,13 @@
       ; No registration matching given id and external-user-id from session.
       (bad-request {:reason :registration-not-found}))))
 
-(defmethod ig/init-key :yki.handler/exam-payment-new [_ {:keys [auth access-log db payment-helper pdf-renderer url-helper email-q]}]
-  {:pre [(some? auth) (some? access-log) (some? db) (some? email-q) (some? payment-helper) (some? pdf-renderer) (some? url-helper)]}
+(defmethod ig/init-key :yki.handler/exam-payment-new [_ {:keys [access-log auth db email-q error-boundary payment-helper pdf-renderer url-helper]}]
+  {:pre [(some? access-log) (some? auth) (some? db) (some? email-q) (some? error-boundary) (some? payment-helper) (some? pdf-renderer) (some? url-helper)]}
   (api
     (context routing/payment-v2-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [error-boundary auth access-log wrap-params]
       (GET "/report" _
         :query-params [from :- ::ys/date-type
                        to :- ::ys/date-type]
@@ -172,7 +172,7 @@
     (context routing/payment-v3-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [error-boundary auth access-log wrap-params]
       (GET "/:id/redirect" {session :session}
         :path-params [id :- ::ys/registration_id]
         :query-params [lang :- ::ys/language-code]
@@ -182,7 +182,7 @@
       ; After removing support for redirecting to old UI, this is now identical to ...-v3-root
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (handle-success-callback db email-q pdf-renderer url-helper lang request))
@@ -192,7 +192,7 @@
     (context routing/paytrail-payment-v3-root []
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (handle-success-callback db email-q pdf-renderer url-helper lang request))

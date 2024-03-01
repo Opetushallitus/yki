@@ -17,6 +17,7 @@
 
 (defn- send-request [request]
   (let [handler (api (ig/init-key :yki.handler/exam-session-public {:db             (base/db)
+                                                                    :error-boundary (base/error-boundary)
                                                                     :payment-config {:amount {:PERUS 100
                                                                                               :KESKI 123
                                                                                               :YLIN  160}}}))]

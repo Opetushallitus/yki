@@ -6,9 +6,11 @@
     [yki.boundary.codes :as codes]
     [yki.handler.routing :as routing]))
 
-(defmethod ig/init-key :yki.handler/code [_ {:keys [url-helper]}]
+(defmethod ig/init-key :yki.handler/code [_ {:keys [error-boundary url-helper]}]
+  {:pre [(some? error-boundary) (some? url-helper)]}
   (context (str routing/code-api-root "/:collection") [collection]
     :coercion :spec
+    :middleware [error-boundary]
     (GET "/" []
       (ok (codes/get-codes url-helper collection)))
     (context "/:code" [code]

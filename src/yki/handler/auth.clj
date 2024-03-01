@@ -10,13 +10,13 @@
     [yki.middleware.access-log]
     [yki.spec :as ys]))
 
-(defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client onr-client permissions-client access-log db]}]
-  {:pre [(some? auth) (some? url-helper) (some? cas-client) (some? onr-client) (some? permissions-client) (some? access-log) (some? db)]}
+(defmethod ig/init-key :yki.handler/auth [_ {:keys [auth error-boundary url-helper cas-client onr-client permissions-client access-log db]}]
+  {:pre [(some? access-log) (some? auth) (some? cas-client) (some? db) (some? error-boundary) (some? onr-client) (some? permissions-client) (some? url-helper)]}
   (api
     (context routing/auth-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [error-boundary auth access-log wrap-params]
       ; TODO Duplicates functionality provided by endpoint /yki/api/user/identity
       ; Used by legacy yki-frontend. Remove once yki-frontend no longer uses this endpoint.
       (GET "/user" {session :session}
