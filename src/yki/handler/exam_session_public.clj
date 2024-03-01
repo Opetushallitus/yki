@@ -1,13 +1,13 @@
 (ns yki.handler.exam-session-public
   (:require
+    [clj-time.core :as t]
     [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [context GET POST]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok not-found conflict]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
-    [yki.spec :as ys]
-    [yki.util.common :refer [string->date]]))
+    [yki.spec :as ys]))
 
 (defn- get-exam-fee
   [payment-config exam-session]
@@ -18,9 +18,8 @@
   (context routing/exam-session-public-api-root []
     :coercion :spec
     (GET "/" []
-      :query-params [{from :- ::ys/date-type nil}]
       :return ::ys/exam-sessions-response
-      (let [from-date     (string->date from)
+      (let [from-date     (t/now)
             exam-sessions (exam-session-db/get-exam-sessions db nil from-date)
             with-fee      (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
         (ok {:exam_sessions with-fee})))
