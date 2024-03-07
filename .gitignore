@@ -46,8 +46,6 @@ local.edn
 
 # OPH specific rules
 /logs
-pom.xml
-pom.xml.asc
 *.jar
 *.class
 /.dir-locals.el
