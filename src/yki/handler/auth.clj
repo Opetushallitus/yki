@@ -37,16 +37,14 @@
         :query-params [{redirect :- ::ys/redirect-to nil}]
         (-> (found redirect)
             (assoc :session nil)))
-      (POST "/callback" request
-        (cas-auth/cas-oppija-logout url-helper))
       (GET "/callback*" [ticket :as request]
-        (cas-auth/oppija-login ticket request cas-client onr-client url-helper))
+        (cas-auth/oppija-login ticket request cas-client onr-client url-helper db))
       (context routing/virkailija-auth-uri []
         (POST "/callback" request
           (cas-auth/cas-logout db (get-in request [:params :logoutRequest])))
         (GET "/" {session :session}
           (found (cas-auth/create-redirect-uri-from-session session url-helper)))
         (GET "/callback" [ticket :as request]
-          (cas-auth/login ticket request cas-client permissions-client onr-client url-helper db))
+          (cas-auth/virkailija-login ticket request cas-client permissions-client onr-client url-helper db))
         (GET "/logout" {session :session}
           (cas-auth/logout session url-helper))))))

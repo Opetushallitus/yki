@@ -902,16 +902,28 @@ INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 WHERE re.id = :id;
 
--- name: insert-ticket!
+-- name: insert-virkailija-ticket!
 INSERT INTO cas_ticketstore (ticket) VALUES (:ticket);
 
--- name: delete-ticket!
+-- name: delete-virkailija-ticket!
 DELETE FROM cas_ticketstore
 WHERE ticket = :ticket;
 
--- name: select-ticket
+-- name: select-virkailija-ticket
 SELECT ticket
 FROM cas_ticketstore
+WHERE ticket = :ticket;
+
+-- name: insert-oppija-ticket!
+INSERT INTO cas_oppija_ticketstore (ticket) VALUES (:ticket);
+
+-- name: delete-oppija-ticket!
+DELETE FROM cas_oppija_ticketstore
+WHERE ticket = :ticket;
+
+-- name: select-oppija-ticket
+SELECT ticket
+FROM cas_oppija_ticketstore
 WHERE ticket = :ticket;
 
 --name: insert-participants-sync-status!

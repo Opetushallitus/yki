@@ -36,12 +36,12 @@
     (url-helper (if oph-admin? :yki.admin.cas.login-success.redirect
                                :yki.organizer.cas.login-success.redirect) lang)))
 
-(defn login [ticket request cas-client permissions-client onr-client url-helper db]
+(defn virkailija-login [ticket request cas-client permissions-client onr-client url-helper db]
   (try
     (if ticket
       (let [auth-cas-client (cas-client (url-helper :root-cas-service))
             username        (cas/validate-ticket auth-cas-client ticket)
-            _               (cas-ticket-db/create-ticket! db ticket)
+            _               (cas-ticket-db/create-ticket! db :virkailija ticket)
             permissions     (permissions/virkailija-by-username permissions-client username)
             person-oid      (:oidHenkilo permissions)
             person          (onr/get-person-by-oid onr-client person-oid)
@@ -162,7 +162,7 @@
   (info "Ticket validation failed: " message)
   (found (url-helper :exam-session.fail.redirect exam-session-id lang)))
 
-(defn oppija-login [ticket request cas-client onr-client url-helper]
+(defn oppija-login [ticket request cas-client onr-client url-helper db]
   (try
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
@@ -176,7 +176,9 @@
             cas-attributes    (process-cas-attributes cas-response)
             session           (:session request)]
         (if (:success? cas-attributes)
-          (oppija-login-response examSessionId lang session cas-attributes url-helper onr-client)
+          (do
+            (cas-ticket-db/create-ticket! db :oppija ticket)
+            (oppija-login-response examSessionId lang session cas-attributes url-helper onr-client))
           (validation-failed-response (:failureMessage cas-attributes) examSessionId lang url-helper)))
       unauthorized)
     (catch Exception e
@@ -190,7 +192,7 @@
                    (.parseTicketFromLogoutRequest logout-request))]
     (if (.isEmpty ticket)
       (error "Could not parse ticket from CAS request")
-      (cas-ticket-db/delete-ticket! db (.get ticket)))
+      (cas-ticket-db/delete-ticket! db :virkailija (.get ticket)))
     (ok)))
 
 (defn logout

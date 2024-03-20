@@ -9,17 +9,29 @@
 (require-sql ["yki/queries.sql" :as q])
 
 (defprotocol CasTickets
-  (create-ticket! [db ticket])
-  (delete-ticket! [db ticket])
-  (get-ticket [db ticket]))
+  (create-ticket! [db cas-variant ticket])
+  (delete-ticket! [db cas-variant ticket])
+  (get-ticket [db cas-variant ticket]))
 
 (extend-protocol CasTickets
   Boundary
-  (create-ticket! [{:keys [spec]} ticket]
+  (create-ticket! [{:keys [spec]} cas-variant ticket]
     (jdbc/with-db-transaction [tx spec]
-      (q/insert-ticket! tx {:ticket ticket})))
-  (delete-ticket! [{:keys [spec]} ticket]
+      (case cas-variant
+        :oppija
+        (q/insert-oppija-ticket! tx {:ticket ticket})
+        :virkailija
+        (q/insert-virkailija-ticket! tx {:ticket ticket}))))
+  (delete-ticket! [{:keys [spec]} cas-variant ticket]
     (jdbc/with-db-transaction [tx spec]
-      (q/delete-ticket! tx {:ticket ticket})))
-  (get-ticket [{:keys [spec]} ticket]
-    (first (q/select-ticket spec {:ticket ticket}))))
+      (case cas-variant
+        :oppija
+        (q/delete-oppija-ticket! tx {:ticket ticket})
+        :virkailija
+        (q/delete-virkailija-ticket! tx {:ticket ticket}))))
+  (get-ticket [{:keys [spec]} cas-variant ticket]
+    (case cas-variant
+      :oppija
+      (first (q/select-oppija-ticket spec {:ticket ticket}))
+      :virkailija
+      (first (q/select-virkailija-ticket spec {:ticket ticket})))))
