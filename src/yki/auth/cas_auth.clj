@@ -201,10 +201,13 @@
   (assoc (found (url-helper :cas.logout.yki)) :session nil))
 
 (defn cas-oppija-logout
-  [url-helper]
-  (let [redirect-url (url-helper :cas-oppija.logout-redirect)]
-    (info "Redirecting oppija to" redirect-url)
-    (assoc (found redirect-url) :session nil)))
+  [db logout-request]
+  (let [ticket (-> (CasLogout.)
+                   (.parseTicketFromLogoutRequest logout-request))]
+    (if (.isEmpty ticket)
+      (error "Could not parse ticket from CAS request")
+      (cas-ticket-db/delete-ticket! db :oppija (.get ticket)))
+    (ok)))
 
 (defn oppija-logout [redirect-url]
   (info "Sending cas oppija logout to" redirect-url)
