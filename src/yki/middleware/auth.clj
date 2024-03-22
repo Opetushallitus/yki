@@ -204,6 +204,25 @@
           (assoc-in response [:session :timeout] (+ now timeout)))
         response))))
 
+(defn- wrap-cas-session-clearing [handler db]
+  (fn [request]
+    (let [session     (:session request)
+          auth-method (:auth-method session)
+          ticket      (get-in session [:identity :ticket])
+          cas-variant (case auth-method
+                        "CAS"
+                        :virkailija
+                        "SUOMIFI"
+                        :oppija
+                        nil)]
+      ; If auth-method is CAS or SUOMIFI and ticket is not found in database,
+      ; the ticket has likely been deleted by CAS Single Logout.
+      ; To respect the Single Logout, we must clear the session (cookie) here.
+      (if (and cas-variant
+               (not (cas-ticket-db/get-ticket db cas-variant ticket)))
+        (handler (dissoc request :session))
+        (handler request)))))
+
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
   (let [{:keys [cookie-attrs key]} session-config]
     (fn with-authentication [handler]
@@ -211,6 +230,7 @@
           (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
           (wrap-authentication backend)
           (wrap-authorization backend)
+          (wrap-cas-session-clearing db)
           (wrap-session-timeout (:max-age cookie-attrs))
           ; TODO Figure out how to have separate cookies for public and virkailija APIs
           (wrap-session {:store        (cookie-store {:key (.getBytes ^String key)})
