@@ -47,6 +47,7 @@
       (GET "/callback*" [ticket :as request]
         (cas-auth/oppija-login ticket request cas-client onr-client url-helper db))
       (POST "/callback*" request
+        (warn "CAS-oppija /callback* POST" request)
         (cas-auth/cas-oppija-logout db (get-in request [:params :logoutRequest])))
       (context routing/virkailija-auth-uri []
         (POST "/callback" request
