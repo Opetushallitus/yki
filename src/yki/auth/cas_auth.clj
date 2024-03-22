@@ -193,7 +193,9 @@
                    (.parseTicketFromLogoutRequest logout-request))]
     (if (.isEmpty ticket)
       (error "Could not parse ticket from CAS request")
-      (cas-ticket-db/delete-ticket! db :virkailija (.get ticket)))
+      (let [ticket-value (.get ticket)]
+        (info "CAS ticket parsed from logoutRequest" ticket-value)
+        (cas-ticket-db/delete-ticket! db :virkailija (.get ticket))))
     (ok)))
 
 (defn logout
@@ -207,7 +209,9 @@
                    (.parseTicketFromLogoutRequest logout-request))]
     (if (.isEmpty ticket)
       (error "Could not parse ticket from CAS request")
-      (cas-ticket-db/delete-ticket! db :oppija (.get ticket)))
+      (let [ticket-value (.get ticket)]
+        (info "CAS-Oppija ticket parsed from logoutRequest:" ticket-value)
+        (cas-ticket-db/delete-ticket! db :oppija ticket-value)))
     (ok)))
 
 (defn oppija-logout [redirect-url]
