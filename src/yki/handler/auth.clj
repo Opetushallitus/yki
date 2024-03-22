@@ -47,26 +47,13 @@
       (GET "/callback*" [ticket :as request]
         (cas-auth/oppija-login ticket request cas-client onr-client url-helper db))
       (POST "/callback*" request
-        (cas-auth/cas-oppija-logout db (get-in request [:params :logoutRequest])))
+        (cas-auth/cas-logout db :oppija (get-in request [:params :logoutRequest])))
       (context routing/virkailija-auth-uri []
         (POST "/callback" request
-          (cas-auth/cas-logout db (get-in request [:params :logoutRequest])))
+          (cas-auth/cas-logout db :virkailija (get-in request [:params :logoutRequest])))
         (GET "/" {session :session}
           (found (cas-auth/create-redirect-uri-from-session session url-helper)))
         (GET "/callback" [ticket :as request]
           (cas-auth/virkailija-login ticket request cas-client permissions-client onr-client url-helper db))
         (GET "/logout" {session :session}
           (cas-auth/logout session url-helper))))))
-
-; CAS
-; - CASin kutsuma login GET /yki/auth/cas/callback
-; - CASin kutsuma logout POST /yki/auth/cas/callback
-; - sovelluksen tarjoama logout-URL /yki/auth/cas/logout
-
-; CAS-oppija
-; - CASin kutsuma login GET /yki/auth/callback*
-;   - HUOM! callback* eli esim. callbackFI
-;  - CASin kutsuma logout ???
-;   - aiempi oletus on ollut POST /yki/auth/callback, mutta pitäisi ehkä ollakin POST /yki/auth/callback*
-;   - täytyisi kenties siis mätsätä alkuperäinen login callback-URL?
-

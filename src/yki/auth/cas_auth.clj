@@ -9,8 +9,8 @@
             [yki.boundary.permissions :as permissions]
             [yki.middleware.auth :as auth])
   (:import [java.util UUID]
-           [fi.vm.sade.javautils.nio.cas CasLogout]
-           [clojure.data.xml Element]))
+           [clojure.data.xml Element]
+           (fi.vm.sade.javautils.nio.cas CasLogout)))
 
 (def unauthorized {:status  401
                    :body    "Unauthorized"
@@ -187,32 +187,24 @@
       (throw e))))
 
 (defn cas-logout
-  [db logout-request]
-  (info "cas-initiated logout")
-  (let [ticket (-> (CasLogout.)
-                   (.parseTicketFromLogoutRequest logout-request))]
-    (if (.isEmpty ticket)
-      (error "Could not parse ticket from CAS request")
-      (let [ticket-value (.get ticket)]
-        (info "CAS ticket parsed from logoutRequest" ticket-value)
-        (cas-ticket-db/delete-ticket! db :virkailija (.get ticket))))
-    (ok)))
+  [db cas-variant logout-request]
+  (try
+    (let [ticket (-> (CasLogout.)
+                     (.parseTicketFromLogoutRequest logout-request))]
+      (if (.isEmpty ticket)
+        (error "Could not parse ticket from CAS request")
+        (let [result (cas-ticket-db/delete-ticket! db cas-variant (.get ticket))]
+          (when-not (pos-int? result)
+            (info "Ticket not found corresponding to CAS logout; already deleted? Variant:" cas-variant "Ticket:" ticket)))))
+    (catch Exception e
+      (error e "Caught exception parsing CAS logout request for variant" cas-variant))
+    (finally
+      (ok {}))))
 
 (defn logout
   [session url-helper]
   (info "user" (-> session :identity :username) "logged out")
   (assoc (found (url-helper :cas.logout.yki)) :session nil))
-
-(defn cas-oppija-logout
-  [db logout-request]
-  (let [ticket (-> (CasLogout.)
-                   (.parseTicketFromLogoutRequest logout-request))]
-    (if (.isEmpty ticket)
-      (error "Could not parse ticket from CAS request")
-      (let [ticket-value (.get ticket)]
-        (info "CAS-Oppija ticket parsed from logoutRequest:" ticket-value)
-        (cas-ticket-db/delete-ticket! db :oppija ticket-value)))
-    (ok)))
 
 (defn oppija-logout [redirect-url]
   (info "Sending cas oppija logout to" redirect-url)
