@@ -119,7 +119,7 @@
                                   :attributes])]
     (assoc (process-attributes attributes) :success? success :failureMessage failure)))
 
-(defn oppija-login-response [exam-session-id language session cas-attributes url-helper onr-client]
+(defn oppija-login-response [exam-session-id session ticket cas-attributes url-helper onr-client]
   (let [{:keys [VakinainenKotimainenLahiosoitePostitoimipaikkaS
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
@@ -152,7 +152,8 @@
             :ssn              nationalIdentificationNumber
             :oid              oidHenkilo
             :nationalities    (mapv #(get % "kansalaisuusKoodi") kansalaisuus)
-            :external-user-id (or oidHenkilo nationalIdentificationNumber)}
+            :external-user-id (or oidHenkilo nationalIdentificationNumber)
+            :ticket           ticket}
            address)
          :auth-method    "SUOMIFI"
          :yki-session-id (str (UUID/randomUUID))})
@@ -178,7 +179,7 @@
         (if (:success? cas-attributes)
           (do
             (cas-ticket-db/create-ticket! db :oppija ticket)
-            (oppija-login-response examSessionId lang session cas-attributes url-helper onr-client))
+            (oppija-login-response examSessionId session ticket cas-attributes url-helper onr-client))
           (validation-failed-response (:failureMessage cas-attributes) examSessionId lang url-helper)))
       unauthorized)
     (catch Exception e
