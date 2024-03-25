@@ -223,15 +223,6 @@
         (handler (dissoc request :session))
         (handler request)))))
 
-(defn- wrap-separate-virkailija-and-oppija-sessions [handler {:keys [oppija-domain virkailija-domain]}]
-  (fn [request]
-    (let [response    (handler request)]
-      (if-let [auth-method (get-in response [:session :auth-method])]
-        (if (= "CAS" auth-method)
-          (assoc response :session-cookie-attrs {:domain virkailija-domain})
-          (assoc response :session-cookie-attrs {:domain oppija-domain}))
-        response))))
-
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
   (let [{:keys [cookie-attrs key]} session-config]
     (fn with-authentication [handler]
@@ -241,7 +232,6 @@
           (wrap-authorization backend)
           (wrap-cas-session-clearing db)
           (wrap-session-timeout (:max-age cookie-attrs))
-          (wrap-separate-virkailija-and-oppija-sessions cookie-attrs)
           (wrap-session {:store        (cookie-store {:key (.getBytes ^String key)})
                          :cookie-name  "yki"
-                         :cookie-attrs (dissoc cookie-attrs :oppija-domain :virkailija-domain)})))))
+                         :cookie-attrs cookie-attrs})))))

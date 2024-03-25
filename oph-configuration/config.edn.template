@@ -83,8 +83,6 @@
                       :cookie-attrs {:max-age 3600
                                      :http-only true
                                      :secure true
-                                     :oppija-domain "yki.{{host_oppija}}"
-                                     :virkailija-domain "{{host_virkailija}}"
                                      :path "/yki"}}}}
   :duct.profile/prod  {}
 }
