@@ -75,6 +75,8 @@
                    :cookie-attrs {:max-age   28800
                                   :http-only true
                                   :secure    false
+                                  :oppija-domain     "yki.localhost"
+                                  :virkailija-domain "virkailija.localhost"
                                   :path      "/yki"}}}
 
  :yki.middleware.no-auth/with-authentication
