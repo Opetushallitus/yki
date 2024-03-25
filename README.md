@@ -4,8 +4,18 @@ Backend for YKI application. Original frontend is located under <https://github.
 
 ## Environment setup
 
-When you first clone this repository, run:
+First, clone this repository. Ensure you have [leiningen](https://codeberg.org/leiningen/leiningen) installed.
 
+Then, setup credentials to download dependencies from Github Packages.
+
+Concretely, you must ensure leiningen has access to the environment variables `GITHUB_USERNAME` and `GITHUB_REPOSITORY_TOKEN`.
+This can be achieved by creating the file `.lein-env` at this repository's root with the following content:
+```
+{:env {:GITHUB_USERNAME       "<YOUR GITHUB USERNAME>"
+       :GITHUB_REGISTRY_TOKEN "Personal Access Token (Classic) with Packages:Read permission"}}
+```
+
+Then, run:
 ```sh
 lein duct setup
 ```
@@ -84,9 +94,6 @@ Rest of the environment variables are updated as follows:
 ### External development credentials
 
 [Suomi.fi](https://palveluhallinta.suomi.fi/fi/tuki/artikkelit/5a82ef7ab03cdc41de664a2b)
-
-[Paytrail](https://docs.paytrail.com/credentials/)
-
 
 ### Testing
 
