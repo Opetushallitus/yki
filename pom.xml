@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>9ccc98e64e4adf66d8dce4b1cff7b7fe678fedcc</tag>
+    <tag>20b45f018a5e2fe94f75eff4e90a6edc4ecbb686</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>

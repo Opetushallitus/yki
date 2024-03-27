@@ -7,13 +7,8 @@ Backend for YKI application. Original frontend is located under <https://github.
 First, clone this repository. Ensure you have [leiningen](https://codeberg.org/leiningen/leiningen) installed.
 
 Then, setup credentials to download dependencies from Github Packages.
-
-Concretely, you must ensure leiningen has access to the environment variables `GITHUB_USERNAME` and `GITHUB_REPOSITORY_TOKEN`.
-This can be achieved by creating the file `.lein-env` at this repository's root with the following content:
-```
-{:env {:GITHUB_USERNAME       "<YOUR GITHUB USERNAME>"
-       :GITHUB_REGISTRY_TOKEN "Personal Access Token (Classic) with Packages:Read permission"}}
-```
+Credentials are stored in the environment variables `GITHUB_USERNAME` and `GITHUB_REPOSITORY_TOKEN`.
+For the token, you must create a `Personal Access Token (classic)` with scope (at least) `read:packages`.
 
 Then, run:
 ```sh
