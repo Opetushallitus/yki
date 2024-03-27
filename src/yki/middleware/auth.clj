@@ -30,17 +30,17 @@
   (log/info "No access to uri:" (:uri request))
   false)
 
-(defn- participant-authenticated [request]
-  (if (-> request :session :identity)
+(defn- authenticated?
+  [db cas-variant {:keys [session]}]
+  (cond
+    ; Email authentication allowed for public APIs
+    (and (= :oppija cas-variant)
+         (= "EMAIL" (:auth-method session)))
     true
-    (do
-      (log/info "Participant not authenticated request uri:" (:uri request))
-      (error {:status 401 :body "Unauthorized"}))))
-
-(defn- virkailija-authenticated
-  [db request]
-  (if (cas-ticket-db/get-ticket db (-> request :session :identity :ticket))
+    ; If authenticating through CAS- or CAS-Oppija, check for ticket validity
+    (cas-ticket-db/get-ticket db cas-variant (-> session :identity :ticket))
     true
+    :else
     (error {:status 401 :body "Unauthorized"})))
 
 (defn- match-oid-in-uri
@@ -103,80 +103,84 @@
   "OPH users with admin role are allowed to call all endpoints without restrictions to organizer.
   Other users have access only to organizer they have permissions for."
   [url-helper db]
-  [{:pattern #".*/auth/cas/callback"
-    :handler any-access}
-   {:pattern #".*/auth/login.*"
-    :handler any-access}
-   {:pattern #".*/auth/logout"
-    :handler any-access}
-   {:pattern #".*/auth/logout/cas/callback"
-    :handler any-access}
-   {:pattern #".*/auth/initsession"
-    :handler any-access}
-   {:pattern #".*/auth/user"
-    :handler any-access}
-   {:pattern #".*/auth/callback"
-    :handler any-access}
-   {:pattern        #".*/auth/callback.*"
-    :handler        any-access
-    :request-method :get}
-   {:pattern        #".*/api/exam-session"
-    :handler        any-access
-    :request-method :get}
-   {:pattern #".*/api/evaluation.*"
-    :handler any-access}
-   {:pattern        #".*/api/virkailija/organizer/.*/exam-date.*"
-    :handler        (partial virkailija-authenticated db)
-    :request-method :get}
-   {:pattern        #".*/api/virkailija/organizer/.*/exam-date.*"
-    :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
-    :request-method #{:post :put :delete}}
-   {:pattern #".*/api/virkailija/.*/resend-confirmation-email"
-    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
-   {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
-    :handler {:and [(partial virkailija-authenticated db) {:or [oph-admin-access permission-to-organization]}]}}
-   {:pattern        #".*/api/virkailija/organizer"
-    :handler        (partial virkailija-authenticated db)
-    :request-method :get}
-   {:pattern        #".*/api/virkailija/organizer.*"
-    :handler        {:and [(partial virkailija-authenticated db) oph-admin-access]}
-    :request-method #{:post :put :delete}}
-   {:pattern #".*/api/virkailija/quarantine.*"
-    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
-   {:pattern #".*/api/virkailija/debug.*"
-    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
-   {:pattern        #".*/auth/cas.*"
-    :handler        (partial virkailija-authenticated db)
-    :on-error       (fn [req _] (redirect-to-cas req url-helper))
-    :request-method :get}
-   {:pattern        #".*/auth/cas"
-    :handler        any-access
-    :request-method :post}
-   {:pattern  #".*/auth.*"
-    :handler  no-access
-    :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
-   {:pattern #".*/api/registration.*"
-    :handler participant-authenticated}
-   {:pattern #".*/api/exam-date/.*"
-    :handler oph-admin-access}
-   {:pattern #".*/api/payment/v2/report"
-    :handler {:and [(partial virkailija-authenticated db) oph-admin-access]}}
-   {:pattern #".*/api/payment/v3/paytrail/.*"
-    :handler any-access}
-   {:pattern #".*/api/payment/v3/.*/redirect"
-    :handler participant-authenticated}
-   {:pattern #".*/api/evaluation-payment/v3/.*"
-    :handler any-access}
-   {:pattern #".*/api/yki-register-debug/.*"
-    :handler oph-admin-access}
-   {:pattern #".*/api/user/identity"
-    :handler any-access}
-   {:pattern #".*/api/user/.*"
-    :handler participant-authenticated}
-   {:pattern #".*/api.*"
-    :handler no-access}
-   {:pattern #".*"
-    :handler no-access}])
+  (let [oppija-authenticated?     (fn [request]
+                                    (authenticated? db :oppija request))
+        virkailija-authenticated? (fn [request]
+                                    (authenticated? db :virkailija request))]
+    [{:pattern #".*/auth/cas/callback"
+      :handler any-access}
+     {:pattern #".*/auth/login.*"
+      :handler any-access}
+     {:pattern #".*/auth/logout"
+      :handler any-access}
+     {:pattern #".*/auth/logout/cas/callback"
+      :handler any-access}
+     {:pattern #".*/auth/initsession"
+      :handler any-access}
+     {:pattern #".*/auth/user"
+      :handler any-access}
+     {:pattern #".*/auth/callback"
+      :handler any-access}
+     {:pattern        #".*/auth/callback.*"
+      :handler        any-access
+      :request-method #{:get :post}}
+     {:pattern        #".*/api/exam-session"
+      :handler        any-access
+      :request-method :get}
+     {:pattern #".*/api/evaluation.*"
+      :handler any-access}
+     {:pattern        #".*/api/virkailija/organizer/.*/exam-date.*"
+      :handler        virkailija-authenticated?
+      :request-method :get}
+     {:pattern        #".*/api/virkailija/organizer/.*/exam-date.*"
+      :handler        {:and [virkailija-authenticated? oph-admin-access]}
+      :request-method #{:post :put :delete}}
+     {:pattern #".*/api/virkailija/.*/resend-confirmation-email"
+      :handler {:and [virkailija-authenticated? oph-admin-access]}}
+     {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
+      :handler {:and [virkailija-authenticated? {:or [oph-admin-access permission-to-organization]}]}}
+     {:pattern        #".*/api/virkailija/organizer"
+      :handler        virkailija-authenticated?
+      :request-method :get}
+     {:pattern        #".*/api/virkailija/organizer.*"
+      :handler        {:and [virkailija-authenticated? oph-admin-access]}
+      :request-method #{:post :put :delete}}
+     {:pattern #".*/api/virkailija/quarantine.*"
+      :handler {:and [virkailija-authenticated? oph-admin-access]}}
+     {:pattern #".*/api/virkailija/debug.*"
+      :handler {:and [virkailija-authenticated? oph-admin-access]}}
+     {:pattern        #".*/auth/cas.*"
+      :handler        virkailija-authenticated?
+      :on-error       (fn [req _] (redirect-to-cas req url-helper))
+      :request-method :get}
+     {:pattern        #".*/auth/cas"
+      :handler        any-access
+      :request-method :post}
+     {:pattern  #".*/auth.*"
+      :handler  no-access
+      :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
+     {:pattern #".*/api/registration.*"
+      :handler oppija-authenticated?}
+     {:pattern #".*/api/exam-date/.*"
+      :handler oph-admin-access}
+     {:pattern #".*/api/payment/v2/report"
+      :handler {:and [virkailija-authenticated? oph-admin-access]}}
+     {:pattern #".*/api/payment/v3/paytrail/.*"
+      :handler any-access}
+     {:pattern #".*/api/payment/v3/.*/redirect"
+      :handler oppija-authenticated?}
+     {:pattern #".*/api/evaluation-payment/v3/.*"
+      :handler any-access}
+     {:pattern #".*/api/yki-register-debug/.*"
+      :handler oph-admin-access}
+     {:pattern #".*/api/user/identity"
+      :handler any-access}
+     {:pattern #".*/api/user/.*"
+      :handler oppija-authenticated?}
+     {:pattern #".*/api.*"
+      :handler no-access}
+     {:pattern #".*"
+      :handler no-access}]))
 
 (defn on-error
   [_request value]
@@ -194,11 +198,30 @@
                                           (dissoc :session)))]
       (if-let [response-session (:session response)]
         (if (:timeout response-session)
-          ; Don't renew time session timeout if a timeout is present in response
+          ; Don't renew session timeout if a timeout is present in response
           response
           ; Add session timeout to response otherwise.
           (assoc-in response [:session :timeout] (+ now timeout)))
         response))))
+
+(defn- wrap-cas-session-clearing [handler db]
+  (fn [request]
+    (let [session     (:session request)
+          auth-method (:auth-method session)
+          ticket      (get-in session [:identity :ticket])
+          cas-variant (case auth-method
+                        "CAS"
+                        :virkailija
+                        "SUOMIFI"
+                        :oppija
+                        nil)]
+      ; If auth-method is CAS or SUOMIFI and ticket is not found in database,
+      ; the ticket has likely been deleted by CAS Single Logout.
+      ; To respect the Single Logout, we must clear the session (cookie) here.
+      (if (and cas-variant
+               (not (cas-ticket-db/get-ticket db cas-variant ticket)))
+        (handler (dissoc request :session))
+        (handler request)))))
 
 (defmethod ig/init-key :yki.middleware.auth/with-authentication [_ {:keys [url-helper session-config db]}]
   (let [{:keys [cookie-attrs key]} session-config]
@@ -207,6 +230,7 @@
           (wrap-access-rules {:rules (rules url-helper db) :on-error on-error})
           (wrap-authentication backend)
           (wrap-authorization backend)
+          (wrap-cas-session-clearing db)
           (wrap-session-timeout (:max-age cookie-attrs))
           (wrap-session {:store        (cookie-store {:key (.getBytes ^String key)})
                          :cookie-name  "yki"
