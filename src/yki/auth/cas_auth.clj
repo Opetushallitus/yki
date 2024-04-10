@@ -189,17 +189,13 @@
 (defn cas-logout
   [db cas-variant logout-request]
   (try
-    (let [ticket (-> (CasLogout.)
-                     (.parseTicketFromLogoutRequest logout-request))]
-      (if (.isEmpty ticket)
+    (let [ticket-container (-> (CasLogout.)
+                               (.parseTicketFromLogoutRequest logout-request))]
+      (if (.isEmpty ticket-container)
         (error "Could not parse ticket from CAS request")
-        (let [result (cas-ticket-db/delete-ticket! db cas-variant (.get ticket))]
-          (when-not (pos-int? result)
-            (info "Ticket not found corresponding to CAS logout; already deleted? Variant:" cas-variant "Ticket:" ticket)))))
+        (cas-ticket-db/delete-ticket! db cas-variant (.get ticket-container))))
     (catch Exception e
-      (error e "Caught exception parsing CAS logout request for variant" cas-variant))
-    (finally
-      (ok {}))))
+      (error e "Caught exception parsing CAS logout request for variant" cas-variant))))
 
 (defn logout
   [session url-helper]
