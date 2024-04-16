@@ -9,8 +9,8 @@
             [yki.boundary.permissions :as permissions]
             [yki.middleware.auth :as auth])
   (:import [java.util UUID]
-           [fi.vm.sade.javautils.nio.cas CasLogout]
-           [clojure.data.xml Element]))
+           [clojure.data.xml Element]
+           (fi.vm.sade.javautils.nio.cas CasLogout)))
 
 (def unauthorized {:status  401
                    :body    "Unauthorized"
@@ -36,12 +36,12 @@
     (url-helper (if oph-admin? :yki.admin.cas.login-success.redirect
                                :yki.organizer.cas.login-success.redirect) lang)))
 
-(defn login [ticket request cas-client permissions-client onr-client url-helper db]
+(defn virkailija-login [ticket request cas-client permissions-client onr-client url-helper db]
   (try
     (if ticket
       (let [auth-cas-client (cas-client (url-helper :root-cas-service))
             username        (cas/validate-ticket auth-cas-client ticket)
-            _               (cas-ticket-db/create-ticket! db ticket)
+            _               (cas-ticket-db/create-ticket! db :virkailija ticket)
             permissions     (permissions/virkailija-by-username permissions-client username)
             person-oid      (:oidHenkilo permissions)
             person          (onr/get-person-by-oid onr-client person-oid)
@@ -119,7 +119,7 @@
                                   :attributes])]
     (assoc (process-attributes attributes) :success? success :failureMessage failure)))
 
-(defn oppija-login-response [exam-session-id language session cas-attributes url-helper onr-client]
+(defn oppija-login-response [exam-session-id session ticket cas-attributes url-helper onr-client]
   (let [{:keys [VakinainenKotimainenLahiosoitePostitoimipaikkaS
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
@@ -152,7 +152,8 @@
             :ssn              nationalIdentificationNumber
             :oid              oidHenkilo
             :nationalities    (mapv #(get % "kansalaisuusKoodi") kansalaisuus)
-            :external-user-id (or oidHenkilo nationalIdentificationNumber)}
+            :external-user-id (or oidHenkilo nationalIdentificationNumber)
+            :ticket           ticket}
            address)
          :auth-method    "SUOMIFI"
          :yki-session-id (str (UUID/randomUUID))})
@@ -162,7 +163,7 @@
   (info "Ticket validation failed: " message)
   (found (url-helper :exam-session.fail.redirect exam-session-id lang)))
 
-(defn oppija-login [ticket request cas-client onr-client url-helper]
+(defn oppija-login [ticket request cas-client onr-client url-helper db]
   (try
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
@@ -176,7 +177,9 @@
             cas-attributes    (process-cas-attributes cas-response)
             session           (:session request)]
         (if (:success? cas-attributes)
-          (oppija-login-response examSessionId lang session cas-attributes url-helper onr-client)
+          (do
+            (cas-ticket-db/create-ticket! db :oppija ticket)
+            (oppija-login-response examSessionId session ticket cas-attributes url-helper onr-client))
           (validation-failed-response (:failureMessage cas-attributes) examSessionId lang url-helper)))
       unauthorized)
     (catch Exception e
@@ -184,25 +187,20 @@
       (throw e))))
 
 (defn cas-logout
-  [db logout-request]
-  (info "cas-initiated logout")
-  (let [ticket (-> (CasLogout.)
-                   (.parseTicketFromLogoutRequest logout-request))]
-    (if (.isEmpty ticket)
-      (error "Could not parse ticket from CAS request")
-      (cas-ticket-db/delete-ticket! db (.get ticket)))
-    (ok)))
+  [db cas-variant logout-request]
+  (try
+    (let [ticket-container (-> (CasLogout.)
+                               (.parseTicketFromLogoutRequest logout-request))]
+      (if (.isEmpty ticket-container)
+        (error "Could not parse ticket from CAS request")
+        (cas-ticket-db/delete-ticket! db cas-variant (.get ticket-container))))
+    (catch Exception e
+      (error e "Caught exception parsing CAS logout request for variant" cas-variant))))
 
 (defn logout
   [session url-helper]
   (info "user" (-> session :identity :username) "logged out")
   (assoc (found (url-helper :cas.logout.yki)) :session nil))
-
-(defn cas-oppija-logout
-  [url-helper]
-  (let [redirect-url (url-helper :cas-oppija.logout-redirect)]
-    (info "Redirecting oppija to" redirect-url)
-    (assoc (found redirect-url) :session nil)))
 
 (defn oppija-logout [redirect-url]
   (info "Sending cas oppija logout to" redirect-url)

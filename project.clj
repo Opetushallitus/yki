@@ -1,6 +1,9 @@
 (defproject yki "1.0.1-SNAPSHOT"
   :description "YKI backend"
-  :repositories [["oph-releases" "https://artifactory.opintopolku.fi/artifactory/oph-sade-release-local"]
+  :repositories [["oph-github-packages" {:url "https://maven.pkg.github.com/Opetushallitus/packages"
+                                         :username :env/GITHUB_USERNAME
+                                         :password :env/GITHUB_REGISTRY_TOKEN}]
+                 ["oph-releases" "https://artifactory.opintopolku.fi/artifactory/oph-sade-release-local"]
                  ["oph-snapshots" "https://artifactory.opintopolku.fi/artifactory/oph-sade-snapshot-local"]
                  ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
@@ -36,7 +39,7 @@
                  [ring-logger "1.1.1"]
                  [ch.qos.logback/logback-classic "1.4.11"]
                  [org.clojure/data.xml "0.0.8"]
-                 [fi.vm.sade.java-utils/java-cas "1.0.7-SNAPSHOT"
+                 [fi.vm.sade.java-utils/java-cas "1.1.1-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-simple]]
                  [fi.vm.sade/auditlogger "9.2.4-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]

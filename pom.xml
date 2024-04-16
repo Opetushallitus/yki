@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>096e897bf3757b285ecdb75a16532c4f22dfefc7</tag>
+    <tag>20b45f018a5e2fe94f75eff4e90a6edc4ecbb686</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -56,6 +56,16 @@
     <repository>
       <id>clojars</id>
       <url>https://repo.clojars.org/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+    <repository>
+      <id>oph-github-packages</id>
+      <url>https://maven.pkg.github.com/Opetushallitus/packages</url>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
@@ -536,7 +546,7 @@
     <dependency>
       <groupId>fi.vm.sade.java-utils</groupId>
       <artifactId>java-cas</artifactId>
-      <version>1.0.7-SNAPSHOT</version>
+      <version>1.1.1-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>

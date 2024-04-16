@@ -26,5 +26,8 @@ runs:
 
     - name: Install Clojure deps
       run: lein deps
+      env:
+        GITHUB_USERNAME: ${{ github.actor }}
+        GITHUB_REGISTRY_TOKEN: ${{ github.token }}
       if: steps.maven-cache.outputs.cache-hit != 'true'
       shell: bash
