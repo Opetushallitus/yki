@@ -103,7 +103,8 @@
 (defprotocol Onr
   (get-or-create-person [this person])
   (get-person-by-ssn [this ssn])
-  (get-person-by-oid [this oid]))
+  (get-person-by-oid [this oid])
+  (list-persons-by-oids [this oids]))
 
 (defn- get-or-create-person-with-retries [cas-client onr-url registration max-attempts]
   (loop [attempt 1
@@ -155,7 +156,17 @@
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
       (if (= 200 status)
         (json/read-value body)
-        (log/error "ONR get-person-by-oid error:" status)))))
+        (log/error "ONR get-person-by-oid error:" status))))
+  (list-persons-by-oids [_ oids]
+    {:pre [(coll? oids)
+           (seqable? oids)
+           (counted? oids)
+           (<= 5000 (count oids))]}
+    (let [url (url-helper :onr-service.list-persons-by-oids)
+          {:keys [status body]} (cas/cas-authenticated-post cas-client url oids)]
+      (if (= 200 status)
+        (json/read-value body)
+        (log/error "ONR list-persons-by-oids error:" status)))))
 
 (defmethod ig/init-key :yki.boundary.onr/onr-client [_ {:keys [url-helper cas-client]}]
   (let [onr-cas-client (cas-client (url-helper :onr-service))]

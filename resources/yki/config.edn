@@ -199,6 +199,7 @@
   :yki.handler/debug                                  {:access-log #ig/ref :yki.middleware.access-log/with-logging
                                                        :auth       #ig/ref :yki.middleware.auth/with-authentication
                                                        :db         #ig/ref :duct.database/sql
+                                                       :onr-client #ig/ref :yki.boundary.onr/onr-client
                                                        :url-helper #ig/ref :yki.util/url-helper}}
 
  :duct.profile/dev   #duct/include "dev"
