@@ -1,7 +1,6 @@
 (ns yki.handler.debug
   (:require
     [clojure.data.csv :as csv]
-    [clojure.set :as set]
     [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST]]
     [integrant.core :as ig]
@@ -48,11 +47,10 @@
                                           (map :person_oid)
                                           (onr/list-persons-by-oids onr-client))]
                 (doseq [onr-entry onr-data]
-                  (let [onr-details (-> onr-entry
-                                        (select-keys ["oidHenkilo" "oppijanumero" "yksiloity"])
-                                        (set/rename-keys {"oidHenkilo"   :person_oid
-                                                          "oppijanumero" :oppijanumero
-                                                          "yksiloity"    :is_individualized}))
+                  (let [onr-details {:person_oid   (onr-entry "oidHenkilo")
+                                     :oppijanumero (onr-entry "oppijanumero")
+                                     :yksiloity    (or (onr-entry "yksiloity")
+                                                       (onr-entry "yksiloityVTJ"))}
                         oid         (:person_oid onr-details)]
                     (b/upsert-participant-onr-data!
                       db
