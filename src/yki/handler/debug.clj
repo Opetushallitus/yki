@@ -47,10 +47,10 @@
                                           (map :person_oid)
                                           (onr/list-persons-by-oids onr-client))]
                 (doseq [onr-entry onr-data]
-                  (let [onr-details {:person_oid   (onr-entry "oidHenkilo")
-                                     :oppijanumero (onr-entry "oppijanumero")
-                                     :yksiloity    (or (onr-entry "yksiloity")
-                                                       (onr-entry "yksiloityVTJ"))}
+                  (let [onr-details {:person_oid        (onr-entry "oidHenkilo")
+                                     :oppijanumero      (onr-entry "oppijanumero")
+                                     :is_individualized (or (onr-entry "yksiloity")
+                                                            (onr-entry "yksiloityVTJ"))}
                         oid         (:person_oid onr-details)]
                     (b/upsert-participant-onr-data!
                       db
