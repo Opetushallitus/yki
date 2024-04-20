@@ -11,6 +11,9 @@
     [yki.handler.routing :as routing])
   (:import (java.io StringWriter)))
 
+(defn- with-onr-url [url-helper {:keys [oid] :as data}]
+  (assoc data :onr_url (url-helper :henkilo-ui.henkilo-by-oid oid)))
+
 (defmethod ig/init-key :yki.handler/debug [_ {:keys [access-log auth db onr-client url-helper]}]
   {:pre [(some? access-log)
          (some? auth)
@@ -23,8 +26,9 @@
       :middleware [auth access-log wrap-params]
       (GET "/participants/onr" _
         ;:query-params [individualized :- boolean?]
-        (let [participant-onr-data (b/get-participant-onr-data db)
-              columns              [:oid :oppijanumero :participant_id :is_individualized :modified]
+        (let [participant-onr-data (->> (b/get-participant-onr-data db)
+                                        (map #(with-onr-url url-helper %)))
+              columns              [:oid :oppijanumero :onr_url :participant_id :is_individualized :modified]
               batch-size           1000]
           (with-open [writer (StringWriter.)]
             (csv/write-csv writer [(map name columns)] :separator \;)
@@ -32,7 +36,6 @@
                                (map (apply juxt columns))
                                (partition-all batch-size))]
               (csv/write-csv writer batch :separator \;))
-            ; TODO Add link to ONR in the data!
             (-> (.toString writer)
                 (ok)
                 (assoc-in [:headers "Content-Type"] "text/csv")))))
