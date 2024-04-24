@@ -1560,3 +1560,11 @@ WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE 
 SELECT epn.href
 FROM exam_payment_new epn
 WHERE epn.registration_id = :registration_id AND epn.state = 'UNPAID';
+
+-- name: delete-exam-session-queue-entries-for-old-exam-dates!
+DELETE FROM exam_session_queue
+WHERE exam_session_id IN
+      (SELECT es.id
+       FROM exam_session es
+       INNER JOIN exam_date ed on es.exam_date_id = ed.id
+       WHERE ed.exam_date + interval '1 month' < current_date);

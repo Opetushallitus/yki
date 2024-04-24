@@ -76,6 +76,7 @@
   (add-to-exam-session-queue! [db email lang exam-session-id])
   (update-exam-session-queue-last-notified-at! [db email exam-session-id])
   (remove-from-exam-session-queue! [db email exam-session-id])
+  (remove-old-entries-from-exam-session-queue! [db])
   (set-post-admission-active! [db id quota])
   (set-post-admission-deactive! [db id])
   (get-contact-info-by-exam-session-id [db id])
@@ -208,6 +209,9 @@
     (jdbc/with-db-transaction [tx spec]
       (q/delete-from-exam-session-queue! tx {:exam_session_id exam-session-id
                                              :email           email})))
+
+  (remove-old-entries-from-exam-session-queue! [{:keys [spec]}]
+    (q/delete-exam-session-queue-entries-for-old-exam-dates! spec))
 
   (set-post-admission-active!
     [{:keys [spec]} id quota]

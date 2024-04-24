@@ -25,6 +25,10 @@
                                           :task      "EXAM_SESSION_QUEUE_HANDLER"
                                           :interval  "599 SECONDS"})
 
+(defonce remove-old-data-handler-conf {:worker-id (str (UUID/randomUUID))
+                                       :task      "REMOVE_OLD_DATA_HANDLER"
+                                       :interval  "1 DAY"})
+
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
   Rethrows exceptions if retry until limit is not reached so that message is not
@@ -67,13 +71,13 @@
      (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
        (log/info "Check participants sync")
        (let [exam-sessions (exam-session-db/get-exam-sessions-to-be-synced db (str retry-duration-in-days " days"))]
-         (log/info "Syncronizing participants of exam sessions" exam-sessions)
+         (log/info "Synchronizing participants of exam sessions" exam-sessions)
          (doseq [exam-session exam-sessions]
            (try
              (yki-register/sync-exam-session-participants db url-helper basic-auth disabled (:exam_session_id exam-session))
              (catch Exception e
                (do
-                 (log/error e "Failed to syncronize participants of exam session" exam-session)
+                 (log/error e "Failed to synchronize participants of exam session" exam-session)
                  (exam-session-db/set-participants-sync-to-failed! db (:exam_session_id exam-session) (str retry-duration-in-days " days"))))))))
      (catch Exception e
        (log/error e "Participant sync handler failed"))))
@@ -132,3 +136,15 @@
                (log/error e "Failed to send notifications for" exam-session))))))
      (catch Exception e
        (log/error e "Exam session queue handler failed"))))
+
+(defmethod ig/init-key ::remove-old-data-handler
+  [_ {:keys [db]}]
+  {:pre [(some? db)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db remove-old-data-handler-conf)
+       (log/info "Old data removal started")
+       (let [deleted-from-exam-session-queue (exam-session-db/remove-old-entries-from-exam-session-queue! db)]
+         (when (pos? deleted-from-exam-session-queue)
+           (log/info "Removed old entries from exam-session-queue:" deleted-from-exam-session-queue))))
+     (catch Exception e
+       (log/error e "Old data removal failed"))))
