@@ -1568,3 +1568,12 @@ WHERE exam_session_id IN
        FROM exam_session es
        INNER JOIN exam_date ed on es.exam_date_id = ed.id
        WHERE ed.exam_date + interval '1 month' < current_date);
+
+-- name: delete-old-cas-tickets!
+DELETE FROM cas_ticketstore
+WHERE logged_in + interval '1 week' < current_date;
+
+-- name: delete-old-cas-oppija-tickets!
+DELETE FROM cas_oppija_ticketstore
+WHERE logged_in + interval '1 week' < current_date;
+

@@ -1,16 +1,18 @@
 (ns yki.job.scheduled-tasks
-  (:require [integrant.core :as ig]
-            [clj-time.coerce :as c]
-            [clj-time.core :as t]
-            [clojure.tools.logging :as log]
-            [pgqueue.core :as pgq]
-            [yki.boundary.email :as email]
-            [yki.boundary.registration-db :as registration-db]
-            [yki.boundary.exam-session-db :as exam-session-db]
-            [yki.boundary.yki-register :as yki-register]
-            [yki.util.template-util :as template-util]
-            [yki.job.job-queue]
-            [yki.boundary.job-db :as job-db])
+  (:require
+    [clj-time.coerce :as c]
+    [clj-time.core :as t]
+    [clojure.tools.logging :as log]
+    [integrant.core :as ig]
+    [yki.boundary.cas-ticket-db :as cas-ticket-db]
+    [yki.boundary.email :as email]
+    [yki.boundary.exam-session-db :as exam-session-db]
+    [yki.boundary.job-db :as job-db]
+    [yki.boundary.registration-db :as registration-db]
+    [yki.boundary.yki-register :as yki-register]
+    [yki.job.job-queue]
+    [yki.util.template-util :as template-util]
+    [pgqueue.core :as pgq])
   (:import [java.util UUID]))
 
 (defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
@@ -143,8 +145,11 @@
   #(try
      (when (job-db/try-to-acquire-lock! db remove-old-data-handler-conf)
        (log/info "Old data removal started")
-       (let [deleted-from-exam-session-queue (exam-session-db/remove-old-entries-from-exam-session-queue! db)]
-         (when (pos? deleted-from-exam-session-queue)
-           (log/info "Removed old entries from exam-session-queue:" deleted-from-exam-session-queue))))
+       (let [deleted-from-exam-session-queue (exam-session-db/remove-old-entries-from-exam-session-queue! db)
+             deleted-cas-tickets (cas-ticket-db/delete-old-tickets! db :virkailija)
+             deleted-cas-oppija-tickets (cas-ticket-db/delete-old-tickets! db :oppija)]
+         (log/info "Removed old entries from exam-session-queue:" deleted-from-exam-session-queue)
+         (log/info "Removed old CAS tickets:" deleted-cas-tickets)
+         (log/info "Removed old CAS-oppija tickets:" deleted-cas-oppija-tickets)))
      (catch Exception e
        (log/error e "Old data removal failed"))))

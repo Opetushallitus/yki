@@ -11,7 +11,8 @@
 (defprotocol CasTickets
   (create-ticket! [db cas-variant ticket])
   (delete-ticket! [db cas-variant ticket])
-  (get-ticket [db cas-variant ticket]))
+  (get-ticket [db cas-variant ticket])
+  (delete-old-tickets! [db cas-variant]))
 
 (extend-protocol CasTickets
   Boundary
@@ -34,4 +35,10 @@
       :oppija
       (first (q/select-oppija-ticket spec {:ticket ticket}))
       :virkailija
-      (first (q/select-virkailija-ticket spec {:ticket ticket})))))
+      (first (q/select-virkailija-ticket spec {:ticket ticket}))))
+  (delete-old-tickets! [{:keys [spec]} cas-variant]
+    (case cas-variant
+      :oppija
+      (q/delete-old-cas-oppija-tickets! spec)
+      :virkailija
+      (q/delete-old-cas-tickets! spec))))
