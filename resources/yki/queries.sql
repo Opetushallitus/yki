@@ -725,6 +725,12 @@ WHERE re.id = :id
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
+-- name: select-registration-and-exam-session-state
+SELECT re.state, exam_session_registration_open(es.id) AS open, exam_session_post_registration_open(es.id) AS post_admission_open
+FROM registration re
+INNER JOIN exam_session es on re.exam_session_id = es.id
+WHERE re.id = :id;
+
 -- name: select-registration-data-by-participant
 SELECT re.state,
        re.exam_session_id,

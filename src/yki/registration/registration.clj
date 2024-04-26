@@ -49,7 +49,7 @@
      :registration_id        registration-id
      :user                   user}))
 
-(defn- error-response [space-left? not-registered? exam-session-id]
+(defn- init-error-response [space-left? not-registered? exam-session-id]
   (let [error {:error {:full       (not space-left?)
                        :registered (not not-registered?)}}]
     (log/warn "END: Init exam session" exam-session-id "failed with error" error)
@@ -95,7 +95,7 @@
               not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
           (if (and space-left? not-registered?)
             (create-registration db exam_session_id participant-id session payment-config)
-            (error-response space-left? not-registered? exam_session_id)))
+            (init-error-response space-left? not-registered? exam_session_id)))
 
         ;post-admission open
         (registration-db/exam-session-post-registration-open? db exam_session_id)
@@ -103,7 +103,7 @@
               not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
           (if (and quota-left? not-registered?)
             (create-registration db exam_session_id participant-id session payment-config)
-            (error-response quota-left? not-registered? exam_session_id)))
+            (init-error-response quota-left? not-registered? exam_session_id)))
 
         ; no registration open
         :else
@@ -223,10 +223,16 @@
               {:oid oid})
             {:error {:create_payment true}}))
         {:error {:person_creation true}})
-      ; TODO Got probably spurious {:closed true} errors.
-      ; Perhaps a race condition?
-      ; Possible that state was initially STARTED but got EXPIRED by the time get-registration-data was called?
-      {:error (if started? {:closed true} {:expired true})})))
+      ; Submitting form didn't succeed due to some other reason.
+      ; Likely something akin to a race condition: the registration may have expired by the time we got here
+      ; or the registration period may have ended.
+      ; Check the most likely cases against the current database state and return error response.
+      (let [{state                :state
+             open?                :open
+             post-admission-open? :post_admission_open} (registration-db/get-registration-and-exam-session-state db (:id exam-session-registration))]
+        {:error {:expired (= "EXPIRED" state)
+                 :state   state
+                 :closed  (not (or open? post-admission-open?))}}))))
 
 (defn submit-registration
   [db url-helper payment-helper email-q lang session registration-id form onr-client]
