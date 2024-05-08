@@ -725,6 +725,12 @@ WHERE re.id = :id
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
+-- name: select-registration-and-exam-session-state
+SELECT re.state, exam_session_registration_open(es.id) AS open, exam_session_post_registration_open(es.id) AS post_admission_open
+FROM registration re
+INNER JOIN exam_session es on re.exam_session_id = es.id
+WHERE re.id = :id;
+
 -- name: select-registration-data-by-participant
 SELECT re.state,
        re.exam_session_id,
@@ -1560,3 +1566,20 @@ WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE 
 SELECT epn.href
 FROM exam_payment_new epn
 WHERE epn.registration_id = :registration_id AND epn.state = 'UNPAID';
+
+-- name: delete-exam-session-queue-entries-for-old-exam-dates!
+DELETE FROM exam_session_queue
+WHERE exam_session_id IN
+      (SELECT es.id
+       FROM exam_session es
+       INNER JOIN exam_date ed on es.exam_date_id = ed.id
+       WHERE ed.exam_date + interval '1 month' < current_date);
+
+-- name: delete-old-cas-tickets!
+DELETE FROM cas_ticketstore
+WHERE logged_in + interval '1 week' < current_date;
+
+-- name: delete-old-cas-oppija-tickets!
+DELETE FROM cas_oppija_ticketstore
+WHERE logged_in + interval '1 week' < current_date;
+

@@ -3,6 +3,7 @@
             [buddy.core.hash :as hash]
             [clj-time.core :as t]
             [clj-time.format :as f]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [pgqueue.core :as pgq]
             [ring.util.http-response :refer [ok conflict]]
@@ -13,7 +14,8 @@
             [yki.spec :refer [ssn->date]]
             [yki.util.common :as common]
             [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration]]
-            [yki.util.template-util :as template-util]))
+            [yki.util.template-util :as template-util])
+  (:import (org.postgresql.util PSQLException)))
 
 (defn sha256-hash [code]
   (-> code
@@ -47,19 +49,36 @@
      :registration_id        registration-id
      :user                   user}))
 
-(defn- error-response [space-left? not-registered? exam-session-id]
+(defn- init-error-response [space-left? not-registered? exam-session-id]
   (let [error {:error {:full       (not space-left?)
                        :registered (not not-registered?)}}]
     (log/warn "END: Init exam session" exam-session-id "failed with error" error)
     (conflict error)))
 
+(defn- max-participants-error? [^Exception e]
+  (and
+    (instance? PSQLException e)
+    (some->
+      (.getServerErrorMessage ^PSQLException e)
+      (.getMessage)
+      (str/starts-with?
+        "max_participants of exam_session exceeded"))))
+
 (defn- create-registration [db exam-session-id participant-id session payment-config]
-  (let [registration-id (registration-db/create-registration! db {:exam_session_id exam-session-id
-                                                                  :participant_id  participant-id
-                                                                  :started_at      (t/now)})
-        response        (create-init-response db session exam-session-id registration-id payment-config)]
-    (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
-    (ok response)))
+  (try
+    (let [registration-id (registration-db/create-registration! db {:exam_session_id exam-session-id
+                                                                    :participant_id  participant-id
+                                                                    :started_at      (t/now)})
+          response        (create-init-response db session exam-session-id registration-id payment-config)]
+      (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
+      (ok response))
+    (catch Exception e
+      (if (max-participants-error? e)
+        (conflict {:error {:full true}})
+        (do
+          (log/error e "Caught unexpected error within create-registration")
+          (conflict {:error {:full       false
+                             :registered false}}))))))
 
 (defn init-registration
   [db session {:keys [exam_session_id]} payment-config]
@@ -75,18 +94,16 @@
         (let [space-left?     (registration-db/exam-session-space-left? db exam_session_id nil)
               not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
           (if (and space-left? not-registered?)
-            ; TODO figure out if ADMISSION or POST_ADMISSION
             (create-registration db exam_session_id participant-id session payment-config)
-            (error-response space-left? not-registered? exam_session_id)))
+            (init-error-response space-left? not-registered? exam_session_id)))
 
         ;post-admission open
         (registration-db/exam-session-post-registration-open? db exam_session_id)
         (let [quota-left?     (registration-db/exam-session-quota-left? db exam_session_id nil)
               not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
           (if (and quota-left? not-registered?)
-            ; TODO figure out if ADMISSION or POST_ADMISSION
             (create-registration db exam_session_id participant-id session payment-config)
-            (error-response quota-left? not-registered? exam_session_id)))
+            (init-error-response quota-left? not-registered? exam_session_id)))
 
         ; no registration open
         :else
@@ -206,7 +223,16 @@
               {:oid oid})
             {:error {:create_payment true}}))
         {:error {:person_creation true}})
-      {:error (if started? {:closed true} {:expired true})})))
+      ; Submitting form didn't succeed due to some other reason.
+      ; Likely something akin to a race condition: the registration may have expired by the time we got here
+      ; or the registration period may have ended.
+      ; Check the most likely cases against the current database state and return error response.
+      (let [{state                :state
+             open?                :open
+             post-admission-open? :post_admission_open} (registration-db/get-registration-and-exam-session-state db (:id exam-session-registration))]
+        {:error {:expired (= "EXPIRED" state)
+                 :state   state
+                 :closed  (not (or open? post-admission-open?))}}))))
 
 (defn submit-registration
   [db url-helper payment-helper email-q lang session registration-id form onr-client]
