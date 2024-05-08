@@ -992,6 +992,10 @@ UPDATE participant_sync_status
 SET failed_at = current_timestamp
 WHERE exam_session_id = :exam_session_id;
 
+-- name: delete-participant-sync-status!
+DELETE FROM participant_sync_status
+WHERE exam_session_id = :exam_session_id;
+
 -- name: select-completed-exam-session-participants
 SELECT form, person_oid
 FROM registration

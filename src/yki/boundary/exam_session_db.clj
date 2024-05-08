@@ -147,12 +147,14 @@
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
         tx
-        #(let [_       (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
-               _       (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id id})
-               deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
-           (when deleted
-             (send-to-queue-fn))
-           deleted))))
+        (fn []
+          (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
+          (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id id})
+          (q/delete-participant-sync-status! tx {:exam_session_id id})
+          (let [deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
+            (when deleted
+              (send-to-queue-fn))
+            deleted)))))
   (get-exam-session-with-location [{:keys [spec]} id lang]
     (first (q/select-exam-session-with-location spec {:id id :lang lang})))
   (get-exam-session-by-id [{:keys [spec]} id]
