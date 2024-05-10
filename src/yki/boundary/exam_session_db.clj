@@ -72,7 +72,7 @@
   (get-exam-sessions [db from]
     "Get exam sessions with exam date at least 'from'")
   (get-exam-sessions-for-oid [db oid from]
-    "Get exam sessions by oid and with exam date at least 'from'")
+    "Get exam sessions by oid and with (optional) exam date at least 'from'")
   (get-exam-sessions-with-queue [db])
   (get-email-added-to-queue? [db email exam-session-id])
   (add-to-exam-session-queue! [db email lang exam-session-id])
