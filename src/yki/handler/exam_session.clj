@@ -44,7 +44,7 @@
         :query-params [{from :- ::ys/date-type nil}]
         :return ::ys/exam-sessions-response
         (let [from-date (string->date from)]
-          (response {:exam_sessions (exam-session-db/get-exam-sessions db oid from-date)})))
+          (response {:exam_sessions (exam-session-db/get-exam-sessions-for-oid db oid from-date)})))
 
       (POST "/" request
         :body [exam-session ::ys/exam-session]

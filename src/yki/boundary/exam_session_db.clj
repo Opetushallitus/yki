@@ -69,8 +69,10 @@
   (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
   (get-exam-sessions-to-be-synced [db retry-duration])
-  (get-exam-sessions [db oid from]
-    "Get exam sessions by optional oid and from arguments")
+  (get-exam-sessions [db from]
+    "Get exam sessions with exam date at least 'from'")
+  (get-exam-sessions-for-oid [db oid from]
+    "Get exam sessions by oid and with exam date at least 'from'")
   (get-exam-sessions-with-queue [db])
   (get-email-added-to-queue? [db email exam-session-id])
   (add-to-exam-session-queue! [db email lang exam-session-id])
@@ -168,9 +170,11 @@
     (q/select-exam-session-participants spec {:id id :oid oid}))
   (get-completed-exam-session-participants [{:keys [spec]} id]
     (q/select-completed-exam-session-participants spec {:id id}))
-  (get-exam-sessions [{:keys [spec]} oid from]
-    (q/select-exam-sessions spec {:oid  oid
-                                  :from from}))
+  (get-exam-sessions [{:keys [spec]} from]
+    (q/select-exam-sessions spec {:from from}))
+  (get-exam-sessions-for-oid [{:keys [spec]} oid from]
+    (q/select-exam-sessions-for-oid spec {:oid  oid
+                                          :from from}))
   (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
     (int->boolean (:count (first (q/select-email-added-to-queue spec {:email           email
                                                                       :exam_session_id exam-session-id})))))

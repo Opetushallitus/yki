@@ -23,7 +23,7 @@
     (GET "/" []
       :return ::ys/exam-sessions-response
       (let [from-date     (t/now)
-            exam-sessions (exam-session-db/get-exam-sessions db nil from-date)
+            exam-sessions (exam-session-db/get-exam-sessions db from-date)
             with-fee      (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
         (ok {:exam_sessions with-fee})))
 

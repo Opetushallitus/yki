@@ -320,6 +320,67 @@ SELECT
   e.office_oid,
   e.published_at,
   (SELECT COUNT(1)
+   FROM exam_session_queue
+   WHERE exam_session_id = e.id) as queue,
+  ((SELECT COUNT(1)
+    FROM exam_session_queue
+    WHERE exam_session_id = e.id) >= 50) as queue_full,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
+  o.oid as organizer_oid,
+  (SELECT array_to_json(array_agg(contact_row))
+   FROM (SELECT
+           name,
+           email,
+           phone_number
+           FROM contact co
+           WHERE co.id = (SELECT esc.contact_id FROM exam_session_contact esc WHERE esc.exam_session_id = e.id AND deleted_at IS NULL LIMIT 1)
+           AND deleted_at IS NULL) contact_row
+  ) as contact,
+  (SELECT array_to_json(array_agg(loc))
+   FROM (SELECT
+           name,
+           street_address,
+           post_office,
+           zip,
+           other_location_info,
+           extra_information,
+           lang
+         FROM exam_session_location
+         WHERE exam_session_id = e.id) loc
+  ) as location,
+  (SELECT post_admission_enabled FROM exam_date WHERE id = e.exam_date_id) AS post_admission_enabled,
+  (within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
+      OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE)) as open,
+  (now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00')) AS upcoming_admission,
+  (e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE AND (now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.post_admission_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00'))) AS upcoming_post_admission
+FROM exam_session e
+INNER JOIN organizer o ON e.organizer_id = o.id
+INNER JOIN exam_date ed ON e.exam_date_id = ed.id
+WHERE ed.exam_date >= :from
+ORDER BY ed.exam_date ASC;
+
+-- name: select-exam-sessions-for-oid
+SELECT
+  e.id,
+  language_code,
+  level_code,
+  ed.exam_date AS session_date,
+  e.max_participants,
+  ed.registration_start_date,
+  ed.registration_end_date,
+  e.post_admission_activated_at,
+  e.post_admission_quota,
+  e.post_admission_active,
+  ed.post_admission_start_date,
+  ed.post_admission_end_date,
+  e.office_oid,
+  e.published_at,
+  (SELECT COUNT(1)
     FROM exam_session_queue
     WHERE exam_session_id = e.id) as queue,
   ((SELECT COUNT(1)
@@ -368,7 +429,7 @@ FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
 WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
-  AND o.oid = COALESCE(:oid, o.oid)
+  AND o.oid = :oid
 ORDER BY ed.exam_date ASC;
 
 -- name: select-exam-session-by-id
