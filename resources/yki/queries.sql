@@ -332,15 +332,6 @@ SELECT
    FROM registration re
    WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
   o.oid as organizer_oid,
-  (SELECT array_to_json(array_agg(contact_row))
-   FROM (SELECT
-           name,
-           email,
-           phone_number
-           FROM contact co
-           WHERE co.id = (SELECT esc.contact_id FROM exam_session_contact esc WHERE esc.exam_session_id = e.id AND deleted_at IS NULL LIMIT 1)
-           AND deleted_at IS NULL) contact_row
-  ) as contact,
   (SELECT array_to_json(array_agg(loc))
    FROM (SELECT
            name,
