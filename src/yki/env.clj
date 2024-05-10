@@ -10,7 +10,3 @@
 
 (defmethod ig/init-key ::environment [_ {:keys [environment]}]
   (->environment environment))
-
-(comment
-  (-> (local/current-state)
-      (ig/find-derived ::environment)))
