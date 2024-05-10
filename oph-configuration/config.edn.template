@@ -83,6 +83,7 @@
                       :cookie-attrs {:max-age 3600
                                      :http-only true
                                      :secure true
-                                     :path "/yki"}}}}
-  :duct.profile/prod  {}
-}
+                                     :path "/yki"}}}
+  :yki.env/environment {:environment "{{yki_environment}}"}}
+
+  :duct.profile/prod  {}}

@@ -1,6 +1,7 @@
 (ns yki.handler.exam-session-public
   (:require
     [clj-time.core :as t]
+    [clojure.spec.alpha :as s]
     [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [context GET POST]]
     [integrant.core :as ig]
@@ -13,10 +14,12 @@
   [payment-config exam-session]
   (get-in payment-config [:amount (keyword (:level_code exam-session))]))
 
-(defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db payment-config]}]
-  {:pre [(some? db) (some? payment-config)]}
+(defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db environment payment-config]}]
+  {:pre [(some? db) (s/valid? ::ys/environment environment) (some? payment-config)]}
   (context routing/exam-session-public-api-root []
-    :coercion :spec
+    :coercion
+    (when-not (= :prod environment)
+      :spec)
     (GET "/" []
       :return ::ys/exam-sessions-response
       (let [from-date     (t/now)
@@ -25,6 +28,7 @@
         (ok {:exam_sessions with-fee})))
 
     (context "/:id" []
+      :coercion :spec
       (GET "/" []
         :return ::ys/exam-session
         :path-params [id :- ::ys/id]

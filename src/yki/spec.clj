@@ -460,3 +460,5 @@
 (s/def ::open_registrations (s/coll-of ::open-registration) )
 
 (s/def ::user-open-registrations-response (s/keys :req-un [::open_registrations]))
+
+(s/def ::environment #{:dev :qa :prod})
