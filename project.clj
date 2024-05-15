@@ -83,13 +83,17 @@
                   :repl-options {:init-ns user}}
    :uberjar      {:aot :all}
    :profiles/dev {}
-   :project/dev  {:source-paths   ["dev/src"]
+   :project/dev  {:jvm-opts ["-Djdk.attach.allowAttachSelf"
+                             "-XX:+UnlockDiagnosticVMOptions"
+                             "-XX:+DebugNonSafepoints"]
+                  :source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
                   :dependencies   [[integrant/repl "0.3.3"]
                                    [eftest "0.6.0"]
                                    [peridot "0.5.4"]
                                    [se.haleby/stub-http "0.2.14"]
                                    [com.opentable.components/otj-pg-embedded "1.0.3"]
-                                   [kerodon "0.9.1"]]
+                                   [kerodon "0.9.1"]
+                                   [com.clojure-goes-fast/clj-async-profiler "1.2.0"]]
                   :managed-dependencies [[org.testcontainers/testcontainers "1.19.7"]
                                          [org.testcontainers/postgresql "1.19.7"]]}})

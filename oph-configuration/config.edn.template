@@ -52,7 +52,8 @@
                                                  :url-helper #ig/ref :yki.util/url-helper
                                                  :retry-duration-in-days 0}
 
-:yki.handler/exam-session-public {:db #ig/ref :duct.database/sql
+:yki.handler/exam-session-public {:db             #ig/ref :duct.database/sql
+                                  :environment    #ig/ref :yki.env/environment
                                   :payment-config {:amount {:PERUS {{yki_exam_session_fee_basic}}
                                                             :KESKI {{yki_exam_session_fee_intermediate}}
                                                             :YLIN {{yki_exam_session_fee_advanced}}
@@ -83,6 +84,7 @@
                       :cookie-attrs {:max-age 3600
                                      :http-only true
                                      :secure true
-                                     :path "/yki"}}}}
-  :duct.profile/prod  {}
-}
+                                     :path "/yki"}}}
+  :yki.env/environment {:environment "{{yki_environment}}"}}
+
+  :duct.profile/prod  {}}

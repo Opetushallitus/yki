@@ -12,6 +12,7 @@
     [peridot.core :as peridot]
     [yki.boundary.cas]
     [yki.embedded-db :as embedded-db]
+    [yki.env]
     [yki.handler.auth]
     [yki.handler.exam-date]
     [yki.handler.exam-session]
@@ -94,6 +95,9 @@
 
 (defn db []
   (sql/->Boundary @embedded-db/conn))
+
+(defn environment [env]
+  (ig/init-key :yki.env/environment {:environment env}))
 
 (defn auth [url-helper]
   (ig/init-key :yki.middleware.auth/with-authentication

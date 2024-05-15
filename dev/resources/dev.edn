@@ -58,6 +58,7 @@
                                           :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
  :yki.handler/exam-session-public        {:db             #ig/ref :duct.database/sql
+                                          :environment    #ig/ref :yki.env/environment
                                           :payment-config {:paytrail-host   "https://payment.paytrail.com/e2"
                                                            :yki-payment-uri "https://yki.untuvaopintopolku.fi/yki/payment"
                                                            :amount          {:PERUS     153
@@ -93,5 +94,7 @@
  :yki.handler/organizer                  {:db         #ig/ref :duct.database/sql
                                           :url-helper #ig/ref :yki.util/url-helper
                                           :access-log #ig/ref :yki.middleware.access-log/with-logging
-                                          :auth       #ig/ref :yki.middleware.no-auth/with-authentication}}
+                                          :auth       #ig/ref :yki.middleware.no-auth/with-authentication}
+
+ :yki.env/environment {:environment "dev"}}
 
