@@ -227,7 +227,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>core.memoize</artifactId>
-      <version>1.0.257</version>
+      <version>1.1.266</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
