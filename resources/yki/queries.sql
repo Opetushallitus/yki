@@ -728,11 +728,11 @@ WHERE re.id = :id
 SELECT id FROM registration
 WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp;
 
--- submitted registration expires 8 days from creation at midnight
+-- submitted registration expires 3 days from creation at midnight
 -- name: select-submitted-registrations-to-expire
 SELECT id FROM registration
 WHERE state = 'SUBMITTED'
-  AND ((kind = 'ADMISSION' AND ts_older_than(created, interval '9 days'))
+  AND ((kind = 'ADMISSION' AND ts_older_than(created, interval '4 days'))
     OR (kind = 'POST_ADMISSION' AND ts_older_than(created, interval '2 days')));
 
 -- name: expire-registrations-by-ids!

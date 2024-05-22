@@ -146,7 +146,7 @@
                                               (:registration_end_date registration))))
         ongoing-registration-expiration (if post-admission?
                                           (common/date-from-now 1)
-                                          (common/date-from-now 8))]
+                                          (common/date-from-now 3))]
     (t/min-date
       ongoing-registration-expiration
       registration-end-date)))
