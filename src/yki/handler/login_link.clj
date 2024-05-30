@@ -1,6 +1,7 @@
 (ns yki.handler.login-link
   (:require [buddy.core.codecs :refer [bytes->hex]]
             [buddy.core.hash :as hash]
+            [clj-time.core :as t]
             [clojure.tools.logging :as log]
             [compojure.api.sweet :refer [api context POST]]
             [integrant.core :as ig]
@@ -63,7 +64,19 @@
                                                              :expired_link_redirect registration-expired-url
                                                              :registration_id nil)]
               (log/info "Requested login link:" login-link)
-              (when (create-and-send-link db url-helper email-q lang link exam-session)
-                (ok {:success true})))
+              (if
+                (login-link-db/get-recent-login-link-by-exam-session-and-participant
+                  db
+                  exam-session-id
+                  participant-id
+                  (t/minus (t/now) (t/minutes 5)))
+                (do (log/info
+                      "Found recent login-link for email and exam session. Not sending another email yet to avoid flooding the email service. Email:"
+                      (:email login-link)
+                      ", exam-session-id:"
+                      exam-session-id)
+                    (ok {:success true}))
+                (when (create-and-send-link db url-helper email-q lang link exam-session)
+                  (ok {:success true}))))
             (do (log/error "Requested login link, but registration for exam session isn't open." login-link)
                 (forbidden))))))))
