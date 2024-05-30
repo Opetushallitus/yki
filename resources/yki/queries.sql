@@ -593,6 +593,13 @@ INSERT INTO login_link(
   :expires_at
 );
 
+-- name: select-recent-login-link-by-exam-session-and-participant-id
+SELECT l.id, l.created
+FROM login_link l
+WHERE l.exam_session_id = :exam_session_id
+AND   l.participant_id = :participant_id
+AND   l.created > :older_than;
+
 -- name: select-login-link-by-code
 SELECT
  l.code,
