@@ -132,10 +132,11 @@
                                                           :permissions-client (permissions-client url-helper)
                                                           :cas-client         (cas-client url-helper)})))
 (defn user-handler
-  [auth url-helper]
+  [auth env]
   (middleware/wrap-format (ig/init-key :yki.handler/user {:auth       auth
                                                           :db         (db)
-                                                          :access-log (access-log)})))
+                                                          :access-log (access-log)
+                                                          :environment env})))
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
   (ig/init-key :yki.job.job-queue/email-q {}))
