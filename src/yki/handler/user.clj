@@ -1,5 +1,6 @@
 (ns yki.handler.user
   (:require
+    [clojure.spec.alpha :as s]
     [compojure.api.sweet :refer [api context GET]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok]]
@@ -7,11 +8,11 @@
     [yki.registration.registration :as registration]
     [yki.spec :as ys]))
 
-(defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log]}]
-  {:pre [(some? db) (some? auth) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log environment]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (s/valid? ::ys/environment environment)]}
   (api
     (context routing/user-api-root []
-      :coercion :spec
+      :coercion (when-not (#{:qa :prod} environment) :spec)
       :middleware [auth access-log]
       (GET "/identity" {session :session}
         :return ::ys/user-identity-response
