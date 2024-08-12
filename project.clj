@@ -69,7 +69,7 @@
   :test-refresh {:changes-only true}
   :middleware [lein-duct.plugin/middleware lein-git-version.plugin/middleware]
   :main ^:skip-aot yki.main
-  :jvm-opts ["-Duser.timezone=UTC"
+  :jvm-opts ["-Duser.timezone=Europe/Helsinki"
              "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
   :resource-paths ["resources" "target/resources"]
   :prep-tasks ["javac" "compile" ["run" ":duct/compiler"]]
