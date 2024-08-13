@@ -8,20 +8,20 @@
 (def finnish-date-formatter (f/formatter "d.M.YYYY"))
 (def time-format "HH:mm")
 
-(defn next-start-of-day [date]
-  (t/plus date (t/days 1)))
+(defn next-start-of-day [local-date]
+  (t/plus local-date (t/days 1)))
 
 (defn date-from-now [days]
   (t/plus (t/today) (t/days (inc days))))
 
-(defn format-date-to-finnish-format [date]
-  (f/unparse-local-date finnish-date-formatter date))
+(defn format-date-to-finnish-format [local-date]
+  (f/unparse-local-date finnish-date-formatter local-date))
 
 (defn format-date-string-to-finnish-format [date-string]
   (f/unparse finnish-date-formatter (f/parse date-string)))
 
 (defn finnish-date-from-long [date-long]
-  (format-date-to-finnish-format (c/from-long date-long)))
+  (f/unparse finnish-date-formatter (c/from-long date-long)))
 
 (defn string->date [datestr]
   (some-> datestr (f/parse)))
