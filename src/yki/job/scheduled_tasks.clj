@@ -153,3 +153,26 @@
          (log/info "Removed old CAS-oppija tickets:" deleted-cas-oppija-tickets)))
      (catch Exception e
        (log/error e "Old data removal failed"))))
+
+(defn- log-timezone-info []
+  (let [env-property (System/getProperty "user.timezone")
+        default-tz   (java.util.TimeZone/getDefault)]
+    (log/info
+      (str "App is started with -Duser.timezone="
+           env-property
+           " and the system timezone is "
+           (.getDisplayName default-tz)
+           ". Current time is "
+           (t/now)
+           ", local time is "
+           (t/time-now)
+           " and today is "
+           (t/today)
+           "."))))
+
+(defmethod ig/init-key ::log-system-time-and-timezone
+  [_ _]
+  #(try
+     (log-timezone-info)
+     (catch Exception e
+       (log/error e "Logging system time and timezone info failed"))))

@@ -87,6 +87,8 @@
 
   :yki.job.scheduled-tasks/remove-old-data-handler    {:db #ig/ref :duct.database/sql}
 
+  :yki.job.scheduled-tasks/log-system-time-and-timezone {}
+
   :duct.scheduler/simple
   {:thread-pool-size 10
    :jobs             [{:interval 60 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/registration-state-handler}
@@ -94,7 +96,8 @@
                       {:interval 1 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}
                       {:interval 60 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/data-sync-queue-reader}
                       {:interval 600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/exam-session-queue-handler}
-                      {:interval 3600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/remove-old-data-handler}]}
+                      {:interval 3600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/remove-old-data-handler}
+                      {:interval 3600 :delay 10 :run #ig/ref :yki.job.scheduled-tasks/log-system-time-and-timezone}]}
 
   :yki.boundary.cas/cas-client                        {:url-helper #ig/ref :yki.util/url-helper
                                                        :cas-creds  {}}
