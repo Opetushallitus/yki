@@ -473,7 +473,6 @@
        :oppija-sub-domain         "yki."
        :cas-service-base          uri-with-schema
        :cas-oppija-service-base   uri
-       :kayttooikeus-service-base uri-with-schema
        :koodisto-service-base     uri-with-schema
        :onr-service-base          uri-with-schema
        :organisaatio-service-base uri-with-schema})))
