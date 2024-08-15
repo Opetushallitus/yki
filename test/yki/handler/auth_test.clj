@@ -15,12 +15,13 @@
   (let [uri          (str "localhost:" port)
         url-helper   (base/create-url-helper uri)
         auth         (base/auth url-helper)
+        environment  (base/environment "prod")
         auth-handler (base/auth-handler auth url-helper)
-        user-handler (base/user-handler auth url-helper)]
+        user-handler (base/user-handler auth environment)]
     (routes auth-handler user-handler)))
 
 (deftest redirect-unauthenticated-user-to-authentication-test
-  (let [routes (create-routes 8080)
+  (let [routes   (create-routes 8080)
         session  (peridot/session routes)
         response (-> session
                      (peridot/request routing/auth-root
@@ -71,7 +72,7 @@
         logout-response-body (base/body-as-json (:response logout-response))]
     (testing "after successful login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
-      (is (= (id "external-user-id") "test@user.com")))
+      (is (= (id "email") "test@user.com")))
     (testing "after logout session should not contain user data"
       (is (= (get-in logout-response [:response :status]) 200))
       (is (= (logout-response-body "identity") nil))))

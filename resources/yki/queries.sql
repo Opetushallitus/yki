@@ -604,6 +604,7 @@ AND   l.created > :older_than;
 SELECT
  l.code,
  p.external_user_id,
+ p.email,
  l.exam_session_id,
  l.expires_at,
  l.expired_link_redirect,

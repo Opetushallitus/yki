@@ -443,10 +443,9 @@
 (s/def ::redirect-to (s/nilable ::non-blank-string))
 
 (s/def ::auth-method #{"EMAIL" "SUOMIFI" "CAS"})
-(s/def ::external-user-id ::email-type)
 (s/def ::username ::non-blank-string)
 (s/def ::identity (s/or ::not-authenticated nil?
-                        ::email-identity (s/keys :req-un [::external-user-id])
+                        ::email-identity (s/keys :req-un [::email])
                         ::suomi-identity (s/keys :req-un [::first_name ::last_name ::ssn])
                         ::cas-identity (s/keys :req-un [::username])))
 

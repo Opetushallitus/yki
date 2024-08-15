@@ -18,11 +18,12 @@
     (if-let [login-link (login-link-db/get-login-link-by-code db (login-link/sha256-hash code))]
       (if (link-valid? login-link)
         (assoc
-         (found (:success_redirect login-link))
-         :session
-         {:identity {:external-user-id (:external_user_id login-link)}
-          :auth-method "EMAIL"
-          :yki-session-id (str (random-uuid))})
+          (found (:success_redirect login-link))
+          :session
+          {:identity       {:external-user-id (:external_user_id login-link)
+                            :email            (:email login-link)}
+           :auth-method    "EMAIL"
+           :yki-session-id (str (random-uuid))})
         (found (:expired_link_redirect login-link)))
       unauthorized)
     (catch Exception e

@@ -22,9 +22,11 @@
         auth                 (base/auth url-helper)
         access-log           (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
         auth-handler         (base/auth-handler auth url-helper)
-        user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user         {:db             db
-                                                                                             :access-log     access-log
-                                                                                             :auth           auth}))
+        environment          (base/environment "prod")
+        user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user {:db          db
+                                                                                     :access-log  access-log
+                                                                                     :auth        auth
+                                                                                     :environment environment}))
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db             db
                                                                                              :url-helper     url-helper
                                                                                              :payment-helper payment-helper
