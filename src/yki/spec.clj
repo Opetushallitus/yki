@@ -5,7 +5,7 @@
     [clojure.string :as str]
     [spec-tools.core :as st]
     [yki.util.common :refer [string->date]])
-  (:import [org.joda.time DateTime]))
+  (:import [org.joda.time DateTime LocalDate]))
 
 ;; common
 (def time-regex #"^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$")
@@ -75,6 +75,7 @@
 
 (defn date? [maybe-date]
   (or (instance? DateTime maybe-date)
+      (instance? LocalDate maybe-date)
       (f/parse maybe-date)))
 
 (s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))

@@ -7,6 +7,7 @@
     [yki.util.common :as c])
   (:import
     (clojure.lang IPersistentCollection)
+    (java.time LocalDate)
     (java.sql Date Time)
     (org.joda.time DateTime)
     (org.postgresql.jdbc PgArray)
@@ -17,7 +18,10 @@
   (sql-value [value]
     (doto (PGobject.)
       (.setType "jsonb")
-      (.setValue (json/write-str value)))))
+      (.setValue (json/write-str value))))
+  org.joda.time.LocalDate
+  (sql-value [^org.joda.time.LocalDate value]
+    (LocalDate/of (.getYear value) (.getMonthOfYear value) (.getDayOfMonth value))))
 
 (defn- date-time->str [^DateTime date-time ^String format]
   (.toString date-time format))

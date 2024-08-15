@@ -139,11 +139,15 @@
 
 (defn- registration->expiration-date [registration]
   (let [post-admission?                 (= (:kind registration) "POST_ADMISSION")
-        registration-end-date           (common/next-start-of-day
-                                          (f/parse
-                                            (if post-admission?
-                                              (:post_admission_end_date registration)
-                                              (:registration_end_date registration))))
+        date-str                        (if post-admission?
+                                          (:post_admission_end_date registration)
+                                          (:registration_end_date registration))
+        registration-end-date           (-> (f/parse-local-date date-str)
+                                            (common/next-start-of-day))
+        ; Registration and payment link expiry should be three whole days from today
+        ; => expiry at start of day 3+1 days from now.
+        ; With post-admission, however, user should get one whole day of payment time
+        ; => expiry at start of day 1+1 days from now.
         ongoing-registration-expiration (if post-admission?
                                           (common/date-from-now 1)
                                           (common/date-from-now 3))]
