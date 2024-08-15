@@ -14,7 +14,8 @@
                                                       insert-common-base-data
                                                       registration-form-data
                                                       registration-success-redirect]]
-            [yki.handler.routing :as routing]))
+            [yki.handler.routing :as routing]
+            [yki.util.common :refer [date-from-now previous-day format-date-to-finnish-format]]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
@@ -59,12 +60,17 @@
         (is (nil? (get-payment))))
 
       (testing "and send email with payment link"
-        (let [email-request (get-email-request)
-              payment-link  (get-payment-link)]
+        (let [email-request       (get-email-request)
+              payment-link        (get-payment-link)
+              payment-link-expiry (date-from-now (inc 3))
+              last-payment-date   (previous-day payment-link-expiry)]
           (is (= (:subject email-request) "Maksulinkki (YKI): Suomi perustaso - Omenia, 27.1.2018"))
           (is (s/includes? (:body email-request) "135,00 €"))
           (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 ESPOO"))
           (is (= (:type payment-link) "PAYMENT"))
+          (is (= (.toDate (:expires_at payment-link))
+                 (.toDate payment-link-expiry)))
+          (is (s/includes? (:body email-request) (str "Maksa tutkintomaksu viimeistään " (format-date-to-finnish-format last-payment-date))))
           (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port)))))
 
       (let [registration (get-registration)]
