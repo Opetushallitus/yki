@@ -149,11 +149,15 @@
         ; With post-admission, however, user should get one whole day of payment time
         ; => expiry at start of day 1+1 days from now.
         ongoing-registration-expiration (if post-admission?
-                                          (common/date-from-now 1)
-                                          (common/date-from-now 3))]
-    (t/min-date
-      ongoing-registration-expiration
-      registration-end-date)))
+                                          (common/date-from-now (inc 1))
+                                          (common/date-from-now (inc 3)))
+        date-of-expiry                  (t/min-date
+                                          ongoing-registration-expiration
+                                          registration-end-date)]
+    {:expiration-date   date-of-expiry
+     ; We want to indicate the last possible payment date in email templates.
+     ; The last payment date will be the day before expiration date.
+     :last-payment-date (common/previous-day date-of-expiry)}))
 
 (defn- with-session-details [form {:keys [auth-method identity]}]
   (if (= auth-method "EMAIL")
@@ -194,7 +198,7 @@
                                         :oid            oid
                                         :form_version   1
                                         :participant_id unified-participant-id}
-              expiration-date          (registration->expiration-date registration-data)
+              {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
               payment-success-url      (url-helper :exam-payment-v3.redirect registration-id lang)
               payment-link-expired-url (url-helper :yki-ui.registration.payment-link-expired.url)
               payment-link             {:participant_id        unified-participant-id
@@ -213,7 +217,7 @@
                                                                 :amount (:email-template amount)
                                                                 :language (template-util/get-language (:language_code registration-data) lang)
                                                                 :level (template-util/get-level (:level_code registration-data) lang)
-                                                                :expiration_date (common/format-date-to-finnish-format expiration-date)))
+                                                                :expiration_date (common/format-date-to-finnish-format last-payment-date)))
               success                  (registration-db/update-registration-details! db
                                                                                      update-registration
                                                                                      create-and-send-link-fn)]

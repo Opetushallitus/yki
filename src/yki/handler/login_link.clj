@@ -59,7 +59,8 @@
                   registration-expired-url (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
                   link                     (assoc login-link :participant_id participant-id
                                                              :type "LOGIN"
-                                                             :expires_at (c/date-from-now 1)
+                                                             ; Login link should be valid for the current day PLUS ONE FULL DAY.
+                                                             :expires_at (c/date-from-now 2)
                                                              :success_redirect registration-url
                                                              :expired_link_redirect registration-expired-url
                                                              :registration_id nil)]

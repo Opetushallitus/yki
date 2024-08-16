@@ -11,8 +11,11 @@
 (defn next-start-of-day [local-date]
   (t/plus local-date (t/days 1)))
 
+(defn previous-day [local-date]
+  (t/minus local-date (t/days 1)))
+
 (defn date-from-now [days]
-  (t/plus (t/today) (t/days (inc days))))
+  (t/plus (t/today) (t/days days)))
 
 (defn format-date-to-finnish-format [local-date]
   (f/unparse-local-date finnish-date-formatter local-date))
