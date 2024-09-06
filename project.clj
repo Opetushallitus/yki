@@ -12,7 +12,7 @@
                          [com.fasterxml.jackson.core/jackson-core "2.17.0"]
                          [com.fasterxml.jackson.core/jackson-databind "2.17.0"]
                          [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.17.0"]]
-  :dependencies [[org.clojure/clojure "1.11.3"]
+  :dependencies [[org.clojure/clojure "1.12.0"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/data.json "2.5.0"]
                  [org.clojure/data.csv "1.1.0"]
