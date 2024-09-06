@@ -92,8 +92,8 @@
                                    [eftest "0.6.0"]
                                    [peridot "0.5.4"]
                                    [se.haleby/stub-http "0.2.14"]
-                                   [com.opentable.components/otj-pg-embedded "1.0.3"]
+                                   [com.opentable.components/otj-pg-embedded "1.1.0"]
                                    [kerodon "0.9.1"]
-                                   [com.clojure-goes-fast/clj-async-profiler "1.2.0"]]
-                  :managed-dependencies [[org.testcontainers/testcontainers "1.19.7"]
-                                         [org.testcontainers/postgresql "1.19.7"]]}})
+                                   [com.clojure-goes-fast/clj-async-profiler "1.2.2"]]
+                  :managed-dependencies [[org.testcontainers/testcontainers "1.20.1"]
+                                         [org.testcontainers/postgresql "1.20.1"]]}})
