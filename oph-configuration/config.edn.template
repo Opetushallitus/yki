@@ -13,7 +13,6 @@
                         :oppija-sub-domain         "yki."
                         :yki-register-host         "{{yki_register_host}}"
                         :yki-host-virkailija       "{{host_ilb}}"
-                        :cas-service-base          "http://cas.{{server_name}}.internal:8080"
                         :cas-oppija-service-base   "http://cas-oppija.{{server_name}}.internal:8080"
                         :koodisto-service-base     "http://koodisto.{{server_name}}.internal:8080"
                         :onr-service-base          "http://oppijanumerorekisteri.{{server_name}}.internal:8080"
