@@ -39,7 +39,7 @@
 (defn virkailija-login [ticket request cas-client permissions-client onr-client url-helper db]
   (try
     (if ticket
-      (let [auth-cas-client (cas-client (url-helper :root-cas-service))
+      (let [auth-cas-client (cas-client (url-helper :cas-client))
             username        (cas/validate-ticket auth-cas-client ticket)
             _               (cas-ticket-db/create-ticket! db :virkailija ticket)
             permissions     (permissions/virkailija-by-username permissions-client username)
@@ -172,7 +172,7 @@
                                                         ["FI" "SV" "EN"])
                                                   "fi"))
             callback-uri      (url-helper (str "cas-oppija.login-success." lang) examSessionId)
-            oppija-cas-client (cas-client (url-helper :root-cas-service))
+            oppija-cas-client (cas-client (url-helper :cas-client))
             cas-response      (cas/validate-oppija-ticket oppija-cas-client ticket callback-uri)
             cas-attributes    (process-cas-attributes cas-response)
             session           (:session request)]
