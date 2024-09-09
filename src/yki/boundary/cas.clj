@@ -14,7 +14,6 @@
 
 (defprotocol CasAccess
   (validate-ticket [this ticket])
-  (validate-oppija-ticket [this ticket callback-url])
   (cas-authenticated-post [this url body])
   (cas-authenticated-get [this url]))
 
@@ -22,15 +21,17 @@
 (def caller-id "1.2.246.562.10.00000000001.yki")
 
 (defn- process-response [^Response response]
-  {:status         (.getStatusCode response)
-   :body           (.getResponseBody response)
-   :headers        (.getHeaders response)})
+  {:status  (.getStatusCode response)
+   :body    (.getResponseBody response)
+   :headers (.getHeaders response)})
 
-(defn- cas-oppija-ticket-validation [url-helper ticket callback-url]
-  (let [validate-service-url (url-helper :cas-oppija.validate-service)]
-    @(http/get validate-service-url {:query-params {:ticket  ticket
-                                                    :service callback-url}
-                                     :headers      {"Caller-Id" caller-id}})))
+(defn cas-oppija-ticket-validation [url-helper ticket callback-url]
+  (let [validate-service-url (url-helper :cas-oppija.validate-service)
+        [{:keys [status body]}] @(http/get validate-service-url {:query-params {:ticket  ticket
+                                                                                :service callback-url}
+                                                                 :headers      {"Caller-Id" caller-id}})]
+    (when (= 200 status)
+      body)))
 
 (defn- json-request [^String method url data]
   (let [body            (when data (json/write-str data))
@@ -74,10 +75,6 @@
                                   (.validateServiceTicketWithVirkailijaUsername (url-helper :yki.cas.login-success) ticket)
                                   (.get))]
       validation-response))
-  (validate-oppija-ticket [_ ticket callback-url]
-    (let [{:keys [status body]} (cas-oppija-ticket-validation url-helper ticket callback-url)]
-      (when (= status 200)
-        body)))
   (cas-authenticated-get [_ url]
     (try
       (cas-http cas-client url-helper "GET" url nil)
