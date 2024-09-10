@@ -94,6 +94,7 @@
         cas-success-redirect     (url-helper (str "cas-oppija.login-success." lang) exam-session-id)
         session-success-redirect (url-helper :yki-ui.exam-session-registration.url exam-session-id)
         login-url                (str (url-helper :cas-oppija.login lang) cas-success-redirect)]
+    (log/info "redirect-url:" login-url)
     (assoc
       (see-other login-url)
       :session
