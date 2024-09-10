@@ -27,9 +27,9 @@
 
 (defn cas-oppija-ticket-validation [url-helper ticket callback-url]
   (let [validate-service-url (url-helper :cas-oppija.validate-service)
-        [{:keys [status body]}] @(http/get validate-service-url {:query-params {:ticket  ticket
-                                                                                :service callback-url}
-                                                                 :headers      {"Caller-Id" caller-id}})]
+        {:keys [status body]} @(http/get validate-service-url {:query-params {:ticket  ticket
+                                                                              :service callback-url}
+                                                               :headers      {"Caller-Id" caller-id}})]
     (when (= 200 status)
       body)))
 
