@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>67e3eb0d122d0e2eec32046928043be02c3b9526</tag>
+    <tag>f88d4f38393e45ece821824502a746d777a23c00</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -119,32 +119,32 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>2.17.0</version>
+        <version>2.17.2</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>2.17.0</version>
+        <version>2.17.2</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>2.17.0</version>
+        <version>2.17.2</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>2.17.0</version>
+        <version>2.17.2</version>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers</artifactId>
-        <version>1.19.7</version>
+        <version>1.20.1</version>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>postgresql</artifactId>
-        <version>1.19.7</version>
+        <version>1.20.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -152,7 +152,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
-      <version>1.11.3</version>
+      <version>1.12.0</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -347,7 +347,7 @@
     <dependency>
       <groupId>selmer</groupId>
       <artifactId>selmer</artifactId>
-      <version>1.12.59</version>
+      <version>1.12.61</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -381,7 +381,7 @@
     <dependency>
       <groupId>metosin</groupId>
       <artifactId>jsonista</artifactId>
-      <version>0.3.8</version>
+      <version>0.3.10</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -411,7 +411,7 @@
     <dependency>
       <groupId>metosin</groupId>
       <artifactId>spec-tools</artifactId>
-      <version>0.10.6</version>
+      <version>0.10.7</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -426,7 +426,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.7.3</version>
+      <version>42.7.4</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -516,7 +516,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.6</version>
+      <version>1.5.7</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -709,7 +709,7 @@
     <dependency>
       <groupId>com.opentable.components</groupId>
       <artifactId>otj-pg-embedded</artifactId>
-      <version>1.0.3</version>
+      <version>1.1.0</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -741,7 +741,7 @@
     <dependency>
       <groupId>com.clojure-goes-fast</groupId>
       <artifactId>clj-async-profiler</artifactId>
-      <version>1.2.0</version>
+      <version>1.2.2</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
