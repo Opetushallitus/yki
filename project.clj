@@ -39,7 +39,7 @@
                  [ring-logger "1.1.1"]
                  [ch.qos.logback/logback-classic "1.5.6"]
                  [org.clojure/data.xml "0.0.8"]
-                 [fi.vm.sade.java-utils/java-cas "1.1.1-SNAPSHOT"
+                 [fi.vm.sade.java-utils/java-cas "1.2.1-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-simple]]
                  [fi.vm.sade/auditlogger "9.2.4-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]

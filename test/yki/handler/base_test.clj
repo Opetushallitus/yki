@@ -470,12 +470,7 @@
        :yki-host-virkailija       uri
        :alb-host                  uri-with-schema
        :scheme                    "http"
-       :oppija-sub-domain         "yki."
-       :cas-service-base          uri-with-schema
-       :cas-oppija-service-base   uri
-       :koodisto-service-base     uri-with-schema
-       :onr-service-base          uri-with-schema
-       :organisaatio-service-base uri-with-schema})))
+       :oppija-sub-domain         "yki."})))
 
 (defn mock-pdf-renderer []
   (reify PdfTemplateRenderer

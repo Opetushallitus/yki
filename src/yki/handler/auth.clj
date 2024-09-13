@@ -45,7 +45,7 @@
         (-> (found redirect)
             (assoc :session nil)))
       (GET "/callback*" [ticket :as request]
-        (cas-auth/oppija-login ticket request cas-client onr-client url-helper db))
+        (cas-auth/oppija-login ticket request onr-client url-helper db))
       (POST "/callback*" request
         (cas-auth/cas-logout db :oppija (get-in request [:params :logoutRequest]))
         (ok {}))

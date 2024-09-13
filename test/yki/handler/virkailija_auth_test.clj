@@ -36,8 +36,6 @@
                                                                 :oppija-host               uri
                                                                 :yki-register-host         uri
                                                                 :yki-host-virkailija       ""
-                                                                :cas-service-base          (str "http://" uri)
-                                                                :onr-service-base          (str "http://" uri)
                                                                 :alb-host                  (str "http://" uri)
                                                                 :scheme                    "http"})
         auth                 (base/auth url-helper)
