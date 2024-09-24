@@ -43,7 +43,7 @@
         ; TODO Syncing data may take a long time, so this endpoint should instead trigger a background job and return instantly.
         (try
           (let [participants-to-sync (b/get-participants-for-onr-check db)
-                batch-size           100]
+                batch-size           1000]
             (doseq [participants-batch (partition-all batch-size participants-to-sync)]
               (let [oid->participant (into {} (map (juxt :person_oid identity)) participants-batch)
                     onr-data         (->> participants-batch
