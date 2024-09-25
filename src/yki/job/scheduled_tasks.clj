@@ -5,9 +5,11 @@
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
     [yki.boundary.cas-ticket-db :as cas-ticket-db]
+    [yki.boundary.debug :as debug]
     [yki.boundary.email :as email]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.job-db :as job-db]
+    [yki.boundary.onr :as onr]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
     [yki.job.job-queue]
@@ -30,6 +32,10 @@
 (defonce remove-old-data-handler-conf {:worker-id (str (UUID/randomUUID))
                                        :task      "REMOVE_OLD_DATA_HANDLER"
                                        :interval  "1 DAY"})
+
+(defonce sync-onr-participant-data-handler-conf {:worker-id (str (UUID/randomUUID))
+                                                 :task "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
+                                                 :interval "1 DAY"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -153,3 +159,31 @@
          (log/info "Removed old CAS-oppija tickets:" deleted-cas-oppija-tickets)))
      (catch Exception e
        (log/error e "Old data removal failed"))))
+
+(defmethod ig/init-key ::sync-participant-onr-data-handler [_ {:keys [db onr-client]}]
+  {:pre [(some? db) (some? onr-client)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db sync-onr-participant-data-handler-conf)
+       (log/info "Participant ONR data syncing started")
+       (let [participants-to-sync (debug/get-participants-for-onr-check db)
+             batch-size           1000]
+         (doseq [participants-batch (partition-all batch-size participants-to-sync)]
+           (let [oid->participant (into {} (map (juxt :person_oid identity)) participants-batch)
+                 onr-data         (->> participants-batch
+                                       (map :person_oid)
+                                       (onr/list-persons-by-oids onr-client))]
+             (doseq [onr-entry onr-data]
+               (let [onr-details {:person_oid        (onr-entry "oidHenkilo")
+                                  :oppijanumero      (onr-entry "oppijanumero")
+                                  :is_individualized (or (onr-entry "yksiloity")
+                                                         (onr-entry "yksiloityVTJ"))}
+                     oid         (:person_oid onr-details)]
+                 (debug/upsert-participant-onr-data!
+                   db
+                   (merge
+                     (oid->participant oid)
+                     onr-details)))))
+           ; Wait 10 seconds between calls to ONR just to play it safe.
+           (Thread/sleep 10000))))
+     (catch Exception e
+       (log/error e "Syncing participant ONR data failed"))))
