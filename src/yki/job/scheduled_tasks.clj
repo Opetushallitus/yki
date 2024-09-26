@@ -35,7 +35,7 @@
 
 (defonce sync-onr-participant-data-handler-conf {:worker-id (str (UUID/randomUUID))
                                                  :task "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
-                                                 :interval "1 DAY"})
+                                                 :interval "59 MINUTES"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.

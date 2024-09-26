@@ -8,9 +8,8 @@ INNER JOIN participant p
 ON r.participant_id = p.id
 WHERE r.person_oid IS NOT NULL
 AND NOT EXISTS
-    (SELECT is_individualized FROM participant_onr
-     WHERE oid = r.person_oid AND
-        is_individualized = true);
+    (SELECT oid FROM participant_onr
+     WHERE oid = r.person_oid);
 
 -- name: upsert-participant-onr-data!
 INSERT INTO participant_onr
