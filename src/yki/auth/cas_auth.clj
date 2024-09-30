@@ -2,7 +2,7 @@
   (:require [clojure.data.xml :as xml]
             [clojure.string :as str]
             [clojure.tools.logging :refer [info error]]
-            [ring.util.http-response :refer [ok found see-other]]
+            [ring.util.http-response :refer [found see-other]]
             [yki.boundary.cas :as cas]
             [yki.boundary.cas-ticket-db :as cas-ticket-db]
             [yki.boundary.onr :as onr]
