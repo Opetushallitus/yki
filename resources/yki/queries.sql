@@ -423,6 +423,16 @@ WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
   AND o.oid = :oid
 ORDER BY ed.exam_date ASC;
 
+-- name: select-tranfer-targets-by-exam-session-id
+SELECT
+ies.id,
+ied.exam_date
+FROM exam_session es
+LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
+LEFT JOIN exam_session ies ON ies.id <> es.id AND ies.level_code = es.level_code AND ies.language_code = es.language_code AND ies.organizer_id = es.organizer_id
+LEFT JOIN exam_date ied ON ies.exam_date_id = ied.id
+WHERE es.id = :exam_session_id  AND ied.exam_date >= ed.exam_date
+
 -- name: select-exam-session-by-id
 SELECT
   e.id,
@@ -1076,7 +1086,8 @@ SELECT
   r.id as registration_id,
   r.kind,
   r.original_exam_session_id,
-  oed.exam_date AS original_exam_date
+  oed.exam_date AS original_exam_date,
+  (r.state = 'COMPLETED' AND (r.original_exam_session_id IS NULL OR current_date < '2024-01-01'::date)) AS is_transferable
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 LEFT JOIN exam_session oes ON oes.id = r.original_exam_session_id
