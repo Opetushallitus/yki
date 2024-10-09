@@ -53,6 +53,17 @@
     ; Delete link if contact fields are null
     (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id exam-session-id})))
 
+(defn- get-transfer-targets-for-exam-session [tx original-exam-date exam-session-id]
+  (let [candidates (q/select-tranfer-targets-by-exam-session-id tx {:exam_session_id exam-session-id})
+        within-year? #(let [exam-date (f/parse (:exam_date %1))
+                            limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
+                        (not (t/after? exam-date limit-date)))
+        within-year (filter within-year? candidates)]
+    (cond
+      (empty? candidates) []
+      (seq within-year) (map :id within-year)
+      :else (->> candidates (sort-by :exam_date) first :id vector))))
+
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
   (update-exam-session! [db oid id exam-session])
@@ -74,7 +85,6 @@
     "Get exam sessions with exam date at least 'from'")
   (get-exam-sessions-for-oid [db oid from]
     "Get exam sessions by oid and with (optional) exam date at least 'from'")
-  (get-transfer-targets-for-exam-session [db exam-date exam-session-id])
   (get-exam-sessions-with-queue [db])
   (get-email-added-to-queue? [db email exam-session-id])
   (add-to-exam-session-queue! [db email lang exam-session-id])
@@ -123,9 +133,18 @@
   (update-registration-exam-session!
     [{:keys [spec]} to-exam-session-id registration-id oid]
     (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/update-registration-exam-session! tx {:exam_session_id to-exam-session-id
-                                                             :registration_id registration-id
-                                                             :oid             oid}))))
+      (let [{exam-session-id :id exam-date :exam_date} (q/select-registration-details-for-transfer tx {:id registration-id})
+            valid-transfer-targets (get-transfer-targets-for-exam-session
+                                    tx
+                                    exam-date
+                                    exam-session-id)]
+        (if (some #{to-exam-session-id} valid-transfer-targets )
+          (int->boolean (q/update-registration-exam-session!
+                         tx
+                         {:exam_session_id to-exam-session-id
+                          :registration_id registration-id
+                          :oid             oid}))
+          false))))
   (cancel-registration!
     [{:keys [spec]} registration-id]
     (jdbc/with-db-transaction [tx spec]
@@ -174,20 +193,13 @@
     (q/select-completed-exam-session-participants spec {:id id}))
   (get-exam-sessions [{:keys [spec]} from]
     (q/select-exam-sessions spec {:from from}))
-  (get-exam-sessions-for-oid [{:keys [spec] :as db} oid from]
-    (let [exam-sessions (q/select-exam-sessions-for-oid spec {:oid  oid
+  (get-exam-sessions-for-oid [{:keys [spec]} oid from]
+    (jdbc/with-db-transaction [tx spec]
+      (let [exam-sessions (q/select-exam-sessions-for-oid tx {:oid  oid
                                                               :from from})]
-      (map #(assoc % :transfer_targets (get-transfer-targets-for-exam-session db (:session_date %) (:id %))) exam-sessions)))
-  (get-transfer-targets-for-exam-session [{:keys [spec]} original-exam-date exam-session-id]
-    (let [candidates (q/select-tranfer-targets-by-exam-session-id spec {:exam_session_id exam-session-id})
-          within-year? #(let [exam-date (f/parse (:exam_date %1))
-                              limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
-                          (not (t/after? exam-date limit-date)))
-          within-year (filter within-year? candidates)]
-      (cond
-        (empty? candidates) []
-        (seq within-year) (map :id within-year)
-        :else (->> candidates (sort-by :exam_date) first :id vector))))
+        (mapv (fn [{date :session_date id :id :as session}]
+                (assoc session :transfer_targets (get-transfer-targets-for-exam-session tx date id)))
+              exam-sessions))))
   (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
     (int->boolean (:count (first (q/select-email-added-to-queue spec {:email           email
                                                                       :exam_session_id exam-session-id})))))
