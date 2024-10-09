@@ -423,6 +423,13 @@ WHERE ed.exam_date >= COALESCE(:from, ed.exam_date)
   AND o.oid = :oid
 ORDER BY ed.exam_date ASC;
 
+-- name: select-registration-details-for-transfer
+SELECT es.id, ed.exam_date
+FROM registration re
+INNER JOIN exam_session es ON re.exam_session_id = es.id
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+WHERE re.id = :id
+
 -- name: select-tranfer-targets-by-exam-session-id
 SELECT
 ies.id,
