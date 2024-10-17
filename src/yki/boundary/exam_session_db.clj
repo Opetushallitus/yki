@@ -1,5 +1,6 @@
 (ns yki.boundary.exam-session-db
-  (:require [clj-time.format :as f]
+  (:require [clj-time.core :as t]
+            [clj-time.format :as f]
             [clj-time.jdbc]
             [clojure.java.jdbc :as jdbc]
             [clojure.tools.logging :as log]
@@ -51,6 +52,18 @@
 
     ; Delete link if contact fields are null
     (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id exam-session-id})))
+
+(defn- get-transfer-targets-for-exam-session [tx original-exam-date exam-session-id]
+  "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session"
+  (let [candidates (q/select-transfer-targets-by-exam-session-id tx {:exam_session_id exam-session-id})
+        within-year? #(let [exam-date (f/parse (:exam_date %1))
+                            limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
+                        (not (t/after? exam-date limit-date)))
+        within-year (filter within-year? candidates)]
+    (cond
+      (empty? candidates) []
+      (seq within-year) (map :id within-year)
+      :else (->> candidates (sort-by :exam_date) first :id vector))))
 
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
@@ -121,9 +134,18 @@
   (update-registration-exam-session!
     [{:keys [spec]} to-exam-session-id registration-id oid]
     (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/update-registration-exam-session! tx {:exam_session_id to-exam-session-id
-                                                             :registration_id registration-id
-                                                             :oid             oid}))))
+      (let [{exam-session-id :id exam-date :exam_date} (q/select-registration-details-for-transfer tx {:id registration-id})
+            valid-transfer-targets (get-transfer-targets-for-exam-session
+                                    tx
+                                    exam-date
+                                    exam-session-id)]
+        (if (some #{to-exam-session-id} valid-transfer-targets )
+          (int->boolean (q/update-registration-exam-session!
+                         tx
+                         {:exam_session_id to-exam-session-id
+                          :registration_id registration-id
+                          :oid             oid}))
+          false))))
   (cancel-registration!
     [{:keys [spec]} registration-id]
     (jdbc/with-db-transaction [tx spec]
@@ -173,8 +195,12 @@
   (get-exam-sessions [{:keys [spec]} from]
     (q/select-exam-sessions spec {:from from}))
   (get-exam-sessions-for-oid [{:keys [spec]} oid from]
-    (q/select-exam-sessions-for-oid spec {:oid  oid
-                                          :from from}))
+    (jdbc/with-db-transaction [tx spec]
+      (let [exam-sessions (q/select-exam-sessions-for-oid tx {:oid  oid
+                                                              :from from})]
+        (mapv (fn [{date :session_date id :id :as session}]
+                (assoc session :transfer_targets (get-transfer-targets-for-exam-session tx date id)))
+              exam-sessions))))
   (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
     (int->boolean (:count (first (q/select-email-added-to-queue spec {:email           email
                                                                       :exam_session_id exam-session-id})))))
