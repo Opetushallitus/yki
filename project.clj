@@ -11,7 +11,10 @@
   :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.18.1"]
                          [com.fasterxml.jackson.core/jackson-core "2.18.1"]
                          [com.fasterxml.jackson.core/jackson-databind "2.18.1"]
-                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.18.1"]]
+                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.18.1"]
+                         ; [com.layerware/pgqueue "0.5.1"] depends on a version of nippy with a known vulnerability
+                         ; as there is no update for pgqueue available, let's instead fix the nippy version here
+                         [com.taoensso/nippy "2.15.3"]]
   :dependencies [[org.clojure/clojure "1.12.0"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/data.json "2.5.0"]
