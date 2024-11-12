@@ -1094,7 +1094,7 @@ SELECT
   r.kind,
   r.original_exam_session_id,
   oed.exam_date AS original_exam_date,
-  (r.state = 'COMPLETED' AND (r.original_exam_session_id IS NULL OR current_date < '2025-01-01'::date)) AS is_transferable,
+  (r.state = 'COMPLETED' AND (r.original_exam_session_id IS NULL OR current_date < '2024-01-01'::date)) AS is_transferable,
   (r.original_exam_session_id IS NOT NULL) AS is_transfered
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
@@ -1661,4 +1661,3 @@ WHERE logged_in + interval '1 week' < current_date;
 -- name: delete-old-cas-oppija-tickets!
 DELETE FROM cas_oppija_ticketstore
 WHERE logged_in + interval '1 week' < current_date;
-
