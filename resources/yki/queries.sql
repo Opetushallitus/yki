@@ -863,6 +863,41 @@ WHERE re.id = :id
   AND re.state = 'COMPLETED'
   AND esl.lang = :lang;
 
+-- name: select-registration-details-for-clerk-mail
+SELECT re.state,
+       re.exam_session_id,
+       re.participant_id,
+       re.kind,
+       re.form->>'email' AS email,
+       re.form->>'last_name' AS last_name,
+       re.form->>'first_name' AS first_name,
+       re.form->>'certificate_lang' AS lang,
+       es.language_code,
+       es.level_code,
+       ed.exam_date,
+       ed.registration_end_date,
+       ed.post_admission_end_date,
+       esl.street_address,
+       esl.post_office,
+       esl.zip,
+       esl.name
+FROM registration re
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+WHERE re.id = :id
+  AND re.exam_session_id = :exam_session_id
+  AND (re.state = 'SUBMITTED' OR re.state = 'COMPLETED' OR re.state = 'PAID_AND_CANCELLED')
+  ORDER BY CASE
+      WHEN esl.lang = re.form->>'certificate_lang' THEN 1
+      WHEN esl.lang = 'fi' THEN 2
+      WHEN esl.lang = 'en' THEN 3 ELSE 4 END;
+
+-- name: select-completed-registration-lang
+SELECT re.form->>'certificate_lang' AS certificate_lang
+FROM registration re
+WHERE re.id = :id
+
 -- name: select-open-registrations-by-participant
 SELECT re.exam_session_id, (started_at + interval '30 minutes') AS expires_at
 FROM registration re
