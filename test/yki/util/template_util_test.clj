@@ -59,7 +59,7 @@
         (is (s/includes? rendered "Test: Finnish basic level"))
         (is (s/includes? rendered "Test day: 16.5.2024"))
         (is (s/includes? rendered "Test centre: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
-        (is (not (s/includes? rendered "Additional information from the organizer")))
+        (is (not (s/includes? rendered "Additional information from the test centre")))
         (is (not (s/includes? rendered "Test centre's contact information")))))
 
     (testing "mail contains proper content with extra information and organizer's contact info"
@@ -71,7 +71,7 @@
         (is (s/includes? rendered "Test: Finnish basic level"))
         (is (s/includes? rendered "Test day: 16.5.2024"))
         (is (s/includes? rendered "Test centre: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
-        (is (s/includes? rendered "Additional information from the organizer"))
+        (is (s/includes? rendered "Additional information from the test centre"))
         (is (s/includes? rendered "Be on time"))
         (is (s/includes? rendered "Test centre's contact information"))
         (is (s/includes? rendered "Name: Foo Bar"))
