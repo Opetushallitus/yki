@@ -26,7 +26,7 @@
   "email.cancel_registration.content.line1": "Your registration for the following YKI test has been cancelled",
   "email.cancel_registration.content.line2": "You test fee will not be refunded automatically.",
   "email.cancel_registration.content.line3": "You may apply for a test fee refund from the Finnish National Agency for Education. The Finnish National Agency for Education will refund your test fee if your application meets all the conditions laid down by the Act on National Certificates of Language Proficiency (YKI).",
-  "email.cancel_registration.content.line4": "If you wish to apply for the test fee refund, read the instructions on the website of the Finnish National Agency for Education:",
+  "email.cancel_registration.content.line4": "If you wish to apply for the test fee refund, read the instructions on the website of the Finnish National Agency for Education",
   "email.cancel_registration.content.line5": "If you have already applied for the test fee refund from the Finnish National Agency for Education, you do not need to resubmit your application.",
   "email.cancel_registration.content.line6": "If you have any question, you can contact us at kielitutkinnot@oph.fi.",
   "email.cancel_registration.content.link.url": "https://www.oph.fi/en/education-and-qualifications/yki-test#anchor-cancelling-your-test-registration",
