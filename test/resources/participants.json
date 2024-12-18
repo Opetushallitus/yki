@@ -1,6 +1,7 @@
 {
   "participants": [
     {
+      "is_transferable": true,
       "form": {
         "post_office": "Ankkalinna",
         "ssn": "301079-900U",
@@ -24,6 +25,7 @@
       "registration_id": 1
     },
     {
+      "is_transferable": true,
       "form": {
         "post_office": "Ankkalinna",
         "ssn": "010199-9012",
@@ -48,6 +50,7 @@
       "registration_id": 2
     },
     {
+      "is_transferable": true,
       "form": {
         "post_office": "Ankkalinna",
         "ssn": "301079-083N",
@@ -71,6 +74,7 @@
       "registration_id": 3
     },
     {
+      "is_transferable": false,
       "form": {
         "post_office": "Ankkalinna",
         "ssn": "301079-900U",

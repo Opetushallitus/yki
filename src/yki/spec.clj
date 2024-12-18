@@ -230,6 +230,7 @@
 (s/def ::post_admission_start_date (s/nilable ::date-type))
 (s/def ::post_admission_end_date (s/nilable ::date-type))
 (s/def ::post_admission_active boolean?)
+(s/def ::transfer_targets (s/coll-of pos-int?))
 (s/def ::upcoming_post_admission boolean?)
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
@@ -252,6 +253,7 @@
                                        ::post_admission_start_date
                                        ::post_admission_end_date
                                        ::post_admission_active
+                                       ::transfer_targets
                                        ::upcoming_admission
                                        ::upcoming_post_admission]))
 
@@ -373,11 +375,13 @@
 ;; exam session participant
 (s/def ::state ::non-blank-string)
 (s/def ::form ::registration)
+(s/def ::is_transferable boolean?)
 (s/def ::kind ::registration-kind)
 (s/def ::original_exam_session_id (s/nilable ::id))
 (s/def ::original_exam_date (s/nilable ::exam_date))
 (s/def ::exam-session-participant (s/keys :req-un [::created
                                                    ::form
+                                                   ::is_transferable
                                                    ::registration_id
                                                    ::original_exam_session_id
                                                    ::original_exam_date
