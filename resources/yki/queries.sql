@@ -428,7 +428,7 @@ SELECT es.id, ed.exam_date
 FROM registration re
 INNER JOIN exam_session es ON re.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-WHERE re.id = :id
+WHERE re.id = :id;
 
 -- name: select-transfer-targets-by-exam-session-id
 SELECT
@@ -438,7 +438,7 @@ FROM exam_session es
 LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN exam_session ies ON ies.id <> es.id AND ies.level_code = es.level_code AND ies.language_code = es.language_code AND ies.organizer_id = es.organizer_id
 LEFT JOIN exam_date ied ON ies.exam_date_id = ied.id
-WHERE es.id = :exam_session_id  AND ied.exam_date >= ed.exam_date
+WHERE es.id = :exam_session_id  AND ied.exam_date >= ed.exam_date;
 
 -- name: select-exam-session-by-id
 SELECT
@@ -877,6 +877,7 @@ SELECT re.state,
        ed.exam_date,
        ed.registration_end_date,
        ed.post_admission_end_date,
+       esl.extra_information,
        esl.street_address,
        esl.post_office,
        esl.zip,
@@ -896,7 +897,7 @@ WHERE re.id = :id
 -- name: select-completed-registration-lang
 SELECT re.form->>'certificate_lang' AS certificate_lang
 FROM registration re
-WHERE re.id = :id
+WHERE re.id = :id;
 
 -- name: select-open-registrations-by-participant
 SELECT re.exam_session_id, (started_at + interval '30 minutes') AS expires_at

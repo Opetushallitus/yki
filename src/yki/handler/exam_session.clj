@@ -171,15 +171,13 @@
             (DELETE "/" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response
-              (if-let [cancelled-registration (exam-session-db/cancel-registration! db registration-id)]
+              (if (exam-session-db/cancel-registration! db registration-id)
                 (do
                   (let [registration-details (registration-db/get-registration-data-for-clerk-mail db id registration-id)
                         lang (:lang registration-details)
                         exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
-                        exam-session-extra-information (exam-session-db/get-exam-session-location-extra-information db id lang)
                         email-template-data            (assoc registration-details
-                                                              :contact_info exam-session-contact-info
-                                                              :extra_information (:extra_information exam-session-extra-information))]
+                                                              :contact_info exam-session-contact-info)]
                     (when (= (:state registration-details) "PAID_AND_CANCELLED")
                       (log/info "Sending registration cancelled email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-cancel-registration-email!
@@ -205,10 +203,8 @@
                     (let [registration-details (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
                           lang (:lang registration-details)
                           exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
-                          exam-session-extra-information (exam-session-db/get-exam-session-location-extra-information db to-exam-session-id lang)
                           email-template-data            (assoc registration-details
-                                                                :contact_info exam-session-contact-info
-                                                                :extra_information (:extra_information exam-session-extra-information))]
+                                                                :contact_info exam-session-contact-info)]
                       (log/info "Sending transfer confirmation email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-transfer-confirmation-email!
                        email-q

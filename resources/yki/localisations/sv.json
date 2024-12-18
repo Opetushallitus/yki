@@ -66,7 +66,7 @@
   "email.payment_success.content.line5.link.text": "Annullering av deltagande",
   "email.payment_success.content.line5.link.url": "https://www.oph.fi/sv/koulutus-ja-tutkinnot/kieli-ja-kaantajatutkinnot/yleiset-kielitutkinnot-yki/ennen-testia#anchor-annullering-av-deltagande",
   "email.payment_success.content.line6": "Bifogat hittar du kvittot för din examensavgift.",
-    "email.payment_success.extra_information.label": "Ytterligare information från teststället",
+  "email.payment_success.extra_information.label": "Ytterligare information från teststället",
   "email.payment_success.idDocument.bulletPoint1": "pass",
   "email.payment_success.idDocument.bulletPoint2": "identitetskort",
   "email.payment_success.idDocument.bulletPoint3": "främlingspass",
