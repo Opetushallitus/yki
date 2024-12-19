@@ -23,6 +23,7 @@
   (get-registration-and-exam-session-state [db registration-id])
   (get-registration-data-by-participant [db registration-id participant-id lang])
   (get-completed-registration-data [db exam-session-id registration-id lang])
+  (get-registration-data-for-clerk-mail [db exam-session-id registration-id])
   (get-completed-payment-data-for-registration [db registration-id])
   (get-open-registrations-by-participant [db participant-id])
   (exam-session-space-left? [db exam-session-id registration-id])
@@ -126,6 +127,10 @@
     (first (q/select-completed-registration-details spec {:id              registration-id
                                                           :exam_session_id exam-session-id
                                                           :lang            lang})))
+  (get-registration-data-for-clerk-mail
+    [{:keys [spec]} exam-session-id registration-id]
+    (first (q/select-registration-details-for-clerk-mail spec {:id              registration-id
+                                                               :exam_session_id exam-session-id})))
   (get-completed-payment-data-for-registration
     [{:keys [spec]} registration-id]
     (first (q/select-completed-payment-details-for-registration spec {:registration_id registration-id})))

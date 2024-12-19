@@ -77,11 +77,6 @@
         exam-session-route     (get-exam-session-route)
         request                (mock/request :delete (str exam-session-route "/registration/" registration-id))
         get-registration-state #(:state (base/select-one (str "SELECT state from registration where id=" registration-id)))]
-    (testing "cancelling paid registration should fail if cancelling user is not OPH admin"
-      (with-redefs [auth/oph-admin-access (constantly false)]
-        (let [response (base/send-request-with-tx request)]
-          (is (= (:status response) 400))
-          (is (= (get-registration-state) "COMPLETED")))))
     (testing "cancelling paid registration should set registration state to PAID_AND_CANCELLED if user is OPH admin"
       (with-redefs [auth/oph-admin-access (constantly true)]
         (let [response (base/send-request-with-tx request)]

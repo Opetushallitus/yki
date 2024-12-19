@@ -169,22 +169,28 @@
             (response {:participants (exam-session-db/get-exam-session-participants db id oid)}))
           (context "/:registration-id" []
             (DELETE "/" request
-              :path-params [registration-id :- ::ys/id]
+              :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response
-              (let [cancelled-registration
-                    (if (auth/oph-admin-access request)
-                      (exam-session-db/cancel-registration! db registration-id)
-                      ; If user is not an OPH-admin but rather an exam organizer, only allow cancelling unpaid registrations
-                      (exam-session-db/cancel-unpaid-registration! db registration-id oid))]
-                (if cancelled-registration
-                  (do
-                    (audit-log/log {:request   request
-                                    :target-kv {:k audit-log/registration
-                                                :v registration-id}
-                                    :change    {:type audit-log/delete-op}})
-                    (response {:success true}))
-                  (bad-request {:success false
-                                :error   "Registration couldn't be cancelled"}))))
+              (if (exam-session-db/cancel-registration! db registration-id)
+                (do
+                  (let [registration-details (registration-db/get-registration-data-for-clerk-mail db id registration-id)
+                        lang (:lang registration-details)
+                        exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
+                        email-template-data            (assoc registration-details
+                                                              :contact_info exam-session-contact-info)]
+                    (when (= (:state registration-details) "PAID_AND_CANCELLED")
+                      (log/info "Sending registration cancelled email for registration with id" registration-id "and lang" lang)
+                      (registration-email/send-cancel-registration-email!
+                       email-q
+                       lang
+                       email-template-data)))
+                  (audit-log/log {:request   request
+                                  :target-kv {:k audit-log/registration
+                                              :v registration-id}
+                                  :change    {:type audit-log/delete-op}})
+                  (response {:success true}))
+                (bad-request {:success false
+                              :error   "Registration couldn't be cancelled"})))
             (POST "/relocate" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]
@@ -194,13 +200,23 @@
                     success?           (exam-session-db/update-registration-exam-session! db to-exam-session-id registration-id oid)]
                 (if success?
                   (do
+                    (let [registration-details (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
+                          lang (:lang registration-details)
+                          exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
+                          email-template-data            (assoc registration-details
+                                                                :contact_info exam-session-contact-info)]
+                      (log/info "Sending transfer confirmation email for registration with id" registration-id "and lang" lang)
+                      (registration-email/send-transfer-confirmation-email!
+                       email-q
+                       lang
+                       email-template-data))
                     (audit-log/log {:request   request
                                     :target-kv {:k audit-log/registration
                                                 :v registration-id}
                                     :change    {:type audit-log/update-op
                                                 :old  {:exam_session_id id}
                                                 :new  {:exam_session_id (:to_exam_session_id relocate-request)}}})
-                    ; Sync only the relocation destination exam session
+                                        ; Sync only the relocation destination exam session
                     (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                     (response {:success true}))
                   (not-found {:success false
