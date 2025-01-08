@@ -770,7 +770,8 @@ WHERE id IN (:ids) AND state IN ('STARTED', 'SUBMITTED');
 UPDATE registration
 SET exam_session_id = :exam_session_id,
     kind = 'ADMISSION',
-    original_exam_session_id = exam_session_id
+    original_exam_session_id = exam_session_id,
+    is_transfered = TRUE
 WHERE id = :registration_id
 AND EXISTS (SELECT id
             FROM exam_session
@@ -1130,8 +1131,8 @@ SELECT
   r.kind,
   r.original_exam_session_id,
   oed.exam_date AS original_exam_date,
-  (r.state = 'COMPLETED' AND (r.original_exam_session_id IS NULL OR current_date < '2025-01-01'::date)) AS is_transferable,
-  (r.original_exam_session_id IS NOT NULL) AS is_transfered
+  (r.state = 'COMPLETED' AND NOT r.is_transfered) AS is_transferable,
+  r.is_transfered
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 LEFT JOIN exam_session oes ON oes.id = r.original_exam_session_id
@@ -1697,4 +1698,3 @@ WHERE logged_in + interval '1 week' < current_date;
 -- name: delete-old-cas-oppija-tickets!
 DELETE FROM cas_oppija_ticketstore
 WHERE logged_in + interval '1 week' < current_date;
-
