@@ -38,4 +38,7 @@
   (fn with-logging [handler]
     (logger/wrap-log-response
       handler
-      {:transform-fn (env->log-transformer env), :request-keys request-keys})))
+      {:transform-fn (env->log-transformer env)
+       :request-keys request-keys
+       :log-fn (fn [{:keys [level throwable message]}]
+                  (clojure.tools.logging/log "yki.middleware.access-log" level throwable message))})))

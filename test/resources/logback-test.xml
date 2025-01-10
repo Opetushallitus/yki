@@ -7,7 +7,7 @@
     </layout>
   </appender>
 
-    <logger name="ring.logger" level="OFF" additivity="false">
+    <logger name="yki.middleware.access-log" level="OFF" additivity="false">
         <appender-ref ref="STDOUT" />
     </logger>
 
