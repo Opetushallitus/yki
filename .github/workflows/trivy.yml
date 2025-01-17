@@ -1,0 +1,25 @@
+name: Trivy
+
+on:
+  schedule:
+    # Schedule execution daily at 7:23 am (UTC).
+    - cron: "23 07 * * *"
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Scan vulnerabilities with Trivy
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          scan-type: 'repo'
+          scanners: 'vuln'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
