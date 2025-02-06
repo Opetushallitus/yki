@@ -26,7 +26,7 @@
         ;:query-params [individualized :- boolean?]
         (let [participant-onr-data (->> (b/get-participant-onr-data db)
                                         (map #(with-onr-url url-helper %)))
-              columns              [:oid :oppijanumero :onr_url :participant_id :is_individualized :modified]
+              columns              [:oid :onr_url :participant_id :is_individualized :modified :exam_date]
               batch-size           1000]
           (with-open [writer (StringWriter.)]
             (csv/write-csv writer [(map name columns)] :separator \;)
