@@ -96,5 +96,9 @@
                                           :access-log #ig/ref :yki.middleware.access-log/with-logging
                                           :auth       #ig/ref :yki.middleware.no-auth/with-authentication}
 
- :yki.env/environment {:environment "dev"}}
+ :yki.env/environment                    {:environment "dev"}
+
+ :yki.boundary.email/email-client        {:url-helper             #ig/ref :yki.util/url-helper
+                                          :cas-client             #ig/ref :yki.boundary.cas/cas-client
+                                          :use-new-email-service? true}}
 

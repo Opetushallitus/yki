@@ -105,10 +105,6 @@
   :yki.boundary.onr/onr-client                               {:url-helper #ig/ref :yki.util/url-helper
                                                               :cas-client #ig/ref :yki.boundary.cas/cas-client}
 
-  :yki.boundary.email/email-client                           {:url-helper             #ig/ref :yki.util/url-helper
-                                                              :cas-client             #ig/ref :yki.boundary.cas/cas-client
-                                                              :use-new-email-service? false}
-
   :yki.boundary.permissions/permissions-client               {:url-helper #ig/ref :yki.util/url-helper
                                                               :cas-client #ig/ref :yki.boundary.cas/cas-client}
 
