@@ -119,7 +119,8 @@
     (log/info "Payment link created for " email ". Adding to email queue")
     (pgq/put email-q
              {:language   lang
-              :recipients [email]
+              :recipients [{:email email
+                            :name  (str (:first_name template-data) " " (:last_name template-data))}]
               :created    (System/currentTimeMillis)
               :message-id (random-uuid)
               :subject    (template-util/subject link-type lang template-data)
@@ -219,7 +220,9 @@
                                                                 :amount (:email-template amount)
                                                                 :language (template-util/get-language (:language_code registration-data) lang)
                                                                 :level (template-util/get-level (:level_code registration-data) lang)
-                                                                :expiration_date (common/format-date-to-finnish-format last-payment-date)))
+                                                                :expiration_date (common/format-date-to-finnish-format last-payment-date)
+                                                                :first_name (:first_name form-to-persist)
+                                                                :last_name (:last_name form-to-persist)))
               success                  (registration-db/update-registration-details! db
                                                                                      update-registration
                                                                                      create-and-send-link-fn)]
