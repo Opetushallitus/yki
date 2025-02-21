@@ -43,7 +43,6 @@
           (when (not= 200 (:status response))
             (throw (Exception. (str "Could not send email to " (str/join recipients))))))))))
 
-
 (defn- attachment->body-part [{:keys [name data contentType]}]
   (ByteArrayPart. "liite" data contentType nil name))
 
@@ -89,19 +88,25 @@
 (defrecord NewEmailService [url-helper cas-client]
   Email
   (send-email! [_ email disabled?]
-    (let [{:keys [recipients subject body attachments]} email]
+    (let [{:keys [recipients subject body attachments metadata message-id]} email]
       (if disabled?
         (log-disabled-email recipients subject body attachments)
         ; TODO Consider failure modes!
         ; TODO Eg. if uploading an attachment fails, retry whole operation?
         ; TODO Not a problem right now, but what if there were multiple attachments and uploading only one of them would persistently fail?
         ; TODO Should other uploaded attachments be explicitly removed? AFAIK, this is not even supported by the email service.
-        (try
-          (let [send-msg-endpoint (url-helper :new-email-service.messages)
-                attachment-ids    (mapv #(upload-attachment! url-helper cas-client %) attachments)]
-            (cas/cas-authenticated-post cas-client send-msg-endpoint (email->message email attachment-ids)))
-          (catch Exception e
-            (log/error e)))))))
+        (let [send-msg-endpoint (url-helper :new-email-service.messages)
+              attachment-ids    (mapv #(upload-attachment! url-helper cas-client %) attachments)
+              {:keys [status body]} (cas/cas-authenticated-post cas-client send-msg-endpoint (email->message email attachment-ids))
+              response-body     (json/read-value body)]
+          (if (= 200 status)
+            ; TODO Store returned fields viestiTunniste and lahetysTunniste in DB?
+            response-body
+            (throw (ex-info "Error sending email!" {:status     status
+                                                    :body       response-body
+                                                    ; TODO message-id and metadata are not yet populated!
+                                                    :message-id message-id
+                                                    :metadata   metadata}))))))))
 
 (defmethod ig/init-key ::email-client [_ {:keys [use-new-email-service? cas-client url-helper]}]
   {:pre [(boolean? use-new-email-service?)
