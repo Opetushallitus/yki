@@ -10,7 +10,6 @@
     [ring.util.response :refer [bad-request not-found response]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
-    [yki.middleware.auth :as auth]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]
     [yki.util.common :refer [string->date]]

@@ -9,11 +9,10 @@
     [ring.middleware.session :refer [wrap-session]]
     [ring.middleware.session.cookie :refer [cookie-store]]
     [ring.util.http-response :refer [found see-other]]
-    [yki.boundary.cas-ticket-db :as cas-ticket-db]))
+    [yki.boundary.cas-ticket-db :as cas-ticket-db]
+    [yki.config :refer [oph-oid]]))
 
 (def backend (session-backend))
-
-(def oph-oid "1.2.246.562.10.00000000001")
 
 (def admin-role "YLLAPITAJA")
 
