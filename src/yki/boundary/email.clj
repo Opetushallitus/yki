@@ -36,7 +36,13 @@
                                   :body        body
                                   :attachments attachments
                                   :charset     "UTF-8"}
-              wrapped-recipients (mapv (fn [rcp] {:email rcp}) recipients)
+              wrapped-recipients (mapv (fn [recipient]
+                                         ; Recipient can be
+                                         ; 1) a map containing keys :email and :name, OR
+                                         ; 2) the email as a string
+                                         (if (map? recipient)
+                                           {:email (:email recipient)}
+                                           {:email recipient})) recipients)
               url                (url-helper :ryhmasahkoposti-service)
               response           (http-util/do-post url {:headers      {"content-type" "application/json; charset=UTF-8"}
                                                          :query-params {:sanitize "false"}
@@ -69,10 +75,15 @@
    ; TODO Internationalization of name?
    :lahettaja               {:nimi             "Yleiset kielitutkinnot / Opetushallitus"
                              :sahkopostiOsoite "noreply@opintopolku.fi"}
-   ; TODO Modify queued data to allow setting recipient name as well as email address!
    :vastaanottajat          (->> recipients
-                                 (mapv (fn [email]
-                                         {:sahkopostiOsoite email})))
+                                 (mapv (fn [recipient]
+                                         ; Recipient can be
+                                         ; 1) a map containing keys :email and :name, OR
+                                         ; 2) the email as a string
+                                         (if (map? recipient)
+                                           {:sahkopostiOsoite (:email recipient)
+                                            :nimi             (:name recipient)}
+                                           {:sahkopostiOsoite recipient}))))
    ; Enforce normal priority. If we were to use high priority, we'd need to throttle the rate of high priority messages ourselves.
    :prioriteetti            "normaali"
    :sailytysaika            (or retention-period default-email-retention-period)
@@ -104,8 +115,8 @@
             response-body
             (throw (ex-info "Error sending email!" {:status     status
                                                     :body       response-body
-                                                    ; TODO message-id and metadata are not yet populated!
                                                     :message-id message-id
+                                                    ; TODO metadata isn't populated yet!
                                                     :metadata   metadata}))))))))
 
 (defmethod ig/init-key ::email-client [_ {:keys [use-new-email-service? cas-client url-helper]}]

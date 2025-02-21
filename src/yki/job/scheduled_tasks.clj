@@ -135,7 +135,7 @@
                  (log/info "Sending notification to email" email)
                  (pgq/put email-q
                           {:language   lang
-                           :recipients [email]
+                           :recipients [{:email email}]
                            :created    (System/currentTimeMillis)
                            :message-id (random-uuid)
                            :subject    (template-util/subject "queue" lang exam-session)

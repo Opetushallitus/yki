@@ -35,7 +35,7 @@
     (log/info "Login link created for" email ". Adding to email queue")
     (pgq/put email-q
              {:language         lang
-              :recipients       [email]
+              :recipients       [{:email email}]
               :created          (System/currentTimeMillis)
               ; TODO Discuss if there is a need to retain login link messages for a longer or shorter period of time
               :retention-period 7
