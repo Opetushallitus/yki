@@ -91,14 +91,14 @@
        (log/error e "Participant sync handler failed"))))
 
 (defmethod ig/init-key ::email-queue-reader
-  [_ {:keys [email-q handle-at-once-at-most url-helper retry-duration-in-days disabled]}]
-  {:pre [(some? url-helper) (pos-int? handle-at-once-at-most) (some? email-q) (some? retry-duration-in-days)]}
+  [_ {:keys [email-q handle-at-once-at-most email-boundary retry-duration-in-days disabled]}]
+  {:pre [(some? email-boundary) (pos-int? handle-at-once-at-most) (some? email-q) (some? retry-duration-in-days)]}
   #(try
      (doseq [_ (range (min handle-at-once-at-most (pgq/count email-q)))]
        (take-with-error-handling email-q retry-duration-in-days
                                  (fn [email-req]
                                    (log/info "Email queue reader sending email to:" (:recipients email-req))
-                                   (email/send-email! url-helper email-req disabled))))
+                                   (email/send-email! email-boundary email-req disabled))))
      (catch Exception e
        (log/error e "Email queue reader failed"))))
 
