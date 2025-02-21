@@ -114,6 +114,11 @@
   (ig/init-key :yki.boundary.cas/cas-client {:url-helper url-helper
                                              :cas-creds  {:username "username"
                                                           :password "password"}}))
+
+(defn email-boundary [url-helper cas-client]
+  (ig/init-key :yki.boundary.email/email-client {:url-helper url-helper
+                                                 :cas-client cas-client}))
+
 (defn onr-client [url-helper]
   (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
                                              :cas-client (cas-client url-helper)}))
