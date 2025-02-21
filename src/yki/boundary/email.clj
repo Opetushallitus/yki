@@ -57,7 +57,7 @@
                                                      :body       response-body
                                                      :attachment (:name attachment)})))))
 
-(defn- email->message [{:keys [recipients subject body language metadata]} attachment-ids]
+(defn- email->message [{:keys [recipients subject body language metadata message-id]} attachment-ids]
   {:otsikko                 subject
    :sisalto                 body
    :sisallonTyyppi          "html"
@@ -77,8 +77,7 @@
    :sailytysaika            365
    :lahettavaPalvelu        "yki"
    :metadata                metadata
-   ; TODO Ensure same queued email always gets the same idempotencyKey
-   :idempotencyKey          (random-uuid)
+   :idempotencyKey          message-id
    :kayttooikeusRajoitukset [{:oikeus       "APP_YKI_YLLAPITAJA"
                               :organisaatio oph-oid}]
    :liitteidenTunnisteet    attachment-ids

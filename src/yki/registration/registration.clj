@@ -121,6 +121,7 @@
              {:language   lang
               :recipients [email]
               :created    (System/currentTimeMillis)
+              :message-id (random-uuid)
               :subject    (template-util/subject link-type lang template-data)
               :body       (template-util/render link-type lang (assoc template-data :login_url login-url))})))
 

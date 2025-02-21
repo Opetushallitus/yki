@@ -137,6 +137,7 @@
                           {:language   lang
                            :recipients [email]
                            :created    (System/currentTimeMillis)
+                           :message-id (random-uuid)
                            :subject    (template-util/subject "queue" lang exam-session)
                            :body       (template-util/render
                                          "queue"

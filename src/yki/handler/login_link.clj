@@ -37,6 +37,7 @@
              {:language   lang
               :recipients [email]
               :created    (System/currentTimeMillis)
+              :message-id (random-uuid)
               :subject    (template-util/login-subject template-data)
               :body       (template-util/render link-type lang template-data)})))
 

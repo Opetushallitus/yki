@@ -37,6 +37,7 @@
              {:language    email-language
               :recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
+              :message-id  (random-uuid)
               :subject     (template-util/subject "payment_success" email-language template-data)
               :body        (template-util/render "payment_success" email-language (assoc template-data :language exam-language :level exam-level))
               :attachments (when payment-data
@@ -50,6 +51,7 @@
              {:language   email-language
               :recipients [(:email template-data)]
               :created    order-time
+              :message-id (random-uuid)
               :subject    (template-util/evaluation-subject template-data)
               :body       (template-util/render
                             "evaluation_payment_success"
@@ -74,6 +76,7 @@
              {:language   email-language
               :recipients [kirjaamo-email]
               :created    order-time
+              :message-id (random-uuid)
               :subject    (template-util/evaluation-subject kirjaamo-template)
               :body       (template-util/render "evaluation_payment_kirjaamo" "fi" kirjaamo-template)})))
 
@@ -84,6 +87,7 @@
              {:language   email-language
               :recipients [(:email template-data)]
               :created    (System/currentTimeMillis)
+              :message-id (random-uuid)
               :subject    (template-util/subject "transfer_confirmation" email-language template-data)
               :body       (template-util/render "transfer_confirmation" email-language (assoc template-data :language exam-language :level exam-level))})))
 
@@ -94,5 +98,6 @@
              {:language   email-language
               :recipients [(:email template-data)]
               :created    (System/currentTimeMillis)
+              :message-id (random-uuid)
               :subject    (template-util/subject "cancel_registration" email-language template-data)
               :body       (template-util/render "cancel_registration" email-language (assoc template-data :language exam-language :level exam-level))})))
