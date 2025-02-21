@@ -48,7 +48,7 @@
           (is (= (:status response) 200))
           (testing "email send request should be send to job queue"
             (is (= (:subject email-request) "Ilmoittautuminen (YKI): Suomi perustaso - Omenia, 27.1.2018"))
-            (is (= (:recipients email-request) ["test@test.com"])))))
+            (is (= (:recipients email-request) [{:email "test@test.com"}])))))
       (testing "login link should not be created if exam session isn't open for registration"
         (base/execute! "UPDATE exam_date SET registration_start_date='2039-01-01' WHERE id IN (SELECT exam_date_id FROM exam_session WHERE id=1);")
         (let [request-data  {:email           "unique@email.com"

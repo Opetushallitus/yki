@@ -31,7 +31,9 @@
     (send-exam-registration-completed-email! email-q pdf-renderer "fi" registration-data payment-data)
     (let [{:keys [recipients attachments]} (pgq/take email-q)]
       (testing "Confirmation email is sent to correct recipient"
-        (is (= ["teijo@test.invalid"] recipients)))
+        (is (= [{:email "teijo@test.invalid"
+                 :name  "Teijo Antero Testitapaus"}]
+               recipients)))
       (testing "Attachments contains a PDF receipt"
         (is (= 1 (count attachments)))
         (let [attachment-data     (first attachments)

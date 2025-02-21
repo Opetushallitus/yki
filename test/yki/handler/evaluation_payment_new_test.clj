@@ -129,7 +129,8 @@
                         kirjaamo-email (pgq/take email-q)
                         exam-date      (base/two-weeks-ago)]
                     (testing "Emails are sent to customer and kirjaamo after successful payment"
-                      (is (= {:recipients ["anne-marie.jones@testi.fi"]
+                      (is (= {:recipients [{:email "anne-marie.jones@testi.fi"
+                                            :name  "Anne Marie Jones"}]
                               :subject    (str/join ", " ["Yleiset kielitutkinnot (YKI), tarkistusarviointipyyntö: Suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
                              (select-keys customer-email [:recipients :subject])))
                       (testing "Customer email has PDF receipt as attachment"
@@ -140,7 +141,7 @@
                           (is (= (without-empty-lines (:data receipt-attachment))
                                  (without-empty-lines (parser/render-file "evaluation_payment_receipt_template.html" {:current_date (t/now)
                                                                                                                       :exam_date    exam-date}))))))
-                      (is (= {:recipients ["kirjaamo@oph.fi"]
+                      (is (= {:recipients [{:email "kirjaamo@oph.fi"}]
                               :subject    (str/join ", " ["YKI" "Suomi perustaso" (format-date-string-to-finnish-format exam-date)])}
                              (select-keys kirjaamo-email [:recipients :subject])))))
                   (testing "Once payment is marked as PAID, later callback invocations do not change the status"
