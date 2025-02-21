@@ -34,7 +34,8 @@
         exam-language (template-util/get-language (:language_code template-data) email-language)
         receipt-id    (:reference payment-data)]
     (pgq/put email-q
-             {:recipients  [(:email template-data)]
+             {:language    email-language
+              :recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject "payment_success" email-language template-data)
               :body        (template-util/render "payment_success" email-language (assoc template-data :language exam-language :level exam-level))
@@ -46,7 +47,8 @@
 (defn send-customer-evaluation-registration-completed-email! [email-q payment-helper pdf-renderer email-language order-time template-data]
   (let [receipt-id (:order_number template-data)]
     (pgq/put email-q
-             {:recipients [(:email template-data)]
+             {:language   email-language
+              :recipients [(:email template-data)]
               :created    order-time
               :subject    (template-util/evaluation-subject template-data)
               :body       (template-util/render
@@ -69,7 +71,8 @@
                                   :language (template-util/get-language (:language_code template-data) "fi")
                                   :level (template-util/get-level (:level_code template-data) "fi")))]
     (pgq/put email-q
-             {:recipients [kirjaamo-email]
+             {:language   email-language
+              :recipients [kirjaamo-email]
               :created    order-time
               :subject    (template-util/evaluation-subject kirjaamo-template)
               :body       (template-util/render "evaluation_payment_kirjaamo" "fi" kirjaamo-template)})))
@@ -78,16 +81,18 @@
   (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
         exam-language (template-util/get-language (:language_code template-data) email-language)]
     (pgq/put email-q
-             {:recipients  [(:email template-data)]
-              :created     (System/currentTimeMillis)
-              :subject     (template-util/subject "transfer_confirmation" email-language template-data)
-              :body        (template-util/render "transfer_confirmation" email-language (assoc template-data :language exam-language :level exam-level))})))
+             {:language   email-language
+              :recipients [(:email template-data)]
+              :created    (System/currentTimeMillis)
+              :subject    (template-util/subject "transfer_confirmation" email-language template-data)
+              :body       (template-util/render "transfer_confirmation" email-language (assoc template-data :language exam-language :level exam-level))})))
 
 (defn send-cancel-registration-email! [email-q email-language template-data]
   (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
         exam-language (template-util/get-language (:language_code template-data) email-language)]
     (pgq/put email-q
-             {:recipients  [(:email template-data)]
-              :created     (System/currentTimeMillis)
-              :subject     (template-util/subject "cancel_registration" email-language template-data)
-              :body        (template-util/render "cancel_registration" email-language (assoc template-data :language exam-language :level exam-level))})))
+             {:language   email-language
+              :recipients [(:email template-data)]
+              :created    (System/currentTimeMillis)
+              :subject    (template-util/subject "cancel_registration" email-language template-data)
+              :body       (template-util/render "cancel_registration" email-language (assoc template-data :language exam-language :level exam-level))})))

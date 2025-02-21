@@ -118,7 +118,8 @@
     (login-link-db/create-login-link! db (assoc payment-link :code hashed))
     (log/info "Payment link created for " email ". Adding to email queue")
     (pgq/put email-q
-             {:recipients [email]
+             {:language   lang
+              :recipients [email]
               :created    (System/currentTimeMillis)
               :subject    (template-util/subject link-type lang template-data)
               :body       (template-util/render link-type lang (assoc template-data :login_url login-url))})))
