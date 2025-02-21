@@ -9,6 +9,8 @@
     [yki.util.http-util :as http-util])
   (:import (org.asynchttpclient.request.body.multipart ByteArrayPart)))
 
+(def default-email-retention-period 180)
+
 (defn- log-disabled-email [recipients subject body attachments]
   (log/info
     (str/join "\r\n"
@@ -57,7 +59,7 @@
                                                      :body       response-body
                                                      :attachment (:name attachment)})))))
 
-(defn- email->message [{:keys [recipients subject body language metadata message-id]} attachment-ids]
+(defn- email->message [{:keys [recipients subject body language metadata message-id retention-period]} attachment-ids]
   {:otsikko                 subject
    :sisalto                 body
    :sisallonTyyppi          "html"
@@ -73,8 +75,7 @@
                                          {:sahkopostiOsoite email})))
    ; Enforce normal priority. If we were to use high priority, we'd need to throttle the rate of high priority messages ourselves.
    :prioriteetti            "normaali"
-   ; TODO Allow customizing retention period?
-   :sailytysaika            365
+   :sailytysaika            (or retention-period default-email-retention-period)
    :lahettavaPalvelu        "yki"
    :metadata                metadata
    :idempotencyKey          message-id

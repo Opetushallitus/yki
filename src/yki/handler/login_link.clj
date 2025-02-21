@@ -34,12 +34,14 @@
     (login-link-db/create-login-link! db (assoc login-link :code hashed))
     (log/info "Login link created for" email ". Adding to email queue")
     (pgq/put email-q
-             {:language   lang
-              :recipients [email]
-              :created    (System/currentTimeMillis)
-              :message-id (random-uuid)
-              :subject    (template-util/login-subject template-data)
-              :body       (template-util/render link-type lang template-data)})))
+             {:language         lang
+              :recipients       [email]
+              :created          (System/currentTimeMillis)
+              ; TODO Discuss if there is a need to retain login link messages for a longer or shorter period of time
+              :retention-period 7
+              :message-id       (random-uuid)
+              :subject          (template-util/login-subject template-data)
+              :body             (template-util/render link-type lang template-data)})))
 
 (defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper access-log]}]
   {:pre [(some? db) (some? email-q) (some? url-helper) (some? access-log)]}
