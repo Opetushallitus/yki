@@ -177,7 +177,7 @@
           (is (= (:birthdate base/quarantine-form)
                  (:birthdate (base/select-one "SELECT * FROM quarantine WHERE id=2;")))))
         (testing "mismatching birthdate should result in an error"
-          (is (= 500
+          (is (= 400
                  (:status (insert-quarantine! (-> base/quarantine-form
                                                   (assoc :birthdate "1999-01-28"))))))
           (is (= {:count 2}
