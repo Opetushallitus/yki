@@ -13,6 +13,7 @@
             [yki.boundary.registration-db :as registration-db]
             [yki.handler.routing :as routing]
             [yki.job.job-queue]
+            [yki.middleware.error-boundary :refer [with-error-boundary]]
             [yki.spec :as ys]
             [yki.util.common :as c]
             [yki.util.template-util :as template-util]))
@@ -43,7 +44,7 @@
   (api
     (context routing/login-link-api-root []
       :coercion :spec
-      :middleware [access-log]
+      :middleware [with-error-boundary access-log]
       ; Handler only called when ordering registration link
       ; to email, as an alternative to Suomi.fi-authentication.
       (POST "/" _

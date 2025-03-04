@@ -10,6 +10,7 @@
     [yki.boundary.cas-ticket-db :as cas-ticket-db]
     [yki.handler.routing :as routing]
     [yki.middleware.access-log]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]))
 
 (defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client onr-client permissions-client access-log db]}]
@@ -18,7 +19,7 @@
     (context routing/auth-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [auth with-error-boundary access-log wrap-params]
       ; TODO Duplicates functionality provided by endpoint /yki/api/user/identity
       ; Used by legacy yki-frontend. Remove once yki-frontend no longer uses this endpoint.
       (GET "/user" {session :session}

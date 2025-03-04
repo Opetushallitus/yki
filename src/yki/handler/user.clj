@@ -5,6 +5,7 @@
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok]]
     [yki.handler.routing :as routing]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.registration.registration :as registration]
     [yki.spec :as ys]))
 
@@ -13,7 +14,7 @@
   (api
     (context routing/user-api-root []
       :coercion (when-not (#{:qa :prod} environment) :spec)
-      :middleware [auth access-log]
+      :middleware [auth with-error-boundary access-log]
       (GET "/identity" {session :session}
         :return ::ys/user-identity-response
         (ok (update-in session [:identity] dissoc :ticket)))

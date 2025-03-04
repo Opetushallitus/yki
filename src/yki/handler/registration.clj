@@ -6,6 +6,7 @@
     [ring.util.http-response :refer [ok bad-request internal-server-error]]
     [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.registration.registration :as registration]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit]))
@@ -21,7 +22,7 @@
   (api
     (context routing/registration-api-root []
       :coercion :spec
-      :middleware [auth access-log]
+      :middleware [auth with-error-boundary access-log]
       (POST "/init" request
         :body [registration-init ::ys/registration-init]
         :return ::ys/registration-init-response

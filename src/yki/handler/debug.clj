@@ -6,7 +6,8 @@
     [ring.middleware.params :refer [wrap-params]]
     [ring.util.http-response :refer [ok]]
     [yki.boundary.debug :as b]
-    [yki.handler.routing :as routing])
+    [yki.handler.routing :as routing]
+    [yki.middleware.error-boundary :refer [with-error-boundary]])
   (:import (java.io StringWriter)))
 
 (defn- with-onr-url [url-helper {:keys [oid] :as data}]
@@ -21,7 +22,7 @@
     (context routing/debug-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [auth with-error-boundary access-log wrap-params]
       (GET "/participants/onr" _
         ;:query-params [individualized :- boolean?]
         (let [participant-onr-data (->> (b/get-participant-onr-data db)
