@@ -8,4 +8,4 @@
       (handler request)
       (catch Exception e
         (log/error e "Caught exception at error boundary!")
-        (bad-request "Bad request")))))
+        (bad-request {:error "Bad request"})))))
