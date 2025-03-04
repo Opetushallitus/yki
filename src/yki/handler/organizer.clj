@@ -26,7 +26,7 @@
   {:pre [(some? db) (some? url-helper) (some? auth) (some? exam-session-handler) (some? exam-date-handler) (some? data-sync-q) (some? access-log)]}
   (api
     (context routing/organizer-api-root []
-      :middleware [auth with-error-boundary access-log]
+      :middleware [auth access-log with-error-boundary]
       :coercion :spec
       (GET "/" {session :session}
         :return ::ys/organizers-response

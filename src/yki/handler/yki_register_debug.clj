@@ -23,7 +23,7 @@
     (context routing/yki-register-debug-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth with-error-boundary access-log wrap-params]
+      :middleware [auth access-log with-error-boundary wrap-params]
       (GET "/:id" _
         :path-params [id :- ::ys/id]
         (log/warn (str "Request yki-register CSV export for debug purposes for exam-session " id))

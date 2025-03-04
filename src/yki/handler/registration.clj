@@ -22,7 +22,7 @@
   (api
     (context routing/registration-api-root []
       :coercion :spec
-      :middleware [auth with-error-boundary access-log]
+      :middleware [auth access-log with-error-boundary]
       (POST "/init" request
         :body [registration-init ::ys/registration-init]
         :return ::ys/registration-init-response

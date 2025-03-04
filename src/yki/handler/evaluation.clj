@@ -5,8 +5,8 @@
             [ring.util.http-response :refer [internal-server-error ok unprocessable-entity conflict]]
             [ring.util.response :refer [not-found]]
             [yki.boundary.evaluation-db :as evaluation-db]
-            [yki.middleware.error-boundary :refer [with-error-boundary]]
             [yki.handler.routing :as routing]
+            [yki.middleware.error-boundary :refer [with-error-boundary]]
             [yki.spec :as ys]
             [yki.util.common :as common]
             [yki.util.paytrail-payments :refer [sign-string]]))

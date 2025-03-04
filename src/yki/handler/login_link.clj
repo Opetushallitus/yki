@@ -44,7 +44,7 @@
   (api
     (context routing/login-link-api-root []
       :coercion :spec
-      :middleware [with-error-boundary access-log]
+      :middleware [access-log with-error-boundary]
       ; Handler only called when ordering registration link
       ; to email, as an alternative to Suomi.fi-authentication.
       (POST "/" _

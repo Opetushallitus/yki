@@ -14,7 +14,7 @@
   (api
     (context routing/user-api-root []
       :coercion (when-not (#{:qa :prod} environment) :spec)
-      :middleware [auth with-error-boundary access-log]
+      :middleware [auth access-log with-error-boundary]
       (GET "/identity" {session :session}
         :return ::ys/user-identity-response
         (ok (update-in session [:identity] dissoc :ticket)))

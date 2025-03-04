@@ -31,7 +31,7 @@
   {:pre [(some? access-log) (some? auth) (some? db) (some? url-helper)]}
   (api
     (context routing/quarantine-api-root []
-      :middleware [auth with-error-boundary access-log]
+      :middleware [auth access-log with-error-boundary]
       :coercion :spec
       (GET "/" _
         :return ::ys/quarantine-response

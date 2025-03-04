@@ -22,7 +22,7 @@
     (context routing/debug-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth with-error-boundary access-log wrap-params]
+      :middleware [auth access-log with-error-boundary wrap-params]
       (GET "/participants/onr" _
         ;:query-params [individualized :- boolean?]
         (let [participant-onr-data (->> (b/get-participant-onr-data db)

@@ -149,7 +149,7 @@
     (context routing/payment-v2-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth with-error-boundary access-log wrap-params]
+      :middleware [auth access-log with-error-boundary wrap-params]
       (GET "/report" _
         :query-params [from :- ::ys/date-type
                        to :- ::ys/date-type]
@@ -173,7 +173,7 @@
     (context routing/payment-v3-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth with-error-boundary access-log wrap-params]
+      :middleware [auth access-log with-error-boundary wrap-params]
       (GET "/:id/redirect" {session :session}
         :path-params [id :- ::ys/registration_id]
         :query-params [lang :- ::ys/language-code]
