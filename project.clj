@@ -8,10 +8,10 @@
                  ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
-  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.18.2"]
-                         [com.fasterxml.jackson.core/jackson-core "2.18.2"]
-                         [com.fasterxml.jackson.core/jackson-databind "2.18.2"]
-                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.18.2"]
+  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.18.3"]
+                         [com.fasterxml.jackson.core/jackson-core "2.18.3"]
+                         [com.fasterxml.jackson.core/jackson-databind "2.18.3"]
+                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.18.3"]
                          ; [com.layerware/pgqueue "0.5.1"] depends on a version of nippy with a known vulnerability
                          ; as there is no update for pgqueue available, let's instead fix the nippy version here
                          [com.taoensso/nippy "2.15.3"]]
@@ -28,7 +28,7 @@
                  [duct/module.web "0.7.4"]
                  [duct/scheduler.simple "0.1.0"]
                  [com.layerware/pgqueue "0.5.1"]
-                 [selmer "1.12.61"]
+                 [selmer "1.12.62"]
                  [metosin/compojure-api "2.0.0-alpha31"
                   :exclusions [joda-time]]
                  [metosin/jsonista "0.3.13"]
@@ -40,7 +40,7 @@
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.8.0"]
                  [ring-logger "1.1.1"]
-                 [ch.qos.logback/logback-classic "1.5.16"]
+                 [ch.qos.logback/logback-classic "1.5.17"]
                  [org.clojure/data.xml "0.0.8"]
                  [fi.vm.sade.java-utils/java-cas "1.2.2-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-simple]]
@@ -91,12 +91,12 @@
                              "-XX:+DebugNonSafepoints"]
                   :source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
-                  :dependencies   [[integrant/repl "0.3.3"]
+                  :dependencies   [[integrant/repl "0.4.0"]
                                    [eftest "0.6.0"]
                                    [peridot "0.5.4"]
                                    [se.haleby/stub-http "0.2.14"]
                                    [com.opentable.components/otj-pg-embedded "1.1.0"]
                                    [kerodon "0.9.1"]
-                                   [com.clojure-goes-fast/clj-async-profiler "1.4.0"]]
-                  :managed-dependencies [[org.testcontainers/testcontainers "1.20.4"]
-                                         [org.testcontainers/postgresql "1.20.4"]]}})
+                                   [com.clojure-goes-fast/clj-async-profiler "1.6.1"]]
+                  :managed-dependencies [[org.testcontainers/testcontainers "1.20.6"]
+                                         [org.testcontainers/postgresql "1.20.6"]]}})
