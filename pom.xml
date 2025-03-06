@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>dfd37f638a143cef0a3112b9061d6452e9ec1e59</tag>
+    <tag>d1d240a2354f7c35aca7794ad245eb3de1656089</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -68,9 +68,11 @@
       <url>https://maven.pkg.github.com/Opetushallitus/packages</url>
       <snapshots>
         <enabled>true</enabled>
+        <updatePolicy>daily</updatePolicy>
       </snapshots>
       <releases>
         <enabled>true</enabled>
+        <updatePolicy>daily</updatePolicy>
       </releases>
     </repository>
     <repository>

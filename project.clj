@@ -1,8 +1,10 @@
 (defproject yki "1.0.1-SNAPSHOT"
   :description "YKI backend"
-  :repositories [["oph-github-packages" {:url "https://maven.pkg.github.com/Opetushallitus/packages"
+  :repositories [["oph-github-packages" {:url      "https://maven.pkg.github.com/Opetushallitus/packages"
                                          :username :env/GITHUB_USERNAME
-                                         :password :env/GITHUB_REGISTRY_TOKEN}]
+                                         :password :env/GITHUB_REGISTRY_TOKEN
+                                         ; Check for snapshot updates daily
+                                         :update   :daily}]
                  ["oph-releases" "https://artifactory.opintopolku.fi/artifactory/oph-sade-release-local"]
                  ["oph-snapshots" "https://artifactory.opintopolku.fi/artifactory/oph-sade-snapshot-local"]
                  ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
@@ -80,23 +82,23 @@
   :profiles
   {:provided     {:dependencies [[hawk "0.2.11" :exclusions [net.java.dev.jna/jna]]]}
    :dev          [:project/dev :profiles/dev]
-   :test         {:jvm-opts ["-Dlogback.configurationFile=test/resources/logback-test.xml"]
+   :test         {:jvm-opts       ["-Dlogback.configurationFile=test/resources/logback-test.xml"]
                   :resource-paths ["test/resources"]}
    :repl         {:prep-tasks   ^:replace ["javac" "compile"]
                   :repl-options {:init-ns user}}
    :uberjar      {:aot :all}
    :profiles/dev {}
-   :project/dev  {:jvm-opts ["-Djdk.attach.allowAttachSelf"
-                             "-XX:+UnlockDiagnosticVMOptions"
-                             "-XX:+DebugNonSafepoints"]
-                  :source-paths   ["dev/src"]
-                  :resource-paths ["dev/resources"]
-                  :dependencies   [[integrant/repl "0.4.0"]
-                                   [eftest "0.6.0"]
-                                   [peridot "0.5.4"]
-                                   [se.haleby/stub-http "0.2.14"]
-                                   [com.opentable.components/otj-pg-embedded "1.1.0"]
-                                   [kerodon "0.9.1"]
-                                   [com.clojure-goes-fast/clj-async-profiler "1.6.1"]]
+   :project/dev  {:jvm-opts             ["-Djdk.attach.allowAttachSelf"
+                                         "-XX:+UnlockDiagnosticVMOptions"
+                                         "-XX:+DebugNonSafepoints"]
+                  :source-paths         ["dev/src"]
+                  :resource-paths       ["dev/resources"]
+                  :dependencies         [[integrant/repl "0.4.0"]
+                                         [eftest "0.6.0"]
+                                         [peridot "0.5.4"]
+                                         [se.haleby/stub-http "0.2.14"]
+                                         [com.opentable.components/otj-pg-embedded "1.1.0"]
+                                         [kerodon "0.9.1"]
+                                         [com.clojure-goes-fast/clj-async-profiler "1.6.1"]]
                   :managed-dependencies [[org.testcontainers/testcontainers "1.20.6"]
                                          [org.testcontainers/postgresql "1.20.6"]]}})
