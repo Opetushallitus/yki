@@ -12,8 +12,6 @@
 
 (def virkailija-auth-logout (str auth-root virkailija-auth-uri "/logout"))
 
-(def auth-callback (str auth-root "/login"))
-
 (def exam-date-api-root (str api-root "/exam-date"))
 
 (def login-link-api-root (str api-root "/login-link"))

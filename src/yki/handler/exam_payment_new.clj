@@ -11,6 +11,7 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.organization :as organization]
     [yki.handler.routing :as routing]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.middleware.payment :refer [with-request-validation]]
     [yki.spec :as ys]
     [yki.registration.email :as registration-email]
@@ -148,7 +149,7 @@
     (context routing/payment-v2-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [auth access-log with-error-boundary wrap-params]
       (GET "/report" _
         :query-params [from :- ::ys/date-type
                        to :- ::ys/date-type]
@@ -172,7 +173,7 @@
     (context routing/payment-v3-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [auth access-log with-error-boundary wrap-params]
       (GET "/:id/redirect" {session :session}
         :path-params [id :- ::ys/registration_id]
         :query-params [lang :- ::ys/language-code]
@@ -183,7 +184,7 @@
       ; After removing support for redirecting to old UI, this is now identical to ...-v3-root
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [with-error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (handle-success-callback db email-q pdf-renderer url-helper lang request))
@@ -193,7 +194,7 @@
     (context routing/paytrail-payment-v3-root []
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [with-error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (handle-success-callback db email-q pdf-renderer url-helper lang request))

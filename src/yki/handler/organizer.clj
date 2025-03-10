@@ -9,6 +9,7 @@
     [yki.handler.routing :as routing]
     [yki.middleware.access-log]
     [yki.middleware.auth :as auth]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]))
 
@@ -25,7 +26,7 @@
   {:pre [(some? db) (some? url-helper) (some? auth) (some? exam-session-handler) (some? exam-date-handler) (some? data-sync-q) (some? access-log)]}
   (api
     (context routing/organizer-api-root []
-      :middleware [auth access-log]
+      :middleware [auth access-log with-error-boundary]
       :coercion :spec
       (GET "/" {session :session}
         :return ::ys/organizers-response

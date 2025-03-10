@@ -10,6 +10,7 @@
     [yki.boundary.yki-register :refer [return-exam-session-participants-csv
                                        sync-exam-session-and-organizer
                                        sync-exam-session-participants]]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]))
 
 (defmethod ig/init-key :yki.handler/yki-register-debug [_ {:keys [access-log auth basic-auth db url-helper]}]
@@ -22,7 +23,7 @@
     (context routing/yki-register-debug-root []
       :coercion :spec
       :no-doc true
-      :middleware [auth access-log wrap-params]
+      :middleware [auth access-log with-error-boundary wrap-params]
       (GET "/:id" _
         :path-params [id :- ::ys/id]
         (log/warn (str "Request yki-register CSV export for debug purposes for exam-session " id))

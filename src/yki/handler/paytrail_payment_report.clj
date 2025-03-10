@@ -11,6 +11,7 @@
     [ring.middleware.params :refer [wrap-params]]
     [ring.util.http-response :refer [ok]]
     [yki.handler.routing :as routing]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.middleware.payment :refer [with-request-validation]])
   (:import (java.io FileOutputStream InputStream)))
 
@@ -56,7 +57,7 @@
     (context routing/paytrail-payment-report-root []
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [with-error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       ; Handler for writing requested payment report to disk
       (POST "/store" req
         (let [body         (:body req)

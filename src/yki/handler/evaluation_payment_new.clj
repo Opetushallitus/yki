@@ -9,6 +9,7 @@
     [yki.handler.routing :as routing]
     [yki.boundary.evaluation-db :as evaluation-db]
     [yki.boundary.localisation :as localisation]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.middleware.payment :refer [with-request-validation]]
     [yki.registration.email :as registration-email]
     [yki.spec :as ys]
@@ -109,7 +110,7 @@
       ; After refactoring is now identical to the newer context block.
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [with-error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (handle-success ctx lang request))
@@ -119,7 +120,7 @@
     (context routing/evaluation-payment-for-new-ui-root []
       :coercion :spec
       :no-doc true
-      :middleware [wrap-params #(with-request-validation (:payment-config payment-helper) %)]
+      :middleware [with-error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
         (handle-success ctx lang request))

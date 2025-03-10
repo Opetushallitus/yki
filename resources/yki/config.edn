@@ -21,7 +21,6 @@
 
   :yki/api                                            [#ig/ref :yki.handler/status
                                                        #ig/ref :yki.handler/code
-                                                       #ig/ref :yki.handler/exam-date-public
                                                        #ig/ref :yki.handler/auth
                                                        #ig/ref :yki.handler/user
                                                        #ig/ref :yki.handler/login-link
@@ -131,8 +130,6 @@
   :yki.handler/code                                   {:url-helper #ig/ref :yki.util/url-helper}
 
   :yki.handler/status                                 {:db #ig/ref :duct.database/sql}
-
-  :yki.handler/exam-date-public                       {:db #ig/ref :duct.database/sql}
 
   :yki.handler/exam-date                              {:db #ig/ref :duct.database/sql}
 

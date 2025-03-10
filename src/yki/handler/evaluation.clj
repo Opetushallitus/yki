@@ -6,6 +6,7 @@
             [ring.util.response :refer [not-found]]
             [yki.boundary.evaluation-db :as evaluation-db]
             [yki.handler.routing :as routing]
+            [yki.middleware.error-boundary :refer [with-error-boundary]]
             [yki.spec :as ys]
             [yki.util.common :as common]
             [yki.util.paytrail-payments :refer [sign-string]]))
@@ -25,6 +26,7 @@
   {:pre [(some? db) (some? payment-helper)]}
   (context routing/evaluation-root []
     :coercion :spec
+    :middleware [with-error-boundary]
     (GET "/" []
       :return ::ys/evaluation-periods-response
       (ok {:evaluation_periods (evaluation-db/get-upcoming-evaluation-periods db)}))

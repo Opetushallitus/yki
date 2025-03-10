@@ -8,6 +8,7 @@
     [ring.util.http-response :refer [ok not-found conflict]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]))
 
 (defn- get-exam-fee
@@ -17,6 +18,7 @@
 (defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db environment payment-config]}]
   {:pre [(some? db) (s/valid? ::ys/environment environment) (some? payment-config)]}
   (context routing/exam-session-public-api-root []
+    :middleware [with-error-boundary]
     :coercion
     (when-not (= :prod environment)
       :spec)

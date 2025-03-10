@@ -8,6 +8,7 @@
     [yki.boundary.quarantine-db :as quarantine-db]
     [yki.handler.routing :as routing]
     [yki.middleware.access-log]
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]
     [yki.util.common :refer [format-date-for-db string->date]]))
 
@@ -30,7 +31,7 @@
   {:pre [(some? access-log) (some? auth) (some? db) (some? url-helper)]}
   (api
     (context routing/quarantine-api-root []
-      :middleware [auth access-log]
+      :middleware [auth access-log with-error-boundary]
       :coercion :spec
       (GET "/" _
         :return ::ys/quarantine-response
