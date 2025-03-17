@@ -119,7 +119,7 @@
                                   :attributes])]
     (assoc (process-attributes attributes) :success? success :failureMessage failure)))
 
-(defn oppija-login-response [exam-session-id session ticket cas-attributes url-helper onr-client]
+(defn oppija-login-response [exam-session-id to-user-portal? session ticket cas-attributes url-helper onr-client]
   (let [{:keys [VakinainenKotimainenLahiosoitePostitoimipaikkaS
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
@@ -135,7 +135,9 @@
                       :street_address VakinainenKotimainenLahiosoiteS}
         redirect-uri (if (:success-redirect session)
                        (str (:success-redirect session))
-                       (url-helper :yki-ui.exam-session-registration.url exam-session-id))]
+                       (if to-user-portal?
+                         (url-helper :yki-ui.user-portal.url)
+                         (url-helper :yki-ui.exam-session-registration.url exam-session-id)))]
     (info "Redirecting oppija to url: " redirect-uri)
     (if (and sn firstName nationalIdentificationNumber)
       (assoc
@@ -167,7 +169,7 @@
   (try
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
-      (let [{:strs [examSessionId]} (:query-params request)
+      (let [{:strs [examSessionId toUserPortal]} (:query-params request)
             lang              (str/lower-case (or (some #{(-> request :route-params :*)}
                                                         ["FI" "SV" "EN"])
                                                   "fi"))
@@ -178,7 +180,7 @@
         (if (:success? cas-attributes)
           (do
             (cas-ticket-db/create-ticket! db :oppija ticket)
-            (oppija-login-response examSessionId session ticket cas-attributes url-helper onr-client))
+            (oppija-login-response examSessionId toUserPortal session ticket cas-attributes url-helper onr-client))
           (validation-failed-response (:failureMessage cas-attributes) examSessionId lang url-helper)))
       unauthorized)
     (catch Exception e
