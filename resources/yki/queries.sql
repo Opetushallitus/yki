@@ -312,11 +312,6 @@ SELECT
   e.max_participants,
   ed.registration_start_date,
   ed.registration_end_date,
-  e.post_admission_activated_at,
-  e.post_admission_quota,
-  e.post_admission_active,
-  ed.post_admission_start_date,
-  ed.post_admission_end_date,
   e.office_oid,
   e.published_at,
   (SELECT COUNT(1)
@@ -328,9 +323,6 @@ SELECT
   (SELECT COUNT(1)
    FROM registration re
    WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
-  (SELECT COUNT(1)
-   FROM registration re
-   WHERE re.exam_session_id = e.id AND re.kind = 'POST_ADMISSION' AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) as pa_participants,
   o.oid as organizer_oid,
   (SELECT array_to_json(array_agg(loc))
    FROM (SELECT
@@ -344,11 +336,8 @@ SELECT
          FROM exam_session_location
          WHERE exam_session_id = e.id) loc
   ) as location,
-  (SELECT post_admission_enabled FROM exam_date WHERE id = e.exam_date_id) AS post_admission_enabled,
-  (within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-      OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE)) as open,
-  (now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00')) AS upcoming_admission,
-  (e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE AND (now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.post_admission_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00'))) AS upcoming_post_admission
+  within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open,
+  (now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00')) AS upcoming_admission
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -364,11 +353,6 @@ SELECT
   e.max_participants,
   ed.registration_start_date,
   ed.registration_end_date,
-  e.post_admission_activated_at,
-  e.post_admission_quota,
-  e.post_admission_active,
-  ed.post_admission_start_date,
-  ed.post_admission_end_date,
   e.office_oid,
   e.published_at,
   (SELECT COUNT(1)
@@ -411,11 +395,8 @@ SELECT
     WHERE exam_session_id = e.id
   ) loc
  ) as location,
-(SELECT post_admission_enabled FROM exam_date WHERE id = e.exam_date_id) AS post_admission_enabled,
-  (within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-  OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE)) as open,
+within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open,
 (now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00')) AS upcoming_admission,
-(e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE AND (now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.post_admission_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00'))) AS upcoming_post_admission
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -446,16 +427,10 @@ SELECT
   ed.exam_date AS session_date,
   ed.registration_start_date,
   ed.registration_end_date,
-  e.post_admission_activated_at,
-  ed.post_admission_start_date,
-  ed.post_admission_end_date,
-  ed.post_admission_enabled,
-  e.post_admission_quota,
-  e.language_code,
+   e.language_code,
   e.level_code,
   e.max_participants,
   e.office_oid,
-  e.post_admission_active,
   e.published_at,
 (SELECT COUNT(1)
   FROM exam_session_queue
@@ -496,10 +471,7 @@ o.oid as organizer_oid,
     WHERE exam_session_id = e.id
   ) loc
 ) AS location,
-(within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-  OR (within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date) AND e.post_admission_active AND ed.post_admission_enabled)) as open,
-(now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00')) AS upcoming_admission,
-(e.post_admission_active = TRUE AND ed.post_admission_enabled = TRUE AND (now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.post_admission_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00'))) AS upcoming_post_admission
+within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -528,10 +500,7 @@ SELECT
   esl.post_office,
   esl.zip,
   esl.name,
-  (within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-  OR (es.post_admission_active = TRUE
-    AND ed.post_admission_enabled = TRUE
-    AND within_dt_range(now(), ed.post_admission_start_date, ed.post_admission_end_date))) as open
+  within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open
 FROM exam_session es
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
@@ -692,9 +661,6 @@ WHERE
 -- name: select-exam-session-registration-open
 SELECT exam_session_registration_open(:exam_session_id) as exists;
 
--- name: select-exam-session-post-registration-open
-SELECT exam_session_post_registration_open(:exam_session_id) as exists;
-
 -- name: select-exam-session-space-left
 SELECT NOT EXISTS (
 	SELECT es.max_participants
@@ -706,19 +672,6 @@ SELECT NOT EXISTS (
       AND re.kind = 'ADMISSION'
 	GROUP BY es.max_participants
 	HAVING (es.max_participants - COUNT(re.id)) <= 0
-) as exists;
-
--- name: select-exam-session-quota-left
-SELECT NOT EXISTS (
-    SELECT es.post_admission_quota
-      FROM exam_session es
- LEFT JOIN registration re ON es.id = re.exam_session_id
-     WHERE re.exam_session_id = :exam_session_id
-       AND re.id != COALESCE(:registration_id, 0)
-       AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-       AND re.kind = 'POST_ADMISSION'
-  GROUP BY es.post_admission_quota
-    HAVING (es.post_admission_quota - COUNT(re.id)) <= 0
 ) as exists;
 
 -- name: select-not-registered-to-exam-session
@@ -787,7 +740,6 @@ SELECT re.state,
        es.level_code,
        ed.exam_date,
        ed.registration_end_date,
-       ed.post_admission_end_date,
        esl.street_address,
        esl.post_office,
        esl.zip,
@@ -797,14 +749,14 @@ INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
-  AND ((re.kind = 'ADMISSION' AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
-       OR (re.kind = 'POST_ADMISSION' AND (ed.post_admission_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')))
+  -- TODO Support also queueing!
+  AND (re.kind = 'ADMISSION' AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
   AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
 -- name: select-registration-and-exam-session-state
-SELECT re.state, exam_session_registration_open(es.id) AS open, exam_session_post_registration_open(es.id) AS post_admission_open
+SELECT re.state, exam_session_registration_open(es.id) AS open
 FROM registration re
 INNER JOIN exam_session es on re.exam_session_id = es.id
 WHERE re.id = :id;
@@ -818,7 +770,6 @@ SELECT re.state,
        es.level_code,
        ed.exam_date,
        ed.registration_end_date,
-       ed.post_admission_end_date,
        esl.street_address,
        esl.post_office,
        esl.zip,
@@ -828,8 +779,8 @@ INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
-  AND ((re.kind = 'ADMISSION' AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
-    OR (re.kind = 'POST_ADMISSION' AND (ed.post_admission_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')))
+  -- TODO Support also queueing!
+  AND (re.kind = 'ADMISSION' AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki'))
   AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
   AND esl.lang = :lang
   AND EXISTS (SELECT 1
@@ -850,7 +801,6 @@ SELECT re.state,
        es.level_code,
        ed.exam_date,
        ed.registration_end_date,
-       ed.post_admission_end_date,
        esl.street_address,
        esl.post_office,
        esl.zip,
@@ -877,7 +827,6 @@ SELECT re.state,
        es.level_code,
        ed.exam_date,
        ed.registration_end_date,
-       ed.post_admission_end_date,
        esl.extra_information,
        esl.street_address,
        esl.post_office,
@@ -1076,7 +1025,7 @@ INSERT INTO participant_sync_status(
   :exam_session_id)
 ON CONFLICT DO NOTHING;
 
--- Syncronization is done during registration period and
+-- Synchronization is done during registration period and
 -- failed sync attempts will be retried for given period
 -- after registration has ended.
 -- Exam sessions where participants have been relocated to another
@@ -1089,11 +1038,10 @@ FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
 WHERE ((((ed.registration_end_date + interval '1 day') >= current_date
-    OR (ed.post_admission_end_date + interval '1 day') >= current_date
     OR ((ed.registration_end_date + :duration::interval) >= current_date
         AND pss.failed_at IS NOT NULL
         AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
-    AND (ed.registration_start_date <= current_date OR es.post_admission_start_date <= current_date))
+    AND ed.registration_start_date <= current_date)
   OR (pss.relocated_at IS NOT NULL
     AND pss.success_at IS NULL
     AND ed.registration_start_date < current_date
@@ -1155,29 +1103,12 @@ WHERE id = :id
                                  FROM organizer
                                  WHERE oid = :oid));
 
--- name: select-exam-dates
-SELECT ed.id, ed.exam_date, ed.registration_start_date, ed.registration_end_date, ed.post_admission_end_date,
-(
-  SELECT array_to_json(array_agg(lang))
-  FROM (
-    SELECT language_code, level_code
-    FROM exam_date_language
-    WHERE exam_date_id = ed.id AND deleted_at IS NULL
-  ) lang
-) AS languages
-FROM exam_date ed
-WHERE ed.registration_end_date >= current_date AND deleted_at IS NULL
-ORDER BY ed.exam_date ASC;
-
 -- name: select-organizer-exam-dates
 SELECT
 ed.id,
 ed.exam_date,
 ed.registration_start_date,
 ed.registration_end_date,
-ed.post_admission_start_date,
-ed.post_admission_end_date,
-ed.post_admission_enabled,
 (
   SELECT array_to_json(array_agg(lang))
   FROM (
@@ -1223,9 +1154,6 @@ SELECT
   ed.exam_date,
   ed.registration_start_date,
   ed.registration_end_date,
-  ed.post_admission_enabled,
-  ed.post_admission_start_date,
-  ed.post_admission_end_date,
 (
   SELECT array_to_json(array_agg(lang))
   FROM (
@@ -1250,9 +1178,6 @@ SELECT
   ed.exam_date,
   ed.registration_start_date,
   ed.registration_end_date,
-  ed.post_admission_enabled,
-  ed.post_admission_start_date,
-  ed.post_admission_end_date,
 (
   SELECT array_to_json(array_agg(lang))
   FROM (
@@ -1284,10 +1209,7 @@ UPDATE exam_date
   SET
     exam_date = :exam_date,
     registration_start_date = :registration_start_date,
-    registration_end_date = :registration_end_date,
-    post_admission_start_date = :post_admission_start_date,
-    post_admission_end_date = :post_admission_end_date,
-    post_admission_enabled = :post_admission_enabled
+    registration_end_date = :registration_end_date
   WHERE id = :id;
 
 -- name: delete-exam-date!
@@ -1377,38 +1299,6 @@ SELECT COUNT(1)
 FROM exam_session_queue
 WHERE exam_session_id = :exam_session_id
   AND LOWER(email) = LOWER(:email);
-
---name: fetch-post-admission-details
-SELECT post_admission_activated_at, post_admission_active, post_admission_quota
-  FROM exam_session
- WHERE id = :exam_session_id;
-
---name: activate-post-admission!
-UPDATE exam_session
-   SET post_admission_active = :post_admission_active
- WHERE id = :exam_session_id;
-
--- name: activate-exam-session-post-admission!
-UPDATE exam_session
-   SET post_admission_activated_at = now(),
-       post_admission_quota = :post_admission_quota,
-       post_admission_active = TRUE
-   WHERE id = :exam_session_id;
-
--- name: deactivate-exam-session-post-admission!
-UPDATE exam_session
-   SET post_admission_active = FALSE
-   WHERE id = :exam_session_id;
-
---name: update-post-admission-end-date!
-UPDATE exam_date
-   SET post_admission_end_date = :post_admission_end_date
- WHERE id = :exam_date_id;
-
---name: delete-post-admission-end-date!
-UPDATE exam_date
-   SET post_admission_end_date = NULL
- WHERE id = :exam_date_id;
 
 --name: select-contacts-by-oid
 SELECT

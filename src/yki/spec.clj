@@ -225,13 +225,7 @@
 (s/def ::queue int?)
 (s/def ::from ::date-type)
 (s/def ::upcoming_admission boolean?)
-; post admission extensions for exam-session
-(s/def ::post_admission_quota (s/nilable pos-int?))
-(s/def ::post_admission_start_date (s/nilable ::date-type))
-(s/def ::post_admission_end_date (s/nilable ::date-type))
-(s/def ::post_admission_active boolean?)
 (s/def ::transfer_targets (s/coll-of pos-int?))
-(s/def ::upcoming_post_admission boolean?)
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -249,22 +243,13 @@
                                        ::queue_full
                                        ::participants
                                        ::organizer_oid
-                                       ::post_admission_quota
-                                       ::post_admission_start_date
-                                       ::post_admission_end_date
-                                       ::post_admission_active
                                        ::transfer_targets
-                                       ::upcoming_admission
-                                       ::upcoming_post_admission]))
+                                       ::upcoming_admission]))
 
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::exam_session_id pos-int?)
 (s/def ::from-param (s/keys :opt-un [::from]))
-
-(s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_quota]))
-
-(s/def ::post-admission-activation (s/keys :req-un [::post_admission_quota]))
 
 (s/def ::id-response (s/keys :req-un [::id]))
 
@@ -272,8 +257,6 @@
 (s/def ::exam_date ::date-type)
 (s/def ::registration_start_date ::date-type)
 (s/def ::registration_end_date ::date-type)
-(s/def ::post_admission_end_date (s/nilable ::date-type))
-(s/def ::post_admission_enabled boolean?)
 (s/def ::exam_session_count int?)
 (s/def ::languages (s/or :null nil? :array (s/coll-of ::exam-date-language)))
 
@@ -282,9 +265,6 @@
                                          ::registration_end_date
                                          ::languages]
                                 :opt-un [::id
-                                         ::post_admission_start_date
-                                         ::post_admission_end_date
-                                         ::post_admission_enabled
                                          ::exam_session_count]))
 
 (s/def ::dates (s/coll-of ::exam-date-type))

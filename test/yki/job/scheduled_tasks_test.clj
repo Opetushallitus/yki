@@ -151,7 +151,6 @@
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (base/yesterday) "'"))
-  (base/insert-post-admission-registration (:oid base/organizer) 50 20)
   (with-routes!
     {"/osallistujat"                                                        {:status 200
                                                                              :body   "{}"}
@@ -167,11 +166,11 @@
           _           (handler)
           sync_status (base/select-one "SELECT * FROM participant_sync_status")]
       (testing "should send participants to yki register and set sync status to success"
-        (is (= (count (:recordings (first @(:routes server)))) 2))
+        (is (= (count (:recordings (first @(:routes server)))) 1))
         (is (some? (:success_at sync_status))))
       (testing "should send participants only once"
         (handler)
-        (is (= (count (:recordings (first @(:routes server)))) 2))))))
+        (is (= (count (:recordings (first @(:routes server)))) 1))))))
 
 (deftest handle-exam-session-participants-failure-test
   (base/insert-base-data)

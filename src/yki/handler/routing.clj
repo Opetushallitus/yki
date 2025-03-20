@@ -48,8 +48,6 @@
 
 (def registration-uri "/registration")
 
-(def post-admission-uri "/post-admission")
-
 (def code-api-root (str api-root "/code"))
 
 (def exam-date-uri "/exam-date")

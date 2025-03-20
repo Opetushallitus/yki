@@ -38,7 +38,6 @@
   (base/insert-organizer (:oid base/organizer))
   (base/insert-languages (:oid base/organizer))
   (base/insert-exam-dates)
-  (base/insert-post-admission-dates)
 
   (testing "post exam session endpoint should add valid exam session to database and send sync request to queue"
     (let [request     (-> (mock/request :post exam-session-route base/exam-session)
@@ -82,47 +81,7 @@
       (is (= {:count 0}
              (base/select-one "SELECT COUNT(1) FROM exam_session_location")))
       (is (some? (:exam-session sync-req)))
-      (is (= (:type sync-req) "DELETE"))))
-
-  ; '2039-05-02' no post admission
-  ; '2041-06-01' post admission, disabled
-  ; '2041-07-01' post admission, enabled
-  (letfn [(mock-request [method path body] (-> (mock/request method path body)
-                                               (mock/content-type "application/json; charset=UTF-8")
-                                               (base/send-request-with-tx)))
-          (create-pa-enabled-es [] (->> (get-new-entry base/exam-session {:session_date "2041-07-01"})
-                                        (mock-request :post exam-session-route)
-                                        (base/body-as-json)))
-          (create-pa-disabled-es [] (->> (get-new-entry base/exam-session {:session_date "2041-06-01"})
-                                         (mock-request :post exam-session-route)
-                                         (base/body-as-json)))
-          (activate [exam-session-id entry] (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission/activate") entry)))
-          (deactivate [exam-session-id] (-> (mock-request :post (str exam-session-route "/" exam-session-id "/post-admission/deactivate") "{}")))]
-
-    (testing "can activate a exam session post admission"
-      (let [exam-session-response (create-pa-enabled-es)
-            exam-session-id       (get exam-session-response "id")
-            response              (activate exam-session-id (get-new-entry "{}" {:post_admission_quota 5}))
-            exam-session          (base/select-one (str "SELECT * FROM exam_session WHERE id = " exam-session-id))]
-        (is (= (:status response) 200))
-        (is (= (:post_admission_active exam-session) true))
-        (is (= (:post_admission_quota exam-session) 5))))
-
-    (testing "cannot activate post admission if post admissions are not enabled for that date"
-      (let [exam-session-response (create-pa-disabled-es)
-            exam-session-id       (get exam-session-response "id")
-            response              (activate exam-session-id (get-new-entry "{}" {:post_admission_quota 5}))
-            exam-session          (base/select-one (str "SELECT * FROM exam_session WHERE id = " exam-session-id))]
-        (is (= (:status response) 409))
-        (is (= (:post_admission_active exam-session) false))
-        (is (= (:post_admission_quota exam-session) nil))))
-
-    (testing "can disable post admissions for exam session"
-      (let [exam-session-id (:id (base/select-one (base/select-exam-session-by-date "2041-07-01")))
-            response        (deactivate exam-session-id)
-            exam-session    (base/select-one (str "SELECT * FROM exam_session WHERE id = " exam-session-id))]
-        (is (= (:status response) 200))
-        (is (= (:post_admission_active exam-session) false))))))
+      (is (= (:type sync-req) "DELETE")))))
 
 (deftest exam-session-history-test
   (base/insert-organizer (:oid base/organizer))

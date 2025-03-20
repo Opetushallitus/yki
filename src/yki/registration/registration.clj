@@ -96,15 +96,6 @@
           (if (and space-left? not-registered?)
             (create-registration db exam_session_id participant-id session payment-config)
             (init-error-response space-left? not-registered? exam_session_id)))
-
-        ;post-admission open
-        (registration-db/exam-session-post-registration-open? db exam_session_id)
-        (let [quota-left?     (registration-db/exam-session-quota-left? db exam_session_id nil)
-              not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
-          (if (and quota-left? not-registered?)
-            (create-registration db exam_session_id participant-id session payment-config)
-            (init-error-response quota-left? not-registered? exam_session_id)))
-
         ; no registration open
         :else
         (conflict {:error {:closed true}})))))
@@ -138,19 +129,13 @@
      (get-in user [:identity :external-user-id]))})
 
 (defn- registration->expiration-date [registration]
-  (let [post-admission?                 (= (:kind registration) "POST_ADMISSION")
-        date-str                        (if post-admission?
-                                          (:post_admission_end_date registration)
-                                          (:registration_end_date registration))
+  (let [date-str                        (:registration_end_date registration)
         registration-end-date           (-> (f/parse-local-date date-str)
                                             (common/next-start-of-day))
         ; Registration and payment link expiry should be three whole days from today
         ; => expiry at start of day 3+1 days from now.
-        ; With post-admission, however, user should get one whole day of payment time
-        ; => expiry at start of day 1+1 days from now.
-        ongoing-registration-expiration (if post-admission?
-                                          (common/date-from-now (inc 1))
-                                          (common/date-from-now (inc 3)))
+        ; TODO Separate expiration date calculation logic registration lifted from queue
+        ongoing-registration-expiration (common/date-from-now (inc 3))
         date-of-expiry                  (t/min-date
                                           ongoing-registration-expiration
                                           registration-end-date)]
@@ -235,21 +220,20 @@
       ; Likely something akin to a race condition: the registration may have expired by the time we got here
       ; or the registration period may have ended.
       ; Check the most likely cases against the current database state and return error response.
-      (let [{state                :state
-             open?                :open
-             post-admission-open? :post_admission_open} (registration-db/get-registration-and-exam-session-state db (:id exam-session-registration))]
+      (let [{state :state
+             open? :open} (registration-db/get-registration-and-exam-session-state db (:id exam-session-registration))]
         {:error {:expired (= "EXPIRED" state)
                  :state   state
-                 :closed  (not (or open? post-admission-open?))}}))))
+                 :closed  (not open?)}}))))
 
 (defn submit-registration
   [db url-helper payment-helper email-q lang session registration-id form onr-client]
   (log/info "START: Submitting registration id" registration-id)
   (let [exam-session-registration (exam-session-db/get-exam-session-registration-by-registration-id db registration-id)]
-    (if
-      (or
-        (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
-        (registration-db/exam-session-quota-left? db (:id exam-session-registration) registration-id))
+    ; TODO If registering to queue, no need to check if there is space left in session.
+    ; Instead, if attempting to register into exam session proper AND there already are queued registrations,
+    ; fail (OR convert to queued registration)
+    (if (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
       (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration)
       ; registration is already full, cannot add new
       {:error {:full true}})))
