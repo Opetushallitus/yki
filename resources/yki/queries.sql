@@ -471,6 +471,7 @@ o.oid as organizer_oid,
     WHERE exam_session_id = e.id
   ) loc
 ) AS location,
+(now() AT TIME ZONE 'Europe/Helsinki' < (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') + time '16:00')) AS upcoming_admission,
 within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
