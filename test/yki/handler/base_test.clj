@@ -172,6 +172,19 @@
                           :street_address   "Katu 4"
                           :phone_number     "+3584012346"})
 
+(def post-admission-registration-form {:first_name       "Roope"
+                                       :last_name        "Ankka"
+                                       :gender           nil
+                                       :nationalities    ["246"]
+                                       :ssn              "301079-083N"
+                                       :certificate_lang "fi"
+                                       :exam_lang        "fi"
+                                       :post_office      "Ankkalinna"
+                                       :zip              "12346"
+                                       :email            "roope@al.fi"
+                                       :street_address   "Katu 5"
+                                       :phone_number     "+3584012347"})
+
 (def quarantine-form {:language_code "fin"
                       :start_date    "2040-06-29"
                       :end_date      "2040-12-30"
@@ -378,7 +391,11 @@
      ('5.4.3.2.2', '" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')"))
   (jdbc/execute! @embedded-db/conn (str
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
-                                     ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')")))
+                                     ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')"))
+
+  (jdbc/execute! @embedded-db/conn (str
+                                     "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form, kind) values
+                                     ('5.4.3.2.4','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string post-admission-registration-form) "', 'POST_ADMISSION')")))
 
 (defn insert-unpaid-expired-registration []
   (jdbc/execute! @embedded-db/conn (str
