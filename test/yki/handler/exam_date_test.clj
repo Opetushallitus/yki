@@ -87,9 +87,6 @@
           update-body     {:exam_date                 "2050-03-15"
                            :registration_start_date   "2050-01-20"
                            :registration_end_date     "2050-02-14"
-                           :post_admission_enabled    true
-                           :post_admission_start_date "2050-02-23"
-                           :post_admission_end_date   "2050-03-05"
                            :languages                 [{:language_code "fin" :level_code "PERUS"}
                                                        {:language_code "fin" :level_code "YLIN"}
                                                        {:language_code "eng" :level_code "PERUS"}]}
@@ -100,9 +97,6 @@
       (is (= "2050-03-15" (:exam_date exam-date)))
       (is (= "2050-01-20" (:registration_start_date exam-date)))
       (is (= "2050-02-14" (:registration_end_date exam-date)))
-      (is (= true (:post_admission_enabled exam-date)))
-      (is (= "2050-02-23" (:post_admission_start_date exam-date)))
-      (is (= "2050-03-05" (:post_admission_end_date exam-date)))
       (is (= 3 (count languages)))))
 
   (testing "PUT can be used to update period for an exam date with exam sessions"
@@ -121,10 +115,7 @@
           id              (get-in (base/body-as-json create-response) ["id"])
           update-body     {:exam_date                 "2050-03-17"
                            :registration_start_date   "2050-01-20"
-                           :registration_end_date     "2050-02-14"
-                           :post_admission_enabled    true
-                           :post_admission_start_date "2050-02-13"
-                           :post_admission_end_date   "2050-03-05"
+                           :registration_end_date     "2050-03-18"
                            :languages                 [{:language_code "fin" :level_code "PERUS"}]}
           update-response (request-put-exam-date id update-body)]
       (is (= (:status update-response) 409))))
@@ -132,7 +123,7 @@
   (testing "PUT fails if another exam date with the same date already exists"
     (let [create-response (request-post-exam-date (assoc new-exam-date :exam_date "2050-02-04"))
           id              (get-in (base/body-as-json create-response) ["id"])
-          update-response (request-put-exam-date id new-exam-date)]
+          update-response (request-put-exam-date id (assoc new-exam-date :exam_date "2050-02-06"))]
       (is (= (:status update-response) 409))))
 
   (testing "PUT fails if trying to change date for an exam date with exam sessions"
