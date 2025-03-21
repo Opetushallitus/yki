@@ -86,11 +86,6 @@
     "Get exam sessions with exam date at least 'from'")
   (get-exam-sessions-for-oid [db oid from]
     "Get exam sessions by oid and with (optional) exam date at least 'from'")
-  (get-exam-sessions-with-queue [db])
-  (get-email-added-to-queue? [db email exam-session-id])
-  (add-to-exam-session-queue! [db email lang exam-session-id])
-  (update-exam-session-queue-last-notified-at! [db email exam-session-id])
-  (remove-from-exam-session-queue! [db email exam-session-id])
   (remove-old-entries-from-exam-session-queue! [db])
   (get-contact-info-by-exam-session-id [db id])
   (get-exam-session-location-extra-information [db id lang]))
@@ -171,7 +166,6 @@
       (rollback-on-exception
         tx
         (fn []
-          (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
           (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id id})
           (q/delete-participant-sync-status! tx {:exam_session_id id})
           (let [deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
@@ -199,48 +193,8 @@
         (mapv (fn [{date :session_date id :id :as session}]
                 (assoc session :transfer_targets (get-transfer-targets-for-exam-session tx date id)))
               exam-sessions))))
-  (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
-    (int->boolean (:count (first (q/select-email-added-to-queue spec {:email           email
-                                                                      :exam_session_id exam-session-id})))))
-  (get-exam-sessions-with-queue [{:keys [spec]}]
-    (q/select-exam-sessions-with-queue spec))
-  (add-to-exam-session-queue!
-    [{:keys [spec] :as db} email lang exam-session-id]
-    (jdbc/with-db-transaction [tx spec]
-      (let [registration-not-open? (-> (q/select-exam-session-registration-open spec {:exam_session_id exam-session-id})
-                                       (first)
-                                       (:exists)
-                                       (not))
-            already-in-queue?      (get-email-added-to-queue? db email exam-session-id)
-            queue-size             (-> (q/select-exam-session-queue-count spec {:exam_session_id exam-session-id})
-                                       (first)
-                                       (:count))
-            full-queue?            (<= 50 queue-size)]
-        (if (or registration-not-open?
-                already-in-queue?
-                full-queue?)
-          {:exists  already-in-queue?
-           :full    full-queue?
-           :success false}
-          (do
-            (q/insert-exam-session-queue! tx {:exam_session_id exam-session-id
-                                              :lang            lang
-                                              :email           email})
-            {:success true})))))
-  (update-exam-session-queue-last-notified-at!
-    [{:keys [spec]} email exam-session-id]
-    (jdbc/with-db-transaction [tx spec]
-      (q/update-exam-session-queue-last-notified-at! tx {:exam_session_id exam-session-id
-                                                         :email           email})))
-  (remove-from-exam-session-queue!
-    [{:keys [spec]} email exam-session-id]
-    (jdbc/with-db-transaction [tx spec]
-      (q/delete-from-exam-session-queue! tx {:exam_session_id exam-session-id
-                                             :email           email})))
-
   (remove-old-entries-from-exam-session-queue! [{:keys [spec]}]
     (q/delete-exam-session-queue-entries-for-old-exam-dates! spec))
-
   (get-contact-info-by-exam-session-id
     [{:keys [spec]} id]
     (first (q/select-exam-session-contact-info spec {:id id})))

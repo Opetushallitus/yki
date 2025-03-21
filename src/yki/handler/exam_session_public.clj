@@ -2,10 +2,9 @@
   (:require
     [clj-time.core :as t]
     [clojure.spec.alpha :as s]
-    [clojure.tools.logging :as log]
-    [compojure.api.sweet :refer [context GET POST]]
+    [compojure.api.sweet :refer [context GET]]
     [integrant.core :as ig]
-    [ring.util.http-response :refer [ok not-found conflict]]
+    [ring.util.http-response :refer [ok not-found]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
@@ -37,19 +36,5 @@
         (if-let [exam-session (exam-session-db/get-exam-session-by-id db id)]
           (-> (assoc exam-session :exam_fee (get-exam-fee payment-config exam-session))
               (ok))
-          (not-found "Exam session not found")))
-
-      (POST "/queue" []
-        :path-params [id :- ::ys/id]
-        :query-params [lang :- ::ys/language-code]
-        :body [request ::ys/to-queue-request]
-        :return ::ys/response
-        (let [result (exam-session-db/add-to-exam-session-queue! db (:email request) lang id)]
-          (if (:success result)
-            (do
-              (log/info "Adding email" (:email request) "to exam session" id "queue")
-              (ok result))
-            (do
-              (log/warn "Failed to add" (:email request) "to exam session" id "queue. Result:" result)
-              (conflict result))))))))
+          (not-found "Exam session not found"))))))
 

@@ -209,10 +209,6 @@
           (if success
             (do
               (log/info "END: Registration id" registration-id "submitted successfully")
-              (try
-                (exam-session-db/remove-from-exam-session-queue! db email (:id exam-session-registration))
-                (catch Exception e
-                  (log/error e "Failed to remove email" email "from exam session" (:id exam-session-registration) "queue")))
               {:oid oid})
             {:error {:create_payment true}}))
         {:error {:person_creation true}})

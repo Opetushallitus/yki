@@ -278,11 +278,6 @@
 
 (s/def ::days int?)
 
-;; exam session queue
-
-
-(s/def ::to-queue-request (s/keys :req-un [::email]))
-
 ;; login link
 (s/def ::exam_session_id ::id)
 (s/def ::user_data (s/and string? #(<= (count %) 2560)))

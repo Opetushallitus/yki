@@ -314,12 +314,8 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
-  (SELECT COUNT(1)
-   FROM exam_session_queue
-   WHERE exam_session_id = e.id) as queue,
-  ((SELECT COUNT(1)
-    FROM exam_session_queue
-    WHERE exam_session_id = e.id) >= 50) as queue_full,
+  -- TODO Return actual count of queued registrations?
+  0 as queue,
   (SELECT COUNT(1)
    FROM registration re
    WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
@@ -355,12 +351,8 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
-  (SELECT COUNT(1)
-    FROM exam_session_queue
-    WHERE exam_session_id = e.id) as queue,
-  ((SELECT COUNT(1)
-    FROM exam_session_queue
-    WHERE exam_session_id = e.id) >= 50) as queue_full,
+  -- TODO Return actual count of queued registrations?
+  0 as queue,
   (SELECT COUNT(1)
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
@@ -432,12 +424,8 @@ SELECT
   e.max_participants,
   e.office_oid,
   e.published_at,
-(SELECT COUNT(1)
-  FROM exam_session_queue
-  WHERE exam_session_id = e.id) as queue,
-((SELECT COUNT(1)
-  FROM exam_session_queue
-  WHERE exam_session_id = e.id) >= 50) as queue_full,
+  -- TODO Return actual count of queued registrations?
+  0 as queue,
 (SELECT COUNT(1)
   FROM registration re
   WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants,
@@ -1230,76 +1218,6 @@ UPDATE exam_date_language
     AND level_code = :level_code
     AND language_code = :language_code
     AND deleted_at IS NULL;
-
--- name: select-exam-session-queue-count
-SELECT count(1)
-FROM exam_session_queue
-WHERE exam_session_id = :exam_session_id;
-
--- name: insert-exam-session-queue!
-INSERT INTO exam_session_queue (
-  email,
-  lang,
-  exam_session_id
-) VALUES (
-  :email,
-  :lang,
-  :exam_session_id
-);
-
--- send notification only once per day between 8 - 21 until registration ends
--- name: select-exam-sessions-with-queue
-SELECT
- esq.exam_session_id,
- esq.last_notified_at,
- es.language_code,
- es.level_code,
- ed.exam_date,
- ed.registration_start_date,
- esl.name,
- esl.street_address,
- esl.post_office,
- esl.zip,
- array_to_json(array_agg(json_build_object('email', esq.email)::jsonb ||
-                         json_build_object('lang', esq.lang)::jsonb ||
-                         json_build_object('created', esq.created)::jsonb)) as queue
-FROM exam_session_queue esq
-INNER JOIN exam_session es ON es.id = esq.exam_session_id
-INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id AND esl.lang = esq.lang
-WHERE current_timestamp AT TIME ZONE 'Europe/Helsinki' BETWEEN (current_date + time '08:00' AT TIME ZONE 'Europe/Helsinki') AND (current_date + time '20:59' AT TIME ZONE 'Europe/Helsinki')
-  AND ed.registration_start_date <= current_date
-  AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >= (current_timestamp AT TIME ZONE 'Europe/Helsinki')
-  AND (last_notified_at IS NULL OR last_notified_at::date < current_date)
-  AND es.max_participants > (SELECT COUNT(1)
-                            FROM registration re
-                            WHERE re.exam_session_id = es.id AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED'))
-GROUP BY esq.exam_session_id, esq.last_notified_at, es.language_code, es.level_code, ed.exam_date, ed.registration_start_date, esl.street_address, esl.post_office, esl.zip, esl.name;
-
--- name: delete-from-exam-session-queue!
-DELETE FROM exam_session_queue
-WHERE email = :email
-AND exam_session_id IN (SELECT id
-                        FROM exam_session
-                        WHERE exam_date_id = (SELECT exam_date_id
-                                              FROM exam_session
-                                              WHERE id = :exam_session_id));
-
--- name: delete-from-exam-session-queue-by-session-id!
-DELETE FROM exam_session_queue
- WHERE id = :exam_session_id;
-
--- name: update-exam-session-queue-last-notified-at!
-UPDATE exam_session_queue
-SET last_notified_at = current_timestamp
-WHERE exam_session_id = :exam_session_id
-  AND email = :email;
-
---name: select-email-added-to-queue
-SELECT COUNT(1)
-FROM exam_session_queue
-WHERE exam_session_id = :exam_session_id
-  AND LOWER(email) = LOWER(:email);
 
 --name: select-contacts-by-oid
 SELECT

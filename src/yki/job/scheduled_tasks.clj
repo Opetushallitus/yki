@@ -4,6 +4,7 @@
     [clj-time.core :as t]
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
+    [pgqueue.core :as pgq]
     [yki.boundary.cas-ticket-db :as cas-ticket-db]
     [yki.boundary.debug :as debug]
     [yki.boundary.email :as email]
@@ -12,9 +13,7 @@
     [yki.boundary.onr :as onr]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
-    [yki.job.job-queue]
-    [yki.util.template-util :as template-util]
-    [pgqueue.core :as pgq])
+    [yki.job.job-queue])
   (:import [java.util UUID]))
 
 (defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
@@ -24,10 +23,6 @@
 (defonce participants-sync-handler-conf {:worker-id (str (UUID/randomUUID))
                                          :task      "PARTICIPANTS_SYNC_HANDLER"
                                          :interval  "59 MINUTES"})
-
-(defonce exam-session-queue-handler-conf {:worker-id (str (UUID/randomUUID))
-                                          :task      "EXAM_SESSION_QUEUE_HANDLER"
-                                          :interval  "599 SECONDS"})
 
 (defonce remove-old-data-handler-conf {:worker-id (str (UUID/randomUUID))
                                        :task      "REMOVE_OLD_DATA_HANDLER"
@@ -109,41 +104,6 @@
                              (fn [data-sync-req]
                                (log/info "Received request to sync data to yki register" data-sync-req)
                                (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled data-sync-req))))
-
-(defmethod ig/init-key ::exam-session-queue-handler
-  [_ {:keys [db email-q url-helper]}]
-  {:pre [(some? db) (some? email-q) (some? url-helper)]}
-  #(try
-     (when (job-db/try-to-acquire-lock! db exam-session-queue-handler-conf)
-       (log/info "Exam session queue handler started")
-       (let [exam-sessions-with-queue (exam-session-db/get-exam-sessions-with-queue db)]
-         (doseq [exam-session exam-sessions-with-queue]
-           (log/info "Exam session with queue and free space" exam-session)
-           (try
-             (doseq [item (:queue exam-session)]
-               (let [lang             (:lang item)
-                     email            (:email item)
-                     exam-session-id  (:exam_session_id exam-session)
-                     exam-session-url (url-helper :exam-session.url exam-session-id)
-                     language         (template-util/get-language (:language_code exam-session) lang)
-                     level            (template-util/get-level (:level_code exam-session) lang)]
-                 (log/info "Sending notification to email" email)
-                 (pgq/put email-q
-                          {:recipients [email]
-                           :created    (System/currentTimeMillis)
-                           :subject    (template-util/subject "queue" lang exam-session)
-                           :body       (template-util/render
-                                         "queue"
-                                         lang
-                                         (assoc exam-session
-                                           :exam_session_url exam-session-url
-                                           :language language
-                                           :level level))})
-                 (exam-session-db/update-exam-session-queue-last-notified-at! db email exam-session-id)))
-             (catch Exception e
-               (log/error e "Failed to send notifications for" exam-session))))))
-     (catch Exception e
-       (log/error e "Exam session queue handler failed"))))
 
 (defmethod ig/init-key ::remove-old-data-handler
   [_ {:keys [db]}]
