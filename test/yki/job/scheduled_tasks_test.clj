@@ -1,7 +1,6 @@
 (ns yki.job.scheduled-tasks-test
   (:require
     [clojure.test :refer [deftest is testing use-fixtures]]
-    [clojure.string :as str]
     [clojure.java.jdbc :as jdbc]
     [clj-time.core :as t]
     [integrant.core :as ig]
@@ -196,28 +195,3 @@
           failed_at_after  (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))]
       (testing "should update failed at timestamp"
         (is (t/after? failed_at_after failed_at_before))))))
-
-(deftest handle-exam-session-queue-test
-  (base/insert-base-data)
-  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")
-  (let [now           (t/to-time-zone (t/now) (t/time-zone-for-id "Europe/Helsinki"))
-        at-eight-am   (t/from-time-zone (t/today-at 8 00 00) (t/time-zone-for-id "Europe/Helsinki"))
-        at-nine-pm    (t/from-time-zone (t/today-at 21 00 00) (t/time-zone-for-id "Europe/Helsinki"))
-        email-q       (base/email-q)
-        handler       (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-handler {:db         (base/db)
-                                                                                        :url-helper (base/create-url-helper "")
-                                                                                        :email-q    email-q})
-        _             (handler)
-        email-request (pgq/take email-q)
-        queue         (base/select-one "SELECT * FROM exam_session_queue")]
-    ; notifications are send only between 8 - 21
-    (if (t/within? at-eight-am at-nine-pm now)
-      (do
-        (testing "should send notification"
-          (is (str/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 ESPOO")))
-        (testing "should set last_notified_at timestamp"
-          (is (some? (:last_notified_at queue))))
-        (testing "should send notification only once a day"
-          (handler)
-          (is (nil? (pgq/take email-q)))))
-      (is (nil? email-request)))))

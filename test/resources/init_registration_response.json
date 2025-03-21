@@ -2,9 +2,8 @@
   "exam_session": {
     "level_code": "PERUS",
     "participants": 1,
-    "queue": 1,
+    "queue": 0,
     "registration_end_date": "2039-12-01",
-    "queue_full": false,
     "registration_start_date": "2017-12-01",
     "open": true,
     "max_participants": 5,

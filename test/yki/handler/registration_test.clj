@@ -1,6 +1,5 @@
 (ns yki.handler.registration-test
   (:require [clojure.test :refer [deftest use-fixtures testing is]]
-            [clojure.java.jdbc :as jdbc]
             [clojure.string :as s]
             [jsonista.core :as j]
             [peridot.core :as peridot]
@@ -26,8 +25,7 @@
     (base/insert-exam-session-location organizer-oid "fi")
     (base/insert-exam-session-location organizer-oid "sv")
     (base/insert-exam-session-location organizer-oid "en")
-    (base/insert-login-link base/code-ok "2038-01-01")
-    (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")))
+    (base/insert-login-link base/code-ok "2038-01-01")))
 
 (deftest registration-create-and-update-with-new-payments-test
   (insert-initial-data!)
@@ -82,9 +80,6 @@
         (testing "sanitize registration input"
           (is (= (get-in registration [:form :post_office]) "Helsinki_"))))
 
-      (testing "and delete item from exam session queue"
-        (is (= {:count 0}
-               (base/select-one "SELECT COUNT(1) FROM exam_session_queue"))))
 
       (testing "second post to same session after submit should return conflict with proper error"
         (let [create-twice-response (-> session
