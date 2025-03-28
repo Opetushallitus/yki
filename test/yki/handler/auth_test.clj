@@ -56,8 +56,10 @@
 
 (deftest login-and-logout-with-login-link-test
   (base/insert-base-data)
-  (base/insert-login-link base/code-ok "2038-01-01")
-  (base/insert-login-link code-expired (l/format-local-time (l/local-now) :date))
+  (base/insert-login-link {:code       base/code-ok
+                           :expires-at "2038-01-01"})
+  (base/insert-login-link {:code code-expired
+                           :expires-at (l/format-local-time (l/local-now) :date)})
 
   (let [routes               (create-routes "")
         session              (peridot/session routes)

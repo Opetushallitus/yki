@@ -318,7 +318,9 @@
                                  ::nationality_desc]))
 
 (s/def ::exam_session ::exam-session)
-(s/def ::registration-init (s/keys :req-un [::exam_session_id]))
+(s/def ::to_queue boolean?)
+(s/def ::registration-init (s/keys :req-un [::exam_session_id]
+                                   :opt-un [::to_queue]))
 
 (s/def ::registration_id ::id)
 

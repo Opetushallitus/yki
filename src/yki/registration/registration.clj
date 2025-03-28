@@ -15,7 +15,8 @@
             [yki.util.common :as common]
             [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration]]
             [yki.util.template-util :as template-util])
-  (:import (org.postgresql.util PSQLException)))
+  (:import
+    (org.postgresql.util PSQLException)))
 
 (defn sha256-hash [code]
   (-> code
@@ -49,9 +50,10 @@
      :registration_id        registration-id
      :user                   user}))
 
-(defn- init-error-response [space-left? not-registered? exam-session-id]
+(defn- init-error-response [space-left? not-registered? to-queue? exam-session-id]
   (let [error {:error {:full       (not space-left?)
-                       :registered (not not-registered?)}}]
+                       :registered (not not-registered?)
+                       :to-queue   to-queue?}}]
     (log/warn "END: Init exam session" exam-session-id "failed with error" error)
     (conflict error)))
 
@@ -64,40 +66,56 @@
       (str/starts-with?
         "max_participants of exam_session exceeded"))))
 
-(defn- create-registration [db exam-session-id participant-id session payment-config]
+(defn- registration-kind-mismatch? [^Exception e]
+  (and
+    (instance? PSQLException e)
+    (some->
+      (.getServerErrorMessage ^PSQLException e)
+      (.getMessage)
+      (str/starts-with?
+        "registration to queue is not available"))))
+
+(defn- create-registration [db exam-session-id participant-id to-queue? session payment-config]
   (try
     (let [registration-id (registration-db/create-registration! db {:exam_session_id exam-session-id
                                                                     :participant_id  participant-id
-                                                                    :started_at      (t/now)})
+                                                                    :started_at      (t/now)
+                                                                    :kind            (if to-queue? "QUEUE" "ADMISSION")})
           response        (create-init-response db session exam-session-id registration-id payment-config)]
       (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
       (ok response))
     (catch Exception e
-      (if (max-participants-error? e)
+      (cond
+        (max-participants-error? e)
         (conflict {:error {:full true}})
+        (registration-kind-mismatch? e)
+        (conflict {:error {:registration_kind true}})
+        :else
         (do
           (log/error e "Caught unexpected error within create-registration")
           (conflict {:error {:full       false
                              :registered false}}))))))
 
 (defn init-registration
-  [db session {:keys [exam_session_id]} payment-config]
+  [db session {:keys [exam_session_id to_queue]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
-  (let [participant-id          (get-or-create-participant db (:identity session))
+  (let [
+        ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
+        participant-id          (get-or-create-participant db (:identity session))
         started-registration-id (registration-db/get-started-registration-id-by-participant-id db participant-id exam_session_id)]
-    (log/warn "started-registration-id" started-registration-id)
+    (log/info "started-registration-id" started-registration-id)
     (if started-registration-id
       (ok (create-init-response db session exam_session_id started-registration-id payment-config))
-      (cond
+      (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
-        (registration-db/exam-session-registration-open? db exam_session_id)
-        (let [space-left?     (registration-db/exam-session-space-left? db exam_session_id nil)
+        (let [to-queue?       to_queue
+              space-left?     (registration-db/exam-session-space-left? db exam_session_id nil)
               not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
-          (if (and space-left? not-registered?)
-            (create-registration db exam_session_id participant-id session payment-config)
-            (init-error-response space-left? not-registered? exam_session_id)))
+          (if (and not-registered?
+                   (or to-queue? space-left?))
+            (create-registration db exam_session_id participant-id to-queue? session payment-config)
+            (init-error-response space-left? not-registered? to-queue? exam_session_id)))
         ; no registration open
-        :else
         (conflict {:error {:closed true}})))))
 
 (defn create-and-send-link [db url-helper email-q lang payment-link template-data]

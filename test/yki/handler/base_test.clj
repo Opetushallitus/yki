@@ -265,7 +265,7 @@
   (select-one (str "(SELECT * from evaluation WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")")))
 
 (defn insert-exam-session
-  [exam-date-id organizer-oid count]
+  [exam-date-id organizer-oid max-participants]
   (let [office-oid (str organizer-oid ".5")]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
           language_code,
@@ -276,7 +276,7 @@
           published_at)
             VALUES (
               (SELECT id FROM organizer where oid = '" organizer-oid "'),
-              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null)"))))
+              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " max-participants ", null)"))))
 
 (defn insert-exam-session-location
   [organizer-oid lang]
@@ -402,17 +402,22 @@
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
                                      ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')")))
 
-(defn insert-login-link [code expires-at]
+(defn insert-login-link [{:keys [code participant exam-session expires-at]
+                          :or {participant select-participant
+                               exam-session select-exam-session}}]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
-            VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " select-participant ", " select-exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
+            VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " participant ", " exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
 (defn get-exam-session-id []
   (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))
 
-(defn login-with-login-link [session]
-  (-> session
-      (peridot/request (str routing/auth-root "/login?code=" code-ok))))
+(defn login-with-login-link
+  ([session]
+   (login-with-login-link session code-ok))
+  ([session code]
+   (-> session
+       (peridot/request (str routing/auth-root "/login?code=" code)))))
 
 (defn create-url-helper [uri]
   (let [uri-with-schema (str "http://" uri)]

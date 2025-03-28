@@ -314,8 +314,9 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
-  -- TODO Return actual count of queued registrations?
-  0 as queue,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id AND re.kind = 'QUEUE' AND re.state IN ('SUBMITTED', 'STARTED')) AS queue,
   (SELECT COUNT(1)
    FROM registration re
    WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
@@ -351,8 +352,9 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
-  -- TODO Return actual count of queued registrations?
-  0 as queue,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id AND re.kind = 'QUEUE' AND re.state IN ('SUBMITTED', 'STARTED')) AS queue,
   (SELECT COUNT(1)
     FROM registration re
     WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) as participants,
@@ -424,8 +426,9 @@ SELECT
   e.max_participants,
   e.office_oid,
   e.published_at,
-  -- TODO Return actual count of queued registrations?
-  0 as queue,
+(SELECT COUNT(1)
+  FROM registration re
+  WHERE re.exam_session_id = e.id AND re.kind = 'QUEUE' AND re.state IN ('SUBMITTED', 'STARTED')) AS queue,
 (SELECT COUNT(1)
   FROM registration re
   WHERE re.exam_session_id = e.id AND re.kind = 'ADMISSION' AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants,
@@ -615,7 +618,7 @@ INSERT INTO registration(
   :exam_session_id,
   :participant_id,
   :started_at,
-  select_registration_phase(:exam_session_id)::registration_kind
+  :kind::registration_kind
   -- only one registration per participant on same exam date
   WHERE NOT EXISTS (SELECT es.id
                     FROM exam_session es
@@ -624,7 +627,6 @@ INSERT INTO registration(
                       AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
                       AND es.exam_date_id =
                         (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
-
 
 -- name: update-registration-to-submitted!
 UPDATE registration SET

@@ -1,6 +1,6 @@
 (ns yki.handler.registration-test
   (:require [clojure.test :refer [deftest use-fixtures testing is]]
-            [clojure.string :as s]
+            [clojure.string :as str]
             [jsonista.core :as j]
             [peridot.core :as peridot]
             [stub-http.core :refer [with-routes!]]
@@ -9,6 +9,7 @@
             [yki.handler.registration]
             [yki.handler.registration-commons :refer [common-bindings
                                                       common-route-specs
+                                                      create-handlers
                                                       fill-exam-session
                                                       insert-common-base-data
                                                       registration-form-data
@@ -18,14 +19,19 @@
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
-(defn- insert-initial-data! []
-  (let [organizer-oid "1.2.3.5"]
-    (insert-common-base-data organizer-oid)
-    (base/insert-exam-session 1 organizer-oid 50)
-    (base/insert-exam-session-location organizer-oid "fi")
-    (base/insert-exam-session-location organizer-oid "sv")
-    (base/insert-exam-session-location organizer-oid "en")
-    (base/insert-login-link base/code-ok "2038-01-01")))
+(def organizer-oid "1.2.3.5")
+
+(defn- insert-initial-data!
+  ([]
+   (insert-initial-data! 50))
+  ([max-participants]
+   (insert-common-base-data organizer-oid)
+   (base/insert-exam-session 1 organizer-oid max-participants)
+   (base/insert-exam-session-location organizer-oid "fi")
+   (base/insert-exam-session-location organizer-oid "sv")
+   (base/insert-exam-session-location organizer-oid "en")
+   (base/insert-login-link {:code       base/code-ok
+                            :expires-at "2038-01-01"})))
 
 (deftest registration-create-and-update-with-new-payments-test
   (insert-initial-data!)
@@ -63,12 +69,12 @@
               payment-link-expiry (date-from-now (inc 3))
               last-payment-date   (previous-day payment-link-expiry)]
           (is (= (:subject email-request) "Maksulinkki (YKI): Suomi perustaso - Omenia, 27.1.2018"))
-          (is (s/includes? (:body email-request) "135,00 €"))
-          (is (s/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 ESPOO"))
+          (is (str/includes? (:body email-request) "135,00 €"))
+          (is (str/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 ESPOO"))
           (is (= (:type payment-link) "PAYMENT"))
           (is (= (.toDate (:expires_at payment-link))
                  (.toDate payment-link-expiry)))
-          (is (s/includes? (:body email-request) (str "Maksa tutkintomaksu viimeistään " (format-date-to-finnish-format last-payment-date))))
+          (is (str/includes? (:body email-request) (str "Maksa tutkintomaksu viimeistään " (format-date-to-finnish-format last-payment-date))))
           (is (= (:success_redirect payment-link) (registration-success-redirect registration-id port)))))
 
       (let [registration (get-registration)]
@@ -102,7 +108,7 @@
           (is (= (get-in create-twice-response [:response :status]) 409))))
 
       (testing "when session is full should return conflict with proper error"
-        (fill-exam-session 50, "ADMISSION")
+        (fill-exam-session 50 "ADMISSION")
         (let [session-full-response (-> session
                                         (peridot/request (str routing/registration-api-root "/init")
                                                          :body (j/write-value-as-string {:exam_session_id 2})
@@ -148,3 +154,64 @@
         (base/execute! (str "UPDATE registration SET participant_id=" (:participant_id registration) " WHERE id=" (:id registration)))
         (is (= 200 (-> (cancel-registration!) :response :status)))
         (is (= "CANCELLED" (:state (get-registration))))))))
+
+(deftest registration-to-queue
+  (let [max-participants 1]
+    (insert-initial-data! max-participants)
+    (with-routes!
+      common-route-specs
+      (let [handlers              (create-handlers (base/email-q) (:port server))
+            session               (-> (peridot/session handlers)
+                                      (base/login-with-login-link))
+            json-mapper           (j/object-mapper {:decode-key-fn true})
+            init-registration!    (fn [session exam-session-id to-queue?]
+                                    (-> session
+                                        (peridot/request
+                                          (str routing/registration-api-root "/init")
+                                          :body (j/write-value-as-string {:exam_session_id exam-session-id
+                                                                          :to_queue        to-queue?})
+                                          :content-type "application/json"
+                                          :request-method :post)))
+            exam-session-id       (-> (str "SELECT id FROM exam_session WHERE organizer_id=(SELECT id FROM organizer WHERE oid='" organizer-oid "');")
+                                      (base/select-one)
+                                      (:id))
+            participant-2-email   "anothertest@user.com"
+            participant-2-id      (:id (base/select-one (str "SELECT id FROM participant WHERE email='" participant-2-email "';")))
+            participant-2-code    (str/replace base/code-ok \8 \0)
+            _                     (base/insert-login-link {:code         participant-2-code
+                                                           :expires-at   "2038-01-01"
+                                                           :participant  participant-2-id
+                                                           :exam-session exam-session-id})
+            participant-2-session (-> (peridot/session handlers)
+                                      (base/login-with-login-link participant-2-code))]
+        (testing "enrolling to queue succeeds when exam is full"
+          ; Initialise registration with kind == "ADMISSION"
+          (let [{:keys [status body]} (-> (init-registration! session exam-session-id false) :response)
+                queue-size (-> (j/read-value body json-mapper)
+                               (:exam_session)
+                               (:queue))]
+            (is (= 200 status))
+            ; Queue should be empty at this point
+            (is (= 0 queue-size)))
+          ; Exam session is now full -> enrolling to queue (with another participant!) should succeed
+          (let [{:keys [status body]} (-> (init-registration! participant-2-session exam-session-id true) :response)
+                queue-size (-> (j/read-value body json-mapper)
+                               (:exam_session)
+                               (:queue))]
+            (is (= 200 status))
+            ; Queue should now have one entry
+            (is (= 1 queue-size))))
+        ; NB! The following test case should the last within a deftest block, as the request triggers an exception
+        ; during the database transaction. This will lead to the transaction getting terminated and all DB changes,
+        ; *including* the ones for test setup, are rolled back!
+        (testing "enrolling to queue fails if exam is not yet full and has no existing queue"
+          (let [; Exam session with id 1 should not be full currently
+                {:keys [status body]} (-> (init-registration! session 1 true) :response)
+                response-body (j/read-value body json-mapper)]
+            (is (= 409 status))
+            (is (= {:error {:registration_kind true}} response-body))))
+
+        (testing "enrolling to queue succeeds when exam has existing queue")
+        (testing "enrolling to multiple sessions on same day fails")
+        ))))
+
