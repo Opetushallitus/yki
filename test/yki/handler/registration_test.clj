@@ -205,13 +205,19 @@
         ; during the database transaction. This will lead to the transaction getting terminated and all DB changes,
         ; *including* the ones for test setup, are rolled back!
         (testing "enrolling to queue fails if exam is not yet full and has no existing queue"
-          (let [; Exam session with id 1 should not be full currently
-                {:keys [status body]} (-> (init-registration! session 1 true) :response)
-                response-body (j/read-value body json-mapper)]
+          (let [new-participant-email   "fresh@test.invalid"
+                _                       (base/execute! (str "INSERT INTO participant (external_user_id, email) VALUES ('" new-participant-email "','" new-participant-email "');"))
+                new-participant-id      (:id (base/select-one (str "SELECT id FROM participant WHERE external_user_id='" new-participant-email "';")))
+                new-participant-code    (str/replace base/code-ok \8 \3)
+                _                       (base/insert-login-link {:code         new-participant-code
+                                                                 :expires-at   "2038-01-01"
+                                                                 :participant  new-participant-id
+                                                                 :exam-session 1})
+                new-participant-session (-> (peridot/session handlers)
+                                            (base/login-with-login-link new-participant-code))
+                ; Exam session with id 1 should not be full currently
+                {:keys [status body]} (-> (init-registration! new-participant-session 1 true) :response)
+                response-body           (j/read-value body json-mapper)]
             (is (= 409 status))
-            (is (= {:error {:registration_kind true}} response-body))))
-
-        (testing "enrolling to queue succeeds when exam has existing queue")
-        (testing "enrolling to multiple sessions on same day fails")
-        ))))
+            (is (= {:error {:registration_kind true}} response-body))))))))
 

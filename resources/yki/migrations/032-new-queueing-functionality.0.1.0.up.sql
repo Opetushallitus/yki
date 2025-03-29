@@ -27,32 +27,16 @@ DROP TRIGGER IF EXISTS participant_limit_trigger ON registration;
 
 CREATE OR REPLACE FUNCTION error_if_exceeds_participant_limit() RETURNS TRIGGER AS $$
 DECLARE
-    current_registrations NUMERIC := (
-        SELECT count(id) FROM registration
-        WHERE exam_session_id = NEW.exam_session_id
-          AND state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-          AND kind = 'ADMISSION'
-    );
-    session_limit NUMERIC := (
-        SELECT max_participants FROM exam_session WHERE id = NEW.exam_session_id
-    );
-    registration_kind TEXT := (
+    actual_kind TEXT := (
         select_registration_kind(NEW.exam_session_id)
     );
 BEGIN
-    IF NEW.kind = 'QUEUE' THEN
-        IF registration_kind = 'QUEUE' THEN
-            RETURN NEW;
-        ELSE
-            RAISE EXCEPTION 'registration to queue is not available';
-        END IF;
-    -- TODO Does not currently correctly handle case where NEW.kind = 'ADMISSION' but registration_kind = 'QUEUE'
-    --  while current_registration < session_limit holds - ie. someone has enrolled to queue, registration is momentarily not full,
-    --  and user currently tries to enroll directly to exam session!
-    ELSIF current_registrations < session_limit THEN
-        RETURN NEW;
-    ELSE
+    IF NEW.kind = 'QUEUE' AND actual_kind = 'ADMISSION' THEN
+        RAISE EXCEPTION 'registration to queue is not available';
+    ELSIF NEW.kind = 'ADMISSION' AND actual_kind = 'QUEUE' THEN
         RAISE EXCEPTION 'max_participants of exam_session exceeded.';
+    ELSE
+        RETURN NEW;
     END IF;
 END;
 $$ LANGUAGE plpgsql;
