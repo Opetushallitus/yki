@@ -32,10 +32,9 @@
                                                  :task      "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
                                                  :interval  "59 MINUTES"})
 
-; TODO Longer interval!
 (defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_QUEUE_HANDLER"
-                                          :interval  "9 SECONDS"})
+                                          :interval  "29 SECONDS"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.

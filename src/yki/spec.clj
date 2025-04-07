@@ -79,7 +79,7 @@
       (f/parse maybe-date)))
 
 (s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))
-(s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION"})
+(s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION" "QUEUE"})
 (s/def ::date-type (st/spec
                      {:spec                (partial date?)
                       :type                :date-time
@@ -226,6 +226,7 @@
 (s/def ::from ::date-type)
 (s/def ::upcoming_admission boolean?)
 (s/def ::transfer_targets (s/coll-of pos-int?))
+(s/def ::available_registration_kind ::registration-kind)
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -244,7 +245,8 @@
                                        ::participants
                                        ::organizer_oid
                                        ::transfer_targets
-                                       ::upcoming_admission]))
+                                       ::upcoming_admission
+                                       ::available_registration_kind]))
 
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))

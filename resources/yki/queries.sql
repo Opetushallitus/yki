@@ -352,7 +352,8 @@ SELECT e.id,
        within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open,
        (now() AT TIME ZONE 'Europe/Helsinki' <
         (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') +
-         time '16:00'))                                                             AS upcoming_admission
+         time '16:00'))                                                             AS upcoming_admission,
+       select_registration_kind(e.id)                                           AS available_registration_kind
 FROM exam_session e
          INNER JOIN organizer o ON e.organizer_id = o.id
          INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -486,7 +487,8 @@ SELECT e.id,
        (now() AT TIME ZONE 'Europe/Helsinki' <
         (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') +
          time '16:00'))                                                             AS upcoming_admission,
-       within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open
+       within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) as open,
+       select_registration_kind(e.id)                                           AS available_registration_kind
 FROM exam_session e
          INNER JOIN organizer o ON e.organizer_id = o.id
          INNER JOIN exam_date ed ON e.exam_date_id = ed.id
