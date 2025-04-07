@@ -1,5 +1,13 @@
 ALTER TYPE registration_kind ADD VALUE IF NOT EXISTS 'QUEUE';
 
+ALTER TABLE registration ADD COLUMN IF NOT EXISTS lifted_from_queue_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+-- TODO Is this index necessary and suitable? Perhaps the index might need to take also exam session id into account?
+-- TODO Consider also adding an index on registration state, as quite a few scheduled tasks use queries targeting registration state.
+CREATE INDEX IF NOT EXISTS registration_state ON registration (state);
+CREATE INDEX IF NOT EXISTS registration_lifted_from_queue_at ON registration (lifted_from_queue_at);
+
+INSERT INTO task_lock (task, last_executed) VALUES ('REGISTRATION_QUEUE_HANDLER', '-infinity');
+
 -- Determine if exam session has room for participant or if the registration to be created should be queued instead.
 CREATE OR REPLACE FUNCTION select_registration_kind(eid bigint) RETURNS text AS $$
 DECLARE

@@ -34,7 +34,10 @@
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
   (update-submitted-registrations-to-expired! [db])
-  (cancel-registration-for-participant! [db participant-id registration-id]))
+  (cancel-registration-for-participant! [db participant-id registration-id])
+  ; Queueing
+  (get-participant-and-queue-count-for-ongoing-admissions [db])
+  (lift-registration-from-queue! [db exam-session-id send-email!]))
 
 (defn- int->boolean [value]
   (pos? value))
@@ -152,4 +155,16 @@
       (q/cancel-registration-for-participant!
         spec
         {:id             registration-id
-         :participant_id participant-id}))))
+         :participant_id participant-id})))
+  (get-participant-and-queue-count-for-ongoing-admissions [{:keys [spec]}]
+    (q/select-participant-and-queue-count-by-exam-session spec))
+  (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email!]
+    (jdbc/with-db-transaction [tx spec]
+      ; TODO rollback-on-exception does not seem to reliably rollback changes!
+      ; For instance, if an error is thrown when sending email,
+      ; it appears that the registration will end up being lifted from queue.
+      (rollback-on-exception
+        tx
+        (fn lift-registration-and-notify! []
+          (let [registration (q/lift-registration-from-queue<! spec {:exam_session_id exam-session-id})]
+            (send-email! registration)))))))

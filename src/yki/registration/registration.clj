@@ -11,6 +11,7 @@
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
             [yki.boundary.registration-db :as registration-db]
+            [yki.registration.email :refer [send-enrolled-to-queue-email!]]
             [yki.spec :refer [ssn->date]]
             [yki.util.common :as common]
             [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration]]
@@ -118,19 +119,22 @@
         ; no registration open
         (conflict {:error {:closed true}})))))
 
-(defn create-and-send-link [db url-helper email-q lang payment-link template-data]
+(defn send-payment-link-email! [email-q lang recipient template-name template-data]
+  (pgq/put
+    email-q
+    {:recipients [recipient]
+     :created    (System/currentTimeMillis)
+     :subject    (template-util/subject template-name lang template-data)
+     :body       (template-util/render template-name lang template-data)}))
+
+(defn create-and-send-payment-link [db url-helper email-q lang payment-link template-name template-data]
   (let [code      (str (random-uuid))
         login-url (url-helper :yki.login-link.url code)
         email     (:email (registration-db/get-participant-by-id db (:participant_id payment-link)))
-        link-type (:type payment-link)
         hashed    (sha256-hash code)]
     (login-link-db/create-login-link! db (assoc payment-link :code hashed))
     (log/info "Payment link created for " email ". Adding to email queue")
-    (pgq/put email-q
-             {:recipients [email]
-              :created    (System/currentTimeMillis)
-              :subject    (template-util/subject link-type lang template-data)
-              :body       (template-util/render link-type lang (assoc template-data :login_url login-url))})))
+    (send-payment-link-email! email-q lang email template-name (assoc template-data :login_url login-url))))
 
 ;; Get registration data with participant found in session
 ;; In a case user has two different registration forms open and a non matching session,
@@ -175,6 +179,62 @@
                                    ssn->date
                                    common/format-date-for-db))))
 
+(defn- ->send-registration-email! [db url-helper payment-helper email-q lang registration-data]
+  (case (:kind registration-data)
+    "ADMISSION"
+    (let [registration-id          (:id registration-data)
+          participant-id           (:participant_id registration-data)
+          amount                   (get-payment-amount-for-registration payment-helper registration-data)
+          {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
+          payment-success-url      (url-helper :exam-payment-v3.redirect registration-id lang)
+          payment-link-expired-url (url-helper :yki-ui.registration.payment-link-expired.url)
+          payment-link             {:participant_id        participant-id
+                                    :exam_session_id       nil
+                                    :registration_id       registration-id
+                                    :expires_at            expiration-date
+                                    :success_redirect      payment-success-url
+                                    :expired_link_redirect payment-link-expired-url
+                                    :type                  "PAYMENT"}]
+      #(create-and-send-payment-link db
+                                     url-helper
+                                     email-q
+                                     lang
+                                     payment-link
+                                     "PAYMENT"
+                                     (assoc registration-data
+                                       :amount (:email-template amount)
+                                       :language (template-util/get-language (:language_code registration-data) lang)
+                                       :level (template-util/get-level (:level_code registration-data) lang)
+                                       :expiration_date (common/format-date-to-finnish-format last-payment-date))))
+    "QUEUE"
+    #(send-enrolled-to-queue-email! email-q lang registration-data)))
+
+(defn send-lifted-from-queue-email! [db url-helper payment-helper email-q lang registration-data]
+  (let [registration-id          (:id registration-data)
+        participant-id           (:participant_id registration-data)
+        amount                   (get-payment-amount-for-registration payment-helper registration-data)
+        {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
+        payment-success-url      (url-helper :exam-payment-v3.redirect registration-id lang)
+        payment-link-expired-url (url-helper :yki-ui.registration.payment-link-expired.url)
+        payment-link             {:participant_id        participant-id
+                                  :exam_session_id       nil
+                                  :registration_id       registration-id
+                                  :expires_at            expiration-date
+                                  :success_redirect      payment-success-url
+                                  :expired_link_redirect payment-link-expired-url
+                                  :type                  "PAYMENT"}]
+    (create-and-send-payment-link db
+                                  url-helper
+                                  email-q
+                                  lang
+                                  payment-link
+                                  "PAYMENT_FROM_QUEUE"
+                                  (assoc registration-data
+                                    :amount (:email-template amount)
+                                    :language (template-util/get-language (:language_code registration-data) lang)
+                                    :level (template-util/get-level (:level_code registration-data) lang)
+                                    :expiration_date (common/format-date-to-finnish-format last-payment-date)))))
+
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
   (let [form                   (sanitized-form raw-form)
@@ -193,37 +253,17 @@
                        (onr/get-or-create-person
                          onr-client
                          (assoc form-to-persist :registration_id registration-id)))]
-        (let [amount                   (get-payment-amount-for-registration payment-helper exam-session-registration)
-              ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
-              unified-participant-id   (or (:participant_id registration-data) session-participant-id)
-              update-registration      {:id             registration-id
-                                        :form           form-to-persist
-                                        :oid            oid
-                                        :form_version   1
-                                        :participant_id unified-participant-id}
-              {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
-              payment-success-url      (url-helper :exam-payment-v3.redirect registration-id lang)
-              payment-link-expired-url (url-helper :yki-ui.registration.payment-link-expired.url)
-              payment-link             {:participant_id        unified-participant-id
-                                        :exam_session_id       nil
-                                        :registration_id       registration-id
-                                        :expires_at            expiration-date
-                                        :success_redirect      payment-success-url
-                                        :expired_link_redirect payment-link-expired-url
-                                        :type                  "PAYMENT"}
-              create-and-send-link-fn  #(create-and-send-link db
-                                                              url-helper
-                                                              email-q
-                                                              lang
-                                                              payment-link
-                                                              (assoc registration-data
-                                                                :amount (:email-template amount)
-                                                                :language (template-util/get-language (:language_code registration-data) lang)
-                                                                :level (template-util/get-level (:level_code registration-data) lang)
-                                                                :expiration_date (common/format-date-to-finnish-format last-payment-date)))
-              success                  (registration-db/update-registration-details! db
-                                                                                     update-registration
-                                                                                     create-and-send-link-fn)]
+        (let [; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
+              unified-participant-id  (or (:participant_id registration-data) session-participant-id)
+              update-registration     {:id             registration-id
+                                       :form           form-to-persist
+                                       :oid            oid
+                                       :form_version   1
+                                       :participant_id unified-participant-id}
+              create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang (assoc registration-data :participant_id unified-participant-id))
+              success                 (registration-db/update-registration-details! db
+                                                                                    update-registration
+                                                                                    create-and-send-link-fn)]
           (if success
             (do
               (log/info "END: Registration id" registration-id "submitted successfully")
@@ -244,10 +284,4 @@
   [db url-helper payment-helper email-q lang session registration-id form onr-client]
   (log/info "START: Submitting registration id" registration-id)
   (let [exam-session-registration (exam-session-db/get-exam-session-registration-by-registration-id db registration-id)]
-    ; TODO If registering to queue, no need to check if there is space left in session.
-    ; Instead, if attempting to register into exam session proper AND there already are queued registrations,
-    ; fail (OR convert to queued registration)
-    (if (registration-db/exam-session-space-left? db (:id exam-session-registration) registration-id)
-      (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration)
-      ; registration is already full, cannot add new
-      {:error {:full true}})))
+    (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration)))

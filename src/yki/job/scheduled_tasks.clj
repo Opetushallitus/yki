@@ -13,24 +13,29 @@
     [yki.boundary.onr :as onr]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
-    [yki.job.job-queue])
-  (:import [java.util UUID]))
+    [yki.registration.registration :refer [send-lifted-from-queue-email!]]
+    [yki.job.job-queue]))
 
-(defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
+(defonce registration-state-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_STATE_HANDLER"
                                           :interval  "59 SECONDS"})
 
-(defonce participants-sync-handler-conf {:worker-id (str (UUID/randomUUID))
+(defonce participants-sync-handler-conf {:worker-id (str (random-uuid))
                                          :task      "PARTICIPANTS_SYNC_HANDLER"
                                          :interval  "59 MINUTES"})
 
-(defonce remove-old-data-handler-conf {:worker-id (str (UUID/randomUUID))
+(defonce remove-old-data-handler-conf {:worker-id (str (random-uuid))
                                        :task      "REMOVE_OLD_DATA_HANDLER"
                                        :interval  "1 DAY"})
 
-(defonce sync-onr-participant-data-handler-conf {:worker-id (str (UUID/randomUUID))
-                                                 :task "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
-                                                 :interval "59 MINUTES"})
+(defonce sync-onr-participant-data-handler-conf {:worker-id (str (random-uuid))
+                                                 :task      "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
+                                                 :interval  "59 MINUTES"})
+
+; TODO Longer interval!
+(defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
+                                          :task      "REGISTRATION_QUEUE_HANDLER"
+                                          :interval  "9 SECONDS"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -112,8 +117,8 @@
      (when (job-db/try-to-acquire-lock! db remove-old-data-handler-conf)
        (log/info "Old data removal started")
        (let [deleted-from-exam-session-queue (exam-session-db/remove-old-entries-from-exam-session-queue! db)
-             deleted-cas-tickets (cas-ticket-db/delete-old-tickets! db :virkailija)
-             deleted-cas-oppija-tickets (cas-ticket-db/delete-old-tickets! db :oppija)]
+             deleted-cas-tickets             (cas-ticket-db/delete-old-tickets! db :virkailija)
+             deleted-cas-oppija-tickets      (cas-ticket-db/delete-old-tickets! db :oppija)]
          (log/info "Removed old entries from exam-session-queue:" deleted-from-exam-session-queue)
          (log/info "Removed old CAS tickets:" deleted-cas-tickets)
          (log/info "Removed old CAS-oppija tickets:" deleted-cas-oppija-tickets)))
@@ -147,3 +152,23 @@
            (Thread/sleep 10000))))
      (catch Exception e
        (log/error e "Syncing participant ONR data failed"))))
+
+(defmethod ig/init-key ::registration-queue-handler [_ {:keys [db url-helper payment-helper email-q]}]
+  {:pre [(some? db) (some? url-helper) (some? payment-helper) (some? email-q)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db registration-queue-handler-conf)
+       (log/info "Registration queue handler started")
+       (let [create-and-send-payment-link! (fn [{:keys [id participant_id lang]}]
+                                             (let [; TODO Email language needs to be persisted along with registration!
+                                                   ; At present lang will always be bound to "fi"
+                                                   lang                (or lang "fi")
+                                                   email-template-data (registration-db/get-registration-data db id participant_id lang)]
+                                               (send-lifted-from-queue-email! db url-helper payment-helper email-q lang email-template-data)))
+             exam-session-details          (registration-db/get-participant-and-queue-count-for-ongoing-admissions db)]
+         (doseq [{:keys [exam_session_id max_participants participants queue]} exam-session-details
+                 :let [available-places (- max_participants participants)
+                       to-lift          (min queue available-places)]
+                 _ (range 0 to-lift)]
+           (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link!))))
+     (catch Exception e
+       (log/error e "Registration queue handler failed"))))

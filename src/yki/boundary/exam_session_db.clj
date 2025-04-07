@@ -132,7 +132,7 @@
                                     tx
                                     exam-date
                                     exam-session-id)]
-        (if (some #{to-exam-session-id} valid-transfer-targets )
+        (if (some #{to-exam-session-id} valid-transfer-targets)
           (int->boolean (q/update-registration-exam-session!
                          tx
                          {:exam_session_id to-exam-session-id
