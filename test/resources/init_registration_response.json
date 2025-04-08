@@ -53,5 +53,6 @@
     "external-user-id": "test@user.com",
     "email": "test@user.com"
   },
-  "registration_id": 1
+  "registration_id": 1,
+  "registration_kind": "ADMISSION"
 }

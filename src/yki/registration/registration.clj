@@ -40,7 +40,7 @@
     (merge form sanitized)))
 
 (defn- create-init-response
-  [db session exam-session-id registration-id payment-config]
+  [db session exam-session-id registration-id registration-kind payment-config]
   (let [exam-session            (exam-session-db/get-exam-session-by-id db exam-session-id)
         authenticated-by-email? (= (:auth-method session) "EMAIL")
         email                   (when authenticated-by-email? (:external-user-id (:identity session)))
@@ -49,6 +49,7 @@
     {:exam_session           (assoc exam-session :exam_fee exam-fee)
      :is_strongly_identified (not authenticated-by-email?)
      :registration_id        registration-id
+     :registration_kind      registration-kind
      :user                   user}))
 
 (defn- init-error-response [space-left? not-registered? to-queue? exam-session-id]
@@ -76,13 +77,13 @@
       (str/starts-with?
         "registration to queue is not available"))))
 
-(defn- create-registration [db exam-session-id participant-id to-queue? session payment-config]
+(defn- create-registration [db exam-session-id participant-id registration-kind session payment-config]
   (try
     (let [registration-id (registration-db/create-registration! db {:exam_session_id exam-session-id
                                                                     :participant_id  participant-id
                                                                     :started_at      (t/now)
-                                                                    :kind            (if to-queue? "QUEUE" "ADMISSION")})
-          response        (create-init-response db session exam-session-id registration-id payment-config)]
+                                                                    :kind            registration-kind})
+          response        (create-init-response db session exam-session-id registration-id registration-kind payment-config)]
       (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
       (ok response))
     (catch Exception e
@@ -102,20 +103,20 @@
   (log/info "START: Init exam session" exam_session_id "registration")
   (let [
         ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
-        participant-id          (get-or-create-participant db (:identity session))
-        started-registration-id (registration-db/get-started-registration-id-by-participant-id db participant-id exam_session_id)]
-    (log/info "started-registration-id" started-registration-id)
-    (if started-registration-id
-      (ok (create-init-response db session exam_session_id started-registration-id payment-config))
+        participant-id    (get-or-create-participant db (:identity session))
+        started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
+    (log/info "started-registration-id" (:id started-registration))
+    (if started-registration
+      (ok (create-init-response db session exam_session_id (:id started-registration) (:kind started-registration) payment-config))
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
-        (let [to-queue?       to_queue
-              space-left?     (registration-db/exam-session-space-left? db exam_session_id nil)
-              not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)]
+        (let [space-left?     (registration-db/exam-session-space-left? db exam_session_id nil)
+              not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
+              registration-kind (if to_queue "QUEUE" "ADMISSION")]
           (if (and not-registered?
-                   (or to-queue? space-left?))
-            (create-registration db exam_session_id participant-id to-queue? session payment-config)
-            (init-error-response space-left? not-registered? to-queue? exam_session_id)))
+                   (or to_queue space-left?))
+            (create-registration db exam_session_id participant-id registration-kind session payment-config)
+            (init-error-response space-left? not-registered? to_queue exam_session_id)))
         ; no registration open
         (conflict {:error {:closed true}})))))
 

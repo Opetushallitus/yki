@@ -17,7 +17,7 @@
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
   (not-registered-to-exam-session? [db participant-id exam-session-id])
-  (get-started-registration-id-by-participant-id [db participant-id exam-session-id])
+  (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
   (get-registration-and-exam-session-state [db registration-id])
@@ -55,10 +55,10 @@
     (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id  participant-id
                                                                        :exam_session_id exam-session-id}))]
       (:exists exists)))
-  (get-started-registration-id-by-participant-id
+  (get-started-registration-id+kind-by-participant-id
     [{:keys [spec]} participant-id exam-session-id]
-    (:id (first (q/select-started-registration-id-by-participant spec {:participant_id  participant-id
-                                                                       :exam_session_id exam-session-id}))))
+    (first (q/select-started-registration-id-and-kind-by-participant spec {:participant_id  participant-id
+                                                                           :exam_session_id exam-session-id})))
   (exam-session-space-left?
     [{:keys [spec]} exam-session-id registration-id]
     (let [exists (first (q/select-exam-session-space-left spec {:exam_session_id exam-session-id
