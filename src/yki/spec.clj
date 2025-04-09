@@ -346,10 +346,12 @@
 
 (s/def ::is_strongly_identified boolean?)
 
+(s/def ::registration_kind ::registration-kind)
 (s/def ::registration-init-response (s/keys :req-un [::exam_session
                                                      ::is_strongly_identified
                                                      ::user
-                                                     ::registration_id]))
+                                                     ::registration_id
+                                                     ::registration_kind]))
 
 ;; exam session participant
 (s/def ::state ::non-blank-string)
