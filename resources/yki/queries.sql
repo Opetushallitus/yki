@@ -1698,3 +1698,28 @@ WHERE logged_in + interval '1 week' < current_date;
 -- name: delete-old-cas-oppija-tickets!
 DELETE FROM cas_oppija_ticketstore
 WHERE logged_in + interval '1 week' < current_date;
+
+-- name: upsert-person!
+INSERT INTO person
+(oid, first_name, last_name, email) VALUES
+(:oid, :first_name, :last_name, :email)
+ON CONFLICT (oid)
+DO UPDATE SET first_name = :first_name, last_name = :last_name, email =  :email, modified = current_timestamp;
+
+-- name: select-person
+SELECT oid, first_name, last_name, email
+FROM person
+WHERE oid = :oid;
+
+-- name: select-person-registrations
+SELECT r.exam_session_id, r.state,
+ed.exam_date, es.language_code, es.level_code,
+esl.street_address, esl.zip, esl.post_office, esl.post_office, esl.other_location_info, esl.extra_information,
+p.amount AS payment_amount, p.state AS payment_state, p.payed_at
+FROM registration r
+LEFT JOIN exam_session es ON r.exam_session_id = es.id
+LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
+LEFT JOIN exam_session_location esl ON es.id = esl.exam_session_id
+LEFT JOIN payment p ON r.id = p.registration_id
+WHERE person_oid = :oid
+AND esl.lang = :lang;

@@ -17,7 +17,7 @@
         auth         (base/auth url-helper)
         environment  (base/environment "prod")
         auth-handler (base/auth-handler auth url-helper)
-        user-handler (base/user-handler auth environment)]
+        user-handler (base/user-handler auth environment url-helper)]
     (routes auth-handler user-handler)))
 
 (deftest redirect-unauthenticated-user-to-authentication-test

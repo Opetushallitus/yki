@@ -26,7 +26,8 @@
         user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user {:db          db
                                                                                      :access-log  access-log
                                                                                      :auth        auth
-                                                                                     :environment environment}))
+                                                                                     :environment environment
+                                                                                     :onr-client (base/onr-client url-helper)}))
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db             db
                                                                                              :url-helper     url-helper
                                                                                              :payment-helper payment-helper
