@@ -88,11 +88,16 @@
   [{:keys [query-params]} url-helper]
   (log/info "Redirect to cas-oppija")
   (let [{exam-session-id "examSessionId"
-         query-lang      "lang"} query-params
+         query-lang      "lang"
+         to-queue        "toQueue"} query-params
         lang                     (or (#{"fi" "sv" "en"} query-lang)
                                      "fi")
-        cas-success-redirect     (url-helper (str "cas-oppija.login-success." lang) exam-session-id)
-        session-success-redirect (url-helper :yki-ui.exam-session-registration.url exam-session-id)
+        to-queue?                (if (string? to-queue)
+                                   (parse-boolean to-queue)
+                                   false)
+        cas-success-redirect     (url-helper (str "cas-oppija.login-success." lang) exam-session-id to-queue?)
+        ui-route                 (if to-queue? :yki-ui.exam-session-registration.url :yki-ui.exam-session-registration.url)
+        session-success-redirect (url-helper ui-route exam-session-id)
         login-url                (str (url-helper :cas-oppija.login lang) cas-success-redirect)]
     (assoc
       (see-other login-url)

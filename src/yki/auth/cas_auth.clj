@@ -119,7 +119,7 @@
                                   :attributes])]
     (assoc (process-attributes attributes) :success? success :failureMessage failure)))
 
-(defn oppija-login-response [exam-session-id session ticket cas-attributes url-helper onr-client]
+(defn oppija-login-response [exam-session-id to-queue? session ticket cas-attributes url-helper onr-client]
   (let [{:keys [VakinainenKotimainenLahiosoitePostitoimipaikkaS
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
@@ -135,7 +135,7 @@
                       :street_address VakinainenKotimainenLahiosoiteS}
         redirect-uri (if (:success-redirect session)
                        (str (:success-redirect session))
-                       (url-helper :yki-ui.exam-session-registration.url exam-session-id))]
+                       (url-helper (if to-queue? :yki-ui.exam-session-queue.url :yki-ui.exam-session-registration.url) exam-session-id))]
     (info "Redirecting oppija to url: " redirect-uri)
     (if (and sn firstName nationalIdentificationNumber)
       (assoc
@@ -167,18 +167,19 @@
   (try
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
-      (let [{:strs [examSessionId]} (:query-params request)
-            lang              (str/lower-case (or (some #{(-> request :route-params :*)}
-                                                        ["FI" "SV" "EN"])
-                                                  "fi"))
-            callback-uri      (url-helper (str "cas-oppija.login-success." lang) examSessionId)
-            cas-response      (cas/cas-oppija-ticket-validation url-helper ticket callback-uri)
-            cas-attributes    (process-cas-attributes cas-response)
-            session           (:session request)]
+      (let [{:strs [examSessionId toQueue]} (:query-params request)
+            lang           (str/lower-case (or (some #{(-> request :route-params :*)}
+                                                     ["FI" "SV" "EN"])
+                                               "fi"))
+            to-queue?      (parse-boolean toQueue)
+            callback-uri   (url-helper (str "cas-oppija.login-success." lang) examSessionId toQueue)
+            cas-response   (cas/cas-oppija-ticket-validation url-helper ticket callback-uri)
+            cas-attributes (process-cas-attributes cas-response)
+            session        (:session request)]
         (if (:success? cas-attributes)
           (do
             (cas-ticket-db/create-ticket! db :oppija ticket)
-            (oppija-login-response examSessionId session ticket cas-attributes url-helper onr-client))
+            (oppija-login-response examSessionId to-queue? session ticket cas-attributes url-helper onr-client))
           (validation-failed-response (:failureMessage cas-attributes) examSessionId lang url-helper)))
       unauthorized)
     (catch Exception e
