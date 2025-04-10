@@ -10,6 +10,7 @@
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
+            [yki.boundary.person-db :as person-db]
             [yki.boundary.registration-db :as registration-db]
             [yki.spec :refer [ssn->date]]
             [yki.util.common :as common]
@@ -218,9 +219,10 @@
                                                                 :language (template-util/get-language (:language_code registration-data) lang)
                                                                 :level (template-util/get-level (:level_code registration-data) lang)
                                                                 :expiration_date (common/format-date-to-finnish-format last-payment-date)))
-              success                  (registration-db/update-registration-details! db
-                                                                                     update-registration
-                                                                                     create-and-send-link-fn)]
+              person (person-db/upsert-person! db (assoc form :oid oid))
+              success                  (and person (registration-db/update-registration-details! db
+                                                                                                 update-registration
+                                                                                                 create-and-send-link-fn))]
           (if success
             (do
               (log/info "END: Registration id" registration-id "submitted successfully")
@@ -253,3 +255,11 @@
       (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration)
       ; registration is already full, cannot add new
       {:error {:full true}})))
+
+
+(defn get-person-and-registrations
+  [db lang person-oid onr-client]
+  (when person-oid
+    (let [person (person-db/get-person db person-oid lang)
+          onr-data (onr/get-person-by-oid onr-client person-oid)]
+      (assoc person :onr onr-data))))
