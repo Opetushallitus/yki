@@ -171,7 +171,9 @@
             lang           (str/lower-case (or (some #{(-> request :route-params :*)}
                                                      ["FI" "SV" "EN"])
                                                "fi"))
-            to-queue?      (parse-boolean toQueue)
+            to-queue?      (if (string? toQueue)
+                             (parse-boolean toQueue)
+                             false)
             callback-uri   (url-helper (str "cas-oppija.login-success." lang) examSessionId toQueue)
             cas-response   (cas/cas-oppija-ticket-validation url-helper ticket callback-uri)
             cas-attributes (process-cas-attributes cas-response)
