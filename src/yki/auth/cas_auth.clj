@@ -163,18 +163,13 @@
   (info "Ticket validation failed: " message)
   (found (url-helper :exam-session.fail.redirect exam-session-id lang)))
 
-(defn oppija-login [ticket request onr-client url-helper db]
+(defn oppija-login [ticket request lang registration-kind onr-client url-helper db]
   (try
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
-      (let [{:strs [examSessionId toQueue]} (:query-params request)
-            lang           (str/lower-case (or (some #{(-> request :route-params :*)}
-                                                     ["FI" "SV" "EN"])
-                                               "fi"))
-            to-queue?      (if (string? toQueue)
-                             (parse-boolean toQueue)
-                             false)
-            callback-uri   (url-helper (str "cas-oppija.login-success." lang) examSessionId toQueue)
+      (let [{:strs [examSessionId]} (:query-params request)
+            to-queue?      (= registration-kind "QUEUE")
+            callback-uri   (url-helper "cas-oppija.login-success" lang registration-kind examSessionId)
             cas-response   (cas/cas-oppija-ticket-validation url-helper ticket callback-uri)
             cas-attributes (process-cas-attributes cas-response)
             session        (:session request)]

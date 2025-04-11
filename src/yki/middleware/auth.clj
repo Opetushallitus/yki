@@ -95,9 +95,9 @@
         to-queue?                (if (string? to-queue)
                                    (parse-boolean to-queue)
                                    false)
-        cas-success-redirect     (url-helper (str "cas-oppija.login-success." lang) exam-session-id to-queue?)
         ui-route                 (if to-queue? :yki-ui.exam-session-registration.url :yki-ui.exam-session-registration.url)
         session-success-redirect (url-helper ui-route exam-session-id)
+        cas-success-redirect     (url-helper "cas-oppija.login-success" lang (if to-queue? "QUEUE" "ADMISSION") exam-session-id)
         login-url                (str (url-helper :cas-oppija.login lang) cas-success-redirect)]
     (assoc
       (see-other login-url)

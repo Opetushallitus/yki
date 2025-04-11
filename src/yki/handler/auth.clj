@@ -45,8 +45,10 @@
         :query-params [{redirect :- ::ys/redirect-to nil}]
         (-> (found redirect)
             (assoc :session nil)))
-      (GET "/callback*" [ticket :as request]
-        (cas-auth/oppija-login ticket request onr-client url-helper db))
+      (GET "/callback/:lang/:kind" [ticket :as request]
+        :path-params [lang :- ::ys/language-code
+                      kind :- ::ys/registration-kind]
+        (cas-auth/oppija-login ticket request lang kind onr-client url-helper db))
       (POST "/callback*" request
         (cas-auth/cas-logout db :oppija (get-in request [:params :logoutRequest]))
         (ok {}))
