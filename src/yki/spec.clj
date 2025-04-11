@@ -80,6 +80,7 @@
 
 (s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))
 (s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION" "QUEUE"})
+(s/def ::registration_kind ::registration-kind)
 (s/def ::date-type (st/spec
                      {:spec                (partial date?)
                       :type                :date-time
@@ -286,7 +287,8 @@
 
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
-                            :opt-un [::user_data]))
+                            :opt-un [::user_data
+                                     ::registration_kind]))
 
 ;; registration
 
@@ -346,7 +348,6 @@
 
 (s/def ::is_strongly_identified boolean?)
 
-(s/def ::registration_kind ::registration-kind)
 (s/def ::registration-init-response (s/keys :req-un [::exam_session
                                                      ::is_strongly_identified
                                                      ::user
