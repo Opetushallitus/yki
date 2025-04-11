@@ -103,15 +103,15 @@
   (log/info "START: Init exam session" exam_session_id "registration")
   (let [
         ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
-        participant-id    (get-or-create-participant db (:identity session))
+        participant-id       (get-or-create-participant db (:identity session))
         started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
     (log/info "started-registration-id" (:id started-registration))
     (if started-registration
       (ok (create-init-response db session exam_session_id (:id started-registration) (:kind started-registration) payment-config))
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
-        (let [space-left?     (registration-db/exam-session-space-left? db exam_session_id nil)
-              not-registered? (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
+        (let [space-left?       (registration-db/exam-session-space-left? db exam_session_id nil)
+              not-registered?   (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
               registration-kind (if to_queue "QUEUE" "ADMISSION")]
           (if (and not-registered?
                    (or to_queue space-left?))
@@ -208,7 +208,9 @@
                                        :level (template-util/get-level (:level_code registration-data) lang)
                                        :expiration_date (common/format-date-to-finnish-format last-payment-date))))
     "QUEUE"
-    #(send-enrolled-to-queue-email! email-q lang registration-data)))
+    (let [participant-id (:participant_id registration-data)
+          email          (:email (registration-db/get-participant-by-id db participant-id))]
+      #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :email email)))))
 
 (defn send-lifted-from-queue-email! [db url-helper payment-helper email-q lang registration-data]
   (let [registration-id          (:id registration-data)
