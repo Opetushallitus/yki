@@ -1712,10 +1712,10 @@ FROM person
 WHERE oid = :oid;
 
 -- name: select-person-registrations
-SELECT r.exam_session_id, r.state,
+SELECT r.id, r.exam_session_id, r.state,
 ed.exam_date, es.language_code, es.level_code,
 esl.street_address, esl.zip, esl.post_office, esl.post_office, esl.other_location_info, esl.extra_information,
-p.amount AS payment_amount, p.state AS payment_state, p.payed_at
+p.amount AS payment_amount, p.state AS payment_state, p.payed_at, (r.state = 'COMPLETED' AND NOT r.is_transfered) AS is_transferable
 FROM registration r
 LEFT JOIN exam_session es ON r.exam_session_id = es.id
 LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
