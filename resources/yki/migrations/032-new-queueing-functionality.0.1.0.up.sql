@@ -14,14 +14,15 @@ DECLARE
     registration_kind record;
 BEGIN
     SELECT INTO "registration_kind"
-        (SELECT EXISTS (SELECT 1 FROM registration r WHERE r.exam_session_id = eid AND r.kind = 'QUEUE' AND r.state IN ('STARTED','SUBMITTED'))) AS has_queue,
-        (SELECT COUNT(*) FROM registration r WHERE r.exam_session_id = eid AND r.kind = 'ADMISSION' AND r.state IN ('STARTED','SUBMITTED','COMPLETED') HAVING COUNT(*) >= es.max_participants) AS is_full
+        (SELECT COUNT(*) FROM registration r WHERE r.exam_session_id = eid AND r.kind = 'QUEUE' AND r.state IN ('STARTED','SUBMITTED')) AS queue_count,
+        (SELECT COUNT(*) FROM registration r WHERE r.exam_session_id = eid AND r.kind = 'ADMISSION' AND r.state IN ('STARTED','SUBMITTED','COMPLETED')) AS participants_count,
+        max_participants
     FROM "exam_session" es
     WHERE es."id" = eid;
 
-    IF registration_kind.has_queue THEN
+    IF registration_kind.queue_count > 0 THEN
         RETURN 'QUEUE';
-    ELSIF registration_kind.is_full THEN
+    ELSIF registration_kind.participants_count >= registration_kind.max_participants THEN
         RETURN 'QUEUE';
     ELSE
         RETURN 'ADMISSION';
