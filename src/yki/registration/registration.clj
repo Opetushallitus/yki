@@ -3,6 +3,7 @@
             [buddy.core.hash :as hash]
             [clj-time.core :as t]
             [clj-time.format :as f]
+            [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [pgqueue.core :as pgq]
@@ -258,7 +259,12 @@
 
 
 (defn get-person-and-registrations
-  [db lang person-oid onr-client]
+  [{:keys [spec]} lang person-oid onr-client]
   (when person-oid
-    (let [person (person-db/get-person db person-oid lang)]
-      person)))
+    (jdbc/with-db-transaction [tx spec]
+      (let [person (person-db/get-person tx person-oid lang)]
+        (update person :registrations #(map %2 %1)
+                #(assoc % :transfer_targets
+                        (exam-session-db/get-transfer-targets-for-exam-session
+                         tx
+                         (:exam_date %) (:exam_session_id %))))))))

@@ -53,7 +53,7 @@
     ; Delete link if contact fields are null
     (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id exam-session-id})))
 
-(defn- get-transfer-targets-for-exam-session [tx original-exam-date exam-session-id]
+(defn get-transfer-targets-for-exam-session [tx original-exam-date exam-session-id]
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session"
   (let [candidates (q/select-transfer-targets-by-exam-session-id tx {:exam_session_id exam-session-id})
         within-year? #(let [exam-date (f/parse (:exam_date %1))
@@ -82,6 +82,7 @@
   (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
   (get-exam-sessions-to-be-synced [db retry-duration])
+  (get-exam-session-organizer-oid [db registration-id])
   (get-exam-sessions [db from]
     "Get exam sessions with exam date at least 'from'")
   (get-exam-sessions-for-oid [db oid from]
@@ -192,6 +193,8 @@
     (q/select-exam-session-participants spec {:id id :oid oid}))
   (get-completed-exam-session-participants [{:keys [spec]} id]
     (q/select-completed-exam-session-participants spec {:id id}))
+  (get-exam-session-organizer-oid [{:keys [spec]} id]
+    (q/select-exam-session-organizer-oid spec {:id id}))
   (get-exam-sessions [{:keys [spec]} from]
     (q/select-exam-sessions spec {:from from}))
   (get-exam-sessions-for-oid [{:keys [spec]} oid from]

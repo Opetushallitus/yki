@@ -26,6 +26,7 @@
                                                        #ig/ref :yki.handler/login-link
                                                        #ig/ref :yki.handler/exam-session-public
                                                        #ig/ref :yki.handler/registration
+                                                       #ig/ref :yki.handler/person
                                                        #ig/ref :yki.handler/organizer
                                                        #ig/ref :yki.handler/quarantine
                                                        #ig/ref :yki.handler/evaluation
@@ -142,6 +143,11 @@
                                                        :access-log     #ig/ref :yki.middleware.access-log/with-logging}
 
   :yki.handler/user                                   {:db          #ig/ref :duct.database/sql
+                                                       :auth        #ig/ref :yki.middleware.auth/with-authentication
+                                                       :access-log  #ig/ref :yki.middleware.access-log/with-logging
+                                                       :onr-client  #ig/ref :yki.boundary.onr/onr-client
+                                                       :environment #ig/ref :yki.env/environment}
+  :yki.handler/person                                   {:db          #ig/ref :duct.database/sql
                                                        :auth        #ig/ref :yki.middleware.auth/with-authentication
                                                        :access-log  #ig/ref :yki.middleware.access-log/with-logging
                                                        :onr-client  #ig/ref :yki.boundary.onr/onr-client

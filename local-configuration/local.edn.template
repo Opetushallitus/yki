@@ -28,6 +28,12 @@
                     :onr-client #ig/ref :yki.boundary.onr/onr-client
                     :access-log #ig/ref :yki.middleware.access-log/with-logging}
 
+ :yki.handler/person {:db #ig/ref :duct.database/sql
+                    :auth #ig/ref :yki.middleware.no-auth/with-fake-session
+                    :url-helper #ig/ref :yki.util/url-helper
+                    :onr-client #ig/ref :yki.boundary.onr/onr-client
+                    :access-log #ig/ref :yki.middleware.access-log/with-logging}
+
  ; User configuration. Changing the id will create a new participant.
  :yki.middleware.no-auth/with-fake-session    {:auth-method "EMAIL"
                                                :identity {:external-user-id "local_test@testi.fi"
