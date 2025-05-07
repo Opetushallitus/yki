@@ -20,7 +20,4 @@
         (ok (update-in session [:identity] dissoc :ticket)))
       (GET "/open-registrations" request
         :return ::ys/user-open-registrations-response
-        (ok (registration/get-open-registrations-by-participant db (:session request))))
-      (GET "/person-registrations" {session :session}
-        :query-params [lang :- ::ys/language-code]
-        (ok (registration/get-person-and-registrations db lang (get-in session [:identity :oid]) onr-client))))))
+        (ok (registration/get-open-registrations-by-participant db (:session request)))))))

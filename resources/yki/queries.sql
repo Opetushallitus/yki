@@ -303,6 +303,14 @@ FROM exam_session es
 INNER JOIN organizer o ON es.organizer_id = o.id
 WHERE o.oid = :oid;
 
+-- name: select-exam-session-organizer-oid
+-- single?: true
+SELECT o.oid
+FROM exam_session es
+INNER JOIN organizer o ON es.organizer_id = o.id
+INNER JOIN registration r ON r.exam_session_id = es.id
+WHERE r.id = :id
+
 -- name: select-exam-sessions
 SELECT
   e.id,
@@ -1716,7 +1724,7 @@ FROM person
 WHERE oid = :oid;
 
 -- name: select-person-registrations
-SELECT r.id, r.exam_session_id, r.state,
+SELECT r.id AS registration_id, r.exam_session_id, r.state,
 ed.exam_date, es.language_code, es.level_code,
 esl.street_address, esl.zip, esl.post_office, esl.post_office, esl.other_location_info, esl.extra_information,
 p.amount AS payment_amount, p.state AS payment_state, p.payed_at, (r.state = 'COMPLETED' AND NOT r.is_transfered) AS is_transferable

@@ -466,3 +466,5 @@
 (s/def ::user-open-registrations-response (s/keys :req-un [::open_registrations]))
 
 (s/def ::environment #{:dev :qa :prod})
+
+(s/def ::person (s/keys :req-un [::first_name ::last_name ::email ::phone_number ::street_address ::post_office ::zip]))
