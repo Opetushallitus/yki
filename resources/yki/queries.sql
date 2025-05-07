@@ -1701,13 +1701,17 @@ WHERE logged_in + interval '1 week' < current_date;
 
 -- name: upsert-person!
 INSERT INTO person
-(oid, first_name, last_name, email) VALUES
-(:oid, :first_name, :last_name, :email)
+(oid, first_name, last_name, email, phone_number, street_address, post_office, zip) VALUES
+(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip)
 ON CONFLICT (oid)
-DO UPDATE SET first_name = :first_name, last_name = :last_name, email =  :email, modified = current_timestamp;
+DO UPDATE SET first_name = :first_name, last_name = :last_name,
+email = :email, phone_number = :phone_number,
+street_address = :street_address,
+post_office = :post_office, zip = :zip,
+modified = current_timestamp;
 
 -- name: select-person
-SELECT oid, first_name, last_name, email
+SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip
 FROM person
 WHERE oid = :oid;
 

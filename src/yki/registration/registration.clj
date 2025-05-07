@@ -260,6 +260,5 @@
 (defn get-person-and-registrations
   [db lang person-oid onr-client]
   (when person-oid
-    (let [person (person-db/get-person db person-oid lang)
-          onr-data (onr/get-person-by-oid onr-client person-oid)]
-      (assoc person :onr onr-data))))
+    (let [person (person-db/get-person db person-oid lang)]
+      person)))
