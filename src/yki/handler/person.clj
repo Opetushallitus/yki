@@ -17,48 +17,39 @@
     (context routing/person-api-root []
       :coercion (when-not (#{:qa :prod} environment) :spec)
       :middleware [auth access-log with-error-boundary]
-      (context "/:oid" []
-        (GET "/" {session :session}
-             :query-params [lang :- ::ys/lang]
-             :path-params [oid :- ::ys/oid]
-             :return ::ys/person
-             (let [session-oid (get-in session [:identity :oid])]
-               (if (= oid session-oid)
-                 (ok (registration/get-person-and-registrations
-                      db
-                      lang
-                      oid onr-client)))))
-        (POST "/" {session :session}
-          :body [person ::ys/person]
-          :path-params [oid :- ::ys/oid]
-          :return ::ys/response
-          (let [session-oid (get-in session [:identity :oid])]
-            (if (= oid session-oid)
-              (if (person-db/upsert-person! db (assoc person :oid oid))
+      (GET "/" {session :session}
+        :query-params [lang :- ::ys/lang]
+        :return ::ys/person
+        (let [oid (get-in session [:identity :oid])]
+          (if oid
+            (ok (registration/get-person-and-registrations
+                 db
+                 lang
+                 oid onr-client))
+            (not-found "no oid in session"))))
+      (POST "/" {session :session}
+        :body [person ::ys/person]
+        :return ::ys/response
+        (let [oid (get-in session [:identity :oid])]
+          (if (person-db/upsert-person! db (assoc person :oid oid))
+            (ok {:success true})
+            (ok {:success false}))))
+      (context routing/registration-uri []
+        (context "/:registration-id" []
+          (DELETE "/" {session :session}
+            :path-params [registration-id :- ::ys/registration_id]
+            :return ::ys/response
+            (let [oid (get-in session [:identity :oid])]
+              (if (exam-session-db/cancel-registration! db registration-id)
                 (ok {:success true})
-                (ok {:success false}))
-              (ok {:success false}))))
-        (context routing/registration-uri []
-          (context "/:registration-id" []
-            (DELETE "/" {session :session}
-              :path-params [oid :- ::ys/oid registration-id :- ::ys/registration_id]
-              :return ::ys/response
-              (let [session-oid (get-in session [:identity :oid])]
-                (if (= oid session-oid)
-                  (if (exam-session-db/cancel-registration! db registration-id)
-                    (ok {:success true})
-                    (ok {:success false}))
-                  (ok {:success false}))))
-            (POST "/relocate" {session :session}
-              :path-params [oid :- ::ys/oid registration-id :- ::ys/registration_id]
-              :body [relocate-request ::ys/relocate-request]
-              :return ::ys/response
-              (let [session-oid (get-in session [:identity :oid])]
-                (if (= oid session-oid)
-                  (let [to-exam-session-id (:to_exam_session_id relocate-request)
-                        organizer-oid (exam-session-db/get-exam-session-organizer-oid db registration-id)
-                        success?           (exam-session-db/update-registration-exam-session! db to-exam-session-id registration-id organizer-oid)]
-                    (if success?
-                      (ok {:success true})
-                      (ok {:success false})))
-                  (ok {:success true}))))))))))
+                (ok {:success false}))))
+          (POST "/relocate" {session :session}
+            :path-params [registration-id :- ::ys/registration_id]
+            :body [relocate-request ::ys/relocate-request]
+            :return ::ys/response
+            (let [to-exam-session-id (:to_exam_session_id relocate-request)
+                  organizer-oid (exam-session-db/get-exam-session-organizer-oid db registration-id)
+                  success?           (exam-session-db/update-registration-exam-session! db to-exam-session-id registration-id organizer-oid)]
+              (if success?
+                (ok {:success true})
+                (ok {:success false})))))))))

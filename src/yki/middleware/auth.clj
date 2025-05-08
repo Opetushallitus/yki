@@ -176,6 +176,8 @@
       :handler any-access}
      {:pattern #".*/api/yki-register-debug/.*"
       :handler oph-admin-access}
+     {:pattern #".*/api/person.*"
+      :handler oppija-authenticated?}
      {:pattern #".*/api/user/identity"
       :handler any-access}
      {:pattern #".*/api/user/.*"
