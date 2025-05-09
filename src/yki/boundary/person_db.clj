@@ -9,9 +9,9 @@
 (require-sql ["yki/queries.sql" :as q])
 
 (defn get-person
-    [tx oid lang]
+    [tx oid]
     (assoc (first (q/select-person tx {:oid oid}))
-           :registrations (q/select-person-registrations tx {:oid oid :lang lang})))
+           :registrations (q/select-person-registrations tx {:oid oid})))
 
 (defprotocol Person
   (upsert-person! [db person]))

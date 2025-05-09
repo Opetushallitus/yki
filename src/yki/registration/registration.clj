@@ -257,14 +257,7 @@
       ; registration is already full, cannot add new
       {:error {:full true}})))
 
-
 (defn get-person-and-registrations
-  [{:keys [spec]} lang person-oid onr-client]
+  [{:keys [spec]} person-oid]
   (when person-oid
-    (jdbc/with-db-transaction [tx spec]
-      (let [person (person-db/get-person tx person-oid lang)]
-        (update person :registrations #(map %2 %1)
-                #(assoc % :transfer_targets
-                        (exam-session-db/get-transfer-targets-for-exam-session
-                         tx
-                         (:exam_date %) (:exam_session_id %))))))))
+    (person-db/get-person spec person-oid)))
