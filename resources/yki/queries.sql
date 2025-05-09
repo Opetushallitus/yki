@@ -1726,12 +1726,20 @@ WHERE oid = :oid;
 -- name: select-person-registrations
 SELECT r.id AS registration_id, r.exam_session_id, r.state,
 ed.exam_date, es.language_code, es.level_code,
-esl.street_address, esl.zip, esl.post_office, esl.post_office, esl.other_location_info, esl.extra_information,
-p.amount AS payment_amount, p.state AS payment_state, p.payed_at, (r.state = 'COMPLETED' AND NOT r.is_transfered) AS is_transferable
+       (SELECT array_to_json(array_agg(loc))
+        FROM (SELECT name,
+                     street_address,
+                     post_office,
+                     zip,
+                     other_location_info,
+                     extra_information,
+                     lang
+              FROM exam_session_location
+              WHERE exam_session_id = es.id) loc) as location,
+       p.amount AS payment_amount, p.state AS payment_state, p.payed_at, is_transferable(r.id) AS is_transferable
 FROM registration r
 LEFT JOIN exam_session es ON r.exam_session_id = es.id
 LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN exam_session_location esl ON es.id = esl.exam_session_id
 LEFT JOIN payment p ON r.id = p.registration_id
-WHERE person_oid = :oid
-AND esl.lang = :lang;
+WHERE person_oid = :oid;
