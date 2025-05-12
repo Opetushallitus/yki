@@ -8,7 +8,7 @@ BEGIN
          INNER JOIN exam_session es ON r.exam_session_id = es.id
          INNER JOIN exam_date ed ON es.exam_date_id = ed.id
         WHERE r.id=registration_id)
-        AT TIME ZONE 'Europe/Helsinki');
+        AT TIME ZONE 'Europe/Helsinki') AT TIME ZONE 'Europe/Helsinki';
 END;
 $$;
 
