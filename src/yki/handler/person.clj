@@ -40,17 +40,19 @@
               (if (exam-session-db/cancel-registration! db registration-id)
                 (ok {:success true})
                 (ok {:success false}))))
+          (GET "/relocate" {session :session}
+            :path-params [registration-id :- ::ys/registration_id]
+            (let [; TODO What if user has no oid, ie. is authenticated with email link only?
+                  oid     (get-in session [:identity :oid])
+                  results (person-db/get-registration-relocate-details db oid registration-id)]
+              (ok results)))
           (POST "/relocate" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
             :body [relocate-request ::ys/relocate-request]
             :return ::ys/response
-            (let [
-                  ; TODO Authorization (registration to relocate belongs to user)
-                  ; TODO Ensure user can relocate only transferable registrations (is COMPLETED, transfer window (TBD!) is open, has not been already transfered)
-                  ; TODO Ensure user can relocate only to suitable targets (has space, meets other conditions)
+            (let [oid                (get-in session [:identity :oid])
                   to-exam-session-id (:to_exam_session_id relocate-request)
-                  organizer-oid      (exam-session-db/get-exam-session-organizer-oid db registration-id)
-                  success?           (exam-session-db/update-registration-exam-session! db to-exam-session-id registration-id organizer-oid)]
-              (if success?
+                  result             (person-db/relocate-registration! db oid registration-id to-exam-session-id)]
+              (if result
                 (ok {:success true})
                 (ok {:success false})))))))))
