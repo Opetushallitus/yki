@@ -786,6 +786,16 @@ AND EXISTS (SELECT id
             WHERE id = :exam_session_id
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
 
+-- name: relocate-registration-for-user<!
+UPDATE registration
+SET exam_session_id = :target_id,
+    original_exam_session_id = exam_session_id,
+    is_transfered = TRUE,
+    modified = current_timestamp
+WHERE id = :registration_id AND
+      person_oid = :person_oid AND
+      TRUE IN (SELECT is_transferable(r.id) FROM registration r WHERE id = :registration_id);
+
 -- name: select-registration-data
 SELECT re.state,
        re.exam_session_id,
@@ -1743,3 +1753,49 @@ LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN exam_session_location esl ON es.id = esl.exam_session_id
 LEFT JOIN payment p ON r.id = p.registration_id
 WHERE person_oid = :oid;
+
+-- name: select-registration-relocate-details
+SELECT r.id,
+       es.id AS exam_session_id,
+       is_transferable(r.id) AS is_transferable,
+       ed.exam_date AS session_date,
+       es.level_code,
+       es.language_code,
+       (SELECT array_to_json(array_agg(loc))
+        FROM (SELECT name,
+                     street_address,
+                     post_office,
+                     zip,
+                     other_location_info,
+                     extra_information,
+                     lang
+              FROM exam_session_location
+              WHERE exam_session_id = es.id) loc) as location
+FROM registration r
+INNER JOIN exam_session es ON r.exam_session_id = es.id
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+WHERE r.id = :id AND r.person_oid = :oid;
+
+-- name: select-transfer-target-details-by-exam-session-id
+SELECT
+    ies.id,
+    ied.exam_date AS session_date,
+    ies.level_code,
+    ies.language_code,
+    (SELECT array_to_json(array_agg(loc))
+     FROM (SELECT name,
+                  street_address,
+                  post_office,
+                  zip,
+                  other_location_info,
+                  extra_information,
+                  lang
+           FROM exam_session_location
+           WHERE exam_session_id = ies.id) loc) as location,
+    (SELECT COUNT(1) FROM registration WHERE exam_session_id = ies.id AND state IN ('STARTED','SUBMITTED','COMPLETED') AND kind = 'ADMISSION') AS participants,
+    ies.max_participants
+FROM exam_session es
+LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
+LEFT JOIN exam_session ies ON ies.id <> es.id AND ies.level_code = es.level_code AND ies.language_code = es.language_code AND ies.organizer_id = es.organizer_id
+LEFT JOIN exam_date ied ON ies.exam_date_id = ied.id
+WHERE es.id = :exam_session_id  AND ied.exam_date >= ed.exam_date;
