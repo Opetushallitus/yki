@@ -17,7 +17,7 @@
       :coercion (when-not (#{:qa :prod} environment) :spec)
       :middleware [auth access-log with-error-boundary]
       (GET "/" {session :session}
-        :return ::ys/person
+        ;:return ::ys/person
         (let [oid (get-in session [:identity :oid])]
           (if oid
             (ok (registration/get-person-and-registrations
