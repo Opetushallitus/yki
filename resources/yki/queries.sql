@@ -1734,7 +1734,7 @@ FROM person
 WHERE oid = :oid;
 
 -- name: select-person-registrations
-SELECT r.id AS registration_id, r.exam_session_id, r.state,
+SELECT r.id, r.exam_session_id, r.state,
 ed.exam_date, es.language_code, es.level_code,
        (SELECT array_to_json(array_agg(loc))
         FROM (SELECT name,
