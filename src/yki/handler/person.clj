@@ -29,6 +29,7 @@
         :return ::ys/response
         (let [oid (get-in session [:identity :oid])]
           (if (person-db/upsert-person! db (assoc person :oid oid))
+            ; TODO Update person details to Solki!
             (ok {:success true})
             (ok {:success false}))))
       (context routing/registration-uri []
@@ -38,6 +39,7 @@
             :return ::ys/response
             (let [oid (get-in session [:identity :oid])]
               (if (exam-session-db/cancel-registration! db registration-id)
+                ; TODO Ensure Solki gets information regarding cancelled registration!
                 (ok {:success true})
                 (ok {:success false}))))
           (GET "/relocate" {session :session}
@@ -53,6 +55,7 @@
             (let [oid                (get-in session [:identity :oid])
                   to-exam-session-id (:to_exam_session_id relocate-request)
                   result             (person-db/relocate-registration! db oid registration-id to-exam-session-id)]
+              ; TODO Update participant lists of source and target exam sessions to Solki!
               (if result
                 (ok {:success true})
                 (ok {:success false})))))))))
