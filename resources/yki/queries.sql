@@ -1746,12 +1746,13 @@ ed.exam_date, es.language_code, es.level_code,
                      lang
               FROM exam_session_location
               WHERE exam_session_id = es.id) loc) as location,
-       p.amount AS payment_amount, p.state AS payment_state, p.payed_at, is_transferable(r.id) AS is_transferable
+       (SELECT epn.paid_at FROM exam_payment_new epn
+        WHERE epn.registration_id = r.id AND
+              epn.state = 'PAID') AS paid_at,
+       is_transferable(r.id) AS is_transferable
 FROM registration r
-LEFT JOIN exam_session es ON r.exam_session_id = es.id
-LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
-LEFT JOIN exam_session_location esl ON es.id = esl.exam_session_id
-LEFT JOIN payment p ON r.id = p.registration_id
+INNER JOIN exam_session es ON r.exam_session_id = es.id
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 WHERE person_oid = :oid;
 
 -- name: select-registration-relocate-details
