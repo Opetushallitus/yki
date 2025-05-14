@@ -19,17 +19,22 @@
   (get-registration-relocate-details [db oid registration-id])
   (relocate-registration! [db oid registration-id target-exam-session-id]))
 
-(defn valid-transfer-targets [original-exam-date candidates]
-  "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session."
-  ; TODO Should we also check that there is space in the exam session?
+(defn valid-transfer-targets [original-exam-date targets]
+  "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
+   Furthermore, the transfer targets must not be already full."
   ; TODO Further down the line, should we also ensure that there is no queue to the session?
-  (let [within-year?           #(let [exam-date  (f/parse (:session_date %1))
+  (let [has-space?             (fn [{:keys [participants max_participants]}]
+                                 (< participants max_participants))
+        candidates             (filter has-space? targets)
+        within-year?           #(let [exam-date  (f/parse (:session_date %1))
                                       limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
                                   (not (t/after? exam-date limit-date)))
         candidates-within-year (filter within-year? candidates)]
     (if (seq candidates-within-year)
       candidates-within-year
-      (->> candidates (sort-by :session_date) first))))
+      (->> candidates
+           (sort-by :session_date)
+           (take 1)))))
 
 (extend-protocol Person
   Boundary
