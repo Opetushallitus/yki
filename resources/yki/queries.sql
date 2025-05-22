@@ -1734,8 +1734,9 @@ FROM person
 WHERE oid = :oid;
 
 -- name: select-person-registrations
-SELECT r.id, r.exam_session_id, r.state,
+SELECT r.id, r.exam_session_id, r.state, r.kind,
 ed.exam_date, es.language_code, es.level_code,
+ed.registration_end_date, ed.post_admission_end_date,
        (SELECT array_to_json(array_agg(loc))
         FROM (SELECT name,
                      street_address,
@@ -1749,7 +1750,9 @@ ed.exam_date, es.language_code, es.level_code,
        (SELECT epn.paid_at FROM exam_payment_new epn
         WHERE epn.registration_id = r.id AND
               epn.state = 'PAID') AS paid_at,
-       is_transferable(r.id) AS is_transferable
+       is_transferable(r.id) AS is_transferable,
+       is_cancellable(r.id) AS is_cancellable,
+       r.is_transfered
 FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
