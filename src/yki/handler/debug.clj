@@ -4,10 +4,11 @@
     [compojure.api.sweet :refer [api context GET]]
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
-    [ring.util.http-response :refer [ok]]
+    [ring.util.http-response :refer [ok internal-server-error]]
     [yki.boundary.debug :as b]
     [yki.handler.routing :as routing]
-    [yki.middleware.error-boundary :refer [with-error-boundary]])
+    [yki.middleware.error-boundary :refer [with-error-boundary]]
+    [yki.util.http-util :as http-util])
   (:import (java.io StringWriter)))
 
 (defn- with-onr-url [url-helper {:keys [oid] :as data}]
@@ -37,4 +38,9 @@
               (csv/write-csv writer batch :separator \;))
             (-> (.toString writer)
                 (ok)
-                (assoc-in [:headers "Content-Type"] "text/csv"))))))))
+                (assoc-in [:headers "Content-Type"] "text/csv")))))
+      (GET "/solki/connection" _
+        (let [{:keys [error status]} (http-util/do-get "https://yki.jyu.fi" nil)]
+          (if error
+            (internal-server-error {:msg (ex-message error)})
+            (ok {:status status})))))))
