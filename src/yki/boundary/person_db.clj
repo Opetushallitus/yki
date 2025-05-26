@@ -17,7 +17,6 @@
     (fn [v]
       (some->
         v
-        (common/previous-day)
         (common/format-date-for-db)))))
 
 (defn get-person
