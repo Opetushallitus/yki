@@ -4,15 +4,27 @@
             [clojure.java.jdbc :as jdbc]
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
-            [yki.boundary.db-extensions])
+            [yki.boundary.db-extensions]
+            [yki.util.common :as common])
   (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
 
+(defn- with-payment-expiry-date [registration]
+  (update
+    registration
+    :expires_at
+    (fn [v]
+      (some->
+        v
+        (common/previous-day)
+        (common/format-date-for-db)))))
+
 (defn get-person
   [tx oid]
-  (assoc (first (q/select-person tx {:oid oid}))
-    :registrations (q/select-person-registrations tx {:oid oid})))
+  (let [person        (first (q/select-person tx {:oid oid}))
+        registrations (q/select-person-registrations tx {:oid oid})]
+    (assoc person :registrations (map with-payment-expiry-date registrations))))
 
 (defprotocol Person
   (upsert-person! [db person])

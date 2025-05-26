@@ -682,7 +682,9 @@ UPDATE registration SET
   modified = current_timestamp,
   form = :form,
   person_oid = :oid,
-  form_version = :form_version
+  form_version = :form_version,
+  expires_at = :expires_at,
+  exam_fee = :exam_fee
 WHERE
   id = :id
   AND state = 'STARTED'
@@ -1750,6 +1752,8 @@ ed.registration_end_date, ed.post_admission_end_date,
        (SELECT epn.paid_at FROM exam_payment_new epn
         WHERE epn.registration_id = r.id AND
               epn.state = 'PAID') AS paid_at,
+       r.expires_at,
+       r.exam_fee,
        is_transferable(r.id) AS is_transferable,
        is_cancellable(r.id) AS is_cancellable,
        r.is_transfered
