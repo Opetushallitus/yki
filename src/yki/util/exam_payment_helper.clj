@@ -9,10 +9,12 @@
 (require-sql ["yki/queries.sql" :as q])
 
 (defn- registration->payment-amount [payment-config registration-details]
-  (let [level-code (keyword (:level_code registration-details))]
-    (->> [:amount level-code]
-         (get-in payment-config)
-         (bigdec))))
+  (-> (or
+        (:exam_fee registration-details)
+        (let [level-code (keyword (:level_code registration-details))]
+          (->> [:amount level-code]
+               (get-in payment-config))))
+      (bigdec)))
 
 (defprotocol PaymentHelper
   (get-payment-amount-for-registration [this registration-details])
@@ -77,7 +79,8 @@
   PaymentHelper
   (get-payment-amount-for-registration [_ registration-details]
     (let [amount (registration->payment-amount payment-config registration-details)]
-      {:email-template amount
+      {:db             amount
+       :email-template amount
        ; Unit of returned amount is EUR.
        ; Return corresponding amount in minor unit, ie. cents.
        :paytrail       (* 100 (int amount))}))

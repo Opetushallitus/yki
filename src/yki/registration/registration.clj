@@ -195,12 +195,15 @@
         (let [amount                   (get-payment-amount-for-registration payment-helper exam-session-registration)
               ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
               unified-participant-id   (or (:participant_id registration-data) session-participant-id)
+              {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
               update-registration      {:id             registration-id
                                         :form           form-to-persist
                                         :oid            oid
                                         :form_version   1
-                                        :participant_id unified-participant-id}
-              {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
+                                        :participant_id unified-participant-id
+                                        ; TODO Ensure expiration date is updated when registration is lifted from queue
+                                        :expires_at     expiration-date
+                                        :exam_fee       (:db amount)}
               payment-success-url      (url-helper :exam-payment-v3.redirect registration-id lang)
               payment-link-expired-url (url-helper :yki-ui.registration.payment-link-expired.url)
               payment-link             {:participant_id        unified-participant-id
@@ -220,7 +223,7 @@
                                                                 :language (template-util/get-language (:language_code registration-data) lang)
                                                                 :level (template-util/get-level (:level_code registration-data) lang)
                                                                 :expiration_date (common/format-date-to-finnish-format last-payment-date)))
-              person (person-db/upsert-person! db (assoc form :oid oid))
+              person                   (person-db/upsert-person! db (assoc form :oid oid))
               success                  (and person (registration-db/update-registration-details! db
                                                                                                  update-registration
                                                                                                  create-and-send-link-fn))]
