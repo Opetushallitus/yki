@@ -1,0 +1,2 @@
+ALTER TABLE registration ADD COLUMN expires_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE registration ADD COLUMN exam_fee NUMERIC;
