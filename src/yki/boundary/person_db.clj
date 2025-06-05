@@ -27,9 +27,10 @@
 
 (defprotocol Person
   (upsert-person! [db person])
+  (migrate-persons! [db])
   (get-registration-relocate-details [db oid registration-id])
   (relocate-registration! [db oid registration-id target-exam-session-id])
-  (migrate-persons! [db]))
+  (get-registration-to-confirm-details [db oid registration-id]))
 
 (defn valid-transfer-targets [original-exam-date targets]
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
@@ -82,4 +83,6 @@
             spec
             {:registration_id registration-id
              :person_oid      oid
-             :target_id       target-exam-session-id}))))))
+             :target_id       target-exam-session-id})))))
+  (get-registration-to-confirm-details [{:keys [spec]} oid registration-id]
+    (first (q/select-registration-to-confirm-details spec {:oid oid :id registration-id}))))

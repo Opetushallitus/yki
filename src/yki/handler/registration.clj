@@ -58,6 +58,7 @@
                                                     :v id}
                                         :change    {:type audit/create-op
                                                     :new  registration}})
+                ; TODO Return payment login link code so that UI can fetch and display payment link details
                 (ok {:success true}))
               (do
                 (log/error "Registration id:" id "failed with error" error)

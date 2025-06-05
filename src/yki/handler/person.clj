@@ -10,8 +10,8 @@
     [yki.spec :as ys]
     [yki.registration.registration :as registration]))
 
-(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log environment onr-client]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client)]}
+(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log environment onr-client url-helper]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? environment) (some? url-helper)]}
   (api
     (context routing/person-api-root []
       :coercion (when-not (#{:qa :prod} environment) :spec)
@@ -42,6 +42,17 @@
                 ; TODO Ensure Solki gets information regarding cancelled registration!
                 (ok {:success true})
                 (ok {:success false}))))
+          (GET "/confirm" {session :session}
+            :path-params [registration-id :- ::ys/registration_id]
+            :query-params [lang :- ::ys/lang]
+            (let [oid                  (get-in session [:identity :oid])
+                  registration-details (person-db/get-registration-to-confirm-details db oid registration-id)
+                  payment-url          (url-helper :exam-payment-v3.redirect registration-id lang)]
+              (if (some? registration-details)
+                (-> registration-details
+                    (assoc :payment_url payment-url)
+                    (ok))
+                (not-found))))
           (GET "/relocate" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
             (let [; TODO What if user has no oid, ie. is authenticated with email link only?

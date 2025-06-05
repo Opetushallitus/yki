@@ -309,7 +309,7 @@ SELECT o.oid
 FROM exam_session es
 INNER JOIN organizer o ON es.organizer_id = o.id
 INNER JOIN registration r ON r.exam_session_id = es.id
-WHERE r.id = :id
+WHERE r.id = :id;
 
 -- name: select-exam-sessions
 SELECT
@@ -1837,3 +1837,30 @@ INSERT INTO person (oid, first_name, last_name, email, phone_number, street_addr
            ORDER BY person_oid, created DESC) registrations_for_person
      ORDER BY created DESC
      LIMIT 2000);
+
+-- name: select-registration-to-confirm-details
+SELECT r.id,
+       r.exam_fee,
+       r.expires_at,
+       es.language_code,
+       es.level_code,
+       ed.registration_start_date,
+       ed.registration_end_date,
+       ed.exam_date AS session_date,
+       (SELECT array_to_json(array_agg(loc))
+        FROM (SELECT name,
+                     street_address,
+                     post_office,
+                     zip,
+                     other_location_info,
+                     extra_information,
+                     lang
+              FROM exam_session_location
+              WHERE exam_session_id = es.id) loc) as location
+FROM registration r
+INNER JOIN exam_session es ON r.exam_session_id = es.id
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+WHERE r.id = :id
+  AND r.person_oid = :oid
+  AND r.state = 'SUBMITTED'
+  AND r.kind = 'ADMISSION';
