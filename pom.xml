@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>d1d240a2354f7c35aca7794ad245eb3de1656089</tag>
+    <tag>ac9b7ab7ea22e7c6f6205c02638703f53f627005</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -121,22 +121,22 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>2.18.3</version>
+        <version>2.19.0</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>2.18.3</version>
+        <version>2.19.0</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>2.18.3</version>
+        <version>2.19.0</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>2.18.3</version>
+        <version>2.19.0</version>
       </dependency>
       <dependency>
         <groupId>com.taoensso</groupId>
@@ -146,12 +146,12 @@
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers</artifactId>
-        <version>1.20.6</version>
+        <version>1.21.0</version>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>postgresql</artifactId>
-        <version>1.20.6</version>
+        <version>1.21.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -523,7 +523,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.17</version>
+      <version>1.5.18</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -553,7 +553,7 @@
     <dependency>
       <groupId>fi.vm.sade.java-utils</groupId>
       <artifactId>java-cas</artifactId>
-      <version>1.2.2-SNAPSHOT</version>
+      <version>1.2.3-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -716,7 +716,7 @@
     <dependency>
       <groupId>com.opentable.components</groupId>
       <artifactId>otj-pg-embedded</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.1</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -748,7 +748,7 @@
     <dependency>
       <groupId>com.clojure-goes-fast</groupId>
       <artifactId>clj-async-profiler</artifactId>
-      <version>1.6.1</version>
+      <version>1.6.2</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
