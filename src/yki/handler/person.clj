@@ -5,13 +5,15 @@
     [ring.util.http-response :refer [ok not-found]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.person-db :as person-db]
+    [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]
+    [yki.registration.email :refer [send-cancel-registration-email!]]
     [yki.registration.registration :as registration]))
 
-(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log environment onr-client url-helper]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? environment) (some? url-helper)]}
+(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q environment onr-client url-helper]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? environment) (some? url-helper)]}
   (api
     (context routing/person-api-root []
       :coercion (when-not (#{:qa :prod} environment) :spec)
@@ -36,17 +38,26 @@
         (context "/:registration-id" []
           (DELETE "/" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
+            :query-params [lang :- ::ys/lang]
             :return ::ys/response
             (let [oid (get-in session [:identity :oid])]
-              (if (exam-session-db/cancel-registration! db registration-id)
+              (if-let [{:keys [state exam_session_id]} (person-db/cancel-person-registration! db oid registration-id)]
                 ; TODO Ensure Solki gets information regarding cancelled registration!
-                (ok {:success true})
+                (do
+                  (when (= "PAID_AND_CANCELLED" state)
+                    (let [email-data    (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
+                          contact-info  (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
+                          template-data (assoc email-data :contact_info contact-info)]
+                      (send-cancel-registration-email! email-q lang template-data)))
+                  (ok {:success true}))
                 (ok {:success false}))))
           (GET "/confirm" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
             :query-params [lang :- ::ys/lang]
             (let [oid                  (get-in session [:identity :oid])
                   registration-details (person-db/get-registration-to-confirm-details db oid registration-id)
+                  ; TODO Consider having another endpoint under this handler for redirecting to paytrail
+                  ; Authentication might be an issue when reusing the existing functionality under y.h.exam-payment-new
                   payment-url          (url-helper :exam-payment-v3.redirect registration-id lang)]
               (if (some? registration-details)
                 (-> registration-details

@@ -70,7 +70,7 @@
           (let [{:keys [auth-method identity]} (:session request)
                 participant-id (registration/get-participant-id db identity)]
             (if participant-id
-              (if (registration-db/cancel-registration-for-participant! db participant-id id)
+              (if (registration-db/cancel-started-registration-for-participant! db participant-id id)
                 (do
                   (audit/log-participant {:request   request
                                           :target-kv {:k audit/registration

@@ -690,7 +690,7 @@ WHERE
   AND state = 'STARTED'
   AND participant_id = :participant_id;
 
--- name: cancel-registration-for-participant!
+-- name: cancel-started-registration-for-participant!
 UPDATE registration SET
   state = 'CANCELLED',
   modified = current_timestamp
@@ -1864,3 +1864,11 @@ WHERE r.id = :id
   AND r.person_oid = :oid
   AND r.state = 'SUBMITTED'
   AND r.kind = 'ADMISSION';
+
+-- name: cancel-registration-for-person<!
+UPDATE registration
+SET state = CASE WHEN state = 'COMPLETED'::registration_state
+                 THEN 'PAID_AND_CANCELLED'::registration_state
+                 ELSE 'CANCELLED'::registration_state END,
+    modified=current_timestamp
+WHERE person_oid = :oid AND id = :id AND state IN ('COMPLETED', 'SUBMITTED');

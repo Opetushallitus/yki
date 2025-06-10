@@ -36,7 +36,7 @@
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
   (update-submitted-registrations-to-expired! [db])
-  (cancel-registration-for-participant! [db participant-id registration-id]))
+  (cancel-started-registration-for-participant! [db participant-id registration-id]))
 
 (defn- int->boolean [value]
   (pos? value))
@@ -158,9 +158,9 @@
             (when (= "COMPLETED" (:state updated-registration))
               (after-fn updated-payment-details))
             updated-registration)))))
-  (cancel-registration-for-participant! [{:keys [spec]} participant-id registration-id]
+  (cancel-started-registration-for-participant! [{:keys [spec]} participant-id registration-id]
     (int->boolean
-      (q/cancel-registration-for-participant!
+      (q/cancel-started-registration-for-participant!
         spec
         {:id             registration-id
          :participant_id participant-id}))))

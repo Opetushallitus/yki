@@ -30,7 +30,8 @@
   (migrate-persons! [db])
   (get-registration-relocate-details [db oid registration-id])
   (relocate-registration! [db oid registration-id target-exam-session-id])
-  (get-registration-to-confirm-details [db oid registration-id]))
+  (get-registration-to-confirm-details [db oid registration-id])
+  (cancel-person-registration! [db oid registration-id]))
 
 (defn valid-transfer-targets [original-exam-date targets]
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
@@ -85,4 +86,7 @@
              :person_oid      oid
              :target_id       target-exam-session-id})))))
   (get-registration-to-confirm-details [{:keys [spec]} oid registration-id]
-    (first (q/select-registration-to-confirm-details spec {:oid oid :id registration-id}))))
+    (first (q/select-registration-to-confirm-details spec {:oid oid :id registration-id})))
+  (cancel-person-registration! [{:keys [spec]} oid registration-id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/cancel-registration-for-person<! tx {:oid oid :id registration-id}))))

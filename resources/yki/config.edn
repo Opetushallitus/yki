@@ -154,6 +154,7 @@
                                                        :auth        #ig/ref :yki.middleware.auth/with-authentication
                                                        :access-log  #ig/ref :yki.middleware.access-log/with-logging
                                                        :onr-client  #ig/ref :yki.boundary.onr/onr-client
+                                                       :email-q     #ig/ref :yki.job.job-queue/email-q
                                                        :environment #ig/ref :yki.env/environment
                                                        :url-helper  #ig/ref :yki.util/url-helper}
 
