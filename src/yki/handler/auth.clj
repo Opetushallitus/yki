@@ -26,6 +26,8 @@
         (ok (update-in session [:identity] dissoc :ticket)))
       (GET "/login" [code lang]
         (code-auth/login db code lang url-helper))
+      (GET "/login-link-info" [code]
+        (code-auth/get-link-details db code))
       (GET "/logout" {session :session}
         :query-params [{redirect :- ::ys/redirect-to nil}]
         (let [lang   (or (get-in session [:identity :lang]) "fi")

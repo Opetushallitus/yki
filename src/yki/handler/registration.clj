@@ -40,16 +40,16 @@
           :body [registration ::ys/registration]
           :path-params [id :- ::ys/id]
           :query-params [lang :- ::ys/language-code]
-          :return ::ys/response
-          (let [{:keys [oid error]} (registration/submit-registration db
-                                                                      url-helper
-                                                                      payment-helper
-                                                                      email-q
-                                                                      lang
-                                                                      (:session request)
-                                                                      id
-                                                                      registration
-                                                                      onr-client)]
+          :return ::ys/submit-registration-response
+          (let [{:keys [oid code error]} (registration/submit-registration db
+                                                                           url-helper
+                                                                           payment-helper
+                                                                           email-q
+                                                                           lang
+                                                                           (:session request)
+                                                                           id
+                                                                           registration
+                                                                           onr-client)]
             (if oid
               (do
                 (audit/log-participant {:request   request
@@ -58,8 +58,8 @@
                                                     :v id}
                                         :change    {:type audit/create-op
                                                     :new  registration}})
-                ; TODO Return payment login link code so that UI can fetch and display payment link details
-                (ok {:success true}))
+                (ok {:success true
+                     :code    code}))
               (do
                 (log/error "Registration id:" id "failed with error" error)
                 (internal-server-error {:success false

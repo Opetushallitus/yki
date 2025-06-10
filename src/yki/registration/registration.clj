@@ -111,10 +111,8 @@
         :else
         (conflict {:error {:closed true}})))))
 
-(defn create-and-send-link [db url-helper email-q lang payment-link template-data]
-  (let [code      (str (random-uuid))
-        login-url (url-helper :yki.login-link.url code)
-        email     (:email (registration-db/get-participant-by-id db (:participant_id payment-link)))
+(defn create-and-send-link [db email-q lang payment-link template-data code login-url]
+  (let [email     (:email (registration-db/get-participant-by-id db (:participant_id payment-link)))
         link-type (:type payment-link)
         hashed    (sha256-hash code)]
     (login-link-db/create-login-link! db (assoc payment-link :code hashed))
@@ -213,8 +211,9 @@
                                         :success_redirect      payment-success-url
                                         :expired_link_redirect payment-link-expired-url
                                         :type                  "PAYMENT"}
+              code                     (str (random-uuid))
+              login-url                (url-helper :yki.login-link.url code)
               create-and-send-link-fn  #(create-and-send-link db
-                                                              url-helper
                                                               email-q
                                                               lang
                                                               payment-link
@@ -222,7 +221,9 @@
                                                                 :amount (:email-template amount)
                                                                 :language (template-util/get-language (:language_code registration-data) lang)
                                                                 :level (template-util/get-level (:level_code registration-data) lang)
-                                                                :expiration_date (common/format-date-to-finnish-format last-payment-date)))
+                                                                :expiration_date (common/format-date-to-finnish-format last-payment-date))
+                                                              code
+                                                              login-url)
               person                   (person-db/upsert-person! db (assoc form :oid oid))
               success                  (and person (registration-db/update-registration-details! db
                                                                                                  update-registration
@@ -234,7 +235,8 @@
                 (exam-session-db/remove-from-exam-session-queue! db email (:id exam-session-registration))
                 (catch Exception e
                   (log/error e "Failed to remove email" email "from exam session" (:id exam-session-registration) "queue")))
-              {:oid oid})
+              {:oid  oid
+               :code code})
             {:error {:create_payment true}}))
         {:error {:person_creation true}})
       ; Submitting form didn't succeed due to some other reason.

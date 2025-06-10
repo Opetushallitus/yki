@@ -2,12 +2,12 @@
   (:require [clj-time.core :as t]
             [clj-time.local :as l]
             [clojure.tools.logging :refer [error]]
-            [ring.util.http-response :refer [found]]
+            [ring.util.http-response :refer [found ok not-found]]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.handler.login-link :as login-link]))
 
-(def unauthorized {:status 401
-                   :body "Unauthorized"
+(def unauthorized {:status  401
+                   :body    "Unauthorized"
                    :headers {"Content-Type" "text/plain; charset=utf-8"}})
 
 (defn- link-valid? [{:keys [expires_at]}]
@@ -33,3 +33,10 @@
 (defn logout [redirect-url]
   (-> (found redirect-url)
       (assoc :session nil)))
+
+(defn get-link-details [db code]
+  (if-let [link (login-link-db/get-login-link-by-code db (login-link/sha256-hash code))]
+    (if (link-valid? link)
+      (ok (select-keys link [:expires_at :success_redirect]))
+      (ok (select-keys link [:expires_at :expired_link_redirect])))
+    (not-found)))

@@ -127,6 +127,10 @@
 (s/def ::response (s/keys :req-un [::success]
                           :opt-un [::error]))
 
+(s/def ::code (s/and string? parse-uuid))
+(s/def ::submit-registration-response (s/or :success (s/keys :req-un [::success ::code])
+                                            :error (s/keys :req-un [::success ::error])))
+
 ;; quarantine
 (s/def ::start_date ::date-type)
 (s/def ::end_date ::date-type)
