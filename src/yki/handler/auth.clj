@@ -11,7 +11,8 @@
     [yki.handler.routing :as routing]
     [yki.middleware.access-log]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
-    [yki.spec :as ys]))
+    [yki.spec :as ys])
+  (:import (java.net URLEncoder)))
 
 (defmethod ig/init-key :yki.handler/auth [_ {:keys [auth url-helper cas-client onr-client permissions-client access-log db]}]
   {:pre [(some? auth) (some? url-helper) (some? cas-client) (some? onr-client) (some? permissions-client) (some? access-log) (some? db)]}
@@ -38,7 +39,9 @@
                 (cas-ticket-db/delete-ticket! db :oppija ticket)
                 (warn "CAS-oppija logout invoked but no ticket was found in session details"))
               (if redirect
-                (cas-auth/oppija-logout (url-helper :cas-oppija.logout.redirect-to-url redirect))
+                (let [encoded-redirect-url (URLEncoder/encode ^String redirect "UTF-8")
+                      final-redirect       (url-helper :cas-oppija.logout.redirect-to-url encoded-redirect-url)]
+                  (cas-auth/oppija-logout final-redirect))
                 (cas-auth/oppija-logout (url-helper :cas-oppija.logout lang))))
             (code-auth/logout
               (or redirect
