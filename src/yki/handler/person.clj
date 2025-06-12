@@ -9,7 +9,7 @@
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]
-    [yki.registration.email :refer [send-cancel-registration-email!]]
+    [yki.registration.email :refer [send-cancel-registration-email! send-transfer-confirmation-email!]]
     [yki.registration.registration :as registration]))
 
 (defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q environment onr-client url-helper]}]
@@ -72,6 +72,7 @@
               (ok results)))
           (POST "/relocate" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
+            :query-params [lang :- ::ys/lang]
             :body [relocate-request ::ys/relocate-request]
             :return ::ys/response
             (let [oid                (get-in session [:identity :oid])
@@ -79,5 +80,10 @@
                   result             (person-db/relocate-registration! db oid registration-id to-exam-session-id)]
               ; TODO Update participant lists of source and target exam sessions to Solki!
               (if result
-                (ok {:success true})
+                (let [registration-details      (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
+                      exam-session-contact-info (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
+                      email-template-data       (assoc registration-details
+                                                  :contact_info exam-session-contact-info)]
+                  (send-transfer-confirmation-email! email-q lang email-template-data)
+                  (ok {:success true}))
                 (ok {:success false})))))))))
