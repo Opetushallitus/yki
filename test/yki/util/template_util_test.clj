@@ -16,7 +16,7 @@
                                                       :name           "Järjestäjä Oy"
                                                       :login_url      "http://localhost:8080/login"})]
     (testing "result contains proper content"
-      (is (s/includes? rendered "Tutkinto: Suomi ylin taso"))
+      (is (s/includes? rendered "YKI-testi: Suomi ylin taso"))
       (is (s/includes? rendered "Testipäivä: 16.5.2024"))
       (is (s/includes? rendered "Testipaikka: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
       (is (s/includes? rendered "Ilmoittaudu YKI-testiin tämän linkin kautta"))
@@ -90,7 +90,7 @@
                                                       :name             "Järjestäjä Oy"
                                                       :exam_session_url "http://localhost:8080/exam-session"})]
     (testing "result contains proper content"
-      (is (s/includes? rendered "Tutkinto: Suomi ylin taso"))
+      (is (s/includes? rendered "YKI-testi: Suomi ylin taso"))
       (is (s/includes? rendered "Testipäivä: 16.5.2024"))
       (is (s/includes? rendered "Testipaikka: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
       (is (s/includes? rendered "YKI-testissä on vapaita paikkoja"))
@@ -106,7 +106,7 @@
                                                       :order_time 1716336000000 ; 22.5.2024
                                                       :amount     100M})]
     (testing "result contains proper content"
-      (is (s/includes? rendered "<b>Tutkinto:</b> Suomi ylin taso"))
+      (is (s/includes? rendered "<b>YKI-testi:</b> Suomi ylin taso"))
       (is (s/includes? rendered "<b>Testipäivä:</b> 16.5.2024"))
       (is (s/includes? rendered "Osakokeet"))
       (is (s/includes? rendered "Puhuminen"))
