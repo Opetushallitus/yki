@@ -6,14 +6,15 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.person-db :as person-db]
     [yki.boundary.registration-db :as registration-db]
+    [yki.handler.exam-payment-new :refer [redirect-to-paytrail]]
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]
     [yki.registration.email :refer [send-cancel-registration-email! send-transfer-confirmation-email!]]
     [yki.registration.registration :as registration]))
 
-(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q environment onr-client url-helper]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? environment) (some? url-helper)]}
+(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q environment onr-client url-helper payment-helper]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? environment) (some? url-helper) (some? payment-helper)]}
   (api
     (context routing/person-api-root []
       :coercion (when-not (#{:qa :prod} environment) :spec)
@@ -53,17 +54,15 @@
                 (ok {:success false}))))
           (GET "/confirm" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
-            :query-params [lang :- ::ys/lang]
             (let [oid                  (get-in session [:identity :oid])
-                  registration-details (person-db/get-registration-to-confirm-details db oid registration-id)
-                  ; TODO Consider having another endpoint under this handler for redirecting to paytrail
-                  ; Authentication might be an issue when reusing the existing functionality under y.h.exam-payment-new
-                  payment-url          (url-helper :exam-payment-v3.redirect registration-id lang)]
+                  registration-details (person-db/get-registration-to-confirm-details db oid registration-id)]
               (if (some? registration-details)
-                (-> registration-details
-                    (assoc :payment_url payment-url)
-                    (ok))
+                (ok registration-details)
                 (not-found))))
+          (GET "/payment-redirect" {session :session}
+            :path-params [registration-id :- ::ys/registration_id]
+            :query-params [lang :- ::ys/lang]
+            (redirect-to-paytrail db payment-helper url-helper lang session registration-id))
           (GET "/relocate" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
             (let [; TODO What if user has no oid, ie. is authenticated with email link only?
