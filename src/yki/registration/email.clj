@@ -91,3 +91,12 @@
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject "cancel_registration" email-language template-data)
               :body        (template-util/render "cancel_registration" email-language (assoc template-data :language exam-language :level exam-level))})))
+
+(defn send-enrolled-to-queue-email! [email-q email-language template-data]
+  (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
+        exam-language (template-util/get-language (:language_code template-data) email-language)]
+    (pgq/put email-q
+             {:recipients  [(:email template-data)]
+              :created     (System/currentTimeMillis)
+              :subject     (template-util/subject "queue" email-language template-data)
+              :body        (template-util/render "queue" email-language (assoc template-data :language exam-language :level exam-level))})))

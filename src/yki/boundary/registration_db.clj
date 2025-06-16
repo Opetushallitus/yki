@@ -17,7 +17,7 @@
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
   (not-registered-to-exam-session? [db participant-id exam-session-id])
-  (get-started-registration-id-by-participant-id [db participant-id exam-session-id])
+  (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
   (get-registration-and-exam-session-state [db registration-id])
@@ -27,16 +27,17 @@
   (get-completed-payment-data-for-registration [db registration-id])
   (get-open-registrations-by-participant [db participant-id])
   (exam-session-space-left? [db exam-session-id registration-id])
-  (exam-session-quota-left? [db exam-session-id registration-id])
   (exam-session-registration-open? [db exam-session-id])
-  (exam-session-post-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
   (get-participant-data-by-registration-id [db registration-id])
   (get-registration [db registration-id external-user-id])
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
   (update-submitted-registrations-to-expired! [db])
-  (cancel-started-registration-for-participant! [db participant-id registration-id]))
+  (cancel-started-registration-for-participant! [db participant-id registration-id])
+  ; Queueing
+  (get-participant-and-queue-count-for-ongoing-admissions [db])
+  (lift-registration-from-queue! [db exam-session-id send-email!]))
 
 (defn- int->boolean [value]
   (pos? value))
@@ -54,27 +55,18 @@
     (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id  participant-id
                                                                        :exam_session_id exam-session-id}))]
       (:exists exists)))
-  (get-started-registration-id-by-participant-id
+  (get-started-registration-id+kind-by-participant-id
     [{:keys [spec]} participant-id exam-session-id]
-    (:id (first (q/select-started-registration-id-by-participant spec {:participant_id  participant-id
-                                                                       :exam_session_id exam-session-id}))))
+    (first (q/select-started-registration-id-and-kind-by-participant spec {:participant_id  participant-id
+                                                                           :exam_session_id exam-session-id})))
   (exam-session-space-left?
     [{:keys [spec]} exam-session-id registration-id]
     (let [exists (first (q/select-exam-session-space-left spec {:exam_session_id exam-session-id
                                                                 :registration_id registration-id}))]
       (:exists exists)))
-  (exam-session-quota-left?
-    [{:keys [spec]} exam-session-id registration-id]
-    (let [exists (first (q/select-exam-session-quota-left spec {:exam_session_id exam-session-id
-                                                                :registration_id registration-id}))]
-      (:exists exists)))
   (exam-session-registration-open?
     [{:keys [spec]} id]
     (let [exists (first (q/select-exam-session-registration-open spec {:exam_session_id id}))]
-      (:exists exists)))
-  (exam-session-post-registration-open?
-    [{:keys [spec]} id]
-    (let [exists (first (q/select-exam-session-post-registration-open spec {:exam_session_id id}))]
       (:exists exists)))
   (update-participant-email!
     [{:keys [spec]} email participant-id]
@@ -163,4 +155,16 @@
       (q/cancel-started-registration-for-participant!
         spec
         {:id             registration-id
-         :participant_id participant-id}))))
+         :participant_id participant-id})))
+  (get-participant-and-queue-count-for-ongoing-admissions [{:keys [spec]}]
+    (q/select-participant-and-queue-count-by-exam-session spec))
+  (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email!]
+    (jdbc/with-db-transaction [tx spec]
+      ; TODO rollback-on-exception does not seem to reliably rollback changes!
+      ; For instance, if an error is thrown when sending email,
+      ; it appears that the registration will end up being lifted from queue.
+      (rollback-on-exception
+        tx
+        (fn lift-registration-and-notify! []
+          (let [registration (q/lift-registration-from-queue<! spec {:exam_session_id exam-session-id})]
+            (send-email! registration)))))))

@@ -4,7 +4,6 @@
     [compojure.api.sweet :refer [api]]
     [duct.database.sql]
     [integrant.core :as ig]
-    [jsonista.core :as j]
     [ring.mock.request :as mock]
     [yki.boundary.exam-session-db]
     [yki.embedded-db :as embedded-db]
@@ -82,55 +81,3 @@
         response (send-request request)]
     (testing "get status endpoint should return 404"
       (is (= (:status response) 404)))))
-
-(deftest post-exam-session-queue-test
-  (base/insert-base-data)
-  (let [id                     (:id (base/select-one "SELECT id from exam_session"))
-        enroll-into-queue!     (fn [exam-session-id email]
-                                 (-> (mock/request :post (str routing/exam-session-public-api-root "/" exam-session-id "/queue?lang=sv")
-                                                   (j/write-value-as-string {:email email}))
-                                     (mock/content-type "application/json; charset=UTF-8")
-                                     (send-request)))
-        response               (enroll-into-queue! id "test@test.com")
-        twice-response         (enroll-into-queue! id "Test@test.com")
-        get-exam-session-queue #(base/select "SELECT * from exam_session_queue")]
-    (testing "post exam session queue endpoint should add email to queue"
-      (is (= (:status response) 200))
-      (is (= (base/body-as-json response)
-             {"success" true}))
-      (is (= (count (get-exam-session-queue)) 1)))
-    (testing "post with same email should return conflict"
-      (is (= (:status twice-response) 409))
-      (is (= (base/body-as-json twice-response)
-             {"exists"  true
-              "full"    false
-              "success" false})))
-    (testing "post with unique email to full queue should return error"
-      (let [queue-capacity 50]
-        (doseq [i (range queue-capacity)]
-          (base/execute!
-            (str "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ("
-                 "'test_" i "@test.invalid',"
-                 "'fi',"
-                 id
-                 ");")))
-        (is (< queue-capacity
-               (count (get-exam-session-queue)))))
-      (let [full-queue-response (enroll-into-queue! id "unique@test.invalid")]
-        (is (= (:status full-queue-response) 409))
-        (is (= (base/body-as-json full-queue-response)
-               {"exists"  false
-                "full"    true
-                "success" false}))))
-    (testing "posting to queue of nonexistent session should return error"
-      (let [fake-exam-session-id 999
-            error-response       (enroll-into-queue! fake-exam-session-id "test@test.com")]
-        (is (= (:status error-response) 409))))
-    (testing "posting to queue outside of regular admission period should return error"
-      ; Ensure empty queue
-      (base/execute! "DELETE FROM exam_session_queue;")
-      ; Ensure enrolling into queue is successful before making any changes.
-      (is (= (:status (enroll-into-queue! id "test@test.com")) 200))
-      ; Update registration period end date to past
-      (base/execute! (str "UPDATE exam_date SET registration_end_date=(current_date - 1) WHERE id IN (SELECT exam_date_id FROM exam_session WHERE id=" id ");"))
-      (is (= (:status (enroll-into-queue! id "valid@email.com")) 409)))))

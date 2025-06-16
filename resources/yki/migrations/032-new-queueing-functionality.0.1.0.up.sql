@@ -1,0 +1,57 @@
+ALTER TYPE registration_kind ADD VALUE IF NOT EXISTS 'QUEUE';
+
+ALTER TABLE registration ADD COLUMN IF NOT EXISTS lifted_from_queue_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+-- TODO Is this index necessary and suitable? Perhaps the index might need to take also exam session id into account?
+-- TODO Consider also adding an index on registration state, as quite a few scheduled tasks use queries targeting registration state.
+CREATE INDEX IF NOT EXISTS registration_state ON registration (state);
+CREATE INDEX IF NOT EXISTS registration_lifted_from_queue_at ON registration (lifted_from_queue_at);
+
+INSERT INTO task_lock (task, last_executed) VALUES ('REGISTRATION_QUEUE_HANDLER', '-infinity');
+
+-- Determine if exam session has room for participant or if the registration to be created should be queued instead.
+CREATE OR REPLACE FUNCTION select_registration_kind(eid bigint) RETURNS text AS $$
+DECLARE
+    registration_kind record;
+BEGIN
+    SELECT INTO "registration_kind"
+        (SELECT COUNT(*) FROM registration r WHERE r.exam_session_id = eid AND r.kind = 'QUEUE' AND r.state IN ('STARTED','SUBMITTED')) AS queue_count,
+        (SELECT COUNT(*) FROM registration r WHERE r.exam_session_id = eid AND r.kind = 'ADMISSION' AND r.state IN ('STARTED','SUBMITTED','COMPLETED')) AS participants_count,
+        max_participants
+    FROM "exam_session" es
+    WHERE es."id" = eid;
+
+    IF registration_kind.queue_count > 0 THEN
+        RETURN 'QUEUE';
+    ELSIF registration_kind.participants_count >= registration_kind.max_participants THEN
+        RETURN 'QUEUE';
+    ELSE
+        RETURN 'ADMISSION';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- It is recommended to drop existing trigger entirely and recreate it from scratch when updating the related functionality.
+-- This was originally defined in migration 004 and later updated in migration 008.
+DROP TRIGGER IF EXISTS participant_limit_trigger ON registration;
+
+CREATE OR REPLACE FUNCTION error_if_exceeds_participant_limit() RETURNS TRIGGER AS $$
+DECLARE
+    actual_kind TEXT := (
+        select_registration_kind(NEW.exam_session_id)
+    );
+BEGIN
+    IF NEW.kind = 'QUEUE' AND actual_kind = 'ADMISSION' THEN
+        RAISE EXCEPTION 'registration to queue is not available';
+    ELSIF NEW.kind = 'ADMISSION' AND actual_kind = 'QUEUE' THEN
+        RAISE EXCEPTION 'max_participants of exam_session exceeded.';
+    ELSE
+        RETURN NEW;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER participant_limit_trigger
+    BEFORE INSERT
+    ON registration
+    FOR EACH ROW
+EXECUTE PROCEDURE error_if_exceeds_participant_limit();

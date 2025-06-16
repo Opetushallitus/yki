@@ -79,7 +79,8 @@
       (f/parse maybe-date)))
 
 (s/def ::non-blank-string (s/and string? #(not (str/blank? %)) #(<= (count %) 2560)))
-(s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION"})
+(s/def ::registration-kind #{"POST_ADMISSION" "ADMISSION" "QUEUE"})
+(s/def ::registration_kind ::registration-kind)
 (s/def ::date-type (st/spec
                      {:spec                (partial date?)
                       :type                :date-time
@@ -229,13 +230,8 @@
 (s/def ::queue int?)
 (s/def ::from ::date-type)
 (s/def ::upcoming_admission boolean?)
-; post admission extensions for exam-session
-(s/def ::post_admission_quota (s/nilable pos-int?))
-(s/def ::post_admission_start_date (s/nilable ::date-type))
-(s/def ::post_admission_end_date (s/nilable ::date-type))
-(s/def ::post_admission_active boolean?)
 (s/def ::transfer_targets (s/coll-of pos-int?))
-(s/def ::upcoming_post_admission boolean?)
+(s/def ::available_registration_kind ::registration-kind)
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -253,22 +249,14 @@
                                        ::queue_full
                                        ::participants
                                        ::organizer_oid
-                                       ::post_admission_quota
-                                       ::post_admission_start_date
-                                       ::post_admission_end_date
-                                       ::post_admission_active
                                        ::transfer_targets
                                        ::upcoming_admission
-                                       ::upcoming_post_admission]))
+                                       ::available_registration_kind]))
 
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
 (s/def ::exam_session_id pos-int?)
 (s/def ::from-param (s/keys :opt-un [::from]))
-
-(s/def ::post-admission-update (s/keys :req-un [::post_admission_start_date ::post_admission_end_date ::post_admission_quota]))
-
-(s/def ::post-admission-activation (s/keys :req-un [::post_admission_quota]))
 
 (s/def ::id-response (s/keys :req-un [::id]))
 
@@ -276,8 +264,6 @@
 (s/def ::exam_date ::date-type)
 (s/def ::registration_start_date ::date-type)
 (s/def ::registration_end_date ::date-type)
-(s/def ::post_admission_end_date (s/nilable ::date-type))
-(s/def ::post_admission_enabled boolean?)
 (s/def ::exam_session_count int?)
 (s/def ::languages (s/or :null nil? :array (s/coll-of ::exam-date-language)))
 
@@ -286,9 +272,6 @@
                                          ::registration_end_date
                                          ::languages]
                                 :opt-un [::id
-                                         ::post_admission_start_date
-                                         ::post_admission_end_date
-                                         ::post_admission_enabled
                                          ::exam_session_count]))
 
 (s/def ::dates (s/coll-of ::exam-date-type))
@@ -302,18 +285,14 @@
 
 (s/def ::days int?)
 
-;; exam session queue
-
-
-(s/def ::to-queue-request (s/keys :req-un [::email]))
-
 ;; login link
 (s/def ::exam_session_id ::id)
 (s/def ::user_data (s/and string? #(<= (count %) 2560)))
 
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
-                            :opt-un [::user_data]))
+                            :opt-un [::user_data
+                                     ::registration_kind]))
 
 ;; registration
 
@@ -347,7 +326,9 @@
                                  ::nationality_desc]))
 
 (s/def ::exam_session ::exam-session)
-(s/def ::registration-init (s/keys :req-un [::exam_session_id]))
+(s/def ::to_queue boolean?)
+(s/def ::registration-init (s/keys :req-un [::exam_session_id]
+                                   :opt-un [::to_queue]))
 
 (s/def ::registration_id ::id)
 
@@ -374,7 +355,8 @@
 (s/def ::registration-init-response (s/keys :req-un [::exam_session
                                                      ::is_strongly_identified
                                                      ::user
-                                                     ::registration_id]))
+                                                     ::registration_id
+                                                     ::registration_kind]))
 
 ;; exam session participant
 (s/def ::state ::non-blank-string)

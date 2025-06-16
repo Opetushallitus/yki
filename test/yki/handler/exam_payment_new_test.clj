@@ -21,7 +21,8 @@
 (defn insert-prereq-data [f]
   (base/insert-base-data)
   (base/insert-registrations "SUBMITTED")
-  (base/insert-login-link base/code-ok "2038-01-01")
+  (base/insert-login-link {:code       base/code-ok
+                           :expires-at "2038-01-01"})
   (f))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction insert-prereq-data)

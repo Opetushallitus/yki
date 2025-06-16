@@ -25,19 +25,20 @@
     (base/insert-exam-session-location organizer-oid "fi")
     (base/insert-exam-session-location organizer-oid "sv")
     (base/insert-exam-session-location organizer-oid "en")
-    (base/insert-login-link base/code-ok "2038-01-01")
+    (base/insert-login-link {:code       base/code-ok
+                             :expires-at "2038-01-01"})
     (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")))
 
 (deftest user-handler-test
   (insert-initial-data!)
   (with-routes!
     common-route-specs
-    (let [{session               :session} (common-bindings server)]
+    (let [{session :session} (common-bindings server)]
       (testing "get user identity should return external-user-id"
         (let [identity (base/body-as-json (:response (-> session
                                                          (peridot/request
-                                                          (str routing/user-api-root "/identity")
-                                                          :content-type "application/json"))))]
+                                                           (str routing/user-api-root "/identity")
+                                                           :content-type "application/json"))))]
           (is (some? (get-in identity ["identity" "external-user-id"])))))
 
       (testing "get user open registrations endpoint should return session id"

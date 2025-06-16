@@ -78,24 +78,6 @@
         (is (s/includes? rendered "Email address: foo@bar"))
         (is (s/includes? rendered "Phone: +358123"))))))
 
-(deftest render-queue-email-test
-  (let [template "QUEUE"
-        lang     "fi"
-        rendered (template-util/render template lang {:language         "Suomi"
-                                                      :level            "Ylin taso"
-                                                      :exam_date        "2024-05-16"
-                                                      :street_address   "Katutie 13"
-                                                      :zip              "00500"
-                                                      :post_office      "Helsinki"
-                                                      :name             "Järjestäjä Oy"
-                                                      :exam_session_url "http://localhost:8080/exam-session"})]
-    (testing "result contains proper content"
-      (is (s/includes? rendered "YKI-testi: Suomi ylin taso"))
-      (is (s/includes? rendered "Testipäivä: 16.5.2024"))
-      (is (s/includes? rendered "Testipaikka: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
-      (is (s/includes? rendered "YKI-testissä on vapaita paikkoja"))
-      (is (s/includes? rendered "http://localhost:8080/exam-session")))))
-
 (deftest render-evaluation-payment-success-email-test
   (let [template "EVALUATION_PAYMENT_SUCCESS"
         lang     "fi"

@@ -81,15 +81,16 @@
                                                               :url-helper             #ig/ref :yki.util/url-helper
                                                               :retry-duration-in-days 0}
 
-  :yki.job.scheduled-tasks/exam-session-queue-handler        {:db         #ig/ref :duct.database/sql
-                                                              :url-helper #ig/ref :yki.util/url-helper
-                                                              :email-q    #ig/ref :yki.job.job-queue/email-q}
-
   :yki.job.scheduled-tasks/remove-old-data-handler           {:db #ig/ref :duct.database/sql}
 
   :yki.job.scheduled-tasks/sync-participant-onr-data-handler {:db         #ig/ref :duct.database/sql
                                                               :onr-client #ig/ref :yki.boundary.onr/onr-client}
   :yki.job.scheduled-tasks/migrate-person-handler            {:db #ig/ref :duct.database/sql}
+
+  :yki.job.scheduled-tasks/registration-queue-handler        {:db             #ig/ref :duct.database/sql
+                                                              :url-helper     #ig/ref :yki.util/url-helper
+                                                              :payment-helper #ig/ref :yki.util/exam-payment-helper
+                                                              :email-q        #ig/ref :yki.job.job-queue/email-q}
 
   :duct.scheduler/simple
   {:thread-pool-size 10
@@ -97,8 +98,9 @@
                       {:interval 28800 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/participants-sync-handler}
                       {:interval 1 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}
                       {:interval 60 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/data-sync-queue-reader}
-                      {:interval 600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/exam-session-queue-handler}
                       {:interval 3600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/remove-old-data-handler}
+                      {:interval 3600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/sync-participant-onr-data-handler}
+                      {:interval 60 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/registration-queue-handler}
                       {:interval 3600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/sync-participant-onr-data-handler}
                       {:interval 3600 :delay 100 :run #ig/ref :yki.job.scheduled-tasks/migrate-person-handler}]}
 
@@ -147,7 +149,6 @@
   :yki.handler/user                                          {:db          #ig/ref :duct.database/sql
                                                               :auth        #ig/ref :yki.middleware.auth/with-authentication
                                                               :access-log  #ig/ref :yki.middleware.access-log/with-logging
-                                                              :onr-client  #ig/ref :yki.boundary.onr/onr-client
                                                               :environment #ig/ref :yki.env/environment}
 
   :yki.handler/person                                        {:db             #ig/ref :duct.database/sql

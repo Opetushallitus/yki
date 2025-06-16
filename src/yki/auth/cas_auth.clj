@@ -119,7 +119,7 @@
                                   :attributes])]
     (assoc (process-attributes attributes) :success? success :failureMessage failure)))
 
-(defn oppija-login-response [exam-session-id to-user-portal? session ticket cas-attributes url-helper onr-client]
+(defn oppija-login-response [exam-session-id to-user-portal? to-queue? session ticket cas-attributes url-helper onr-client]
   (let [{:keys [VakinainenKotimainenLahiosoitePostitoimipaikkaS
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
@@ -133,11 +133,15 @@
         address      {:post_office    VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip            VakinainenKotimainenLahiosoitePostinumero
                       :street_address VakinainenKotimainenLahiosoiteS}
-        redirect-uri (if (:success-redirect session)
+        redirect-uri (cond
+                       (:success-redirect session)
                        (str (:success-redirect session))
-                       (if to-user-portal?
-                         (url-helper :yki-ui.user-portal.url)
-                         (url-helper :yki-ui.exam-session-registration.url exam-session-id)))]
+                       to-user-portal?
+                       (url-helper :yki-ui.user-portal.url)
+                       to-queue?
+                       (url-helper :yki-ui.exam-session-queue.url exam-session-id)
+                       :else
+                       (url-helper :yki-ui.exam-session-registration.url exam-session-id))]
     (info "Redirecting oppija to url: " redirect-uri)
     (if (and sn firstName nationalIdentificationNumber)
       (assoc
@@ -165,22 +169,21 @@
   (info "Ticket validation failed: " message)
   (found (url-helper :exam-session.fail.redirect exam-session-id lang)))
 
-(defn oppija-login [ticket request onr-client url-helper db]
+(defn oppija-login [ticket request lang registration-kind onr-client url-helper db]
   (try
     (info "Begin cas-oppija ticket handling: " ticket)
     (if ticket
       (let [{:strs [examSessionId toUserPortal]} (:query-params request)
-            lang              (str/lower-case (or (some #{(-> request :route-params :*)}
-                                                        ["FI" "SV" "EN"])
-                                                  "fi"))
-            callback-uri      (url-helper (str "cas-oppija.login-success." lang) examSessionId)
-            cas-response      (cas/cas-oppija-ticket-validation url-helper ticket callback-uri)
-            cas-attributes    (process-cas-attributes cas-response)
-            session           (:session request)]
+            to-queue?      (= registration-kind "QUEUE")
+            callback-uri   (url-helper "cas-oppija.login-success" lang registration-kind examSessionId)
+
+            cas-response   (cas/cas-oppija-ticket-validation url-helper ticket callback-uri)
+            cas-attributes (process-cas-attributes cas-response)
+            session        (:session request)]
         (if (:success? cas-attributes)
           (do
             (cas-ticket-db/create-ticket! db :oppija ticket)
-            (oppija-login-response examSessionId toUserPortal session ticket cas-attributes url-helper onr-client))
+            (oppija-login-response examSessionId toUserPortal to-queue? session ticket cas-attributes url-helper onr-client))
           (validation-failed-response (:failureMessage cas-attributes) examSessionId lang url-helper)))
       unauthorized)
     (catch Exception e

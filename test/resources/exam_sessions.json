@@ -6,12 +6,6 @@
       "registration_end_date": "2039-03-01",
       "office_oid": null,
       "id": 1,
-      "post_admission_quota": null,
-      "post_admission_active": false,
-      "post_admission_start_date": null,
-      "post_admission_end_date": null,
-      "post_admission_activated_at": null,
-      "post_admission_enabled": false,
       "contact": null,
       "location": [
         {
@@ -51,10 +45,8 @@
       "language_code": "fin",
       "level_code": "PERUS",
       "open": false,
-      "queue_full": false,
       "queue": 0,
-      "upcoming_admission": true,
-      "upcoming_post_admission": false
+      "upcoming_admission": true
     }
   ]
 }

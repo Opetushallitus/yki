@@ -12,7 +12,6 @@
 (defprotocol ExamDate
   (create-exam-date! [db exam-date])
   (update-exam-date! [db id exam-date-update new-languages removable-languages])
-  (get-exam-dates [db])
   (get-organizer-exam-dates [db from])
   (get-exam-date-by-id [db id])
   (get-exam-date-session-count [db id])
@@ -42,10 +41,7 @@
         #(do (q/update-exam-date! tx {:id                        id
                                       :exam_date                 (string->date (:exam_date exam-date-update))
                                       :registration_start_date   (string->date (:registration_start_date exam-date-update))
-                                      :registration_end_date     (string->date (:registration_end_date exam-date-update))
-                                      :post_admission_start_date (string->date (:post_admission_start_date exam-date-update))
-                                      :post_admission_end_date   (string->date (:post_admission_end_date exam-date-update))
-                                      :post_admission_enabled    (:post_admission_enabled exam-date-update)})
+                                      :registration_end_date     (string->date (:registration_end_date exam-date-update))})
              (doseq [lang new-languages]
                (q/insert-exam-date-language! tx (assoc lang :exam_date_id id)))
              (doseq [lang removable-languages]
@@ -55,8 +51,6 @@
              true))))
   (get-exam-date-by-id [{:keys [spec]} id]
     (first (q/select-exam-date-by-id spec {:id id})))
-  (get-exam-dates [{:keys [spec]}]
-    (q/select-exam-dates spec))
   (get-organizer-exam-dates [{:keys [spec]} from]
     (q/select-organizer-exam-dates spec {:from (string->date from)}))
   (get-exam-date-session-count [{:keys [spec]} id]
