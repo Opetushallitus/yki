@@ -33,9 +33,10 @@
   (get-registration-to-confirm-details [db oid registration-id])
   (cancel-person-registration! [db oid registration-id]))
 
-(defn valid-transfer-targets [original-exam-date targets]
+(defn valid-transfer-targets
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
    Furthermore, the transfer targets must not be already full."
+  [original-exam-date targets]
   ; TODO Further down the line, should we also ensure that there is no queue to the session?
   (let [has-space?             (fn [{:keys [participants max_participants]}]
                                  (< participants max_participants))

@@ -30,12 +30,12 @@
                                        :interval  "1 DAY"})
 
 (defonce sync-onr-participant-data-handler-conf {:worker-id (str (random-uuid))
-                                                 :task "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
-                                                 :interval "59 MINUTES"})
+                                                 :task      "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
+                                                 :interval  "59 MINUTES"})
 
 (defonce person-migrator-conf {:worker-id (str (random-uuid))
-                               :task "MIGRATE_PERSON_HANDLER"
-                               :interval "59 MINUTES"})
+                               :task      "MIGRATE_PERSON_HANDLER"
+                               :interval  "59 MINUTES"})
 
 (defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_QUEUE_HANDLER"
@@ -166,8 +166,10 @@
                                              (let [; TODO Email language needs to be persisted along with registration!
                                                    ; At present lang will always be bound to "fi"
                                                    lang                (or lang "fi")
-                                                   email-template-data (registration-db/get-registration-data db id participant_id lang)]
-                                               (send-lifted-from-queue-email! db url-helper payment-helper email-q lang email-template-data)))
+                                                   email-template-data (registration-db/get-registration-data db id participant_id lang)
+                                                   code                (str (random-uuid))
+                                                   login-url           (url-helper :yki.login-link.url code)]
+                                               (send-lifted-from-queue-email! db url-helper payment-helper email-q lang email-template-data code login-url)))
              exam-session-details          (registration-db/get-participant-and-queue-count-for-ongoing-admissions db)]
          (doseq [{:keys [exam_session_id max_participants participants queue]} exam-session-details
                  :let [available-places (- max_participants participants)

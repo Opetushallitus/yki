@@ -3,7 +3,6 @@
             [buddy.core.hash :as hash]
             [clj-time.core :as t]
             [clj-time.format :as f]
-            [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [pgqueue.core :as pgq]
@@ -260,7 +259,7 @@
         (let [amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
               ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
               unified-participant-id  (or (:participant_id registration-data) session-participant-id)
-              {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
+              {:keys [expiration-date]} (registration->expiration-date registration-data)
               update-registration     {:id             registration-id
                                        :form           form-to-persist
                                        :oid            oid

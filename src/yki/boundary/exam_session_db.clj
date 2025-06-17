@@ -53,8 +53,9 @@
     ; Delete link if contact fields are null
     (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id exam-session-id})))
 
-(defn get-transfer-targets-for-exam-session [tx original-exam-date exam-session-id]
+(defn get-transfer-targets-for-exam-session
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session"
+  [tx original-exam-date exam-session-id]
   (let [candidates (q/select-transfer-targets-by-exam-session-id tx {:exam_session_id exam-session-id})
         within-year? #(let [exam-date (f/parse (:exam_date %1))
                             limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
