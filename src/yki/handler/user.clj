@@ -9,8 +9,8 @@
     [yki.registration.registration :as registration]
     [yki.spec :as ys]))
 
-(defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log environment onr-client]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (s/valid? ::ys/environment environment)]}
+(defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log environment]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (s/valid? ::ys/environment environment)]}
   (api
     (context routing/user-api-root []
       :coercion (when-not (#{:qa :prod} environment) :spec)
