@@ -129,7 +129,7 @@
                           :opt-un [::error]))
 
 (s/def ::code (s/and string? parse-uuid))
-(s/def ::submit-registration-response (s/or :success (s/keys :req-un [::success ::code])
+(s/def ::submit-registration-response (s/or :success (s/keys :req-un [::success ::registration_kind] :opt-un [::code])
                                             :error (s/keys :req-un [::success ::error])))
 
 ;; quarantine
