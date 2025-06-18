@@ -1625,6 +1625,7 @@ ed.registration_end_date, ed.post_admission_end_date,
        is_cancellable(r.id) AS is_cancellable,
        r.is_transfered,
        r.lifted_from_queue_at
+-- TODO return position in queue!
 FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
