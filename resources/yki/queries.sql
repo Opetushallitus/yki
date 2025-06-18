@@ -1161,6 +1161,7 @@ WITH registrations_to_update AS (SELECT id
 UPDATE registration
 SET kind                 = 'ADMISSION',
     lifted_from_queue_at = current_timestamp
+-- TODO Update expires_at
 WHERE id IN (SELECT id FROM registrations_to_update);
 
 --name: cancel-unpaid-registration-for-organizer!
@@ -1622,7 +1623,8 @@ ed.registration_end_date, ed.post_admission_end_date,
        r.exam_fee,
        is_transferable(r.id) AS is_transferable,
        is_cancellable(r.id) AS is_cancellable,
-       r.is_transfered
+       r.is_transfered,
+       r.lifted_from_queue_at
 FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
