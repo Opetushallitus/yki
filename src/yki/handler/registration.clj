@@ -41,16 +41,10 @@
           :path-params [id :- ::ys/id]
           :query-params [lang :- ::ys/language-code]
           :return ::ys/submit-registration-response
-          (let [{:keys [oid code error]} (registration/submit-registration db
-                                                                           url-helper
-                                                                           payment-helper
-                                                                           email-q
-                                                                           lang
-                                                                           (:session request)
-                                                                           id
-                                                                           registration
-                                                                           onr-client)]
-            (if oid
+          (let [result (registration/submit-registration db url-helper payment-helper
+                                                         email-q lang (:session request)
+                                                         id registration onr-client)]
+            (if-let [oid (:oid result)]
               (do
                 (audit/log-participant {:request   request
                                         :oid       oid
@@ -58,12 +52,11 @@
                                                     :v id}
                                         :change    {:type audit/create-op
                                                     :new  registration}})
-                (ok {:success true
-                     :code    code}))
+                (ok (assoc result :success true)))
               (do
-                (log/error "Registration id:" id "failed with error" error)
+                (log/error "Registration id:" id "failed with error" (:error result))
                 (internal-server-error {:success false
-                                        :error   error})))))
+                                        :error   (:error result)})))))
         (DELETE "/" request
           :path-params [id :- ::ys/id]
           :return ::ys/response

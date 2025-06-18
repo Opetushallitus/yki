@@ -277,13 +277,15 @@
                                              db
                                              update-registration
                                              create-and-send-link-fn))
-              kind                    (:kind registration-data)]
+              kind                    (:kind registration-data)
+              response-base           {:oid               oid
+                                       :registration_kind kind}]
           (if success
             (do
               (log/info "END: Registration id" registration-id "submitted successfully")
-              {:oid  oid
-               :code (when (= "ADMISSION" kind) code)
-               :registration_kind kind})
+              (if (= kind "ADMISSION")
+                (assoc response-base :code code)
+                response-base))
             {:error {:create_payment true}}))
         {:error {:person_creation true}})
       ; Submitting form didn't succeed due to some other reason.

@@ -1134,7 +1134,7 @@ AND r.form IS NOT NULL
 ORDER BY r.created ASC;
 
 -- name: select-participant-and-queue-count-by-exam-session
-SELECT es.id                             AS exam_session_id,
+SELECT es.id AS exam_session_id,
        es.max_participants,
        (SELECT COUNT(*)
         FROM registration r
