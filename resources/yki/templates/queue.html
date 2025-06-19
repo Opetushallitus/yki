@@ -20,23 +20,9 @@
         {% i18n common.testCentre %}: {{name}}, {{street_address}}, {{zip}} {{post_office|upper}}
     </td>
 </tr>
-
 <tr>
     <td style="padding-left: 20px; padding-top: 20px;">
-        {% i18n email.queue.content.line2 %}
+        {% i18n email.queue.content.line2.part1 %} <b>{% i18n email.queue.content.line2.part2 %}</b>
     </td>
 </tr>
-
-<tr>
-    <td style="padding-left: 20px; padding-top: 20px;">
-        {% i18n email.queue.content.line3 %}
-    </td>
-</tr>
-
-<tr>
-    <td style="padding-left: 20px; padding-top: 20px;">
-        {% i18n email.queue.content.line4 %}
-    </td>
-</tr>
-
 {% endblock %}
