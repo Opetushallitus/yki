@@ -19,13 +19,27 @@
         v
         (common/format-date-for-db)))))
 
-(defn get-person
+(defn get-person+registrations
   [tx oid]
-  (let [person        (first (q/select-person tx {:oid oid}))
-        registrations (q/select-person-registrations tx {:oid oid})]
-    (assoc person :registrations (map with-payment-expiry-date registrations))))
+  (let [person                (first (q/select-person tx {:oid oid}))
+        registrations         (q/select-person-registrations tx {:oid oid})
+        queued-ids            (->> registrations
+                                   (filter #(= "QUEUE" (:kind %)))
+                                   (map :id))
+        id->position-in-queue (->> (q/select-registration-queue-positions tx {:ids queued-ids})
+                                   (map (fn [{:keys [id position]}]
+                                          [id position]))
+                                   (into {}))
+        registration-details  (->> registrations
+                                   (map with-payment-expiry-date)
+                                   (map (fn [{:keys [id] :as v}]
+                                          (if-let [pos (id->position-in-queue id)]
+                                            (assoc v :position_in_queue pos)
+                                            v))))]
+    (assoc person :registrations registration-details)))
 
 (defprotocol Person
+  (get-person [db oid])
   (upsert-person! [db person])
   (migrate-persons! [db])
   (get-registration-relocate-details [db oid registration-id])
@@ -53,6 +67,9 @@
 
 (extend-protocol Person
   Boundary
+  (get-person [{:keys [spec]} oid]
+    (jdbc/with-db-transaction [tx spec]
+      (get-person+registrations tx oid)))
   (upsert-person!
     [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]
