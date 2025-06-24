@@ -23,7 +23,7 @@
         ;:return ::ys/person
         (let [oid (get-in session [:identity :oid])]
           (if oid
-            (ok (registration/get-person-and-registrations
+            (ok (person-db/get-person
                   db
                   oid))
             (not-found "no oid in session"))))

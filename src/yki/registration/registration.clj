@@ -303,8 +303,3 @@
   (log/info "START: Submitting registration id" registration-id)
   (let [exam-session-registration (exam-session-db/get-exam-session-registration-by-registration-id db registration-id)]
     (submit-registration-abstract-flow db url-helper payment-helper email-q lang session registration-id form onr-client exam-session-registration)))
-
-(defn get-person-and-registrations
-  [{:keys [spec]} person-oid]
-  (when person-oid
-    (person-db/get-person spec person-oid)))

@@ -19,7 +19,7 @@
         v
         (common/format-date-for-db)))))
 
-(defn get-person+registrations
+(defn- get-person+registrations
   [tx oid]
   (let [person                (first (q/select-person tx {:oid oid}))
         registrations         (q/select-person-registrations tx {:oid oid})
