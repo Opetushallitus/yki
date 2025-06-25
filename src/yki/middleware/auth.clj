@@ -173,7 +173,9 @@
      {:pattern  #".*/auth.*"
       :handler  no-access
       :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
-     {:pattern #".*/api/registration.*"
+     {:pattern #".*/api/registration/init"
+      :handler any-access}
+     {:pattern #".*/api/registration/submit.*"
       :handler oppija-authenticated?}
      {:pattern #".*/api/exam-date/.*"
       :handler oph-admin-access}

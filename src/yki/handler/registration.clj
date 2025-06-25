@@ -25,7 +25,6 @@
       :middleware [auth access-log with-error-boundary]
       (POST "/init" request
         :body [registration-init ::ys/registration-init]
-        :return ::ys/registration-init-response
         (audit/log-participant {:request   request
                                 :target-kv {:k audit/registration-init
                                             :v (:exam_session_id registration-init)}

@@ -17,7 +17,8 @@
             [yki.util.common :as common]
             [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration]]
             [yki.util.template-util :as template-util])
-  (:import (org.postgresql.util PSQLException)))
+  (:import [java.util UUID]
+           (org.postgresql.util PSQLException)))
 
 (defn sha256-hash [code]
   (-> code
@@ -27,6 +28,15 @@
 (defn get-participant-id
   [db identity]
   (:id (registration-db/get-participant-by-external-id db (:external-user-id identity))))
+
+(defn get-or-create-session
+  [session]
+  (if (get-in session [:identity :external_user_id])
+    session
+    (let [session-id (str (UUID/randomUUID))]
+      {:identity       {:external-user-id session-id}
+       :auth-method    "SESSION"
+       :yki-session-id session-id})))
 
 (defn get-or-create-participant
   [db identity]
@@ -43,11 +53,12 @@
   [db session exam-session-id registration-id registration-kind payment-config]
   (let [exam-session            (exam-session-db/get-exam-session-by-id db exam-session-id)
         authenticated-by-email? (= (:auth-method session) "EMAIL")
+        authenticated-by-sesssion? (= (:auth-method session) "SESSSION")
         email                   (when authenticated-by-email? (:external-user-id (:identity session)))
         user                    (assoc (:identity session) :email email)
         exam-fee                (get-in payment-config [:amount (keyword (:level_code exam-session))])]
     {:exam_session           (assoc exam-session :exam_fee exam-fee)
-     :is_strongly_identified (not authenticated-by-email?)
+     :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-sesssion?))
      :registration_id        registration-id
      :registration_kind      registration-kind
      :user                   user}))
@@ -102,12 +113,15 @@
   [db session {:keys [exam_session_id to_queue]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
   (let [
+        session-new             (get-or-create-session session)
         ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
         participant-id       (get-or-create-participant db (:identity session))
         started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
     (log/info "started-registration-id" (:id started-registration))
     (if started-registration
-      (ok (create-init-response db session exam_session_id (:id started-registration) (:kind started-registration) payment-config))
+      (assoc
+       (ok (create-init-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config))
+       :session session-new)
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
         (let [space-left?       (registration-db/exam-session-space-left? db exam_session_id nil)
