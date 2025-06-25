@@ -17,8 +17,7 @@
             [yki.util.common :as common]
             [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration]]
             [yki.util.template-util :as template-util])
-  (:import [java.util UUID]
-           (org.postgresql.util PSQLException)))
+  (:import (org.postgresql.util PSQLException)))
 
 (defn sha256-hash [code]
   (-> code
@@ -33,7 +32,7 @@
   [session]
   (if (get-in session [:identity :external_user_id])
     session
-    (let [session-id (str (UUID/randomUUID))]
+    (let [session-id (str (random-uuid))]
       {:identity       {:external-user-id session-id}
        :auth-method    "SESSION"
        :yki-session-id session-id})))
@@ -113,15 +112,15 @@
   [db session {:keys [exam_session_id to_queue]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
   (let [
-        session-new             (get-or-create-session session)
+        session-new          (get-or-create-session session)
         ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
         participant-id       (get-or-create-participant db (:identity session-new))
         started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
     (log/info "started-registration-id" (:id started-registration))
     (if started-registration
-      (assoc
-       (ok (create-init-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config))
-       :session session-new)
+      (-> (create-init-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config)
+          (ok)
+          (assoc :session session-new))
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
         (let [space-left?       (registration-db/exam-session-space-left? db exam_session_id nil)
