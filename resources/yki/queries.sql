@@ -1605,7 +1605,7 @@ WHERE oid = :oid;
 -- name: select-person-registrations
 SELECT r.id, r.exam_session_id, r.state, r.kind,
 ed.exam_date, es.language_code, es.level_code,
-ed.registration_end_date, ed.post_admission_end_date,
+ed.registration_start_date, ed.registration_end_date,
        (SELECT array_to_json(array_agg(loc))
         FROM (SELECT name,
                      street_address,
@@ -1625,7 +1625,6 @@ ed.registration_end_date, ed.post_admission_end_date,
        is_cancellable(r.id) AS is_cancellable,
        r.is_transfered,
        r.lifted_from_queue_at
--- TODO return position in queue!
 FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
