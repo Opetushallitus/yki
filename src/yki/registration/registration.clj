@@ -115,7 +115,7 @@
   (let [
         session-new             (get-or-create-session session)
         ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
-        participant-id       (get-or-create-participant db (:identity session))
+        participant-id       (get-or-create-participant db (:identity session-new))
         started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
     (log/info "started-registration-id" (:id started-registration))
     (if started-registration
