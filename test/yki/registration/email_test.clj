@@ -23,7 +23,8 @@
                            :name           "Testikouluttaja"
                            :street_address "Katukatu 1313 W 9"
                            :zip            "00100"
-                           :post_office    "HELSINKI"}
+                           :post_office    "HELSINKI"
+                           :login_url      "https://yki.opintopolku.fi/yki/auth/?toUserPortal=true"}
         random-uuid       #uuid"f5e96975-9d1d-484e-a83b-deadec01ab7c"
         payment-data      {:paid_at   (string->date "2022-10-13T22:00.00Z")
                            :amount    14000M

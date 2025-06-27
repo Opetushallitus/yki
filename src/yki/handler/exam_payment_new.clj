@@ -94,7 +94,8 @@
             exam-session-extra-information    (exam-session-db/get-exam-session-location-extra-information db exam-session-id lang)
             email-template-data               (assoc participant-details
                                                 :contact_info exam-session-contact-info
-                                                :extra_information (:extra_information exam-session-extra-information))
+                                                :extra_information (:extra_information exam-session-extra-information)
+                                                :login_url (url-helper :yki.login.user-portal))
             send-registration-complete-email! (fn [updated-payment-details]
                                                 (registration-email/send-exam-registration-completed-email!
                                                   email-q

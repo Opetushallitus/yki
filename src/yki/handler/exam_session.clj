@@ -196,7 +196,8 @@
                         exam-session-extra-information (exam-session-db/get-exam-session-location-extra-information db id lang)
                         email-template-data            (assoc registration-details
                                                          :contact_info exam-session-contact-info
-                                                         :extra_information (:extra_information exam-session-extra-information))]
+                                                         :extra_information (:extra_information exam-session-extra-information)
+                                                         :login_url (url-helper :yki.login.user-portal))]
                     (log/info "Resending confirmation email for registration with id" registration-id)
                     (registration-email/send-exam-registration-completed-email!
                       email-q

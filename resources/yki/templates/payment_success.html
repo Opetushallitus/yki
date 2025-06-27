@@ -135,7 +135,14 @@
 
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    {% i18n email.payment_success.content.line6 %}
+    {% i18n email.payment_success.content.line6.part1 %} {% i18n email.payment_success.content.line6.part2 %} {% i18n email.payment_success.content.line6.part3 %}
+    <a href="{{login_url}}" target="_blank">{% i18n email.payment_success.content.line6.link.text %}</a>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.content.line7 %}
   </td>
 </tr>
 {% endblock %}
