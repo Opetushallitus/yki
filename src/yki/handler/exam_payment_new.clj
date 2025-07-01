@@ -178,7 +178,10 @@
       (GET "/:id/redirect" {session :session}
         :path-params [id :- ::ys/registration_id]
         :query-params [lang :- ::ys/language-code]
-        (redirect-to-paytrail db payment-helper url-helper lang session id)))
+        (let [weakly-authenticated? (= "EMAIL" (:auth-method session))]
+          (cond-> (redirect-to-paytrail db payment-helper url-helper lang session id)
+                  weakly-authenticated?
+                  (assoc :session nil)))))
     (context routing/paytrail-payment-v2-root []
       ; TODO Is it safe to delete this whole endpoint?
       ; After removing support for redirecting to old UI, this is now identical to ...-v3-root
