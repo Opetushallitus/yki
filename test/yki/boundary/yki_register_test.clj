@@ -44,14 +44,20 @@
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
     (testing "should create valid csv line with birth date"
-      (let [result     (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) base/registration-form "5.4.3.2.1")
-            csv-record ["5.4.3.2.1" "010199-9012" "Ankka" "Aku" "M" "xxx" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi"]]
+      (let [participant {:form          base/registration-form
+                         :person_oid    "5.4.3.2.1"
+                         :is_transfered false}
+            result      (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) participant)
+            csv-record  ["5.4.3.2.1" "010199-9012" "Ankka" "Aku" "M" "xxx" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi" 0]]
         (is (= result csv-record))))
 
     (testing "should create valid csv line with ssn"
       (let [registration-form-with-ssn (dissoc (assoc base/registration-form :ssn "010199-9034" :nationalities ["246"]) :gender)
-            result                     (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) registration-form-with-ssn "5.4.3.2.1")
-            csv-record                 ["5.4.3.2.1" "010199-9034" "Ankka" "Aku" "M" "FIN" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi"]]
+            participant                {:form          registration-form-with-ssn
+                                        :person_oid    "5.4.3.2.1"
+                                        :is_transfered true}
+            result                     (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) participant)
+            csv-record                 ["5.4.3.2.1" "010199-9034" "Ankka" "Aku" "M" "FIN" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi" 1]]
         (is (= result csv-record))))))
 
 (deftest delete-exam-session-and-organizer-test
@@ -74,7 +80,7 @@
             _delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-exam-session-req)]
         "tests that exception is not thrown"))))
 
-(def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-900U;Ankka;Iines;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.1;010199-9012;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi" "5.4.3.2.4;301079-083N;Ankka;Roope;M;FIN;Katu 5;12346;Ankkalinna;roope@al.fi;fi;fi"]))
+(def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-900U;Ankka;Iines;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi;0" "5.4.3.2.1;010199-9012;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi;0" "5.4.3.2.4;301079-083N;Ankka;Roope;M;FIN;Katu 5;12346;Ankkalinna;roope@al.fi;fi;fi;0"]))
 
 (deftest sync-exam-session-participants-test
   (base/insert-base-data)

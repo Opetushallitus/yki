@@ -1107,7 +1107,7 @@ DELETE FROM participant_sync_status
 WHERE exam_session_id = :exam_session_id;
 
 -- name: select-completed-exam-session-participants
-SELECT form, person_oid
+SELECT form, person_oid, is_transfered
 FROM registration
 WHERE exam_session_id = :id
 AND state = 'COMPLETED';
