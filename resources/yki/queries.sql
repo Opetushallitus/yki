@@ -618,9 +618,13 @@ SELECT
  l.exam_session_id,
  l.expires_at,
  l.expired_link_redirect,
- l.success_redirect
-FROM login_link l INNER JOIN participant p
+ l.success_redirect,
+ r.person_oid
+FROM login_link l
+INNER JOIN participant p
   ON l.participant_id = p.id
+LEFT JOIN registration r
+  ON l.registration_id = r.id
 WHERE l.code = :code;
 
 -- name: select-login-link-by-exam-session-and-registration-id
@@ -1003,7 +1007,8 @@ FROM participant
 WHERE id = :id;
 
 -- name: select-participant-data-by-registration-id
-SELECT p.email,
+SELECT p.id AS participant_id,
+       p.email,
        es.language_code,
        es.level_code,
        esl.name,
@@ -1403,6 +1408,12 @@ SELECT
 FROM exam_session_location esl
 WHERE esl.exam_session_id = :id
 AND esl.lang = :lang;
+
+--name: select-exam-session-exam-date
+SELECT ed.exam_date
+FROM exam_session es
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+WHERE es.id = :id;
 
 --name: select-evaluation-by-id
 SELECT

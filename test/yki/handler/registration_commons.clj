@@ -94,7 +94,7 @@
                                      (str routing/registration-api-root "/" registration-id)
                                      :request-method :delete))
         get-payment           #(base/select-one (str "SELECT * FROM exam_payment_new WHERE registration_id = " registration-id))
-        get-payment-link      #(base/select-one (str "SELECT * FROM login_link WHERE registration_id = " registration-id))
+        get-payment-link      #(base/select-one (str "SELECT * FROM login_link WHERE type <> 'PERSON' AND registration_id = " registration-id))
         get-registration      #(base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
         get-email-request     #(pgq/take email-q)]
     {:session               session

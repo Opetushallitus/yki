@@ -20,9 +20,11 @@
         (assoc
           (found (:success_redirect login-link))
           :session
-          {:identity       {:external-user-id (:external_user_id login-link)
-                            :email            (:email login-link)}
-           :auth-method    "EMAIL"
+          {:identity     (merge {:external-user-id (:external_user_id login-link)
+                                 :email            (:email            login-link)}
+                                 (when-let [oid    (:person_oid       login-link)]
+                                   {:oid oid}))
+           :auth-method "EMAIL"
            :yki-session-id (str (random-uuid))})
         (found (:expired_link_redirect login-link)))
       unauthorized)

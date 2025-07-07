@@ -137,6 +137,24 @@
     (log/info "Payment link created for " email ". Adding to email queue")
     (send-payment-link-email! email-q lang email template-name (assoc template-data :login_url login-url))))
 
+(defn create-user-portal-link [db url-helper participant-id registration-id exam-date]
+  (let [code                    (str (random-uuid))
+        login-url               (url-helper :yki.login-link.url code)
+        hashed                  (sha256-hash code)
+        success-url             (url-helper :yki-ui.user-portal.url)
+        expired-url             (url-helper :yki-ui.user-portal.url)
+        expiration-date         (t/plus (common/string->date "2025-07-04") (t/days 2))
+        link-data               {:participant_id        participant-id
+                                 :exam_session_id       nil
+                                 :registration_id       registration-id
+                                 :expires_at            expiration-date
+                                 :success_redirect      success-url
+                                 :expired_link_redirect expired-url
+                                 :type                  "PERSON"
+                                 :code                  hashed}]
+    (login-link-db/create-login-link! db link-data)
+    login-url))
+
 ;; Get registration data with participant found in session
 ;; In a case user has two different registration forms open and a non matching session,
 ;; checks for a matching open registration for the current one
@@ -196,7 +214,8 @@
                                     :expires_at            expiration-date
                                     :success_redirect      payment-success-url
                                     :expired_link_redirect payment-link-expired-url
-                                    :type                  "PAYMENT"}]
+                                    :type                  "PAYMENT"}
+          user-portal-link (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data))]
       #(create-and-send-payment-link db
                                      email-q
                                      lang
@@ -206,13 +225,16 @@
                                        :amount (:email-template amount)
                                        :language (template-util/get-language (:language_code registration-data) lang)
                                        :level (template-util/get-level (:level_code registration-data) lang)
-                                       :expiration_date (common/format-date-to-finnish-format last-payment-date))
+                                       :expiration_date (common/format-date-to-finnish-format last-payment-date)
+                                       :user-portal-link user-portal-link)
                                      code
                                      login-url))
     "QUEUE"
-    (let [participant-id (:participant_id registration-data)
-          email          (:email (registration-db/get-participant-by-id db participant-id))]
-      #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :email email)))))
+    (let [participant-id   (:participant_id registration-data)
+          email            (:email (registration-db/get-participant-by-id db participant-id))
+          user-portal-link (create-user-portal-link db url-helper (:participant_id registration-data) (:registration_id registration-data) (:exam_date registration-data))]
+
+      #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :email email :user-portal-link user-portal-link)))))
 
 (defn send-lifted-from-queue-email! [db url-helper payment-helper email-q lang registration-data code login-url]
   (let [registration-id          (:id registration-data)
@@ -227,7 +249,8 @@
                                   :expires_at            expiration-date
                                   :success_redirect      payment-success-url
                                   :expired_link_redirect payment-link-expired-url
-                                  :type                  "PAYMENT"}]
+                                  :type                  "PAYMENT"}
+          user-portal-link (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data))]
     (create-and-send-payment-link db
                                   email-q
                                   lang
@@ -237,7 +260,8 @@
                                     :amount (:email-template amount)
                                     :language (template-util/get-language (:language_code registration-data) lang)
                                     :level (template-util/get-level (:level_code registration-data) lang)
-                                    :expiration_date (common/format-date-to-finnish-format last-payment-date))
+                                    :expiration_date (common/format-date-to-finnish-format last-payment-date)
+                                    :user-portal-link user-portal-link)
                                   code
                                   login-url)))
 
