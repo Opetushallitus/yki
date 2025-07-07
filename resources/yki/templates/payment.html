@@ -48,4 +48,11 @@
     <a style="color: #0093C4;" href="{{login_url}}" target="_blank">{% i18n email.payment.link_text %}</a>
   </td>
 </tr>
+{% if user-portal-link %}
+<tr>
+    <td style="padding-left: 20px; padding-top: 20px;">
+      <a href="{{user-portal-link}}" target="_blank">{{user-portal-link}}</a>
+    </td>
+</tr>
+{% endif %}
 {% endblock %}

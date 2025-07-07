@@ -15,6 +15,7 @@
     [yki.middleware.payment :refer [with-request-validation]]
     [yki.spec :as ys]
     [yki.registration.email :as registration-email]
+    [yki.registration.registration :as registration]
     [yki.util.db :refer [rollback-on-exception]]
     [yki.util.exam-payment-helper :refer [registration->payment get-payment-amount-for-registration]]
     [yki.util.audit-log :as audit]
@@ -92,10 +93,15 @@
       (let [payment-id                        (:id payment-details)
             exam-session-contact-info         (exam-session-db/get-contact-info-by-exam-session-id db exam-session-id)
             exam-session-extra-information    (exam-session-db/get-exam-session-location-extra-information db exam-session-id lang)
+            exam-date                         (exam-session-db/get-exam-session-exam-date db exam-session-id)
+            user-portal-link                  (registration/create-user-portal-link db url-helper
+                                                                                     (:participant_id participant-details)
+                                                                                     registration-id exam-date)
             email-template-data               (assoc participant-details
                                                 :contact_info exam-session-contact-info
                                                 :extra_information (:extra_information exam-session-extra-information)
-                                                :login_url (url-helper :yki.login.user-portal))
+                                                :login_url (url-helper :yki.login.user-portal)
+                                                :user-portal-link user-portal-link)
             send-registration-complete-email! (fn [updated-payment-details]
                                                 (registration-email/send-exam-registration-completed-email!
                                                   email-q

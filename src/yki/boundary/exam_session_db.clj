@@ -90,7 +90,8 @@
     "Get exam sessions by oid and with (optional) exam date at least 'from'")
   (remove-old-entries-from-exam-session-queue! [db])
   (get-contact-info-by-exam-session-id [db id])
-  (get-exam-session-location-extra-information [db id lang]))
+  (get-exam-session-location-extra-information [db id lang])
+  (get-exam-session-exam-date [db id]))
 
 (extend-protocol ExamSessions
   Boundary
@@ -206,4 +207,7 @@
   (get-exam-session-location-extra-information
     [{:keys [spec]} id lang]
     (first (q/select-exam-session-extra-information spec {:id   id
-                                                          :lang lang}))))
+                                                          :lang lang})))
+  (get-exam-session-exam-date
+    [{:keys [spec]} id]
+    (first (q/select-exam-session-exam-date spec {:id id}))))

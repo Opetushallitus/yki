@@ -1,0 +1,1 @@
+ALTER TYPE login_link_type ADD VALUE IF NOT EXISTS 'PERSON';
