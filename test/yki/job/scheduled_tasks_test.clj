@@ -149,7 +149,7 @@
 (deftest handle-exam-session-participants-sync-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
-  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (base/yesterday) "'"))
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set exam_date = '" (base/two-weeks-from-now) "'"))
   (with-routes!
     {"/osallistujat"                                                        {:status 200
                                                                              :body   "{}"}

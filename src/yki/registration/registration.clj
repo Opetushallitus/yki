@@ -129,6 +129,8 @@
      :body       (template-util/render template-name lang template-data)}))
 
 (defn create-and-send-payment-link [db email-q lang payment-link template-name template-data code login-url]
+  ; TODO Should either consider reading email preferentially from person table or ensure that email within participant table gets
+  ;  updated whenever email for corresponding person gets updated..
   (let [email  (:email (registration-db/get-participant-by-id db (:participant_id payment-link)))
         hashed (sha256-hash code)]
     (login-link-db/create-login-link! db (assoc payment-link :code hashed))
@@ -156,6 +158,7 @@
         ; Registration and payment link expiry should be three whole days from today
         ; => expiry at start of day 3+1 days from now.
         ; TODO Separate expiration date calculation logic registration lifted from queue
+        ;  Can't be tied to registration end date, as the queueing period is supposed to last roughly a week longer?
         ongoing-registration-expiration (common/date-from-now (inc 3))
         date-of-expiry                  (t/min-date
                                           ongoing-registration-expiration

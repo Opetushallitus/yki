@@ -191,6 +191,5 @@
       (sync-organizer db url-helper basic-auth disabled organizer-oid nil))))
 
 (defn return-exam-session-participants-csv [db url-helper exam-session-id]
-  (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
-        csv          (create-participants-csv url-helper participants)]
-    csv))
+  (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)]
+    (create-participants-csv url-helper participants)))

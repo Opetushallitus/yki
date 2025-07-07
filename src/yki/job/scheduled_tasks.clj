@@ -72,7 +72,9 @@
          (when ids (log/info "Started registrations set to expired" ids)))
        (log/debug "Check submitted registrations expiry")
        (let [ids (registration-db/update-submitted-registrations-to-expired! db)]
-         (when ids (log/info "Submitted registrations set to expired" ids))))
+         (when ids (log/info "Submitted registrations set to expired" ids)))
+       ; TODO Expire also queued registrations after exam date
+       )
      (catch Exception e
        (log/error e "Registration state handler failed"))))
 
@@ -166,6 +168,7 @@
                                              (let [; TODO Email language needs to be persisted along with registration!
                                                    ; At present lang will always be bound to "fi"
                                                    lang                (or lang "fi")
+                                                   ; TODO Should get template data preferentially from person table, not registration form
                                                    email-template-data (registration-db/get-registration-data db id participant_id lang)
                                                    code                (str (random-uuid))
                                                    login-url           (url-helper :yki.login-link.url code)]

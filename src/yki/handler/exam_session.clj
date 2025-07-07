@@ -155,6 +155,7 @@
                   (response {:success true}))
                 (bad-request {:success false
                               :error   "Registration couldn't be cancelled"})))
+            ; TODO Is this needed in the future? Users should be able to transfer their own enrollments.
             (POST "/relocate" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]
@@ -180,7 +181,8 @@
                                     :change    {:type audit-log/update-op
                                                 :old  {:exam_session_id id}
                                                 :new  {:exam_session_id (:to_exam_session_id relocate-request)}}})
-                                        ; Sync only the relocation destination exam session
+                    ; Sync only the relocation destination exam session
+                    ; TODO Sync also the origin
                     (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                     (response {:success true}))
                   (not-found {:success false

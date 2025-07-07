@@ -731,7 +731,7 @@ WHERE re.id = :id
 SELECT id FROM registration
 WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp;
 
--- TODO Ensure registrations stuck in queue are also expired once exam date has passed!
+-- TODO Ensure registrations stuck in queue are also expired OR deleted at some point - perhaps once queueing period has ended?
 -- submitted registration expires 3 days at midnight from time of creation or lifting from queue
 -- name: select-submitted-registrations-to-expire
 SELECT id FROM registration
@@ -1106,6 +1106,7 @@ WHERE exam_session_id = :exam_session_id;
 DELETE FROM participant_sync_status
 WHERE exam_session_id = :exam_session_id;
 
+-- TODO Update to read participant details from person table
 -- name: select-completed-exam-session-participants
 SELECT form, person_oid, is_transfered
 FROM registration
