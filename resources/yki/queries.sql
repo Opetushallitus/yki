@@ -1051,7 +1051,7 @@ SELECT es.id
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 WHERE es.id = :exam_session_id
-  AND (ed.exam_date - interval '21 day') >= current_date
+  AND (current_date + interval '7 day') <= ed.exam_date
   AND (SELECT COUNT(1)
      FROM participant_sync_status pss
      WHERE pss.exam_session_id = es.id
@@ -1078,7 +1078,7 @@ SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
-WHERE ((((ed.registration_end_date + interval '1 day') >= current_date
+WHERE (((ed.exam_date >= (current_date + interval '1 week')
     OR ((ed.registration_end_date + :duration::interval) >= current_date
         AND pss.failed_at IS NOT NULL
         AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))
