@@ -73,8 +73,8 @@
        (log/debug "Check submitted registrations expiry")
        (let [ids (registration-db/update-submitted-registrations-to-expired! db)]
          (when ids (log/info "Submitted registrations set to expired" ids)))
-       ; TODO Expire also queued registrations after exam date
-       )
+       (let [ids (registration-db/expire-queued-registrations-after-exam-date! db)]
+         (when ids (log/info "Queued registrations set to expired" ids))))
      (catch Exception e
        (log/error e "Registration state handler failed"))))
 

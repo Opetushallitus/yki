@@ -37,7 +37,8 @@
   (cancel-started-registration-for-participant! [db participant-id registration-id])
   ; Queueing
   (get-participant-and-queue-count-for-ongoing-admissions [db])
-  (lift-registration-from-queue! [db exam-session-id send-email!]))
+  (lift-registration-from-queue! [db exam-session-id send-email!])
+  (expire-queued-registrations-after-exam-date! [db]))
 
 (defn- int->boolean [value]
   (pos? value))
@@ -167,4 +168,11 @@
         tx
         (fn lift-registration-and-notify! []
           (let [registration (q/lift-registration-from-queue<! spec {:exam_session_id exam-session-id})]
-            (send-email! registration)))))))
+            (send-email! registration))))))
+  (expire-queued-registrations-after-exam-date! [{:keys [spec]}]
+    (jdbc/with-db-transaction [tx spec]
+      (let [ids (->> (q/select-queued-registrations-to-expire tx)
+                     (map :id))]
+        (when (seq ids)
+          (q/expire-registrations-by-ids! tx {:ids ids})
+          ids)))))
