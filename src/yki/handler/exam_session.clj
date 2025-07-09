@@ -192,6 +192,7 @@
                             registration-id :- ::ys/id]
               :query-params [lang :- ::ys/language-code]
               :return ::ys/response
+              ; NB: Confirmation email is sent based on email address found on person table entry corresponding to person_oid found on registration table
               (if-let [registration-details (registration-db/get-completed-registration-data db id registration-id lang)]
                 (if-let [payment-details (registration-db/get-completed-payment-data-for-registration db registration-id)]
                   (let [exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)

@@ -842,9 +842,9 @@ SELECT re.state,
        re.exam_session_id,
        re.participant_id,
        re.kind,
-       re.form->>'email' AS email,
-       re.form->>'last_name' AS last_name,
-       re.form->>'first_name' AS first_name,
+       pe.email,
+       pe.last_name,
+       pe.first_name,
        es.language_code,
        es.level_code,
        ed.exam_date,
@@ -854,6 +854,7 @@ SELECT re.state,
        esl.zip,
        esl.name
 FROM registration re
+INNER JOIN person pe ON re.person_oid = pe.oid
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
