@@ -1,7 +1,7 @@
 (ns yki.boundary.yki-register-test
   (:require
+    [clojure.string :as str]
     [clojure.test :refer [deftest is testing use-fixtures]]
-    [clojure.string :as s]
     [yki.handler.base-test :as base]
     [stub-http.core :refer [with-routes!]]
     [jsonista.core :as j]
@@ -80,11 +80,17 @@
             _delete-exam-session-res (yki-register/sync-exam-session-and-organizer db url-helper {:user "user" :password "pass"} false delete-exam-session-req)]
         "tests that exception is not thrown"))))
 
-(def csv (s/join (System/lineSeparator) ["5.4.3.2.2;301079-900U;Ankka;Iines;N;FIN;Katu 4;12346;Ankkalinna;aa@al.fi;fi;fi;0" "5.4.3.2.1;010199-9012;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi;0" "5.4.3.2.4;301079-083N;Ankka;Roope;M;FIN;Katu 5;12346;Ankkalinna;roope@al.fi;fi;fi;0"]))
+(def csv (str/join (System/lineSeparator) ["5.4.3.2.2;301079-900U;Ankka;Iñes;N;FIN;Erikatu 9;00100;Helsinki;ia@al.fi;fi;fi;0" "5.4.3.2.1;010199-9012;Ankka;Aku;M;xxx;Katu 3;12345;Ankkalinna;aa@al.fi;fi;fi;0" "5.4.3.2.4;301079-083N;Ankka;Roope;M;FIN;Katu 5;12346;Ankkalinna;roope@al.fi;fi;fi;0"]))
 
 (deftest sync-exam-session-participants-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
+  (let [person-details ["5.4.3.2.2", "Iñes" "Ankka" "ia@al.fi" "050123456789" "Erikatu 9" "Helsinki" "00100"]]
+    (base/execute! (str "INSERT INTO person (oid, first_name, last_name, email, phone_number, street_address, post_office, zip) VALUES ("
+                        (->> person-details
+                             (map #(str "'" % "'"))
+                             (str/join ","))
+                        ")")))
   (testing "should send participants as csv and add basic auth header"
     (with-routes!
       {{:path "/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}

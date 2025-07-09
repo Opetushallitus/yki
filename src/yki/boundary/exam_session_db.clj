@@ -56,15 +56,24 @@
 (defn get-transfer-targets-for-exam-session
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session"
   [tx original-exam-date exam-session-id]
-  (let [candidates (q/select-transfer-targets-by-exam-session-id tx {:exam_session_id exam-session-id})
-        within-year? #(let [exam-date (f/parse (:exam_date %1))
+  (let [candidates   (q/select-transfer-targets-by-exam-session-id tx {:exam_session_id exam-session-id})
+        within-year? #(let [exam-date  (f/parse (:exam_date %1))
                             limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
                         (not (t/after? exam-date limit-date)))
-        within-year (filter within-year? candidates)]
+        within-year  (filter within-year? candidates)]
     (cond
       (empty? candidates) []
       (seq within-year) (map :id within-year)
       :else (->> candidates (sort-by :exam_date) first :id vector))))
+
+(defn update-form-with-person-details
+  "Combine details returned for exam participant from both person table and registration form.
+   Overwrites form with combined details, preferring details from person table if available."
+  [participant]
+  (let [person-details (select-keys participant [:last_name :first_name :email :zip :post_office :street_address])
+        form           (:form participant)
+        updated-form   (merge-with #(or %1 %2) person-details form)]
+    (assoc participant :form updated-form)))
 
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
@@ -131,15 +140,15 @@
     (jdbc/with-db-transaction [tx spec]
       (let [{exam-session-id :id exam-date :exam_date} (q/select-registration-details-for-transfer tx {:id registration-id})
             valid-transfer-targets (get-transfer-targets-for-exam-session
-                                    tx
-                                    exam-date
-                                    exam-session-id)]
+                                     tx
+                                     exam-date
+                                     exam-session-id)]
         (if (some #{to-exam-session-id} valid-transfer-targets)
           (int->boolean (q/update-registration-exam-session!
-                         tx
-                         {:exam_session_id to-exam-session-id
-                          :registration_id registration-id
-                          :oid             oid}))
+                          tx
+                          {:exam_session_id to-exam-session-id
+                           :registration_id registration-id
+                           :oid             oid}))
           false))))
   (cancel-registration!
     [{:keys [spec]} registration-id]
@@ -183,9 +192,13 @@
   (get-exam-sessions-to-be-synced [{:keys [spec]} retry-duration]
     (q/select-exam-sessions-to-be-synced spec {:duration retry-duration}))
   (get-exam-session-participants [{:keys [spec]} id oid]
-    (q/select-exam-session-participants spec {:id id :oid oid}))
+    (let [participants (q/select-exam-session-participants spec {:id id :oid oid})]
+      (->> participants
+           (map update-form-with-person-details))))
   (get-completed-exam-session-participants [{:keys [spec]} id]
-    (q/select-completed-exam-session-participants spec {:id id}))
+    (let [participants (q/select-completed-exam-session-participants spec {:id id})]
+      (->> participants
+           (map update-form-with-person-details))))
   (get-exam-session-organizer-oid [{:keys [spec]} id]
     (q/select-exam-session-organizer-oid spec {:id id}))
   (get-exam-sessions [{:keys [spec]} from]

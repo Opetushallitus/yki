@@ -141,9 +141,23 @@
         (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string exam-session-req) basic-auth)))))
 
 (defn participant->csv-record [url-helper {:keys [form is_transfered person_oid]}]
-  (let [{:keys [first_name last_name gender nationalities birthdate ssn certificate_lang
-                exam_lang post_office zip street_address email]} form
-        nationality (codes/get-converted-country-code url-helper (first nationalities))]
+  (let [{:keys [gender nationalities birthdate ssn certificate_lang exam_lang
+                last_name first_name email zip post_office street_address]} form
+        nationality (codes/get-converted-country-code url-helper (first nationalities))
+        res [person_oid
+             (ssn-or-birthdate ssn birthdate)
+             last_name
+             first_name
+             (convert-gender gender ssn)
+             (if (nationality-not-supported-or-missing? nationality) "xxx" nationality)
+             street_address
+             zip
+             post_office
+             email
+             exam_lang
+             certificate_lang
+             (if is_transfered 1 0)]]
+    (log/info "SOSOSOSOS" res)
     [person_oid
      (ssn-or-birthdate ssn birthdate)
      last_name

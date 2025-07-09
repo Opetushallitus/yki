@@ -1114,17 +1114,26 @@ WHERE exam_session_id = :exam_session_id;
 DELETE FROM participant_sync_status
 WHERE exam_session_id = :exam_session_id;
 
--- TODO Update to read participant details from person table
+-- TODO Consider moving more of form contents under person table
 -- name: select-completed-exam-session-participants
-SELECT form, person_oid, is_transfered
-FROM registration
-WHERE exam_session_id = :id
-AND state = 'COMPLETED';
+SELECT r.form, r.person_oid, r.is_transfered, p.last_name, p.first_name, p.email, p.zip, p.post_office, p.street_address
+FROM registration r
+LEFT JOIN person p ON p.oid = r.person_oid
+WHERE r.exam_session_id = :id
+AND r.state = 'COMPLETED';
 
+-- TODO Consider moving more of form contents under person table
 -- name: select-exam-session-participants
 SELECT
   r.created,
   r.form,
+  p.last_name,
+  p.first_name,
+  p.email,
+  p.phone_number,
+  p.zip,
+  p.post_office,
+  p.street_address,
   r.state,
   r.id AS registration_id,
   r.kind,
@@ -1134,6 +1143,7 @@ SELECT
   r.is_transfered
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
+LEFT JOIN person p ON r.person_oid = p.oid
 LEFT JOIN exam_session oes ON oes.id = r.original_exam_session_id
 LEFT JOIN exam_date oed ON oed.id = oes.exam_date_id
 WHERE es.id = :id
@@ -1170,7 +1180,7 @@ WITH registrations_to_update AS (SELECT id
 UPDATE registration
 SET kind                 = 'ADMISSION',
     lifted_from_queue_at = current_timestamp
--- TODO Update expires_at
+-- TODO Update expires_at - pending decision on when exactly they should expire
 WHERE id IN (SELECT id FROM registrations_to_update);
 
 --name: cancel-unpaid-registration-for-organizer!
