@@ -70,10 +70,12 @@
   "Combine details returned for exam participant from both person table and registration form.
    Overwrites form with combined details, preferring details from person table if available."
   [participant]
-  (let [person-details (select-keys participant [:last_name :first_name :email :zip :post_office :street_address])
+  (let [person-details (select-keys participant [:last_name :first_name :email :phone_number :zip :post_office :street_address])
         form           (:form participant)
         updated-form   (merge-with #(or %1 %2) person-details form)]
-    (assoc participant :form updated-form)))
+    (-> participant
+        (assoc :form updated-form)
+        (dissoc :last_name :first_name :email :phone_number :zip :post_office :street_address))))
 
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
