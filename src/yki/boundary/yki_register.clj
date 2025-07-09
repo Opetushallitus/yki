@@ -157,7 +157,6 @@
              exam_lang
              certificate_lang
              (if is_transfered 1 0)]]
-    (log/info "SOSOSOSOS" res)
     [person_oid
      (ssn-or-birthdate ssn birthdate)
      last_name
