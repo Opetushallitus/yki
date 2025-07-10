@@ -85,7 +85,7 @@
   (oph-admin? (get-organizations-from-session (:session request))))
 
 (defn- redirect-to-cas-oppija
-  [{:keys [query-params]} url-helper]
+  [{:keys [query-params session]} url-helper]
   (log/info "Redirect to cas-oppija")
   (let [{exam-session-id "examSessionId"
          query-lang      "lang"
@@ -111,7 +111,7 @@
     (assoc
       (see-other login-url)
       :session
-      {:success-redirect session-success-redirect})))
+      (merge session {:success-redirect session-success-redirect}))))
 
 (defn- rules
   "OPH users with admin role are allowed to call all endpoints without restrictions to organizer.
@@ -174,6 +174,8 @@
       :handler  no-access
       :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
      {:pattern #".*/api/registration/init"
+      :handler any-access}
+     {:pattern #".*/api/registration/identify"
       :handler any-access}
      {:pattern #".*/api/registration/submit.*"
       :handler oppija-authenticated?}

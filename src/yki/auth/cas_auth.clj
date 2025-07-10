@@ -162,7 +162,7 @@
             :ticket           ticket}
            address)
          :auth-method    "SUOMIFI"
-         :yki-session-id (str (UUID/randomUUID))})
+         :yki-session-id (or (:yki-session-id session) (str (UUID/randomUUID)))})
       unauthorized)))
 
 (defn- validation-failed-response [message exam-session-id lang url-helper]
