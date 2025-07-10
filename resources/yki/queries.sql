@@ -714,6 +714,17 @@ SELECT NOT EXISTS (
     AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
 ) AS exists;
 
+-- name: select-not-registered-to-other-exam-session
+SELECT NOT EXISTS (
+  SELECT es.id
+  FROM exam_session es
+  INNER JOIN registration re ON es.id = re.exam_session_id
+  WHERE re.participant_id = :participant_id
+    AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+    AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
+    AND es.id <> re.exam_session_id
+) AS exists;
+
 -- name: select-started-registration-id-and-kind-by-participant
 SELECT re.id, re.kind
 FROM exam_session es

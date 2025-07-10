@@ -140,15 +140,17 @@
 (defn identify-registration
   [db session {:keys [exam_session_id to_queue]} payment-config]
   (log/info "START: identify exam session" exam_session_id "registration")
-  (let [participant-id-session (get-participant-by-session-id db session)
-        participant-id-other   (get-participant-id db (:identity session))
-        found-session-registration (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id))
-        found-other-registration (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id))
-        ]
+  (let [participant-id-session     (get-participant-by-session-id db session)
+        participant-id-other       (get-participant-id db (:identity session))
+        found-session-registration (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id))
+        found-other-registration   (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id))
+        not-registered?            (and participant-id-other (registration-db/not-registered-to-other-exam-session? db participant-id-other exam_session_id))]
     ; (log/info "found-registration-id" (:id found-registration))
     (cond
       (some? found-other-registration) (create-registration-response db session exam_session_id (:id found-other-registration) (:kind found-other-registration) payment-config)
-      (some? found-session-registration) (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) payment-config)
+      (some? found-session-registration) (if-not not-registered?
+                                           (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) payment-config)
+                                           (conflict {:error {:registered true}}))
       :else (bad-request {:reason :registration-not-found}))))
 
 (defn send-payment-link-email! [email-q lang recipient template-name template-data]

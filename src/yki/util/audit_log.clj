@@ -26,6 +26,7 @@
 (def evaluation-payment "evaluation-payment")
 (def registration "registration")
 (def registration-init "registration-init")
+(def registration-identify "registration-identify")
 (def exam-session "exam-session")
 (def exam-date "exam-date")
 (def quarantine "quarantine")
