@@ -6,7 +6,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [pgqueue.core :as pgq]
-            [ring.util.http-response :refer [ok conflict]]
+            [ring.util.http-response :refer [bad-request ok conflict]]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
@@ -28,9 +28,13 @@
   [db identity]
   (:id (registration-db/get-participant-by-external-id db (:external-user-id identity))))
 
+(defn get-participant-by-session-id
+  [db session]
+  (:id (registration-db/get-participant-by-external-id db (:yki-session-id session))))
+
 (defn get-or-create-session
   [session]
-  (if (get-in session [:identity :external_user_id])
+  (if (get-in session [:identity :external-user-id])
     session
     (let [session-id (str (random-uuid))]
       {:identity       {:external-user-id session-id}
@@ -48,7 +52,7 @@
         sanitized   (update-vals text-fields sanitizer)]
     (merge form sanitized)))
 
-(defn- create-init-response
+(defn- create-registration-response
   [db session exam-session-id registration-id registration-kind payment-config]
   (let [exam-session            (exam-session-db/get-exam-session-by-id db exam-session-id)
         authenticated-by-email? (= (:auth-method session) "EMAIL")
@@ -56,11 +60,13 @@
         email                   (when authenticated-by-email? (:external-user-id (:identity session)))
         user                    (assoc (:identity session) :email email)
         exam-fee                (get-in payment-config [:amount (keyword (:level_code exam-session))])]
-    {:exam_session           (assoc exam-session :exam_fee exam-fee)
-     :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-sesssion?))
-     :registration_id        registration-id
-     :registration_kind      registration-kind
-     :user                   user}))
+    (assoc
+     (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
+          :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-sesssion?))
+          :registration_id        registration-id
+          :registration_kind      registration-kind
+          :user                   user})
+     :session session)))
 
 (defn- init-error-response [space-left? not-registered? to-queue? exam-session-id]
   (let [error {:error {:full       (not space-left?)
@@ -93,9 +99,9 @@
                                                                     :participant_id  participant-id
                                                                     :started_at      (t/now)
                                                                     :kind            registration-kind})
-          response        (create-init-response db session exam-session-id registration-id registration-kind payment-config)]
+          response        (create-registration-response db session exam-session-id registration-id registration-kind payment-config)]
       (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
-      (ok response))
+      response)
     (catch Exception e
       (cond
         (max-participants-error? e)
@@ -107,18 +113,16 @@
           (log/error e "Caught unexpected error within create-registration")
           (conflict {:error {:full       false
                              :registered false}}))))))
-
 (defn init-registration
   [db session {:keys [exam_session_id to_queue]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
-  (let [
-        session-new          (get-or-create-session session)
+  (let [session-new          (get-or-create-session session)
         ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
         participant-id       (get-or-create-participant db (:identity session-new))
         started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
     (log/info "started-registration-id" (:id started-registration))
     (if started-registration
-      (-> (create-init-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config)
+      (-> (create-registration-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config)
           (ok)
           (assoc :session session-new))
       (if (registration-db/exam-session-registration-open? db exam_session_id)
@@ -128,10 +132,24 @@
               registration-kind (if to_queue "QUEUE" "ADMISSION")]
           (if (and not-registered?
                    (or to_queue space-left?))
-            (create-registration db exam_session_id participant-id registration-kind session payment-config)
+            (create-registration db exam_session_id participant-id registration-kind session-new payment-config)
             (init-error-response space-left? not-registered? to_queue exam_session_id)))
         ; no registration open
         (conflict {:error {:closed true}})))))
+
+(defn identify-registration
+  [db session {:keys [exam_session_id to_queue]} payment-config]
+  (log/info "START: identify exam session" exam_session_id "registration")
+  (let [participant-id-session (get-participant-by-session-id db session)
+        participant-id-other   (get-participant-id db (:identity session))
+        found-session-registration (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id))
+        found-other-registration (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id))
+        ]
+    ; (log/info "found-registration-id" (:id found-registration))
+    (cond
+      (some? found-other-registration) (create-registration-response db session exam_session_id (:id found-other-registration) (:kind found-other-registration) payment-config)
+      (some? found-session-registration) (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) payment-config)
+      :else (bad-request {:reason :registration-not-found}))))
 
 (defn send-payment-link-email! [email-q lang recipient template-name template-data]
   (pgq/put

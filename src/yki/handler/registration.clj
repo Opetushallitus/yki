@@ -34,6 +34,17 @@
                                         (:session request)
                                         registration-init
                                         (:payment-config payment-helper)))
+      (POST "/identify" request
+        :body [registration-init ::ys/registration-init]
+        (audit/log-participant {:request   request
+                                :target-kv {:k audit/registration-init
+                                            :v (:exam_session_id registration-init)}
+                                :change    {:type audit/create-op
+                                            :new  registration-init}})
+        (registration/identify-registration db
+                                            (:session request)
+                                            registration-init
+                                            (:payment-config payment-helper)))
       (context "/:id" []
         (POST "/submit" request
           :body [registration ::ys/registration]

@@ -56,6 +56,11 @@
     (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id  participant-id
                                                                        :exam_session_id exam-session-id}))]
       (:exists exists)))
+  (not-registered-to-other-exam-session?
+    [{:keys [spec]} participant-id exam-session-id]
+    (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id  participant-id
+                                                                       :exam_session_id exam-session-id}))]
+      (:exists exists)))
   (get-started-registration-id+kind-by-participant-id
     [{:keys [spec]} participant-id exam-session-id]
     (first (q/select-started-registration-id-and-kind-by-participant spec {:participant_id  participant-id
