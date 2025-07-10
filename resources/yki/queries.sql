@@ -577,6 +577,16 @@ INSERT INTO participant(
   :email
 );
 
+-- name: update-registration-participant-id!
+UPDATE registration
+SET participant_id = :participant_id
+WHERE id = :registration_id;
+
+-- name: update-participant-external-id!
+UPDATE participant
+SET external_user_id = :external_user_id
+WHERE id = :id;
+
 -- name: update-participant-email!
 UPDATE participant
 SET email = :email
@@ -714,8 +724,8 @@ SELECT NOT EXISTS (
     AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
 ) AS exists;
 
--- name: select-not-registered-to-other-exam-session
-SELECT NOT EXISTS (
+-- name: select-is-registered-to-other-exam-session
+SELECT EXISTS (
   SELECT es.id
   FROM exam_session es
   INNER JOIN registration re ON es.id = re.exam_session_id

@@ -46,6 +46,15 @@
   (:id (registration-db/get-or-create-participant! db {:external_user_id (:external-user-id identity)
                                                        :email            nil})))
 
+(defn update-registration-participant-id!
+  [db registration-id participant-id]
+  (registration-db/update-registration-participant-id! db registration-id participant-id))
+
+(defn update-participant-external-id!
+  [db participant-id session]
+  (registration-db/update-participant-external-id! db {:external_user_id (:external-user-id (:identity session))
+                                                       :id               participant-id}))
+
 (defn- sanitized-form [form]
   (let [text-fields (dissoc form :nationalities)
         sanitizer   (partial common/sanitized-string "_")
@@ -144,12 +153,16 @@
         participant-id-other       (get-participant-id db (:identity session))
         found-session-registration (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id))
         found-other-registration   (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id))
-        not-registered?            (and participant-id-other (registration-db/not-registered-to-other-exam-session? db participant-id-other exam_session_id))]
+        is-registered-to-other?    (and participant-id-other (registration-db/is-registered-to-other-exam-session? db participant-id-other exam_session_id))]
     ; (log/info "found-registration-id" (:id found-registration))
     (cond
       (some? found-other-registration) (create-registration-response db session exam_session_id (:id found-other-registration) (:kind found-other-registration) payment-config)
-      (some? found-session-registration) (if-not not-registered?
-                                           (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) payment-config)
+      (some? found-session-registration) (if-not is-registered-to-other?
+                                           (do
+                                             (if participant-id-other
+                                               (update-registration-participant-id! db (:id found-other-registration) (:id participant-id-other))
+                                               (update-participant-external-id! db participant-id-session session))
+                                             (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) payment-config))
                                            (conflict {:error {:registered true}}))
       :else (bad-request {:reason :registration-not-found}))))
 
