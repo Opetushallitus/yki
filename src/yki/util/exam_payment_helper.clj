@@ -23,12 +23,12 @@
 (defn- registration->payment-description
   [registration]
   (let [sb          (StringBuilder.)
-        {language-code           :language_code
-         level-code              :level_code
-         location-name           :name
-         exam-date               :exam_date
-         {first-name :first_name
-          last-name  :last_name} :form} registration
+        {language-code :language_code
+         level-code    :level_code
+         location-name :name
+         exam-date     :exam_date
+         first-name    :first_name
+         last-name     :last_name} registration
         append-line (fn [& line-items]
                       (.append sb (str/join ", " line-items))
                       (.append sb "\n"))]
@@ -44,11 +44,12 @@
     (.toString sb)))
 
 (defn create-payment-data [url-helper registration language amount]
-  (let [{registration-id   :id
-         exam-session-id   :exam_session_id
-         organizer-id      :organizer_id
-         email             :email
-         registration-form :form} registration
+  (let [{registration-id :id
+         exam-session-id :exam_session_id
+         organizer-id    :organizer_id
+         email           :email
+         first-name      :first_name
+         last-name       :last_name} registration
         callback-urls {"success" (url-helper :exam-payment-v3.success-callback language)
                        "cancel"  (url-helper :exam-payment-v3.error-callback language)}]
     {"stamp"        (random-uuid)
@@ -65,8 +66,8 @@
      "currency"     "EUR"
      "language"     (str/upper-case language)
      "customer"     {"email"     email
-                     "firstName" (:first_name registration-form)
-                     "lastName"  (:last_name registration-form)}
+                     "firstName" first-name
+                     "lastName"  last-name}
      "redirectUrls" callback-urls
      "callbackUrls" callback-urls
      "items"        [{"unitPrice"     amount

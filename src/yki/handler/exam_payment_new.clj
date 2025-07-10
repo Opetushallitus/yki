@@ -38,16 +38,16 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :yki-ui.registration.payment-error.url (:exam_session_id registration))))
 
-(defn- payment->json [{:keys [amount exam_date form language_code level_code organizer_name paid_at reference original_exam_date]}]
+(defn- payment->json [{:keys [amount exam_date last_name first_name email language_code level_code organizer_name paid_at reference original_exam_date]}]
   {:organizer          organizer_name
    :paid_at            (format-datetime-for-export paid_at)
    :exam_date          exam_date
    :exam_language      (template-util/get-language language_code "fi")
    :exam_level         (template-util/get-level level_code "fi")
    :original_exam_date original_exam_date
-   :last_name          (:last_name form)
-   :first_name         (:first_name form)
-   :email              (:email form)
+   :last_name          last_name
+   :first_name         first_name
+   :email              email
    :amount             (->>
                          (/ amount 100)
                          (double)

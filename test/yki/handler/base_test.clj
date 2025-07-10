@@ -130,11 +130,11 @@
                                                           :cas-client         (cas-client url-helper)})))
 (defn user-handler
   [auth env url-helper]
-  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth       auth
-                                                          :db         (db)
-                                                          :access-log (access-log)
+  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth        auth
+                                                          :db          (db)
+                                                          :access-log  (access-log)
                                                           :environment env
-                                                          :onr-client (onr-client url-helper)})))
+                                                          :onr-client  (onr-client url-helper)})))
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
   (ig/init-key :yki.job.job-queue/email-q {}))
@@ -386,6 +386,19 @@
                    (str "INSERT INTO exam_payment_new(state, registration_id, amount, reference, transaction_id, href)
                  VALUES (" values-str ");"))))
 
+(defn insert-persons []
+  (doseq [[oid form] {"5.4.3.2.2" registration-form-2
+                      "5.4.3.2.1" registration-form
+                      "5.4.3.2.4" post-admission-registration-form}]
+    (let [{:keys [first_name last_name email phone_number street_address post_office zip]} form]
+      (jdbc/execute!
+        @embedded-db/conn
+        (str "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip) VALUES ("
+             (->> [oid first_name last_name email phone_number street_address post_office zip]
+                  (map #(str "'" % "'"))
+                  (str/join ","))
+             ")")))))
+
 (defn insert-registrations [state]
   (jdbc/execute! @embedded-db/conn (str
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
@@ -404,8 +417,8 @@
                                      ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')")))
 
 (defn insert-login-link [{:keys [code participant exam-session expires-at]
-                          :or {participant select-participant
-                               exam-session select-exam-session}}]
+                          :or   {participant  select-participant
+                                 exam-session select-exam-session}}]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
             VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " participant ", " exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
@@ -424,13 +437,13 @@
   (let [uri-with-schema (str "http://" uri)]
     (ig/init-key
       :yki.util/url-helper
-      {:virkailija-host           uri
-       :oppija-host               uri
-       :yki-register-host         uri
-       :yki-host-virkailija       uri
-       :alb-host                  uri-with-schema
-       :scheme                    "http"
-       :oppija-sub-domain         "yki."})))
+      {:virkailija-host     uri
+       :oppija-host         uri
+       :yki-register-host   uri
+       :yki-host-virkailija uri
+       :alb-host            uri-with-schema
+       :scheme              "http"
+       :oppija-sub-domain   "yki."})))
 
 (defn mock-pdf-renderer []
   (reify PdfTemplateRenderer

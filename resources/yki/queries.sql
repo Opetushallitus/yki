@@ -910,8 +910,9 @@ SELECT re.id,
        re.exam_session_id,
        re.participant_id,
        re.kind,
-       re.form,
        re.state,
+       pe.first_name,
+       pe.last_name,
        p.email,
        p.external_user_id,
        esl.name,
@@ -920,6 +921,7 @@ SELECT re.id,
        es.organizer_id,
        ed.exam_date
 FROM registration re
+INNER JOIN person pe ON re.person_oid = pe.oid
 INNER JOIN participant p ON p.id = re.participant_id
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
@@ -1568,7 +1570,9 @@ SELECT
   epn.reference,
   epn.amount,
   epn.paid_at,
-  r.form,
+  p.last_name,
+  p.first_name,
+  p.email,
   es.language_code,
   es.level_code,
   ed.exam_date,
@@ -1576,6 +1580,7 @@ SELECT
   oed.exam_date AS original_exam_date
 FROM exam_payment_new epn
 INNER JOIN registration r ON epn.registration_id = r.id
+INNER JOIN person p ON r.person_oid = p.oid
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 INNER JOIN organizer o on es.organizer_id = o.id

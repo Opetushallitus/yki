@@ -20,6 +20,7 @@
 
 (defn insert-prereq-data [f]
   (base/insert-base-data)
+  (base/insert-persons)
   (base/insert-registrations "SUBMITTED")
   (base/insert-login-link {:code       base/code-ok
                            :expires-at "2038-01-01"})
@@ -203,16 +204,19 @@
           participant-email     "test@user.com"
           registration-data     (registration-db/get-registration-data-for-new-payment db registration-id participant-email)
           paytrail-payment-data (create-payment-data url-helper registration-data language amount)
+          {last-name  :last_name
+           first-name :first_name
+           email      :email} registration-data
           callback-urls         {"success" (url-helper :exam-payment-v3.success-callback language)
                                  "cancel"  (url-helper :exam-payment-v3.error-callback language)}
-          customer-data         {"email"     (:email registration-data)
-                                 "firstName" (:first_name (:form registration-data))
-                                 "lastName"  (:last_name (:form registration-data))}
+          customer-data         {"email"     email
+                                 "firstName" first-name
+                                 "lastName"  last-name}
           description-lines     ["Yleinen kielitutkinto (YKI): Tutkintomaksu"
                                  (str/join ", " [(template-util/get-language (:language_code registration-data) language)
                                                  (template-util/get-level (:level_code registration-data) language)])
                                  (str/join ", " [(:name registration-data) (:exam_date registration-data)])
-                                 (str/join ", " [(:last_name (:form registration-data)) (:first_name (:form registration-data))])]
+                                 (str/join ", " [last-name first-name])]
           description           (-> (str/join "\n" description-lines)
                                     (str "\n"))
           items                 [{"description"   description
