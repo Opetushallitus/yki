@@ -66,17 +66,6 @@
       (seq within-year) (map :id within-year)
       :else (->> candidates (sort-by :exam_date) first :id vector))))
 
-(defn update-form-with-person-details
-  "Combine details returned for exam participant from both person table and registration form.
-   Overwrites form with combined details, preferring details from person table if available."
-  [participant]
-  (let [person-details (select-keys participant [:last_name :first_name :email :phone_number :zip :post_office :street_address])
-        form           (:form participant)
-        updated-form   (merge-with #(or %1 %2) person-details form)]
-    (-> participant
-        (assoc :form updated-form)
-        (dissoc :last_name :first_name :email :phone_number :zip :post_office :street_address))))
-
 (defprotocol ExamSessions
   (create-exam-session! [db oid exam-session send-to-queue-fn])
   (update-exam-session! [db oid id exam-session])
@@ -194,13 +183,9 @@
   (get-exam-sessions-to-be-synced [{:keys [spec]} retry-duration]
     (q/select-exam-sessions-to-be-synced spec {:duration retry-duration}))
   (get-exam-session-participants [{:keys [spec]} id oid]
-    (let [participants (q/select-exam-session-participants spec {:id id :oid oid})]
-      (->> participants
-           (map update-form-with-person-details))))
+    (q/select-exam-session-participants spec {:id id :oid oid}))
   (get-completed-exam-session-participants [{:keys [spec]} id]
-    (let [participants (q/select-completed-exam-session-participants spec {:id id})]
-      (->> participants
-           (map update-form-with-person-details))))
+    (q/select-completed-exam-session-participants spec {:id id}))
   (get-exam-session-organizer-oid [{:keys [spec]} id]
     (q/select-exam-session-organizer-oid spec {:id id}))
   (get-exam-sessions [{:keys [spec]} from]

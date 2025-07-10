@@ -388,6 +388,7 @@
 
 (defn insert-persons []
   (doseq [[oid form] {"5.4.3.2.2" registration-form-2
+                      "5.4.3.2.3" registration-form-2
                       "5.4.3.2.1" registration-form
                       "5.4.3.2.4" post-admission-registration-form}]
     (let [{:keys [first_name last_name email phone_number street_address post_office zip]} form]

@@ -1120,7 +1120,7 @@ WHERE exam_session_id = :exam_session_id;
 -- name: select-completed-exam-session-participants
 SELECT r.form, r.person_oid, r.is_transfered, p.last_name, p.first_name, p.email, p.zip, p.post_office, p.street_address
 FROM registration r
-LEFT JOIN person p ON p.oid = r.person_oid
+INNER JOIN person p ON p.oid = r.person_oid
 WHERE r.exam_session_id = :id
 AND r.state = 'COMPLETED';
 
@@ -1145,7 +1145,7 @@ SELECT
   r.is_transfered
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
-LEFT JOIN person p ON r.person_oid = p.oid
+INNER JOIN person p ON r.person_oid = p.oid
 LEFT JOIN exam_session oes ON oes.id = r.original_exam_session_id
 LEFT JOIN exam_date oed ON oed.id = oes.exam_date_id
 WHERE es.id = :id
