@@ -28,7 +28,7 @@
   [db identity]
   (:id (registration-db/get-participant-by-external-id db (:external-user-id identity))))
 
-(defn get-participant-by-session-id
+(defn get-participant-id-by-session
   [db session]
   (:id (registration-db/get-participant-by-external-id db (:yki-session-id session))))
 
@@ -149,7 +149,7 @@
 (defn identify-registration
   [db session {:keys [exam_session_id to_queue]} payment-config]
   (log/info "START: identify exam session" exam_session_id "registration")
-  (let [participant-id-session     (get-participant-by-session-id db session)
+  (let [participant-id-session     (get-participant-id-by-session db session)
         participant-id-other       (get-participant-id db (:identity session))
         found-session-registration (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id))
         found-other-registration   (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id))
