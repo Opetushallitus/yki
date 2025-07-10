@@ -143,7 +143,7 @@
         hashed                  (sha256-hash code)
         success-url             (url-helper :yki-ui.user-portal.url)
         expired-url             (url-helper :yki-ui.user-portal.url)
-        expiration-date         (t/plus (common/string->date "2025-07-04") (t/days 2))
+        expiration-date         (t/plus (common/string->date exam-date) (t/days 2))
         link-data               {:participant_id        participant-id
                                  :exam_session_id       nil
                                  :registration_id       registration-id
@@ -199,7 +199,7 @@
                                    ssn->date
                                    common/format-date-for-db))))
 
-(defn- ->send-registration-email! [db url-helper payment-helper email-q lang registration-data code login-url]
+(defn- ->send-registration-email! [db url-helper payment-helper email-q lang registration-data code login-url email-auth?]
   (case (:kind registration-data)
     "ADMISSION"
     (let [registration-id          (:id registration-data)
@@ -215,7 +215,7 @@
                                     :success_redirect      payment-success-url
                                     :expired_link_redirect payment-link-expired-url
                                     :type                  "PAYMENT"}
-          user-portal-link (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data))]
+          user-portal-link (when email-auth? (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data)))]
       #(create-and-send-payment-link db
                                      email-q
                                      lang
@@ -232,7 +232,7 @@
     "QUEUE"
     (let [participant-id   (:participant_id registration-data)
           email            (:email (registration-db/get-participant-by-id db participant-id))
-          user-portal-link (create-user-portal-link db url-helper (:participant_id registration-data) (:registration_id registration-data) (:exam_date registration-data))]
+          user-portal-link (when email-auth? (create-user-portal-link db url-helper (:participant_id registration-data) (:registration_id registration-data) (:exam_date registration-data)))]
 
       #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :email email :user-portal-link user-portal-link)))))
 
@@ -250,7 +250,8 @@
                                   :success_redirect      payment-success-url
                                   :expired_link_redirect payment-link-expired-url
                                   :type                  "PAYMENT"}
-          user-portal-link (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data))]
+        user-portal-link         (when (:is_email_auth registration-data)
+                                   (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data)))]
     (create-and-send-payment-link db
                                   email-q
                                   lang
@@ -269,6 +270,7 @@
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
   (let [form                   (sanitized-form raw-form)
         identity               (:identity session)
+        email-auth?             (= (:auth-method session) "EMAIL")
         form-to-persist        (-> form
                                    (with-session-details session)
                                    (with-birthdate))
@@ -298,7 +300,7 @@
                                        :ui_language    lang}
               code                    (str (random-uuid))
               login-url               (url-helper :yki.login-link.url code)
-              create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang (assoc registration-data :participant_id unified-participant-id) code login-url)
+              create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang (assoc registration-data :participant_id unified-participant-id) code login-url email-auth?)
               person                  (person-db/upsert-person! db (assoc form :oid oid))
               success                 (and person
                                            (registration-db/update-registration-details!
