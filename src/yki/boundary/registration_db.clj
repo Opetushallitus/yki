@@ -10,6 +10,8 @@
 
 (defprotocol Registration
   (update-registration-details! [db registration after-fn])
+  (update-participant-external-id! [db participant])
+  (update-registration-participant-id! [db registration-id participant-id])
   (get-registration-data-for-new-payment [db registration-id external-user-id])
   (get-new-payment-details [db transaction-id])
   (complete-new-payment-and-exam-registration! [db registration-id payment-id after-fn])
@@ -17,7 +19,7 @@
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
   (not-registered-to-exam-session? [db participant-id exam-session-id])
-  (not-registered-to-other-exam-session? [db participant-id exam-session-id])
+  (is-registered-to-other-exam-session? [db participant-id exam-session-id])
   (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id])
   (create-registration! [db registration])
   (get-registration-data [db registration-id participant-id lang])
@@ -57,9 +59,9 @@
     (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id  participant-id
                                                                        :exam_session_id exam-session-id}))]
       (:exists exists)))
-  (not-registered-to-other-exam-session?
+  (is-registered-to-other-exam-session?
     [{:keys [spec]} participant-id exam-session-id]
-    (let [exists (first (q/select-not-registered-to-other-exam-session spec {:participant_id  participant-id
+    (let [exists (first (q/select-is-registered-to-other-exam-session spec {:participant_id  participant-id
                                                                              :exam_session_id exam-session-id}))]
       (:exists exists)))
   (get-started-registration-id+kind-by-participant-id
@@ -75,6 +77,15 @@
     [{:keys [spec]} id]
     (let [exists (first (q/select-exam-session-registration-open spec {:exam_session_id id}))]
       (:exists exists)))
+  (update-participant-external-id!
+    [{:keys [spec]} participant]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-participant-external-id! tx participant)))
+  (update-registration-participant-id!
+    [{:keys [spec]} registration-id participant-id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-registration-participant-id! tx {:registration_id registration-id
+                                                 :participant_id participant-id})))
   (update-participant-email!
     [{:keys [spec]} email participant-id]
     (jdbc/with-db-transaction [tx spec]
