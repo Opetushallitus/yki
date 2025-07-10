@@ -270,7 +270,8 @@
                                        :participant_id unified-participant-id
                                        ; TODO Ensure expiration date is updated when registration is lifted from queue
                                        :expires_at     expiration-date
-                                       :exam_fee       (:db amount)}
+                                       :exam_fee       (:db amount)
+                                       :ui_language    lang}
               code                    (str (random-uuid))
               login-url               (url-helper :yki.login-link.url code)
               create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang (assoc registration-data :participant_id unified-participant-id) code login-url)

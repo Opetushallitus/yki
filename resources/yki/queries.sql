@@ -668,7 +668,8 @@ UPDATE registration SET
   person_oid = :oid,
   form_version = :form_version,
   expires_at = :expires_at,
-  exam_fee = :exam_fee
+  exam_fee = :exam_fee,
+  ui_language = :ui_language
 WHERE
   id = :id
   AND state = 'STARTED'

@@ -164,11 +164,8 @@
   #(try
      (when (job-db/try-to-acquire-lock! db registration-queue-handler-conf)
        (log/info "Registration queue handler started")
-       (let [create-and-send-payment-link! (fn [{:keys [id participant_id lang]}]
-                                             (let [; TODO Email language needs to be persisted along with registration!
-                                                   ; At present lang will always be bound to "fi"
-                                                   lang                (or lang "fi")
-                                                   ; TODO Should get template data preferentially from person table, not registration form
+       (let [create-and-send-payment-link! (fn [{:keys [id participant_id ui_language]}]
+                                             (let [lang                (or ui_language "fi")
                                                    email-template-data (registration-db/get-registration-data db id participant_id lang)
                                                    code                (str (random-uuid))
                                                    login-url           (url-helper :yki.login-link.url code)]
