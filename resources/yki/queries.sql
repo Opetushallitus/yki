@@ -1713,7 +1713,7 @@ LEFT JOIN exam_session ies ON ies.id <> es.id AND ies.level_code = es.level_code
 LEFT JOIN exam_date ied ON ies.exam_date_id = ied.id
 WHERE es.id = :exam_session_id
   AND ied.exam_date >= ed.exam_date
-  AND select_registration_kind(ied.id) = 'ADMISSION';
+  AND select_registration_kind(ies.id) = 'ADMISSION';
 
 -- name: migrate-persons!
 INSERT INTO person (oid, first_name, last_name, email, phone_number, street_address, post_office, zip)
