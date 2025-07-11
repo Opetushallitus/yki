@@ -17,7 +17,7 @@
   {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? environment) (some? url-helper) (some? payment-helper)]}
   (api
     (context routing/person-api-root []
-      :coercion (when-not (#{:qa :prod} environment) :spec)
+      :coercion :spec
       :middleware [auth access-log with-error-boundary]
       (GET "/" {session :session}
         ;:return ::ys/person
@@ -55,7 +55,6 @@
           (GET "/confirm" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
             (let [oid                  (get-in session [:identity :oid])
-                  _ (log/info "Confirm called!" {:oid {:type (type oid) :val oid} :registration-id {:type (type registration-id) :val registration-id}})
                   registration-details (person-db/get-registration-to-confirm-details db oid registration-id)]
               (if (some? registration-details)
                 (ok registration-details)
@@ -68,7 +67,6 @@
             :path-params [registration-id :- ::ys/registration_id]
             (let [; TODO What if user has no oid, ie. is authenticated with email link only?
                   oid     (get-in session [:identity :oid])
-                  _       (log/info "Relocate called!" {:oid {:type (type oid) :val oid} :registration-id {:type (type registration-id) :val registration-id}})
                   results (person-db/get-registration-relocate-details db oid registration-id)]
               (ok results)))
           (POST "/relocate" {session :session}
