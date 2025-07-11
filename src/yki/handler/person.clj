@@ -1,6 +1,5 @@
 (ns yki.handler.person
   (:require
-    [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST DELETE]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok not-found]]
