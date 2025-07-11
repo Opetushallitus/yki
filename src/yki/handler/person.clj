@@ -1,5 +1,6 @@
 (ns yki.handler.person
   (:require
+    [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST DELETE]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok not-found]]
@@ -10,8 +11,7 @@
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]
-    [yki.registration.email :refer [send-cancel-registration-email! send-transfer-confirmation-email!]]
-    [yki.registration.registration :as registration]))
+    [yki.registration.email :refer [send-cancel-registration-email! send-transfer-confirmation-email!]]))
 
 (defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q environment onr-client url-helper payment-helper]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? environment) (some? url-helper) (some? payment-helper)]}
@@ -55,6 +55,7 @@
           (GET "/confirm" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
             (let [oid                  (get-in session [:identity :oid])
+                  _ (log/info "Confirm called!" {:oid {:type (type oid) :val oid} :registration-id {:type (type registration-id) :val registration-id}})
                   registration-details (person-db/get-registration-to-confirm-details db oid registration-id)]
               (if (some? registration-details)
                 (ok registration-details)
@@ -67,6 +68,7 @@
             :path-params [registration-id :- ::ys/registration_id]
             (let [; TODO What if user has no oid, ie. is authenticated with email link only?
                   oid     (get-in session [:identity :oid])
+                  _       (log/info "Relocate called!" {:oid {:type (type oid) :val oid} :registration-id {:type (type registration-id) :val registration-id}})
                   results (person-db/get-registration-relocate-details db oid registration-id)]
               (ok results)))
           (POST "/relocate" {session :session}
