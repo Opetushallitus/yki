@@ -1182,8 +1182,9 @@ WITH registrations_to_update AS (SELECT id
                                  LIMIT 1)
 UPDATE registration
 SET kind                 = 'ADMISSION',
-    lifted_from_queue_at = current_timestamp
--- TODO Update expires_at - pending decision on when exactly they should expire
+    lifted_from_queue_at = current_timestamp,
+    -- TODO Fix how expires_at is calculated (pending decisions from OPH!)
+    expires_at = current_date + interval '3 days'
 WHERE id IN (SELECT id FROM registrations_to_update);
 
 --name: cancel-unpaid-registration-for-organizer!
