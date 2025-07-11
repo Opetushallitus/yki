@@ -49,13 +49,9 @@
 
 (defn valid-transfer-targets
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
-   Furthermore, the transfer targets must not be already full."
-  [original-exam-date targets]
-  ; TODO Further down the line, should we also ensure that there is no queue to the session?
-  (let [has-space?             (fn [{:keys [participants max_participants]}]
-                                 (< participants max_participants))
-        candidates             (filter has-space? targets)
-        within-year?           #(let [exam-date  (f/parse (:session_date %1))
+   The candidates must also have space for relocating and must not have existing queue; the caller of this function should ensure this."
+  [original-exam-date candidates]
+  (let [within-year?           #(let [exam-date  (f/parse (:session_date %1))
                                       limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
                                   (not (t/after? exam-date limit-date)))
         candidates-within-year (filter within-year? candidates)]
