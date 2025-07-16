@@ -131,9 +131,7 @@
         started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
     (log/info "started-registration-id" (:id started-registration))
     (if started-registration
-      (-> (create-registration-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config)
-          (ok)
-          (assoc :session session-new))
+      (create-registration-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config)
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
         (let [space-left?       (registration-db/exam-session-space-left? db exam_session_id nil)
