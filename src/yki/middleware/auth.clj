@@ -176,7 +176,7 @@
      {:pattern #".*/api/registration/init"
       :handler any-access}
      {:pattern #".*/api/registration/identify"
-      :handler any-access}
+      :handler oppija-authenticated?}
      {:pattern #".*/api/registration/submit.*"
       :handler oppija-authenticated?}
      {:pattern #".*/api/exam-date/.*"
