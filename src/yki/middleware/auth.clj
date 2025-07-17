@@ -175,9 +175,7 @@
       :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
      {:pattern #".*/api/registration/init"
       :handler any-access}
-     {:pattern #".*/api/registration/identify"
-      :handler oppija-authenticated?}
-     {:pattern #".*/api/registration/submit.*"
+     {:pattern #".*/api/registration.*"
       :handler oppija-authenticated?}
      {:pattern #".*/api/exam-date/.*"
       :handler oph-admin-access}
