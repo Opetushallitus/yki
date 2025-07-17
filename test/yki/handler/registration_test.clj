@@ -39,6 +39,7 @@
     common-route-specs
     (let [{session               :session
            init-response         :init-response
+           identify-response     :identify-response
            init-response-body    :init-response-body
            registration          :registration
            registration-id       :registration-id
@@ -58,6 +59,11 @@
         (let [create-twice-response-body (base/body-as-json (:response create-twice-response))]
           (is (= (get-in create-twice-response [:response :status]) 200))
           (is (= create-twice-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))))
+
+      (testing "post identify endpoint should identify registration"
+        (is (= (get-in identify-response [:response :status]) 200))
+        (is (= (:state registration) "STARTED"))
+        (is (some? (:started_at registration))))
 
       (testing "post submit endpoint should return status 200, but payment should not yet be created"
         (is (= (get-in (submit-form! registration-form-data) [:response :status]) 200))

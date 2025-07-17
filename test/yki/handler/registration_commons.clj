@@ -75,6 +75,11 @@
                                                    :body (j/write-value-as-string {:exam_session_id 1})
                                                    :content-type "application/json"
                                                    :request-method :post))
+        identify-response     (-> session
+                                  (peridot/request (str routing/registration-api-root "/identify")
+                                                   :body (j/write-value-as-string {:exam_session_id 1})
+                                                   :content-type "application/json"
+                                                   :request-method :post))
         init-response-body    (base/body-as-json (:response init-response))
         registration-id       (init-response-body "registration_id")
         create-twice-response (-> session
@@ -99,6 +104,7 @@
         get-email-request     #(pgq/take email-q)]
     {:session               session
      :init-response         init-response
+     :identify-response     identify-response
      :init-response-body    init-response-body
      :registration          registration
      :registration-id       registration-id
