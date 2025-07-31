@@ -175,6 +175,7 @@
                                                               :url-helper   #ig/ref :yki.util/url-helper}
 
   :yki.handler/login-link                                    {:db         #ig/ref :duct.database/sql
+                                                              :auth       #ig/ref :yki.middleware.auth/with-authentication
                                                               :url-helper #ig/ref :yki.util/url-helper
                                                               :access-log #ig/ref :yki.middleware.access-log/with-logging
                                                               :email-q    #ig/ref :yki.job.job-queue/email-q}

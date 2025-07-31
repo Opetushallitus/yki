@@ -17,15 +17,20 @@
   (try
     (if-let [login-link (login-link-db/get-login-link-by-code db (login-link/sha256-hash code))]
       (if (link-valid? login-link)
-        (assoc
-          (found (:success_redirect login-link))
-          :session
-          {:identity     (merge {:external-user-id (:external_user_id login-link)
-                                 :email            (:email            login-link)}
-                                 (when-let [oid    (:person_oid       login-link)]
-                                   {:oid oid}))
-           :auth-method "EMAIL"
-           :yki-session-id (str (random-uuid))})
+        (let [previous-session-id (get-in login-link [:user_data :previous-session-id])
+              oid                 (:person_oid login-link)
+              identity            (cond-> {:external-user-id (:external_user_id login-link)
+                                           :email            (:email login-link)}
+                                          previous-session-id
+                                          (assoc :previous-session-id previous-session-id)
+                                          oid
+                                          (assoc :oid oid))
+              session             {:identity       identity
+                                   :auth-method    "EMAIL"
+                                   :yki-session-id (str (random-uuid))}]
+          (assoc
+            (found (:success_redirect login-link))
+            :session session))
         (found (:expired_link_redirect login-link)))
       unauthorized)
     (catch Exception e
