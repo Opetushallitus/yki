@@ -23,7 +23,9 @@
           {:identity     (merge {:external-user-id (:external_user_id login-link)
                                  :email            (:email            login-link)}
                                  (when-let [oid    (:person_oid       login-link)]
-                                   {:oid oid}))
+                                   {:oid oid})
+                                 (when-let [previous-session-id (get-in login-link [:user_data :previous-session-id])]
+                                   {:previous-session-id previous-session-id}))
            :auth-method "EMAIL"
            :yki-session-id (str (random-uuid))})
         (found (:expired_link_redirect login-link)))

@@ -30,7 +30,8 @@
 
 (defn get-participant-id-by-session
   [db session]
-  (:id (registration-db/get-participant-by-external-id db (:yki-session-id session))))
+  (:id (registration-db/get-participant-by-external-id db (or (get-in session [:identity :previous-session-id])
+                                                              (:yki-session-id session)))))
 
 (defn get-or-create-session
   [session]
@@ -65,13 +66,13 @@
   [db session exam-session-id registration-id registration-kind payment-config]
   (let [exam-session            (exam-session-db/get-exam-session-by-id db exam-session-id)
         authenticated-by-email? (= (:auth-method session) "EMAIL")
-        authenticated-by-sesssion? (= (:auth-method session) "SESSSION")
+        authenticated-by-session? (= (:auth-method session) "SESSION")
         email                   (when authenticated-by-email? (:external-user-id (:identity session)))
         user                    (assoc (:identity session) :email email)
         exam-fee                (get-in payment-config [:amount (keyword (:level_code exam-session))])]
     (assoc
      (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
-          :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-sesssion?))
+          :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
           :registration_id        registration-id
           :registration_kind      registration-kind
           :user                   user})
@@ -158,7 +159,7 @@
       (some? found-session-registration) (if-not is-registered-to-other?
                                            (do
                                              (if participant-id-other
-                                               (update-registration-participant-id! db (:id found-other-registration) (:id participant-id-other))
+                                               (update-registration-participant-id! db (:id found-session-registration) participant-id-other)
                                                (update-participant-external-id! db participant-id-session session))
                                              (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) payment-config))
                                            (conflict {:error {:registered true}}))
@@ -177,7 +178,7 @@
   ;  updated whenever email for corresponding person gets updated..
   (let [email  (:email (registration-db/get-participant-by-id db (:participant_id payment-link)))
         hashed (sha256-hash code)]
-    (login-link-db/create-login-link! db (assoc payment-link :code hashed))
+    (login-link-db/create-login-link! db (assoc payment-link :code hashed :user_data nil))
     (log/info "Payment link created for " email ". Adding to email queue")
     (send-payment-link-email! email-q lang email template-name (assoc template-data :login_url login-url))))
 
@@ -195,7 +196,8 @@
                                  :success_redirect      success-url
                                  :expired_link_redirect expired-url
                                  :type                  "PERSON"
-                                 :code                  hashed}]
+                                 :code                  hashed
+                                 :user_data             nil}]
     (login-link-db/create-login-link! db link-data)
     login-url))
 
@@ -369,7 +371,7 @@
       ; or the registration period may have ended.
       ; Check the most likely cases against the current database state and return error response.
       (let [{state :state
-             open? :open} (registration-db/get-registration-and-exam-session-state db (:id exam-session-registration))]
+             open? :open} (registration-db/get-registration-and-exam-session-state db registration-id)]
         {:error {:expired (= "EXPIRED" state)
                  :state   state
                  :closed  (not open?)}}))))

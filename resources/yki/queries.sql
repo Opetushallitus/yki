@@ -601,7 +601,8 @@ INSERT INTO login_link(
   registration_id,
   expired_link_redirect,
   success_redirect,
-  expires_at
+  expires_at,
+  user_data
 ) VALUES (
   :code,
   :type::login_link_type,
@@ -610,7 +611,8 @@ INSERT INTO login_link(
   :registration_id,
   :expired_link_redirect,
   :success_redirect,
-  :expires_at
+  :expires_at,
+  :user_data
 );
 
 -- name: select-recent-login-link-by-exam-session-and-participant-id
@@ -629,6 +631,7 @@ SELECT
  l.expires_at,
  l.expired_link_redirect,
  l.success_redirect,
+ l.user_data,
  r.person_oid
 FROM login_link l
 INNER JOIN participant p

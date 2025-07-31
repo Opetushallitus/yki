@@ -39,15 +39,15 @@
               :subject    (template-util/login-subject template-data)
               :body       (template-util/render link-type lang template-data)})))
 
-(defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper access-log]}]
-  {:pre [(some? db) (some? email-q) (some? url-helper) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/login-link [_ {:keys [db auth email-q url-helper access-log]}]
+  {:pre [(some? db) (some? auth) (some? email-q) (some? url-helper) (some? access-log)]}
   (api
     (context routing/login-link-api-root []
       :coercion :spec
-      :middleware [access-log with-error-boundary]
+      :middleware [auth access-log with-error-boundary]
       ; Handler only called when ordering registration link
       ; to email, as an alternative to Suomi.fi-authentication.
-      (POST "/" _
+      (POST "/" {session :session}
         :body [login-link ::ys/login-link]
         :query-params [lang :- ::ys/language-code]
         :return ::ys/response
@@ -66,7 +66,8 @@
                                                              :expires_at (c/date-from-now 2)
                                                              :success_redirect registration-url
                                                              :expired_link_redirect registration-expired-url
-                                                             :registration_id nil)]
+                                                             :registration_id nil
+                                                             :user_data {:previous-session-id (:yki-session-id session)})]
               (log/info "Requested login link:" login-link)
               (if
                 (login-link-db/get-recent-login-link-by-exam-session-and-participant
