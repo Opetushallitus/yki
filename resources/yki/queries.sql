@@ -736,21 +736,23 @@ WHERE re.id = :id
 SELECT id FROM registration
 WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp;
 
--- submitted registration expires 3 days at midnight from time of creation or lifting from queue
+-- submitted registration expires 3 days at midnight from time of creation
+-- registrations lifted from queue expire at midnight one full day from the time they were lifted from queue
 -- name: select-submitted-registrations-to-expire
 SELECT id FROM registration
 WHERE state = 'SUBMITTED'
   AND ((kind = 'ADMISSION' AND lifted_from_queue_at IS NULL AND ts_older_than(created, interval '4 days'))
     OR (kind = 'POST_ADMISSION' AND lifted_from_queue_at IS NULL AND ts_older_than(created, interval '2 days'))
-    OR (kind = 'ADMISSION' AND lifted_from_queue_at IS NOT NULL AND ts_older_than(lifted_from_queue_at, '4 days')));
+    OR (kind = 'ADMISSION' AND lifted_from_queue_at IS NOT NULL AND ts_older_than(lifted_from_queue_at, '2 days')));
 
+-- queuing period ends one week before exam date
 -- name: select-queued-registrations-to-expire
 SELECT r.id FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 WHERE r.kind = 'QUEUE'
   AND r.state IN ('STARTED', 'SUBMITTED')
-  AND ed.exam_date < current_date;
+  AND ed.exam_date <= (current_date + interval '1 week');
 
 -- name: expire-registrations-by-ids!
 UPDATE registration
