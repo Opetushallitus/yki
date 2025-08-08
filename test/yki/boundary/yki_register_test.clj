@@ -67,8 +67,8 @@
   (base/insert-base-data)
   (testing "should send delete requests"
     (with-routes!
-      {{:path "/tutkintotilaisuus" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 202}
-       {:path "/jarjestaja" :query-params {:oid "1.2.3.4"}}                                                           {:status 202}}
+      {{:path "/yki-sp/oph/tutkintotilaisuus" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 202}
+       {:path "/yki-sp/oph/jarjestaja" :query-params {:oid "1.2.3.4"}}                                                           {:status 202}}
       (let [exam-session-id          (:id (base/select-one "SELECT id FROM exam_session"))
             db                       (base/db)
             es                       (exam-session-db/get-exam-session-by-id db exam-session-id)
@@ -91,7 +91,7 @@
   (base/insert-registrations "COMPLETED")
   (testing "should send participants as csv and add basic auth header"
     (with-routes!
-      {{:path "/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
+      {{:path "/yki-sp/oph/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
        "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246"                                    {:status 200 :content-type "application/json"
                                                                                                                   :body   (slurp "test/resources/maatjavaltiot2_246.json")}
        "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                    {:status 200 :content-type "application/json"
