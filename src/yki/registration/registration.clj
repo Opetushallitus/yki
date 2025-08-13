@@ -226,13 +226,15 @@
                                        :language (template-util/get-language (:language_code registration-data) lang)
                                        :level (template-util/get-level (:level_code registration-data) lang)
                                        :expiration_date (common/format-date-to-finnish-format last-payment-date)
-                                       :user-portal-link user-portal-link)
+                                       :user_portal_url (or user-portal-link (url-helper :yki.login.user-portal)))
                                      code
                                      login-url))
     "QUEUE"
     (let [participant-id   (:participant_id registration-data)
           email            (:email (registration-db/get-participant-by-id db participant-id))
-          user-portal-link (when email-auth? (create-user-portal-link db url-helper (:participant_id registration-data) (:registration_id registration-data) (:exam_date registration-data)))]
+          user-portal-link (if email-auth?
+                             (create-user-portal-link db url-helper (:participant_id registration-data) (:registration_id registration-data) (:exam_date registration-data))
+                             (url-helper :yki.login.user-portal))]
 
       #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :email email :user-portal-link user-portal-link)))))
 
@@ -262,7 +264,7 @@
                                     :language (template-util/get-language (:language_code registration-data) lang)
                                     :level (template-util/get-level (:level_code registration-data) lang)
                                     :expiration_date (common/format-date-to-finnish-format last-payment-date)
-                                    :user-portal-link user-portal-link)
+                                    :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal)))
                                   code
                                   login-url)))
 

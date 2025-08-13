@@ -14,6 +14,7 @@
     [yki.util.audit-log :as audit-log]
     [yki.util.common :refer [string->date]]
     [yki.registration.email :as registration-email]
+    [yki.registration.registration :as registration]
     [yki.boundary.registration-db :as registration-db]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
@@ -140,8 +141,15 @@
                   (let [registration-details (registration-db/get-registration-data-for-clerk-mail db id registration-id)
                         lang (:lang registration-details)
                         exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
+                        user-portal-link (if (:is_email_auth registration-details)
+                                           (registration/create-user-portal-link db url-helper
+                                                                                 (:participant_id registration-details)
+                                                                                 registration-id
+                                                                                 (:exam_date registration-details))
+                                           (url-helper :yki.login.user-portal))
                         email-template-data            (assoc registration-details
-                                                              :contact_info exam-session-contact-info)]
+                                                              :contact_info exam-session-contact-info
+                                                              :user_portal_link user-portal-link)]
                     (when (= (:state registration-details) "PAID_AND_CANCELLED")
                       (log/info "Sending registration cancelled email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-cancel-registration-email!
