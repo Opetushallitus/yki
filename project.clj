@@ -10,14 +10,14 @@
                  ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
-  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.19.0"]
-                         [com.fasterxml.jackson.core/jackson-core "2.19.0"]
-                         [com.fasterxml.jackson.core/jackson-databind "2.19.0"]
-                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.19.0"]
+  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.19.2"]
+                         [com.fasterxml.jackson.core/jackson-core "2.19.2"]
+                         [com.fasterxml.jackson.core/jackson-databind "2.19.2"]
+                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.19.2"]
                          ; [com.layerware/pgqueue "0.5.1"] depends on a version of nippy with a known vulnerability
                          ; as there is no update for pgqueue available, let's instead fix the nippy version here
                          [com.taoensso/nippy "2.15.3"]]
-  :dependencies [[org.clojure/clojure "1.12.0"]
+  :dependencies [[org.clojure/clojure "1.12.1"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/data.json "2.5.1"]
                  [org.clojure/data.csv "1.1.0"]
@@ -36,7 +36,7 @@
                  [metosin/jsonista "0.3.13"]
                  [metosin/muuntaja "0.6.11"]
                  [metosin/spec-tools "0.10.7"]
-                 [org.postgresql/postgresql "42.7.5"]
+                 [org.postgresql/postgresql "42.7.7"]
                  [duct/database.sql.hikaricp "0.4.0"]
                  [buddy/buddy-auth "3.0.323"]
                  [webjure/jeesql "0.4.7"]
@@ -100,5 +100,5 @@
                                          [com.opentable.components/otj-pg-embedded "1.1.1"]
                                          [kerodon "0.9.1"]
                                          [com.clojure-goes-fast/clj-async-profiler "1.6.2"]]
-                  :managed-dependencies [[org.testcontainers/testcontainers "1.21.0"]
-                                         [org.testcontainers/postgresql "1.21.0"]]}})
+                  :managed-dependencies [[org.testcontainers/testcontainers "1.21.3"]
+                                         [org.testcontainers/postgresql "1.21.3"]]}})
