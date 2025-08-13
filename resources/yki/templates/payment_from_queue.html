@@ -6,7 +6,7 @@
 </tr>
 
 <tr>
-    <td style="padding-left: 20px;">
+    <td style="padding-left: 20px; padding-top: 20px;">
         <b>{% i18n email.payment_from_queue.content.line2.part1 %}</b> {% i18n email.payment_from_queue.content.line2.part2 %}
         {% i18n email.payment_from_queue.content.line2.part3 %}: <a href="{% i18n email.payment_from_queue.content.line2.link.url %}" target="_blank">{% i18n email.payment_from_queue.content.line2.link.text %}</a>
     </td>
@@ -41,7 +41,7 @@
 
 <tr>
     <td style="padding-left: 20px; padding-top: 20px;">
-        {% i18n email.payment_from_queue.content.line4.part1 %} {{expiration_date}}{% i18n email.payment_from_queue.content.line4.or %} {% i18n email.payment_from_queue.content.line4.part2 %}
+        <b>{% i18n email.payment_from_queue.content.line4.part1 %} {{expiration_date}}</b>{% i18n email.payment_from_queue.content.line4.or %} {% i18n email.payment_from_queue.content.line4.part2 %}
     </td>
 </tr>
 
@@ -55,4 +55,13 @@
         <a style="color: #0093C4;" href="{{login_url}}" target="_blank">{% i18n email.payment_from_queue.link_text %}</a>
     </td>
 </tr>
+
+{% if user_portal_link %}
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.content.line6 %}:
+    <a href="{{user_portal_link}}" target="_blank">{% i18n email.payment_success.content.line6.link.text %}</a>
+  </td>
+</tr>
+{% endif %}
 {% endblock %}

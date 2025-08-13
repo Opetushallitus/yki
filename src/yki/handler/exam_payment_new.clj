@@ -101,8 +101,7 @@
             email-template-data               (assoc participant-details
                                                 :contact_info exam-session-contact-info
                                                 :extra_information (:extra_information exam-session-extra-information)
-                                                :login_url (url-helper :yki.login.user-portal)
-                                                :user-portal-link user-portal-link)
+                                                :login_url (or user-portal-link (url-helper :yki.login.user-portal)))
             send-registration-complete-email! (fn [updated-payment-details]
                                                 (registration-email/send-exam-registration-completed-email!
                                                   email-q

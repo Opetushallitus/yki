@@ -10,7 +10,8 @@
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]
-    [yki.registration.email :refer [send-cancel-registration-email! send-transfer-confirmation-email!]]))
+    [yki.registration.email :refer [send-cancel-registration-email! send-cancel-queue-email! send-transfer-confirmation-email!]]
+    [yki.registration.registration :refer [create-user-portal-link]]))
 
 (defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q environment onr-client url-helper payment-helper]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? environment) (some? url-helper) (some? payment-helper)]}
@@ -47,8 +48,29 @@
                   (when (= "PAID_AND_CANCELLED" state)
                     (let [email-data    (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
                           contact-info  (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
-                          template-data (assoc email-data :contact_info contact-info)]
+                          user-portal-link (if (:is_email_auth email-data)
+                                             (create-user-portal-link db url-helper
+                                                                                   (:participant_id email-data)
+                                                                                   registration-id
+                                                                                   (:exam_date email-data))
+                                             (url-helper :yki.login.user-portal))
+                          template-data (assoc email-data
+                                               :contact_info contact-info
+                                               :user_portal_link user-portal-link)]
                       (send-cancel-registration-email! email-q lang template-data)))
+                  (when (= "QUEUE" state)
+                    (let [email-data    (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
+                          contact-info  (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
+                          user-portal-link (if (:is_email_auth email-data)
+                                             (create-user-portal-link db url-helper
+                                                                                   (:participant_id email-data)
+                                                                                   registration-id
+                                                                                   (:exam_date email-data))
+                                             (url-helper :yki.login.user-portal))
+                          template-data (assoc email-data
+                                               :contact_info contact-info
+                                               :user_portal_link user-portal-link)]
+                      (send-cancel-queue-email! email-q lang template-data)))
                   (ok {:success true}))
                 (ok {:success false}))))
           (GET "/confirm" {session :session}

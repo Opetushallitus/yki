@@ -19,7 +19,7 @@
       (is (s/includes? rendered "YKI-testi: Suomi ylin taso"))
       (is (s/includes? rendered "Testipäivä: 16.5.2024"))
       (is (s/includes? rendered "Testipaikka: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
-      (is (s/includes? rendered "Ilmoittaudu YKI-testiin tämän linkin kautta"))
+      (is (s/includes? rendered "Ilmoittaudu YKI-testiin tästä linkistä"))
       (is (s/includes? rendered "http://localhost:8080/login")))))
 
 (deftest render-payment-email-test
@@ -40,7 +40,7 @@
       (is (s/includes? rendered "Testdatum: 16.5.2024"))
       (is (s/includes? rendered "Testställe: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
       (is (s/includes? rendered "Examensavgift: 100,00 €"))
-      (is (s/includes? rendered "Betala avgiften senast 24.4.2024, annars återkallas din anmälan."))
+      (is (s/includes? rendered "Betala avgiften senast 24.4.2024</b>, annars återkallas din anmälan."))
       (is (s/includes? rendered "http://localhost:8080/payment")))))
 
 (deftest render-payment-success-email-test

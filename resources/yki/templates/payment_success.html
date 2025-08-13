@@ -82,7 +82,7 @@
 
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    <b>{% i18n email.payment_success.content.line3.part1 %}</b> {% i18n email.payment_success.content.line3.part2 %}:
+    <b>{% i18n email.payment_success.content.line3.part1 %}</b> {% i18n email.payment_success.content.line3.part2 %}
   </td>
 </tr>
 <tr>
@@ -135,7 +135,7 @@
 
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    {% i18n email.payment_success.content.line6.part1 %} {% i18n email.payment_success.content.line6.part2 %} {% i18n email.payment_success.content.line6.part3 %}
+    {% i18n email.payment_success.content.line6 %}:
     <a href="{{login_url}}" target="_blank">{% i18n email.payment_success.content.line6.link.text %}</a>
   </td>
 </tr>
@@ -145,11 +145,4 @@
     {% i18n email.payment_success.content.line7 %}
   </td>
 </tr>
-{% if user-portal-link %}
-<tr>
-    <td style="padding-left: 20px; padding-top: 20px;">
-      <a href="{{user-portal-link}}" target="_blank">{{user-portal-link}}</a>
-    </td>
-</tr>
-{% endif %}
 {% endblock %}
