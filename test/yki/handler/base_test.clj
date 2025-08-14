@@ -114,6 +114,12 @@
   (ig/init-key :yki.boundary.cas/cas-client {:url-helper url-helper
                                              :cas-creds  {:username "username"
                                                           :password "password"}}))
+
+(defn email-boundary [url-helper cas-client]
+  (ig/init-key :yki.boundary.email/email-client {:url-helper             url-helper
+                                                 :cas-client             cas-client
+                                                 :use-new-email-service? false}))
+
 (defn onr-client [url-helper]
   (ig/init-key :yki.boundary.onr/onr-client {:url-helper url-helper
                                              :cas-client (cas-client url-helper)}))
@@ -133,9 +139,9 @@
                                                           :cas-client         (cas-client url-helper)})))
 (defn user-handler
   [auth env]
-  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth       auth
-                                                          :db         (db)
-                                                          :access-log (access-log)
+  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth        auth
+                                                          :db          (db)
+                                                          :access-log  (access-log)
                                                           :environment env})))
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
@@ -464,13 +470,13 @@
   (let [uri-with-schema (str "http://" uri)]
     (ig/init-key
       :yki.util/url-helper
-      {:virkailija-host           uri
-       :oppija-host               uri
-       :yki-register-host         uri
-       :yki-host-virkailija       uri
-       :alb-host                  uri-with-schema
-       :scheme                    "http"
-       :oppija-sub-domain         "yki."})))
+      {:virkailija-host     uri
+       :oppija-host         uri
+       :yki-register-host   uri
+       :yki-host-virkailija uri
+       :alb-host            uri-with-schema
+       :scheme              "http"
+       :oppija-sub-domain   "yki."})))
 
 (defn mock-pdf-renderer []
   (reify PdfTemplateRenderer

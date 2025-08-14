@@ -34,8 +34,8 @@
                                        :interval  "1 DAY"})
 
 (defonce sync-onr-participant-data-handler-conf {:worker-id (str (UUID/randomUUID))
-                                                 :task "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
-                                                 :interval "59 MINUTES"})
+                                                 :task      "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
+                                                 :interval  "59 MINUTES"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -91,14 +91,14 @@
        (log/error e "Participant sync handler failed"))))
 
 (defmethod ig/init-key ::email-queue-reader
-  [_ {:keys [email-q handle-at-once-at-most url-helper retry-duration-in-days disabled]}]
-  {:pre [(some? url-helper) (pos-int? handle-at-once-at-most) (some? email-q) (some? retry-duration-in-days)]}
+  [_ {:keys [email-q handle-at-once-at-most email-boundary retry-duration-in-days disabled]}]
+  {:pre [(some? email-boundary) (pos-int? handle-at-once-at-most) (some? email-q) (some? retry-duration-in-days)]}
   #(try
      (doseq [_ (range (min handle-at-once-at-most (pgq/count email-q)))]
        (take-with-error-handling email-q retry-duration-in-days
                                  (fn [email-req]
                                    (log/info "Email queue reader sending email to:" (:recipients email-req))
-                                   (email/send-email! url-helper email-req disabled))))
+                                   (email/send-email! email-boundary email-req disabled))))
      (catch Exception e
        (log/error e "Email queue reader failed"))))
 
@@ -120,6 +120,11 @@
          (doseq [exam-session exam-sessions-with-queue]
            (log/info "Exam session with queue and free space" exam-session)
            (try
+             ; TODO Instead of sending individual emails to each recipient in queue,
+             ; we could instead send out emails to multiple recipients at the same time.
+             ; This should work because there can be at most 50 people in queue for an individual exam session simultaneously,
+             ; while the (new) email service supports a maximum of 512 recipients per message.
+             ; Note that we'd still need to group the notifications by message language (fi, sv, en).
              (doseq [item (:queue exam-session)]
                (let [lang             (:lang item)
                      email            (:email item)
@@ -129,8 +134,10 @@
                      level            (template-util/get-level (:level_code exam-session) lang)]
                  (log/info "Sending notification to email" email)
                  (pgq/put email-q
-                          {:recipients [email]
+                          {:language   lang
+                           :recipients [{:email email}]
                            :created    (System/currentTimeMillis)
+                           :message-id (random-uuid)
                            :subject    (template-util/subject "queue" lang exam-session)
                            :body       (template-util/render
                                          "queue"
@@ -152,8 +159,8 @@
      (when (job-db/try-to-acquire-lock! db remove-old-data-handler-conf)
        (log/info "Old data removal started")
        (let [deleted-from-exam-session-queue (exam-session-db/remove-old-entries-from-exam-session-queue! db)
-             deleted-cas-tickets (cas-ticket-db/delete-old-tickets! db :virkailija)
-             deleted-cas-oppija-tickets (cas-ticket-db/delete-old-tickets! db :oppija)]
+             deleted-cas-tickets             (cas-ticket-db/delete-old-tickets! db :virkailija)
+             deleted-cas-oppija-tickets      (cas-ticket-db/delete-old-tickets! db :oppija)]
          (log/info "Removed old entries from exam-session-queue:" deleted-from-exam-session-queue)
          (log/info "Removed old CAS tickets:" deleted-cas-tickets)
          (log/info "Removed old CAS-oppija tickets:" deleted-cas-oppija-tickets)))

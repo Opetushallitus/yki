@@ -72,6 +72,10 @@
                                 :cas-creds {:username "{{yki_cas_username}}"
                                             :password "{{yki_cas_password}}"}}
 
+  :yki.boundary.email/email-client {:url-helper             #ig/ref :yki.util/url-helper
+                                    :cas-client             #ig/ref :yki.boundary.cas/cas-client
+                                    :use-new-email-service? {{yki_use_new_email_service}}}
+
   :yki.middleware.auth/with-authentication
     {:url-helper #ig/ref :yki.util/url-helper
      :session-config {:key "{{yki_session_cookie_secret}}"

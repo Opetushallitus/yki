@@ -23,11 +23,14 @@
 
 (defn create-email-q-reader
   [port retry-duration-in-days]
-  (ig/init-key :yki.job.scheduled-tasks/email-queue-reader {:url-helper             (base/create-url-helper (str "localhost:" port))
-                                                            :handle-at-once-at-most 1
-                                                            :basic-auth             {:user "user" :password "pass"}
-                                                            :retry-duration-in-days retry-duration-in-days
-                                                            :email-q                (base/email-q)}))
+  (let [url-helper     (base/create-url-helper (str "localhost:" port))
+        cas-client     (base/cas-client url-helper)
+        email-boundary (base/email-boundary url-helper cas-client)]
+    (ig/init-key :yki.job.scheduled-tasks/email-queue-reader {:url-helper             url-helper
+                                                              :handle-at-once-at-most 1
+                                                              :retry-duration-in-days retry-duration-in-days
+                                                              :email-q                (base/email-q)
+                                                              :email-boundary         email-boundary})))
 
 (deftest handle-email-request-test
   (with-routes!

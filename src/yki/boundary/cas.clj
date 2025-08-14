@@ -10,11 +10,13 @@
     (fi.vm.sade.javautils.nio.cas CasClient CasConfig CasClientBuilder)
     (io.netty.handler.codec.http HttpHeaders)
     (org.asynchttpclient RequestBuilder)
-    (org.asynchttpclient Response)))
+    (org.asynchttpclient Request Response)
+    (org.asynchttpclient.request.body.multipart ByteArrayPart Part)))
 
 (defprotocol CasAccess
   (validate-ticket [this ticket])
   (cas-authenticated-post [this url body])
+  (cas-authenticated-post-multipart-form-data [this url body-parts])
   (cas-authenticated-get [this url]))
 
 (def csrf-token "csrf")
@@ -42,6 +44,15 @@
       (.setUrl url))
     (.build request-builder)))
 
+(defn- multipart-form-data-request [^String method url body-parts]
+  (let [request-builder (RequestBuilder. method)]
+    (doto request-builder
+      (.addHeader "Content-Type" "multipart/form-data")
+      (.setUrl url))
+    (doseq [part body-parts]
+      (.addBodyPart request-builder ^Part part))
+    (.build request-builder)))
+
 (defn- clear-ticket-stores! [^CasClient cas-client]
   (let [cls                   (.getClass cas-client)
         session-fetcher-field (.getDeclaredField cls "casSessionFetcher")
@@ -55,9 +66,8 @@
        (when-let [location (.get ^HttpHeaders headers "Location")]
          (str/starts-with? location (url-helper :cas.login.root)))))
 
-(defn- cas-http [^CasClient cas-client url-helper method url body]
-  (let [request  (json-request method url body)
-        execute! #(->> request
+(defn- execute-with-retry! [^CasClient cas-client url-helper ^Request request]
+  (let [execute! #(->> request
                        (.executeBlocking cas-client)
                        (process-response))
         response (execute!)]
@@ -77,14 +87,19 @@
       validation-response))
   (cas-authenticated-get [_ url]
     (try
-      (cas-http cas-client url-helper "GET" url nil)
+      (execute-with-retry! cas-client url-helper (json-request "GET" url nil))
       (catch Exception e
         (log/error e "cas-authenticated-get failed!"))))
   (cas-authenticated-post [_ url body]
     (try
-      (cas-http cas-client url-helper "POST" url body)
+      (execute-with-retry! cas-client url-helper (json-request "POST" url body))
       (catch Exception e
-        (log/error e "cas-authenticated-post failed!")))))
+        (log/error e "cas-authenticated-post failed!"))))
+  (cas-authenticated-post-multipart-form-data [_ url body-parts]
+    (try
+      (execute-with-retry! cas-client url-helper (multipart-form-data-request "POST" url body-parts))
+      (catch Exception e
+        (log/error e "cas-authenticated-post-multipart-form-data failed!")))))
 
 (defn create-cas-client [{:keys [username password]} url-helper service-url]
   (let [cas-config (CasConfig/SpringSessionCasConfig username password (url-helper :cas-client) service-url csrf-token caller-id)
