@@ -27,6 +27,7 @@
                                           (assoc :oid oid))
               session             {:identity       identity
                                    :auth-method    "EMAIL"
+                                   :auth-target    (:type login-link)
                                    :yki-session-id (str (random-uuid))}]
           (assoc
             (found (:success_redirect login-link))

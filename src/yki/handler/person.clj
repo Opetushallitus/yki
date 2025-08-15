@@ -23,6 +23,7 @@
         ;:return ::ys/person
         (let [oid (get-in session [:identity :oid])]
           (if oid
+            ; TODO If person is weakly authenticated, return here only data corresponding to the registration linked to their session details
             (ok (person-db/get-person
                   db
                   oid))
@@ -37,6 +38,7 @@
             (ok {:success false}))))
       (context routing/registration-uri []
         (context "/:registration-id" []
+          ; TODO If user is weakly authenticated, restrict here access to only the registration linked to their session details
           (DELETE "/" {session :session}
             :path-params [registration-id :- ::ys/registration_id]
             :query-params [lang :- ::ys/lang]
