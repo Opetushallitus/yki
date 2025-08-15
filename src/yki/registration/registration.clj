@@ -64,19 +64,19 @@
 
 (defn- create-registration-response
   [db session exam-session-id registration-id registration-kind payment-config]
-  (let [exam-session            (exam-session-db/get-exam-session-by-id db exam-session-id)
-        authenticated-by-email? (= (:auth-method session) "EMAIL")
+  (let [exam-session              (exam-session-db/get-exam-session-by-id db exam-session-id)
+        authenticated-by-email?   (= (:auth-method session) "EMAIL")
         authenticated-by-session? (= (:auth-method session) "SESSION")
-        email                   (when authenticated-by-email? (:external-user-id (:identity session)))
-        user                    (assoc (:identity session) :email email)
-        exam-fee                (get-in payment-config [:amount (keyword (:level_code exam-session))])]
+        email                     (when authenticated-by-email? (:external-user-id (:identity session)))
+        user                      (assoc (:identity session) :email email)
+        exam-fee                  (get-in payment-config [:amount (keyword (:level_code exam-session))])]
     (assoc
-     (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
-          :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
-          :registration_id        registration-id
-          :registration_kind      registration-kind
-          :user                   user})
-     :session session)))
+      (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
+           :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
+           :registration_id        registration-id
+           :registration_kind      registration-kind
+           :user                   user})
+      :session session)))
 
 (defn- init-error-response [space-left? not-registered? to-queue? exam-session-id]
   (let [error {:error {:full       (not space-left?)
@@ -183,20 +183,21 @@
     (send-payment-link-email! email-q lang email template-name (assoc template-data :login_url login-url))))
 
 (defn create-user-portal-link [db url-helper participant-id registration-id exam-date]
-  (let [code                    (str (random-uuid))
-        login-url               (url-helper :yki.login-link.url code)
-        hashed                  (sha256-hash code)
-        success-url             (url-helper :yki-ui.user-portal.url)
-        expired-url             (url-helper :yki-ui.user-portal.url)
-        expiration-date         (t/plus (common/string->date exam-date) (t/days 2))
-        link-data               {:participant_id        participant-id
-                                 :exam_session_id       nil
-                                 :registration_id       registration-id
-                                 :expires_at            expiration-date
-                                 :success_redirect      success-url
-                                 :expired_link_redirect expired-url
-                                 :type                  "PERSON"
-                                 :code                  hashed}]
+  (let [code            (str (random-uuid))
+        login-url       (url-helper :yki.login-link.url code)
+        hashed          (sha256-hash code)
+        success-url     (url-helper :yki-ui.user-portal.url)
+        expired-url     (url-helper :yki-ui.user-portal.url)
+        expiration-date (t/plus (common/string->date exam-date) (t/days 2))
+        link-data       {:participant_id        participant-id
+                         :exam_session_id       nil
+                         :registration_id       registration-id
+                         :expires_at            expiration-date
+                         :success_redirect      success-url
+                         :expired_link_redirect expired-url
+                         :type                  "PERSON"
+                         :code                  hashed
+                         :user_data             nil}]
     (login-link-db/create-login-link! db link-data)
     login-url))
 
@@ -260,7 +261,7 @@
                                     :success_redirect      payment-success-url
                                     :expired_link_redirect payment-link-expired-url
                                     :type                  "PAYMENT"}
-          user-portal-link (when email-auth? (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data)))]
+          user-portal-link         (when email-auth? (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data)))]
       #(create-and-send-payment-link db
                                      email-q
                                      lang
@@ -317,7 +318,7 @@
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
   (let [form                   (sanitized-form raw-form)
         identity               (:identity session)
-        email-auth?             (= (:auth-method session) "EMAIL")
+        email-auth?            (= (:auth-method session) "EMAIL")
         form-to-persist        (-> form
                                    (with-session-details session)
                                    (with-birthdate))
