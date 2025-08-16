@@ -11,9 +11,12 @@
 
 (defn- valid-session? [session]
   (let [auth-method (:auth-method session)]
-    (or (= "SUOMIFI" auth-method)
-        (and (= "EMAIL" auth-method)
-             (not (= "PAYMENT" (:auth-target session)))))))
+    (case auth-method
+      ("SUOMIFI" "CAS")
+      true
+      "EMAIL"
+      (not (= "PAYMENT" (:auth-target session)))
+      false)))
 
 (defmethod ig/init-key :yki.handler/user [_ {:keys [db auth access-log environment]}]
   {:pre [(some? db) (some? auth) (some? access-log) (s/valid? ::ys/environment environment)]}

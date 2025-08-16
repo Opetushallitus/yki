@@ -70,14 +70,13 @@
         id                   (response-body "identity")
         logout-response      (-> response
                                  (peridot/request (str routing/auth-root "/logout"))
-                                 (peridot/request (str routing/user-api-root "/identity")))
-        logout-response-body (base/body-as-json (:response logout-response))]
+                                 (peridot/request (str routing/user-api-root "/identity")))]
     (testing "after successful login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
       (is (= (id "email") "test@user.com")))
     (testing "after logout session should not contain user data"
-      (is (= (get-in logout-response [:response :status]) 200))
-      (is (= (logout-response-body "identity") nil))))
+      (is (= (get-in logout-response [:response :status]) 401))
+      (is (= (get-in logout-response [:response :body]) nil))))
 
   (let [routes   (create-routes "")
         session  (peridot/session routes)
