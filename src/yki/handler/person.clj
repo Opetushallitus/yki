@@ -2,7 +2,7 @@
   (:require
     [compojure.api.sweet :refer [api context GET POST DELETE]]
     [integrant.core :as ig]
-    [ring.util.http-response :refer [ok not-found]]
+    [ring.util.http-response :refer [ok not-found unauthorized]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.person-db :as person-db]
     [yki.boundary.registration-db :as registration-db]
@@ -13,6 +13,28 @@
     [yki.registration.email :refer [send-cancel-registration-email! send-cancel-queue-email! send-transfer-confirmation-email!]]
     [yki.registration.registration :refer [create-user-portal-link]]))
 
+(defn- has-access-to-registration? [session registration]
+  (let [{:keys [auth-method identity]} session]
+    (or (= "SUOMIFI" auth-method)
+        (= (:id registration) (:registration-id identity)))))
+
+(defn- with-authorized-registrations [person session]
+  (update person :registrations
+          (fn [registrations]
+            (filter #(has-access-to-registration? session %) registrations))))
+
+(defn- authorized-for-handler? [session]
+  (let [{:keys [auth-method auth-target]} session]
+    (or (= "SUOMIFI" auth-method)
+        (and (= "EMAIL" auth-method)
+             (= "PERSON" auth-target)))))
+
+(defn- wrap-with-registration-authorization [session registration-id handler]
+  (fn with-registration-authorization [request]
+    (if (has-access-to-registration? session {:id registration-id})
+      (handler request)
+      (unauthorized))))
+
 (defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q environment onr-client url-helper payment-helper]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? environment) (some? url-helper) (some? payment-helper)]}
   (api
@@ -21,13 +43,15 @@
       :middleware [auth access-log with-error-boundary]
       (GET "/" {session :session}
         ;:return ::ys/person
-        (let [oid (get-in session [:identity :oid])]
-          (if oid
-            ; TODO If person is weakly authenticated, return here only data corresponding to the registration linked to their session details
-            (ok (person-db/get-person
-                  db
-                  oid))
-            (not-found "no oid in session"))))
+        (if (authorized-for-handler? session)
+          (let [oid (get-in session [:identity :oid])]
+            (if oid
+              (->
+                (person-db/get-person db oid)
+                (with-authorized-registrations session)
+                (ok))
+              (not-found "no oid in session")))
+          (unauthorized)))
       (POST "/" {session :session}
         :body [person ::ys/person]
         :return ::ys/response
@@ -36,11 +60,11 @@
             ; TODO Update person details to Solki!
             (ok {:success true})
             (ok {:success false}))))
-      (context routing/registration-uri []
-        (context "/:registration-id" []
-          ; TODO If user is weakly authenticated, restrict here access to only the registration linked to their session details
+      (context (str routing/registration-uri "/:registration-id") []
+        :path-params [registration-id :- ::ys/registration_id]
+        (context "" {session :session}
+          :middleware [#(wrap-with-registration-authorization session registration-id %)]
           (DELETE "/" {session :session}
-            :path-params [registration-id :- ::ys/registration_id]
             :query-params [lang :- ::ys/lang]
             :return ::ys/response
             (let [oid (get-in session [:identity :oid])]
@@ -48,52 +72,48 @@
                 ; TODO Ensure Solki gets information regarding cancelled registration!
                 (do
                   (when (= "PAID_AND_CANCELLED" state)
-                    (let [email-data    (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
-                          contact-info  (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
+                    (let [email-data       (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
+                          contact-info     (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
                           user-portal-link (if (:is_email_auth email-data)
                                              (create-user-portal-link db url-helper
-                                                                                   (:participant_id email-data)
-                                                                                   registration-id
-                                                                                   (:exam_date email-data))
+                                                                      (:participant_id email-data)
+                                                                      registration-id
+                                                                      (:exam_date email-data))
                                              (url-helper :yki.login.user-portal))
-                          template-data (assoc email-data
-                                               :contact_info contact-info
-                                               :user_portal_link user-portal-link)]
+                          template-data    (assoc email-data
+                                             :contact_info contact-info
+                                             :user_portal_link user-portal-link)]
                       (send-cancel-registration-email! email-q lang template-data)))
                   (when (= "QUEUE" state)
-                    (let [email-data    (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
-                          contact-info  (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
+                    (let [email-data       (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
+                          contact-info     (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
                           user-portal-link (if (:is_email_auth email-data)
                                              (create-user-portal-link db url-helper
-                                                                                   (:participant_id email-data)
-                                                                                   registration-id
-                                                                                   (:exam_date email-data))
+                                                                      (:participant_id email-data)
+                                                                      registration-id
+                                                                      (:exam_date email-data))
                                              (url-helper :yki.login.user-portal))
-                          template-data (assoc email-data
-                                               :contact_info contact-info
-                                               :user_portal_link user-portal-link)]
+                          template-data    (assoc email-data
+                                             :contact_info contact-info
+                                             :user_portal_link user-portal-link)]
                       (send-cancel-queue-email! email-q lang template-data)))
                   (ok {:success true}))
                 (ok {:success false}))))
           (GET "/confirm" {session :session}
-            :path-params [registration-id :- ::ys/registration_id]
             (let [oid                  (get-in session [:identity :oid])
                   registration-details (person-db/get-registration-to-confirm-details db oid registration-id)]
               (if (some? registration-details)
                 (ok registration-details)
                 (not-found))))
           (GET "/payment-redirect" {session :session}
-            :path-params [registration-id :- ::ys/registration_id]
             :query-params [lang :- ::ys/lang]
             (redirect-to-paytrail db payment-helper url-helper lang session registration-id))
           (GET "/relocate" {session :session}
-            :path-params [registration-id :- ::ys/registration_id]
             (let [; TODO What if user has no oid, ie. is authenticated with email link only?
                   oid     (get-in session [:identity :oid])
                   results (person-db/get-registration-relocate-details db oid registration-id)]
               (ok results)))
           (POST "/relocate" {session :session}
-            :path-params [registration-id :- ::ys/registration_id]
             :query-params [lang :- ::ys/lang]
             :body [relocate-request ::ys/relocate-request]
             :return ::ys/response

@@ -19,12 +19,15 @@
       (if (link-valid? login-link)
         (let [previous-session-id (get-in login-link [:user_data :previous-session-id])
               oid                 (:person_oid login-link)
+              registration-id     (:registration_id login-link)
               identity            (cond-> {:external-user-id (:external_user_id login-link)
                                            :email            (:email login-link)}
                                           previous-session-id
                                           (assoc :previous-session-id previous-session-id)
                                           oid
-                                          (assoc :oid oid))
+                                          (assoc :oid oid)
+                                          registration-id
+                                          (assoc :registration-id registration-id))
               session             {:identity       identity
                                    :auth-method    "EMAIL"
                                    :auth-target    (:type login-link)
