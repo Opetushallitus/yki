@@ -94,14 +94,16 @@
       (let [payment-id                        (:id payment-details)
             exam-session-contact-info         (exam-session-db/get-contact-info-by-exam-session-id db exam-session-id)
             exam-session-extra-information    (exam-session-db/get-exam-session-location-extra-information db exam-session-id lang)
-            exam-date                         (exam-session-db/get-exam-session-exam-date db exam-session-id)
-            user-portal-link                  (when email-auth? (registration/create-user-portal-link db url-helper
-                                                                                                          (:participant_id participant-details)
-                                                                                                          registration-id exam-date))
+            exam-date                         (:exam_date (exam-session-db/get-exam-session-exam-date db exam-session-id))
+            user-portal-link                  (if (or email-auth? (:is_email_auth participant-details))
+                                                (registration/create-user-portal-link db url-helper
+                                                                                      (:participant_id participant-details)
+                                                                                      registration-id exam-date)
+                                                (url-helper :yki.login.user-portal))
             email-template-data               (assoc participant-details
                                                 :contact_info exam-session-contact-info
                                                 :extra_information (:extra_information exam-session-extra-information)
-                                                :login_url (or user-portal-link (url-helper :yki.login.user-portal)))
+                                                :login_url user-portal-link)
             send-registration-complete-email! (fn [updated-payment-details]
                                                 (registration-email/send-exam-registration-completed-email!
                                                   email-q
