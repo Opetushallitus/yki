@@ -68,7 +68,7 @@
             :query-params [lang :- ::ys/lang]
             :return ::ys/response
             (let [oid (get-in session [:identity :oid])]
-              (if-let [{:keys [state exam_session_id]} (person-db/cancel-person-registration! db oid registration-id)]
+              (if-let [{:keys [state exam_session_id kind]} (person-db/cancel-person-registration! db oid registration-id)]
                 ; TODO Ensure Solki gets information regarding cancelled registration!
                 (do
                   (when (= "PAID_AND_CANCELLED" state)
@@ -84,7 +84,7 @@
                                              :contact_info contact-info
                                              :user_portal_link user-portal-link)]
                       (send-cancel-registration-email! email-q lang template-data)))
-                  (when (= "QUEUE" state)
+                  (when (= "QUEUE" kind)
                     (let [email-data       (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
                           contact-info     (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
                           user-portal-link (if (:is_email_auth email-data)

@@ -631,6 +631,8 @@ SELECT
  l.expires_at,
  l.expired_link_redirect,
  l.success_redirect,
+ l.registration_id,
+ l.type,
  l.user_data,
  r.person_oid
 FROM login_link l
@@ -1050,7 +1052,8 @@ SELECT p.id AS participant_id,
        esl.post_office,
        ed.exam_date,
        re.form->>'last_name' AS last_name,
-       re.form->>'first_name' AS first_name
+       re.form->>'first_name' AS first_name,
+       p.external_user_id = p.email AS is_email_auth
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 INNER JOIN exam_session es ON es.id = re.exam_session_id
