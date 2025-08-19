@@ -46,10 +46,11 @@
         (if (authorized-for-handler? session)
           (let [oid (get-in session [:identity :oid])]
             (if oid
-              (->
-                (person-db/get-person db oid)
-                (with-authorized-registrations session)
-                (ok))
+              (if-let [person (person-db/get-person db oid)]
+                (-> person
+                    (with-authorized-registrations session)
+                    (ok))
+                (not-found))
               (not-found "no oid in session")))
           (unauthorized)))
       (POST "/" {session :session}

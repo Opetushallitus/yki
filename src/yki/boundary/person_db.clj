@@ -19,10 +19,9 @@
         v
         (common/format-date-for-db)))))
 
-(defn- get-person+registrations
+(defn- get-registrations-with-queue-details
   [tx oid]
-  (let [person                (first (q/select-person tx {:oid oid}))
-        registrations         (q/select-person-registrations tx {:oid oid})
+  (let [registrations         (q/select-person-registrations tx {:oid oid})
         queued-ids            (->> registrations
                                    (filter #(= "QUEUE" (:kind %)))
                                    (map :id))
@@ -36,7 +35,7 @@
                                           (if-let [pos (id->position-in-queue id)]
                                             (assoc v :position_in_queue pos)
                                             v))))]
-    (assoc person :registrations registration-details)))
+    registration-details))
 
 (defprotocol Person
   (get-person [db oid])
@@ -65,7 +64,10 @@
   Boundary
   (get-person [{:keys [spec]} oid]
     (jdbc/with-db-transaction [tx spec]
-      (get-person+registrations tx oid)))
+      (some->
+        (q/select-person tx {:oid oid})
+        (first)
+        (assoc :registrations (get-registrations-with-queue-details tx oid)))))
   (upsert-person!
     [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]
