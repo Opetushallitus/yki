@@ -1725,10 +1725,13 @@ SELECT r.id,
                      extra_information,
                      lang
               FROM exam_session_location
-              WHERE exam_session_id = es.id) loc) as location
+              WHERE exam_session_id = es.id) loc) as location,
+        c.email AS contact_email
 FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+INNER JOIN exam_session_contact esc ON esc.exam_session_id = es.id
+INNER JOIN contact c ON c.id = esc.contact_id
 WHERE r.id = :id AND r.person_oid = :oid;
 
 -- name: select-transfer-target-details-by-exam-session-id
