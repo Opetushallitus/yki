@@ -176,8 +176,15 @@
                     (let [registration-details (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
                           lang (:lang registration-details)
                           exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
+                          user-portal-link (if (:is_email_auth registration-details)
+                                             (registration/create-user-portal-link db url-helper
+                                                                      (:participant_id registration-details)
+                                                                      registration-id
+                                                                      (:exam_date registration-details))
+                                             (url-helper :yki.login.user-portal))
                           email-template-data            (assoc registration-details
-                                                                :contact_info exam-session-contact-info)]
+                                                                :contact_info exam-session-contact-info
+                                                                :user_portal_link user-portal-link)]
                       (log/info "Sending transfer confirmation email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-transfer-confirmation-email!
                        email-q
@@ -205,10 +212,15 @@
                 (if-let [payment-details (registration-db/get-completed-payment-data-for-registration db registration-id)]
                   (let [exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
                         exam-session-extra-information (exam-session-db/get-exam-session-location-extra-information db id lang)
+                        user-portal-link                  (if (:is_email_auth registration-details)
+                                                            (registration/create-user-portal-link db url-helper
+                                                                                                  (:participant_id registration-details)
+                                                                                                  registration-id (:exam-date registration-details))
+                                                            (url-helper :yki.login.user-portal))
                         email-template-data            (assoc registration-details
                                                          :contact_info exam-session-contact-info
                                                          :extra_information (:extra_information exam-session-extra-information)
-                                                         :login_url (url-helper :yki.login.user-portal))]
+                                                         :login_url user-portal-link)]
                     (log/info "Resending confirmation email for registration with id" registration-id)
                     (registration-email/send-exam-registration-completed-email!
                       email-q
