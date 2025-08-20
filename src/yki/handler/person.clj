@@ -125,8 +125,15 @@
               (if result
                 (let [registration-details      (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
                       exam-session-contact-info (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
+                      user-portal-link (if (:is_email_auth registration-details)
+                                         (create-user-portal-link db url-helper
+                                                                  (:participant_id registration-details)
+                                                                  registration-id
+                                                                  (:exam_date registration-details))
+                                         (url-helper :yki.login.user-portal))
                       email-template-data       (assoc registration-details
-                                                  :contact_info exam-session-contact-info)]
+                                                       :contact_info exam-session-contact-info
+                                                       :user_portal_link user-portal-link)]
                   (send-transfer-confirmation-email! email-q lang email-template-data)
                   (ok {:success true}))
                 (ok {:success false})))))))))

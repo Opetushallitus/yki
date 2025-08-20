@@ -887,12 +887,14 @@ SELECT re.state,
        esl.street_address,
        esl.post_office,
        esl.zip,
-       esl.name
+       esl.name,
+       p.external_user_id = p.email AS is_email_auth
 FROM registration re
 INNER JOIN person pe ON re.person_oid = pe.oid
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
+INNER JOIN participant p ON p.id = re.participant_id
 WHERE re.id = :id
   AND re.exam_session_id = :exam_session_id
   AND re.state = 'COMPLETED'
