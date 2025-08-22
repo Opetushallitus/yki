@@ -51,7 +51,7 @@
                     (with-authorized-registrations session)
                     (ok))
                 (not-found))
-              (not-found "no oid in session")))
+              (unauthorized "no oid in session")))
           (unauthorized)))
       (POST "/" {session :session}
         :body [person ::ys/person]
