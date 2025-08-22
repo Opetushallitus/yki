@@ -21,11 +21,11 @@
 (defn sha256-hash [code]
   (bytes->hex (hash/sha256 code)))
 
-(defn create-and-send-link [db url-helper email-q lang login-link exam-session]
+(defn create-and-send-link [db url-helper email-q lang login-link exam-session to-queue?]
   (let [code          (str (random-uuid))
         login-url     (url-helper :yki.login-link.url code)
         email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
-        link-type     (:type login-link)
+        link-type     (if to-queue? "LOGIN_QUEUE" (:type login-link))
         hashed        (sha256-hash code)
         template-data (assoc exam-session :subject (str (localisation/get-translation lang "email.login.subject"))
                                           :language (template-util/get-language (:language_code exam-session) lang)
@@ -81,7 +81,7 @@
                       ", exam-session-id:"
                       exam-session-id)
                     (ok {:success true}))
-                (when (create-and-send-link db url-helper email-q lang link exam-session)
+                (when (create-and-send-link db url-helper email-q lang link exam-session to-queue?)
                   (ok {:success true}))))
             (do (log/error "Requested login link, but registration for exam session isn't open." login-link)
                 (forbidden))))))))
