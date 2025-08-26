@@ -110,8 +110,7 @@
             :query-params [lang :- ::ys/lang]
             (redirect-to-paytrail db payment-helper url-helper lang session registration-id))
           (GET "/relocate" {session :session}
-            (let [; TODO What if user has no oid, ie. is authenticated with email link only?
-                  oid     (get-in session [:identity :oid])
+            (let [oid     (get-in session [:identity :oid])
                   results (person-db/get-registration-relocate-details db oid registration-id)]
               (ok results)))
           (POST "/relocate" {session :session}

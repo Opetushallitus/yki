@@ -112,3 +112,52 @@
               (is (= [] (->> response-data
                              :registrations
                              (map :id)))))))))))
+
+(deftest person-registrations-test
+  (base/insert-base-data)
+  (base/insert-persons)
+  (base/insert-registrations "SUBMITTED")
+  (base/insert-unpaid-expired-registration)
+  ; Make all registrations belong to person with oid 5.4.3.2.1
+  (base/execute! "UPDATE registration SET person_oid='5.4.3.2.1'")
+  (with-routes!
+    {}
+    (let [db             (base/db)
+          url-helper     (base/create-url-helper (str "localhost:" port))
+          payment-helper (base/create-examination-payment-helper db url-helper)
+          oid            "5.4.3.2.1"]
+      (testing "strongly authenticated person can view and act on all their registrations"
+        (let [fake-auth          (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                              {:identity    {:oid oid}
+                                               :auth-method "SUOMIFI"})
+              handler            (base/person-handler fake-auth url-helper payment-helper)
+              routes             (routes handler)
+              session            (peridot/session routes)
+              confirm-response-1 (-> session
+                                     (peridot/request (str routing/person-api-root routing/registration-uri "/" 1 "/confirm") :request-method :get))
+              response-data-1    (read-response-json confirm-response-1)
+              confirm-response-2 (-> session
+                                     (peridot/request (str routing/person-api-root routing/registration-uri "/" 2 "/confirm") :request-method :get))
+              response-data-2    (read-response-json confirm-response-2)]
+          (is (= 200 (get-in confirm-response-1 [:response :status])))
+          (is (= 1 (:id response-data-1)))
+          (is (= 200 (get-in confirm-response-2 [:response :status])))
+          (is (= 2 (:id response-data-2)))))
+      (testing "weakly authenticated user can only access data related to registration linked with login code"
+        (let [fake-auth          (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                              {:identity    {:oid             oid
+                                                             :registration-id 1}
+                                               :auth-method "EMAIL"
+                                               :auth-target "PERSON"})
+              handler            (base/person-handler fake-auth url-helper payment-helper)
+              routes             (routes handler)
+              session            (peridot/session routes)
+              confirm-response-1 (-> session
+                                     (peridot/request (str routing/person-api-root routing/registration-uri "/" 1 "/confirm") :request-method :get))
+              response-data-1    (read-response-json confirm-response-1)
+              confirm-response-2 (-> session
+                                     (peridot/request (str routing/person-api-root routing/registration-uri "/" 2 "/confirm") :request-method :get))]
+          (is (= 200 (get-in confirm-response-1 [:response :status])))
+          (is (= 1 (:id response-data-1)))
+          (is (= 401 (get-in confirm-response-2 [:response :status])))
+          (is (= nil (get-in confirm-response-2 [:response :body]))))))))
