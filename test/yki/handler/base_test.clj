@@ -16,8 +16,9 @@
     [yki.handler.auth]
     [yki.handler.exam-date]
     [yki.handler.exam-session]
-    [yki.handler.organizer]
     [yki.handler.login-link :as login-link]
+    [yki.handler.organizer]
+    [yki.handler.person]
     [yki.handler.quarantine]
     [yki.handler.routing :as routing]
     [yki.handler.user]
@@ -135,6 +136,7 @@
                                                           :access-log  (access-log)
                                                           :environment env
                                                           :onr-client  (onr-client url-helper)})))
+
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
   (ig/init-key :yki.job.job-queue/email-q {}))
@@ -491,6 +493,16 @@
 
 (defn no-auth-fake-session-oid-middleware [oid]
   (ig/init-key :yki.middleware.no-auth/with-fake-oid {:oid oid}))
+
+(defn person-handler
+  [auth url-helper payment-helper]
+  (middleware/wrap-format (ig/init-key :yki.handler/person {:auth           auth
+                                                            :url-helper     url-helper
+                                                            :payment-helper payment-helper
+                                                            :db             (db)
+                                                            :onr-client     (onr-client url-helper)
+                                                            :access-log     (access-log)
+                                                            :email-q        (email-q)})))
 
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)

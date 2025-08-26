@@ -223,6 +223,10 @@
         ; => expiry at start of day 3+1 days from now.
         ; TODO Separate expiration date calculation logic registration lifted from queue
         ;  Can't be tied to registration end date, as the queueing period is supposed to last roughly a week longer?
+        ; New spec:
+        ; - regular admission: payment due in three whole days OR until end of registration period
+        ; - regular admission: if registration ends in less than two days' time, grant payment period of current day + one full day
+        ; - lifted from queue: payment period is current day + one full day
         ongoing-registration-expiration (common/date-from-now (inc 3))
         date-of-expiry                  (t/min-date
                                           ongoing-registration-expiration
