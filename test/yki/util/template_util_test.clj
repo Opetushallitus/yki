@@ -40,7 +40,7 @@
       (is (s/includes? rendered "Testdatum: 16.5.2024"))
       (is (s/includes? rendered "Testställe: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
       (is (s/includes? rendered "Examensavgift: 100,00 €"))
-      (is (s/includes? rendered "Betala avgiften senast 24.4.2024</b>, annars återkallas din anmälan."))
+      (is (s/includes? rendered "Betala examensavgiften senast 24.4.2024</b> för att bekräfta din anmälan."))
       (is (s/includes? rendered "http://localhost:8080/payment")))))
 
 (deftest render-payment-success-email-test
