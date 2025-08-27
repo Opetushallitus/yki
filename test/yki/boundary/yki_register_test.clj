@@ -1,5 +1,6 @@
 (ns yki.boundary.yki-register-test
   (:require
+    [clojure.java.jdbc :as jdbc]
     [clojure.string :as str]
     [clojure.test :refer [deftest is testing use-fixtures]]
     [yki.handler.base-test :as base]
@@ -92,10 +93,10 @@
   (testing "should send participants as csv and add basic auth header"
     (with-routes!
       {{:path "/yki-sp/oph/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
-       "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246"                                    {:status 200 :content-type "application/json"
-                                                                                                                  :body   (slurp "test/resources/maatjavaltiot2_246.json")}
-       "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                    {:status 200 :content-type "application/json"
-                                                                                                                  :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
+       "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246"                                               {:status 200 :content-type "application/json"
+                                                                                                                             :body   (slurp "test/resources/maatjavaltiot2_246.json")}
+       "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                               {:status 200 :content-type "application/json"
+                                                                                                                             :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
       (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
             db              (base/db)
             url-helper      (base/create-url-helper (str "localhost:" port))
@@ -103,4 +104,21 @@
             request         (first (:recordings (first @(:routes server))))
             req-body        (get-in request [:request :body "postData"])]
         (is (= (get-in request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
-        (is (= req-body csv))))))
+        (is (= req-body csv)))))
+  (testing "participants csv should look up contact details for participant from the person table"
+    (let [old-email "aa@al.fi"
+          new-email "updated@test.invalid"]
+      (jdbc/execute! @embedded-db/conn (str "UPDATE person SET email='" new-email "' WHERE email='" old-email "'"))
+      (with-routes!
+        {{:path "/yki-sp/oph/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
+         "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246"                                               {:status 200 :content-type "application/json"
+                                                                                                                               :body   (slurp "test/resources/maatjavaltiot2_246.json")}
+         "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                               {:status 200 :content-type "application/json"
+                                                                                                                               :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
+        (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
+              db              (base/db)
+              url-helper      (base/create-url-helper (str "localhost:" port))
+              _               (yki-register/sync-exam-session-participants db url-helper {:user "user" :password "pass"} false exam-session-id)
+              request         (first (:recordings (first @(:routes server))))
+              req-body        (get-in request [:request :body "postData"])]
+          (is (= req-body (str/replace csv old-email new-email) )))))))

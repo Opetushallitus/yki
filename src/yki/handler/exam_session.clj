@@ -196,8 +196,8 @@
                                     :change    {:type audit-log/update-op
                                                 :old  {:exam_session_id id}
                                                 :new  {:exam_session_id (:to_exam_session_id relocate-request)}}})
-                    ; Sync only the relocation destination exam session
-                    ; TODO Sync also the origin
+                    ; Sync both the original and the new exam session
+                    (exam-session-db/init-relocated-participants-sync-status! db id)
                     (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                     (response {:success true}))
                   (not-found {:success false

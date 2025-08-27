@@ -1120,6 +1120,8 @@ ON CONFLICT DO NOTHING;
 -- Synchronization is done during registration period and
 -- failed sync attempts will be retried for given period
 -- after registration has ended.
+-- TODO Can we simplify sync attempts? If sync attempts fail only very rarely,
+--  it seems we could do with just good enough monitoring instead!
 -- Exam sessions where participants have been relocated to another
 -- session after the registration has ended, are synced and retried
 -- for one day after the relocation.
@@ -1138,6 +1140,8 @@ WHERE (((ed.exam_date >= (current_date + interval '1 week')
         AND pss.success_at IS NULL
         AND ed.registration_start_date < current_date
         AND (pss.relocated_at + interval '1 day') > current_date))
+  -- TODO Consider removing the below condition!
+  --  Should be able to also notify Solki of exam sessions that have become empty.
   AND (SELECT COUNT(1)
        FROM registration re
        WHERE re.exam_session_id = es.id
@@ -1157,7 +1161,6 @@ WHERE exam_session_id = :exam_session_id;
 DELETE FROM participant_sync_status
 WHERE exam_session_id = :exam_session_id;
 
--- TODO Consider moving more of form contents under person table
 -- name: select-completed-exam-session-participants
 SELECT r.form, r.person_oid, r.is_transfered, p.last_name, p.first_name, p.email, p.zip, p.post_office, p.street_address
 FROM registration r

@@ -1,5 +1,6 @@
 (ns yki.handler.person
   (:require
+    [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST DELETE]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok not-found unauthorized]]
@@ -70,9 +71,9 @@
             :return ::ys/response
             (let [oid (get-in session [:identity :oid])]
               (if-let [{:keys [state exam_session_id kind]} (person-db/cancel-person-registration! db oid registration-id)]
-                ; TODO Ensure Solki gets information regarding cancelled registration!
                 (do
-                  (when (= "PAID_AND_CANCELLED" state)
+                  (cond
+                    (= "PAID_AND_CANCELLED" state)
                     (let [email-data       (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
                           contact-info     (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
                           user-portal-link (if (:is_email_auth email-data)
@@ -84,8 +85,9 @@
                           template-data    (assoc email-data
                                              :contact_info contact-info
                                              :user_portal_link user-portal-link)]
-                      (send-cancel-registration-email! email-q lang template-data)))
-                  (when (= "QUEUE" kind)
+                      (send-cancel-registration-email! email-q lang template-data)
+                      (exam-session-db/init-participants-sync-status! db exam_session_id))
+                    (= "QUEUE" kind)
                     (let [email-data       (registration-db/get-registration-data-for-clerk-mail db exam_session_id registration-id)
                           contact-info     (exam-session-db/get-contact-info-by-exam-session-id db exam_session_id)
                           user-portal-link (if (:is_email_auth email-data)
@@ -120,19 +122,24 @@
             (let [oid                (get-in session [:identity :oid])
                   to-exam-session-id (:to_exam_session_id relocate-request)
                   result             (person-db/relocate-registration! db oid registration-id to-exam-session-id)]
-              ; TODO Update participant lists of source and target exam sessions to Solki!
               (if result
                 (let [registration-details      (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
                       exam-session-contact-info (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
-                      user-portal-link (if (:is_email_auth registration-details)
-                                         (create-user-portal-link db url-helper
-                                                                  (:participant_id registration-details)
-                                                                  registration-id
-                                                                  (:exam_date registration-details))
-                                         (url-helper :yki.login.user-portal))
+                      user-portal-link          (if (:is_email_auth registration-details)
+                                                  (create-user-portal-link db url-helper
+                                                                           (:participant_id registration-details)
+                                                                           registration-id
+                                                                           (:exam_date registration-details))
+                                                  (url-helper :yki.login.user-portal))
                       email-template-data       (assoc registration-details
-                                                       :contact_info exam-session-contact-info
-                                                       :user_portal_link user-portal-link)]
+                                                  :contact_info exam-session-contact-info
+                                                  :user_portal_link user-portal-link)
+                      original-exam-session-id  (:original_exam_session_id result)]
+                  (exam-session-db/init-relocated-participants-sync-status! db original-exam-session-id)
+                  (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                   (send-transfer-confirmation-email! email-q lang email-template-data)
+                  (log/info "Successfully relocated registration" {:registration-id          registration-id
+                                                                   :original_exam_session_id original-exam-session-id
+                                                                   :exam_session_id          to-exam-session-id})
                   (ok {:success true}))
                 (ok {:success false})))))))))
