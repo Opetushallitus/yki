@@ -72,7 +72,7 @@
                                                               :disabled               true
                                                               :basic-auth             {:user "user" :password "pass"}
                                                               :url-helper             #ig/ref :yki.util/url-helper
-                                                              :retry-duration-in-days 14}
+                                                              :retry-duration-in-days 1}
 
   :yki.job.scheduled-tasks/data-sync-queue-reader            {:data-sync-q            #ig/ref :yki.job.job-queue/data-sync-q
                                                               :db                     #ig/ref :duct.database/sql

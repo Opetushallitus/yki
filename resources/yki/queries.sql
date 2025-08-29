@@ -1131,7 +1131,7 @@ SELECT es.id as exam_session_id, pss.created
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id
-WHERE (((ed.exam_date >= (current_date + interval '1 week')
+WHERE (((ed.exam_date >= (current_date + interval '1 week' - :duration::interval)
     OR ((ed.registration_end_date + :duration::interval) >= current_date
         AND pss.failed_at IS NOT NULL
         AND (pss.success_at IS NULL OR pss.failed_at > pss.success_at)))

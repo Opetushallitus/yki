@@ -10,8 +10,7 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.yki-register :as yki-register]))
 
-(use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
-(use-fixtures :each embedded-db/with-transaction)
+(use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
 
 (def exam-session {:id               1
                    :language_code    "fin"
@@ -121,4 +120,30 @@
               _               (yki-register/sync-exam-session-participants db url-helper {:user "user" :password "pass"} false exam-session-id)
               request         (first (:recordings (first @(:routes server))))
               req-body        (get-in request [:request :body "postData"])]
-          (is (= req-body (str/replace csv old-email new-email) )))))))
+          (is (= req-body (str/replace csv old-email new-email))))))))
+
+(deftest sync-exam-session-participants-schedule-test
+  (base/insert-base-data)
+  (base/insert-persons)
+  (base/insert-registrations "COMPLETED")
+  (let [exam-session-id (:id (base/select-one base/select-exam-session))
+        exam-date-id    (:exam_date_id (base/select-one (str "SELECT exam_date_id FROM exam_session WHERE id=" exam-session-id)))
+        db              (base/db)
+        retry-period    "1 days"]
+    (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET exam_date = current_date + interval '1 month' WHERE id=" exam-session-id))
+    (testing "If current date is before start of registration period, exam session participants should not be synced"
+      (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET registration_start_date = (current_date + interval '1 days') WHERE id=" exam-date-id))
+      (is (= [] (exam-session-db/get-exam-sessions-to-be-synced db retry-period))))
+    (testing "If registration period is ongoing, exam session participants should be synced"
+      (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET registration_start_date = (current_date - interval '1 week'), registration_end_date = (current_date + interval '1 week') WHERE id=" exam-date-id))
+      (is (= [exam-session-id] (map :exam_session_id (exam-session-db/get-exam-sessions-to-be-synced db retry-period)))))
+    (testing "If registration period is over but there is still a week until exam session, exam session participants should be synced"
+      (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET registration_end_date = (current_date - interval '1 days'), exam_date=(current_date + interval '1 week') WHERE id=" exam-date-id))
+      (is (= [exam-session-id] (map :exam_session_id (exam-session-db/get-exam-sessions-to-be-synced db retry-period))))
+      (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET exam_date=(current_date + interval '1 week' - interval '1 day') WHERE id=" exam-date-id))
+      (is (= [exam-session-id] (map :exam_session_id (exam-session-db/get-exam-sessions-to-be-synced db retry-period)))))
+    (testing "To accommodate last minute payments, sync period is extended one full day; sync is thus performed up to 6 days before exam date"
+      (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET exam_date=(current_date + interval '1 week' - interval '" retry-period "') WHERE id=" exam-date-id))
+      (is (= [exam-session-id] (map :exam_session_id (exam-session-db/get-exam-sessions-to-be-synced db retry-period))))
+      (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date SET exam_date=(current_date + interval '6 days' - interval '" retry-period "') WHERE id=" exam-date-id))
+      (is (= [] (map :exam_session_id (exam-session-db/get-exam-sessions-to-be-synced db retry-period)))))))
