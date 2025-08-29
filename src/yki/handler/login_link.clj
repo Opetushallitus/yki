@@ -82,6 +82,14 @@
                       exam-session-id)
                     (ok {:success true}))
                 (when (create-and-send-link db url-helper email-q lang link exam-session to-queue?)
-                  (ok {:success true}))))
+                  ; If user isn't properly logged in, ie. auth-method is "SESSION", clear session details after ordering login link.
+                  ; This is done to allow users to order multiple login links to one exam session.
+                  ; The use case is mostly related to testing in DEV/QA environments, but can also be a legitimate scenario in production use.
+                  (let [auth-method   (:auth-method session)
+                        session-auth? (= "SESSION" auth-method)]
+                    (cond->
+                      (ok {:success true})
+                      session-auth?
+                      (assoc :session nil))))))
             (do (log/error "Requested login link, but registration for exam session isn't open." login-link)
                 (forbidden))))))))
