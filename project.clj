@@ -10,7 +10,7 @@
                  ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
-  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.20.0"]
+  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.20"]
                          [com.fasterxml.jackson.core/jackson-core "2.20.0"]
                          [com.fasterxml.jackson.core/jackson-databind "2.20.0"]
                          [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.20.0"]
