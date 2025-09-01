@@ -926,7 +926,7 @@ INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 LEFT JOIN participant p ON re.participant_id = p.id
 WHERE re.id = :id
   AND re.exam_session_id = :exam_session_id
-  AND (re.state = 'SUBMITTED' OR re.state = 'COMPLETED' OR re.state = 'PAID_AND_CANCELLED')
+  AND re.state IN ('COMPLETED', 'PAID_AND_CANCELLED', 'SUBMITTED', 'CANCELLED')
   ORDER BY CASE
       WHEN esl.lang = re.form->>'certificate_lang' THEN 1
       WHEN esl.lang = 'fi' THEN 2
