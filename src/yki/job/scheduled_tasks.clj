@@ -11,7 +11,6 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.job-db :as job-db]
     [yki.boundary.onr :as onr]
-    [yki.boundary.person-db :as person]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
     [yki.registration.registration :refer [send-lifted-from-queue-email!]]
@@ -32,10 +31,6 @@
 (defonce sync-onr-participant-data-handler-conf {:worker-id (str (random-uuid))
                                                  :task      "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
                                                  :interval  "59 MINUTES"})
-
-(defonce person-migrator-conf {:worker-id (str (random-uuid))
-                               :task "MIGRATE_PERSON_HANDLER"
-                               :interval "59 SECONDS"})
 
 (defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_QUEUE_HANDLER"
@@ -178,13 +173,3 @@
            (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link!))))
      (catch Exception e
        (log/error e "Registration queue handler failed"))))
-
-(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db]}]
-  {:pre [(some? db)]}
-  #(try
-     (when (job-db/try-to-acquire-lock! db person-migrator-conf)
-       (log/info "Person migration started")
-       (let [migrated-count (person/migrate-persons! db)]
-         (log/info (str migrated-count " registrations migrated to person table"))))
-     (catch Exception e
-       (log/error e "Person migration failed"))))

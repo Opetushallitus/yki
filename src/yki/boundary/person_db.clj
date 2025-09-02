@@ -40,7 +40,6 @@
 (defprotocol Person
   (get-person [db oid])
   (upsert-person! [db person])
-  (migrate-persons! [db])
   (get-registration-relocate-details [db oid registration-id])
   (relocate-registration! [db oid registration-id target-exam-session-id])
   (get-registration-to-confirm-details [db oid registration-id])
@@ -72,10 +71,6 @@
     [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]
       (q/upsert-person! tx person)))
-  (migrate-persons!
-    [{:keys [spec]}]
-    (jdbc/with-db-transaction [tx spec]
-      (q/migrate-persons! tx)))
   (get-registration-relocate-details [{:keys [spec]} oid registration-id]
     (jdbc/with-db-transaction [tx spec {:read-only? true}]
       (let [registration-details (-> (q/select-registration-relocate-details tx {:oid oid :id registration-id})

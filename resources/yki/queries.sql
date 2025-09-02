@@ -1768,35 +1768,6 @@ WHERE es.id = :exam_session_id
   AND ied.exam_date >= ed.exam_date
   AND select_registration_kind(ies.id) = 'ADMISSION';
 
--- name: migrate-persons!
-INSERT INTO person (oid, first_name, last_name, email, phone_number, street_address, post_office, zip)
-    (SELECT person_oid,
-            first_name,
-            last_name,
-            email,
-            phone_number,
-            street_address,
-            post_office,
-            zip
-     FROM (SELECT DISTINCT ON (person_oid)
-     person_oid,
-     form->>'first_name'     AS first_name,
-     form->>'last_name'      AS last_name,
-     form->>'email'          AS email,
-     form->>'phone_number'   AS phone_number,
-     form->>'street_address' AS street_address,
-     form->>'post_office'    AS post_office,
-     form->>'zip'            AS zip,
-     created
-           FROM registration
-           WHERE person_oid IS NOT NULL
-             AND person_oid NOT IN (select oid from person)
-             AND form->>'first_name' IS NOT NULL
-             AND form->>'last_name' IS NOT NULL
-           ORDER BY person_oid, created DESC) registrations_for_person
-     ORDER BY created DESC
-     LIMIT 2000);
-
 -- name: select-registration-to-confirm-details
 SELECT r.id,
        r.exam_fee,
