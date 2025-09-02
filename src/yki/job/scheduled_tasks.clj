@@ -40,7 +40,7 @@
 
 (defonce person-migrator-conf {:worker-id (str (UUID/randomUUID))
                                :task "MIGRATE_PERSON_HANDLER"
-                               :interval "59 MINUTES"})
+                               :interval "59 SECONDS"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
