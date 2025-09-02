@@ -4,17 +4,18 @@
     [clj-time.core :as t]
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
+    [pgqueue.core :as pgq]
     [yki.boundary.cas-ticket-db :as cas-ticket-db]
     [yki.boundary.debug :as debug]
     [yki.boundary.email :as email]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.job-db :as job-db]
     [yki.boundary.onr :as onr]
+    [yki.boundary.person-db :as person]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
     [yki.job.job-queue]
-    [yki.util.template-util :as template-util]
-    [pgqueue.core :as pgq])
+    [yki.util.template-util :as template-util])
   (:import [java.util UUID]))
 
 (defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
@@ -36,6 +37,10 @@
 (defonce sync-onr-participant-data-handler-conf {:worker-id (str (UUID/randomUUID))
                                                  :task "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
                                                  :interval "59 MINUTES"})
+
+(defonce person-migrator-conf {:worker-id (str (random-uuid))
+                               :task      "MIGRATE_PERSON_HANDLER"
+                               :interval  "59 SECONDS"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -187,3 +192,13 @@
            (Thread/sleep 10000))))
      (catch Exception e
        (log/error e "Syncing participant ONR data failed"))))
+
+(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db]}]
+  {:pre [(some? db)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db person-migrator-conf)
+       (log/info "Person migration started")
+       (let [migrated-count (person/migrate-persons! db)]
+         (log/info (str migrated-count " registrations migrated to person table"))))
+     (catch Exception e
+       (log/error e "Person migration failed"))))
