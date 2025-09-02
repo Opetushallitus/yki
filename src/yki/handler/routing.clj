@@ -28,6 +28,8 @@
 
 (def paytrail-payment-report-root (str api-root "/payment-report/paytrail"))
 
+(def person-api-root (str api-root "/person"))
+
 (def registration-api-root (str api-root "/registration"))
 
 (def exam-session-public-api-root (str api-root "/exam-session"))
@@ -47,8 +49,6 @@
 (def exam-session-uri "/exam-session")
 
 (def registration-uri "/registration")
-
-(def post-admission-uri "/post-admission")
 
 (def code-api-root (str api-root "/code"))
 

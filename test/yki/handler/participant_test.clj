@@ -18,6 +18,7 @@
 (deftest exam-session-participants-test
   (testing "get exam session participants endpoint should return participant registration form and state"
     (base/insert-base-data)
+    (base/insert-persons)
     (base/insert-registrations "COMPLETED")
     (base/insert-unpaid-expired-registration)
     (let [exam-session-route    (get-exam-session-route)

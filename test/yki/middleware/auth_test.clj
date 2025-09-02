@@ -55,8 +55,8 @@
                                        (assoc :session session))))
                                (context routing/registration-api-root []
                                  :middleware [auth]
-                                 ; /api/registration/init is an authenticated endpoint (see yki.middleware.auth/rules)
-                                 (POST "/init" {session :session}
+                                 ; /api/registration/identify is an authenticated endpoint (see yki.middleware.auth/rules)
+                                 (POST "/identify" {session :session}
                                    (-> (ok {})
                                        (assoc :session session))))
                                (context routing/virkailija-api-root []
@@ -83,7 +83,7 @@
         (is (= 200 (:status (request-with-session handlers :get url (session->cookie cookie-store (assoc oppija-session :timeout half-hour-ago))))))))
     (testing "Endpoint that requires authentication can only be accessed with valid session cookie"
       (base/execute! (str "INSERT INTO cas_oppija_ticketstore (ticket) VALUES ('" oppija-ticket "');"))
-      (let [url      (str routing/registration-api-root "/init")
+      (let [url      (str routing/registration-api-root "/identify")
             handlers (create-handlers)]
         (is (= 200 (:status (request-with-session handlers :post url (session->cookie cookie-store (assoc oppija-session :timeout half-hour-from-now))))))
         (is (= 401 (:status (request-with-session handlers :post url (session->cookie cookie-store (assoc oppija-session :timeout half-hour-ago))))))
@@ -97,7 +97,7 @@
                                        :identity    {:ticket virkailija-ticket}
                                        :timeout     half-hour-from-now}
           handlers                    (create-handlers)
-          init-registration-url       (str routing/registration-api-root "/init")
+          identify-registration-url       (str routing/registration-api-root "/identify")
           virkailija-organization-url (str routing/virkailija-api-root "/organizer")]
       (base/execute! (str "INSERT INTO cas_oppija_ticketstore (ticket) VALUES ('" oppija-ticket "');"))
       (base/execute! (str "INSERT INTO cas_ticketstore (ticket) VALUES ('" virkailija-ticket "');"))
@@ -106,13 +106,13 @@
                (->>
                  valid-oppija-session
                  (session->cookie cookie-store)
-                 (request-with-session handlers :post init-registration-url)
+                 (request-with-session handlers :post identify-registration-url)
                  (:status))))
         (is (= 401
                (->>
                  valid-virkailija-session
                  (session->cookie cookie-store)
-                 (request-with-session handlers :post init-registration-url)
+                 (request-with-session handlers :post identify-registration-url)
                  (:status)))))
       (testing "Virkailija APIs require valid virkailija session"
         (is (= 200

@@ -15,6 +15,7 @@
     [yki.middleware.payment :refer [with-request-validation]]
     [yki.spec :as ys]
     [yki.registration.email :as registration-email]
+    [yki.registration.registration :as registration]
     [yki.util.db :refer [rollback-on-exception]]
     [yki.util.exam-payment-helper :refer [registration->payment get-payment-amount-for-registration]]
     [yki.util.audit-log :as audit]
@@ -38,16 +39,16 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :yki-ui.registration.payment-error.url (:exam_session_id registration))))
 
-(defn- payment->json [{:keys [amount exam_date form language_code level_code organizer_name paid_at reference original_exam_date]}]
+(defn- payment->json [{:keys [amount exam_date last_name first_name email language_code level_code organizer_name paid_at reference original_exam_date]}]
   {:organizer          organizer_name
    :paid_at            (format-datetime-for-export paid_at)
    :exam_date          exam_date
    :exam_language      (template-util/get-language language_code "fi")
    :exam_level         (template-util/get-level level_code "fi")
    :original_exam_date original_exam_date
-   :last_name          (:last_name form)
-   :first_name         (:first_name form)
-   :email              (:email form)
+   :last_name          last_name
+   :first_name         first_name
+   :email              email
    :amount             (->>
                          (/ amount 100)
                          (double)
@@ -84,7 +85,8 @@
         payment-details     (registration-db/get-new-payment-details db transaction-id)
         registration-id     (:registration_id payment-details)
         participant-details (registration-db/get-participant-data-by-registration-id db registration-id)
-        exam-session-id     (:exam_session_id payment-details)]
+        exam-session-id     (:exam_session_id payment-details)
+        email-auth?         (= (get-in request [:session :auth-method]) "EMAIL")]
     (if (and payment-details
              (= (int (:amount payment-details))
                 (Integer/parseInt amount))
@@ -92,9 +94,16 @@
       (let [payment-id                        (:id payment-details)
             exam-session-contact-info         (exam-session-db/get-contact-info-by-exam-session-id db exam-session-id)
             exam-session-extra-information    (exam-session-db/get-exam-session-location-extra-information db exam-session-id lang)
+            exam-date                         (:exam_date (exam-session-db/get-exam-session-exam-date db exam-session-id))
+            user-portal-link                  (if (or email-auth? (:is_email_auth participant-details))
+                                                (registration/create-user-portal-link db url-helper
+                                                                                      (:participant_id participant-details)
+                                                                                      registration-id exam-date)
+                                                (url-helper :yki.login.user-portal))
             email-template-data               (assoc participant-details
                                                 :contact_info exam-session-contact-info
-                                                :extra_information (:extra_information exam-session-extra-information))
+                                                :extra_information (:extra_information exam-session-extra-information)
+                                                :login_url user-portal-link)
             send-registration-complete-email! (fn [updated-payment-details]
                                                 (registration-email/send-exam-registration-completed-email!
                                                   email-q
@@ -177,8 +186,7 @@
       (GET "/:id/redirect" {session :session}
         :path-params [id :- ::ys/registration_id]
         :query-params [lang :- ::ys/language-code]
-        (-> (redirect-to-paytrail db payment-helper url-helper lang session id)
-            (assoc :session nil))))
+        (redirect-to-paytrail db payment-helper url-helper lang session id)))
     (context routing/paytrail-payment-v2-root []
       ; TODO Is it safe to delete this whole endpoint?
       ; After removing support for redirecting to old UI, this is now identical to ...-v3-root

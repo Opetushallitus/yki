@@ -6,15 +6,15 @@
     [compojure.api.sweet :refer [context GET POST PUT DELETE]]
     [integrant.core :as ig]
     [pgqueue.core :as pgq]
-    [ring.util.http-response :refer [conflict internal-server-error ok]]
+    [ring.util.http-response :refer [conflict ok]]
     [ring.util.response :refer [bad-request not-found response]]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.handler.routing :as routing]
-    [yki.middleware.auth :as auth]
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]
     [yki.util.common :refer [string->date]]
     [yki.registration.email :as registration-email]
+    [yki.registration.registration :as registration]
     [yki.boundary.registration-db :as registration-db]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
@@ -127,41 +127,6 @@
                           (not-found {:success false
                                       :error   "Exam session not found"}))))))
 
-        (POST (str routing/post-admission-uri "/activate") request
-          :path-params [id :- ::ys/id]
-          :body [activation ::ys/post-admission-activation]
-          :return ::ys/response
-          (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-            (cond
-              (= exam-session nil) (do (log/error "Could not find exam session with id" id)
-                                       (not-found {:success false :error "Exam session not found"}))
-              (= (:post_admission_enabled exam-session) false) (do (log/error "Post admissions are not enabled for exam session" id "with an exam date" (:session_date exam-session))
-                                                                   (conflict {:success false :error "Post admissions are not enabled for this exam date"}))
-              (< (:post_admission_quota activation) 1) (do (log/error "Attempting to set too small quota of" (:post_admission_quota activation) "for exam session" id)
-                                                           (conflict {:success false :error "Minimum quota for post admission is 1"}))
-              :else
-              (if (exam-session-db/set-post-admission-active! db id (:post_admission_quota activation))
-                (response {:success true})
-                (do
-                  (log/error "Error occurred when attempting to activate post admission for exam session" id)
-                  (internal-server-error {:success false
-                                          :error   "Could not activate post admission"}))))))
-
-        (POST (str routing/post-admission-uri "/deactivate") request
-          :path-params [id :- ::ys/id]
-          :return ::ys/response
-          (let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-            (if exam-session
-              (if (exam-session-db/set-post-admission-deactive! db id)
-                (response {:success true})
-                (do
-                  (log/error "Error occurred when attempting to deactivate post admission for exam session" id)
-                  (internal-server-error {:success false
-                                          :error   "Could not deactivate post admission"})))
-              (do (log/error "Could not find exam session with id" id)
-                  (not-found {:success false
-                              :error   "Exam session not found"})))))
-
         (context routing/registration-uri []
           (GET "/" {session :session}
             :path-params [id :- ::ys/id]
@@ -176,8 +141,15 @@
                   (let [registration-details (registration-db/get-registration-data-for-clerk-mail db id registration-id)
                         lang (:lang registration-details)
                         exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
+                        user-portal-link (if (:is_email_auth registration-details)
+                                           (registration/create-user-portal-link db url-helper
+                                                                                 (:participant_id registration-details)
+                                                                                 registration-id
+                                                                                 (:exam_date registration-details))
+                                           (url-helper :yki.login.user-portal))
                         email-template-data            (assoc registration-details
-                                                              :contact_info exam-session-contact-info)]
+                                                              :contact_info exam-session-contact-info
+                                                              :user_portal_link user-portal-link)]
                     (when (= (:state registration-details) "PAID_AND_CANCELLED")
                       (log/info "Sending registration cancelled email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-cancel-registration-email!
@@ -191,6 +163,7 @@
                   (response {:success true}))
                 (bad-request {:success false
                               :error   "Registration couldn't be cancelled"})))
+            ; TODO Is this needed in the future? Users should be able to transfer their own enrollments.
             (POST "/relocate" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]
@@ -203,8 +176,15 @@
                     (let [registration-details (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
                           lang (:lang registration-details)
                           exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
+                          user-portal-link (if (:is_email_auth registration-details)
+                                             (registration/create-user-portal-link db url-helper
+                                                                      (:participant_id registration-details)
+                                                                      registration-id
+                                                                      (:exam_date registration-details))
+                                             (url-helper :yki.login.user-portal))
                           email-template-data            (assoc registration-details
-                                                                :contact_info exam-session-contact-info)]
+                                                                :contact_info exam-session-contact-info
+                                                                :user_portal_link user-portal-link)]
                       (log/info "Sending transfer confirmation email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-transfer-confirmation-email!
                        email-q
@@ -216,7 +196,8 @@
                                     :change    {:type audit-log/update-op
                                                 :old  {:exam_session_id id}
                                                 :new  {:exam_session_id (:to_exam_session_id relocate-request)}}})
-                                        ; Sync only the relocation destination exam session
+                    ; Sync both the original and the new exam session
+                    (exam-session-db/init-relocated-participants-sync-status! db id)
                     (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                     (response {:success true}))
                   (not-found {:success false
@@ -226,13 +207,20 @@
                             registration-id :- ::ys/id]
               :query-params [lang :- ::ys/language-code]
               :return ::ys/response
+              ; NB: Confirmation email is sent based on email address found on person table entry corresponding to person_oid found on registration table
               (if-let [registration-details (registration-db/get-completed-registration-data db id registration-id lang)]
                 (if-let [payment-details (registration-db/get-completed-payment-data-for-registration db registration-id)]
                   (let [exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
                         exam-session-extra-information (exam-session-db/get-exam-session-location-extra-information db id lang)
+                        user-portal-link                  (if (:is_email_auth registration-details)
+                                                            (registration/create-user-portal-link db url-helper
+                                                                                                  (:participant_id registration-details)
+                                                                                                  registration-id (:exam-date registration-details))
+                                                            (url-helper :yki.login.user-portal))
                         email-template-data            (assoc registration-details
                                                          :contact_info exam-session-contact-info
-                                                         :extra_information (:extra_information exam-session-extra-information))]
+                                                         :extra_information (:extra_information exam-session-extra-information)
+                                                         :login_url user-portal-link)]
                     (log/info "Resending confirmation email for registration with id" registration-id)
                     (registration-email/send-exam-registration-completed-email!
                       email-q

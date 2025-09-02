@@ -13,12 +13,14 @@
        :cookie-name  "yki"
        :cookie-attrs (:cookie-attrs session-config)})))
 
-(defmethod ig/init-key :yki.middleware.no-auth/with-fake-oid [_ {:keys [oid]}]
+(defmethod ig/init-key :yki.middleware.no-auth/with-fake-oid [_ {:keys [oid registration-id auth-method]}]
   (fn with-authentication [handler]
     (warn "No authentication in use, injecting a constant OID into the session identity.")
     (fn [request]
       (-> request
           (assoc-in [:session :identity :oid] oid)
+          (assoc-in [:session :identity :registration-id] registration-id)
+          (assoc-in [:session :auth-method] auth-method)
           (handler)))))
 
 (defmethod ig/init-key :yki.middleware.no-auth/with-fake-session [_ session]

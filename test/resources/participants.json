@@ -4,69 +4,83 @@
       "is_transferable": true,
       "is_transfered": false,
       "form": {
-        "post_office": "Ankkalinna",
         "ssn": "301079-900U",
         "exam_lang": "fi",
-        "phone_number": "+3584012346",
         "gender": null,
-        "email": "aa@al.fi",
-        "certificate_lang": "fi",
-        "last_name": "Ankka",
-        "first_name": "Iines",
         "nationalities": [
           "246"
         ],
+        "certificate_lang": "fi",
+        "email": "aa@al.fi",
+        "phone_number": "+3584012346",
+        "post_office": "Ankkalinna",
         "street_address": "Katu 4",
-        "zip": "12346"
+        "zip": "12346",
+        "last_name": "Ankka",
+        "first_name": "Iines"
       },
       "original_exam_session_id": null,
       "original_exam_date": null,
       "kind": "ADMISSION",
       "state": "COMPLETED",
-      "registration_id": 1
+      "registration_id": 1,
+      "email": "aa@al.fi",
+      "phone_number": "+3584012346",
+      "post_office": "Ankkalinna",
+      "street_address": "Katu 4",
+      "zip": "12346",
+      "last_name": "Ankka",
+      "first_name": "Iines"
     },
     {
       "is_transferable": true,
       "is_transfered": false,
       "form": {
-        "post_office": "Ankkalinna",
         "ssn": "010199-9012",
         "exam_lang": "fi",
-        "phone_number": "+3584012345",
         "gender": "1",
-        "email": "aa@al.fi",
         "certificate_lang": "fi",
-        "last_name": "Ankka",
-        "first_name": "Aku",
         "birthdate": "1999-01-01",
         "nationalities": [
           "180"
         ],
+        "email": "aa@al.fi",
+        "phone_number": "+3584012345",
+        "post_office": "Ankkalinna",
         "street_address": "Katu 3",
-        "zip": "12345"
+        "zip": "12345",
+        "last_name": "Ankka",
+        "first_name": "Aku"
       },
       "original_exam_session_id": null,
       "original_exam_date": null,
       "kind": "ADMISSION",
       "state": "COMPLETED",
-      "registration_id": 2
+      "registration_id": 2,
+      "email": "aa@al.fi",
+      "phone_number": "+3584012345",
+      "post_office": "Ankkalinna",
+      "street_address": "Katu 3",
+      "zip": "12345",
+      "last_name": "Ankka",
+      "first_name": "Aku"
     },
     {
       "is_transferable": true,
       "is_transfered": false,
       "form": {
-        "post_office": "Ankkalinna",
         "ssn": "301079-083N",
         "exam_lang": "fi",
-        "phone_number": "+3584012347",
         "gender": null,
-        "email": "roope@al.fi",
         "certificate_lang": "fi",
-        "last_name": "Ankka",
-        "first_name": "Roope",
         "nationalities": [
           "246"
         ],
+        "email": "roope@al.fi",
+        "phone_number": "+3584012347",
+        "last_name": "Ankka",
+        "first_name": "Roope",
+        "post_office": "Ankkalinna",
         "street_address": "Katu 5",
         "zip": "12346"
       },
@@ -74,24 +88,31 @@
       "original_exam_date": null,
       "kind": "POST_ADMISSION",
       "state": "COMPLETED",
-      "registration_id": 3
+      "registration_id": 3,
+      "email": "roope@al.fi",
+      "phone_number": "+3584012347",
+      "last_name": "Ankka",
+      "first_name": "Roope",
+      "post_office": "Ankkalinna",
+      "street_address": "Katu 5",
+      "zip": "12346"
     },
     {
       "is_transferable": false,
       "is_transfered": false,
       "form": {
-        "post_office": "Ankkalinna",
         "ssn": "301079-900U",
         "exam_lang": "fi",
-        "phone_number": "+3584012346",
         "gender": null,
-        "email": "aa@al.fi",
         "certificate_lang": "fi",
-        "last_name": "Ankka",
-        "first_name": "Iines",
         "nationalities": [
           "246"
         ],
+        "email": "aa@al.fi",
+        "phone_number": "+3584012346",
+        "last_name": "Ankka",
+        "first_name": "Iines",
+        "post_office": "Ankkalinna",
         "street_address": "Katu 4",
         "zip": "12346"
       },
@@ -99,7 +120,14 @@
       "original_exam_date": null,
       "kind": "ADMISSION",
       "state": "EXPIRED",
-      "registration_id": 4
+      "registration_id": 4,
+      "email": "aa@al.fi",
+      "phone_number": "+3584012346",
+      "last_name": "Ankka",
+      "first_name": "Iines",
+      "post_office": "Ankkalinna",
+      "street_address": "Katu 4",
+      "zip": "12346"
     }
   ]
 }

@@ -53,13 +53,14 @@
     ; Delete link if contact fields are null
     (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id exam-session-id})))
 
-(defn- get-transfer-targets-for-exam-session [tx original-exam-date exam-session-id]
+(defn get-transfer-targets-for-exam-session
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session"
-  (let [candidates (q/select-transfer-targets-by-exam-session-id tx {:exam_session_id exam-session-id})
-        within-year? #(let [exam-date (f/parse (:exam_date %1))
+  [tx original-exam-date exam-session-id]
+  (let [candidates   (q/select-transfer-targets-by-exam-session-id tx {:exam_session_id exam-session-id})
+        within-year? #(let [exam-date  (f/parse (:exam_date %1))
                             limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
                         (not (t/after? exam-date limit-date)))
-        within-year (filter within-year? candidates)]
+        within-year  (filter within-year? candidates)]
     (cond
       (empty? candidates) []
       (seq within-year) (map :id within-year)
@@ -82,20 +83,15 @@
   (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
   (get-exam-sessions-to-be-synced [db retry-duration])
+  (get-exam-session-organizer-oid [db registration-id])
   (get-exam-sessions [db from]
     "Get exam sessions with exam date at least 'from'")
   (get-exam-sessions-for-oid [db oid from]
     "Get exam sessions by oid and with (optional) exam date at least 'from'")
-  (get-exam-sessions-with-queue [db])
-  (get-email-added-to-queue? [db email exam-session-id])
-  (add-to-exam-session-queue! [db email lang exam-session-id])
-  (update-exam-session-queue-last-notified-at! [db email exam-session-id])
-  (remove-from-exam-session-queue! [db email exam-session-id])
   (remove-old-entries-from-exam-session-queue! [db])
-  (set-post-admission-active! [db id quota])
-  (set-post-admission-deactive! [db id])
   (get-contact-info-by-exam-session-id [db id])
-  (get-exam-session-location-extra-information [db id lang]))
+  (get-exam-session-location-extra-information [db id lang])
+  (get-exam-session-exam-date [db id]))
 
 (extend-protocol ExamSessions
   Boundary
@@ -136,15 +132,15 @@
     (jdbc/with-db-transaction [tx spec]
       (let [{exam-session-id :id exam-date :exam_date} (q/select-registration-details-for-transfer tx {:id registration-id})
             valid-transfer-targets (get-transfer-targets-for-exam-session
-                                    tx
-                                    exam-date
-                                    exam-session-id)]
-        (if (some #{to-exam-session-id} valid-transfer-targets )
+                                     tx
+                                     exam-date
+                                     exam-session-id)]
+        (if (some #{to-exam-session-id} valid-transfer-targets)
           (int->boolean (q/update-registration-exam-session!
-                         tx
-                         {:exam_session_id to-exam-session-id
-                          :registration_id registration-id
-                          :oid             oid}))
+                          tx
+                          {:exam_session_id to-exam-session-id
+                           :registration_id registration-id
+                           :oid             oid}))
           false))))
   (cancel-registration!
     [{:keys [spec]} registration-id]
@@ -173,7 +169,6 @@
       (rollback-on-exception
         tx
         (fn []
-          (q/delete-from-exam-session-queue-by-session-id! tx {:exam_session_id id})
           (q/delete-exam-session-contact-by-session-id! tx {:exam_session_id id})
           (q/delete-participant-sync-status! tx {:exam_session_id id})
           (let [deleted (int->boolean (q/delete-exam-session! tx {:id id :oid oid}))]
@@ -192,6 +187,8 @@
     (q/select-exam-session-participants spec {:id id :oid oid}))
   (get-completed-exam-session-participants [{:keys [spec]} id]
     (q/select-completed-exam-session-participants spec {:id id}))
+  (get-exam-session-organizer-oid [{:keys [spec]} id]
+    (q/select-exam-session-organizer-oid spec {:id id}))
   (get-exam-sessions [{:keys [spec]} from]
     (q/select-exam-sessions spec {:from from}))
   (get-exam-sessions-for-oid [{:keys [spec]} oid from]
@@ -201,59 +198,8 @@
         (mapv (fn [{date :session_date id :id :as session}]
                 (assoc session :transfer_targets (get-transfer-targets-for-exam-session tx date id)))
               exam-sessions))))
-  (get-email-added-to-queue? [{:keys [spec]} email exam-session-id]
-    (int->boolean (:count (first (q/select-email-added-to-queue spec {:email           email
-                                                                      :exam_session_id exam-session-id})))))
-  (get-exam-sessions-with-queue [{:keys [spec]}]
-    (q/select-exam-sessions-with-queue spec))
-  (add-to-exam-session-queue!
-    [{:keys [spec] :as db} email lang exam-session-id]
-    (jdbc/with-db-transaction [tx spec]
-      (let [registration-not-open? (-> (q/select-exam-session-registration-open spec {:exam_session_id exam-session-id})
-                                       (first)
-                                       (:exists)
-                                       (not))
-            already-in-queue?      (get-email-added-to-queue? db email exam-session-id)
-            queue-size             (-> (q/select-exam-session-queue-count spec {:exam_session_id exam-session-id})
-                                       (first)
-                                       (:count))
-            full-queue?            (<= 50 queue-size)]
-        (if (or registration-not-open?
-                already-in-queue?
-                full-queue?)
-          {:exists  already-in-queue?
-           :full    full-queue?
-           :success false}
-          (do
-            (q/insert-exam-session-queue! tx {:exam_session_id exam-session-id
-                                              :lang            lang
-                                              :email           email})
-            {:success true})))))
-  (update-exam-session-queue-last-notified-at!
-    [{:keys [spec]} email exam-session-id]
-    (jdbc/with-db-transaction [tx spec]
-      (q/update-exam-session-queue-last-notified-at! tx {:exam_session_id exam-session-id
-                                                         :email           email})))
-  (remove-from-exam-session-queue!
-    [{:keys [spec]} email exam-session-id]
-    (jdbc/with-db-transaction [tx spec]
-      (q/delete-from-exam-session-queue! tx {:exam_session_id exam-session-id
-                                             :email           email})))
-
   (remove-old-entries-from-exam-session-queue! [{:keys [spec]}]
     (q/delete-exam-session-queue-entries-for-old-exam-dates! spec))
-
-  (set-post-admission-active!
-    [{:keys [spec]} id quota]
-    (jdbc/with-db-transaction [tx spec]
-      (q/activate-exam-session-post-admission! tx {:exam_session_id      id
-                                                   :post_admission_quota quota})))
-
-  (set-post-admission-deactive!
-    [{:keys [spec]} id]
-    (jdbc/with-db-transaction [tx spec]
-      (q/deactivate-exam-session-post-admission! tx {:exam_session_id id})))
-
   (get-contact-info-by-exam-session-id
     [{:keys [spec]} id]
     (first (q/select-exam-session-contact-info spec {:id id})))
@@ -261,4 +207,7 @@
   (get-exam-session-location-extra-information
     [{:keys [spec]} id lang]
     (first (q/select-exam-session-extra-information spec {:id   id
-                                                          :lang lang}))))
+                                                          :lang lang})))
+  (get-exam-session-exam-date
+    [{:keys [spec]} id]
+    (first (q/select-exam-session-exam-date spec {:id id}))))

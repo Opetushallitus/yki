@@ -4,43 +4,37 @@
     [clj-time.core :as t]
     [clojure.tools.logging :as log]
     [integrant.core :as ig]
+    [pgqueue.core :as pgq]
     [yki.boundary.cas-ticket-db :as cas-ticket-db]
     [yki.boundary.debug :as debug]
     [yki.boundary.email :as email]
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.job-db :as job-db]
     [yki.boundary.onr :as onr]
-    [yki.boundary.person-db :as person]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
-    [yki.job.job-queue]
-    [yki.util.template-util :as template-util]
-    [pgqueue.core :as pgq])
-  (:import [java.util UUID]))
+    [yki.registration.registration :refer [send-lifted-from-queue-email!]]
+    [yki.job.job-queue]))
 
-(defonce registration-state-handler-conf {:worker-id (str (UUID/randomUUID))
+(defonce registration-state-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_STATE_HANDLER"
                                           :interval  "59 SECONDS"})
 
-(defonce participants-sync-handler-conf {:worker-id (str (UUID/randomUUID))
+(defonce participants-sync-handler-conf {:worker-id (str (random-uuid))
                                          :task      "PARTICIPANTS_SYNC_HANDLER"
                                          :interval  "59 MINUTES"})
 
-(defonce exam-session-queue-handler-conf {:worker-id (str (UUID/randomUUID))
-                                          :task      "EXAM_SESSION_QUEUE_HANDLER"
-                                          :interval  "599 SECONDS"})
-
-(defonce remove-old-data-handler-conf {:worker-id (str (UUID/randomUUID))
+(defonce remove-old-data-handler-conf {:worker-id (str (random-uuid))
                                        :task      "REMOVE_OLD_DATA_HANDLER"
                                        :interval  "1 DAY"})
 
-(defonce sync-onr-participant-data-handler-conf {:worker-id (str (UUID/randomUUID))
-                                                 :task "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
-                                                 :interval "59 MINUTES"})
+(defonce sync-onr-participant-data-handler-conf {:worker-id (str (random-uuid))
+                                                 :task      "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
+                                                 :interval  "59 MINUTES"})
 
-(defonce person-migrator-conf {:worker-id (str (UUID/randomUUID))
-                               :task "MIGRATE_PERSON_HANDLER"
-                               :interval "59 SECONDS"})
+(defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
+                                          :task      "REGISTRATION_QUEUE_HANDLER"
+                                          :interval  "29 SECONDS"})
 
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
@@ -73,7 +67,9 @@
          (when ids (log/info "Started registrations set to expired" ids)))
        (log/debug "Check submitted registrations expiry")
        (let [ids (registration-db/update-submitted-registrations-to-expired! db)]
-         (when ids (log/info "Submitted registrations set to expired" ids))))
+         (when ids (log/info "Submitted registrations set to expired" ids)))
+       (let [ids (registration-db/expire-queued-registrations-after-exam-date! db)]
+         (when ids (log/info "Queued registrations set to expired" ids))))
      (catch Exception e
        (log/error e "Registration state handler failed"))))
 
@@ -115,41 +111,6 @@
                                (log/info "Received request to sync data to yki register" data-sync-req)
                                (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled data-sync-req))))
 
-(defmethod ig/init-key ::exam-session-queue-handler
-  [_ {:keys [db email-q url-helper]}]
-  {:pre [(some? db) (some? email-q) (some? url-helper)]}
-  #(try
-     (when (job-db/try-to-acquire-lock! db exam-session-queue-handler-conf)
-       (log/info "Exam session queue handler started")
-       (let [exam-sessions-with-queue (exam-session-db/get-exam-sessions-with-queue db)]
-         (doseq [exam-session exam-sessions-with-queue]
-           (log/info "Exam session with queue and free space" exam-session)
-           (try
-             (doseq [item (:queue exam-session)]
-               (let [lang             (:lang item)
-                     email            (:email item)
-                     exam-session-id  (:exam_session_id exam-session)
-                     exam-session-url (url-helper :exam-session.url exam-session-id)
-                     language         (template-util/get-language (:language_code exam-session) lang)
-                     level            (template-util/get-level (:level_code exam-session) lang)]
-                 (log/info "Sending notification to email" email)
-                 (pgq/put email-q
-                          {:recipients [email]
-                           :created    (System/currentTimeMillis)
-                           :subject    (template-util/subject "queue" lang exam-session)
-                           :body       (template-util/render
-                                         "queue"
-                                         lang
-                                         (assoc exam-session
-                                           :exam_session_url exam-session-url
-                                           :language language
-                                           :level level))})
-                 (exam-session-db/update-exam-session-queue-last-notified-at! db email exam-session-id)))
-             (catch Exception e
-               (log/error e "Failed to send notifications for" exam-session))))))
-     (catch Exception e
-       (log/error e "Exam session queue handler failed"))))
-
 (defmethod ig/init-key ::remove-old-data-handler
   [_ {:keys [db]}]
   {:pre [(some? db)]}
@@ -157,8 +118,8 @@
      (when (job-db/try-to-acquire-lock! db remove-old-data-handler-conf)
        (log/info "Old data removal started")
        (let [deleted-from-exam-session-queue (exam-session-db/remove-old-entries-from-exam-session-queue! db)
-             deleted-cas-tickets (cas-ticket-db/delete-old-tickets! db :virkailija)
-             deleted-cas-oppija-tickets (cas-ticket-db/delete-old-tickets! db :oppija)]
+             deleted-cas-tickets             (cas-ticket-db/delete-old-tickets! db :virkailija)
+             deleted-cas-oppija-tickets      (cas-ticket-db/delete-old-tickets! db :oppija)]
          (log/info "Removed old entries from exam-session-queue:" deleted-from-exam-session-queue)
          (log/info "Removed old CAS tickets:" deleted-cas-tickets)
          (log/info "Removed old CAS-oppija tickets:" deleted-cas-oppija-tickets)))
@@ -193,12 +154,22 @@
      (catch Exception e
        (log/error e "Syncing participant ONR data failed"))))
 
-(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db]}]
-  {:pre [(some? db)]}
+(defmethod ig/init-key ::registration-queue-handler [_ {:keys [db url-helper payment-helper email-q]}]
+  {:pre [(some? db) (some? url-helper) (some? payment-helper) (some? email-q)]}
   #(try
-     (when (job-db/try-to-acquire-lock! db person-migrator-conf)
-       (log/info "Person migration started")
-       (let [migrated-count (person/migrate-persons! db)]
-         (log/info (str migrated-count " registrations migrated to person table"))))
+     (when (job-db/try-to-acquire-lock! db registration-queue-handler-conf)
+       (log/info "Registration queue handler started")
+       (let [create-and-send-payment-link! (fn [{:keys [id participant_id ui_language]}]
+                                             (let [lang                (or ui_language "fi")
+                                                   email-template-data (registration-db/get-registration-data db id participant_id lang)
+                                                   code                (str (random-uuid))
+                                                   login-url           (url-helper :yki.login-link.url code)]
+                                               (send-lifted-from-queue-email! db url-helper payment-helper email-q lang email-template-data code login-url)))
+             exam-session-details          (registration-db/get-participant-and-queue-count-for-ongoing-admissions db)]
+         (doseq [{:keys [exam_session_id max_participants participants queue]} exam-session-details
+                 :let [available-places (- max_participants participants)
+                       to-lift          (min queue available-places)]
+                 _ (range 0 to-lift)]
+           (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link!))))
      (catch Exception e
-       (log/error e "Person migration failed"))))
+       (log/error e "Registration queue handler failed"))))

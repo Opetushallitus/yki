@@ -21,13 +21,14 @@
 (defn sha256-hash [code]
   (bytes->hex (hash/sha256 code)))
 
-(defn create-and-send-link [db url-helper email-q lang login-link exam-session]
+(defn create-and-send-link [db url-helper email-q lang login-link exam-session to-queue?]
   (let [code          (str (random-uuid))
         login-url     (url-helper :yki.login-link.url code)
         email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
-        link-type     (:type login-link)
+        link-type     (if to-queue? "LOGIN_QUEUE" (:type login-link))
+        subject       (str (localisation/get-translation lang (if to-queue? "email.login_queue.subject" "email.login.subject")))
         hashed        (sha256-hash code)
-        template-data (assoc exam-session :subject (str (localisation/get-translation lang "email.login.subject"))
+        template-data (assoc exam-session :subject subject
                                           :language (template-util/get-language (:language_code exam-session) lang)
                                           :level (template-util/get-level (:level_code exam-session) lang)
                                           :login_url login-url)]
@@ -39,15 +40,15 @@
               :subject    (template-util/login-subject template-data)
               :body       (template-util/render link-type lang template-data)})))
 
-(defmethod ig/init-key :yki.handler/login-link [_ {:keys [db email-q url-helper access-log]}]
-  {:pre [(some? db) (some? email-q) (some? url-helper) (some? access-log)]}
+(defmethod ig/init-key :yki.handler/login-link [_ {:keys [db auth email-q url-helper access-log]}]
+  {:pre [(some? db) (some? auth) (some? email-q) (some? url-helper) (some? access-log)]}
   (api
     (context routing/login-link-api-root []
       :coercion :spec
-      :middleware [access-log with-error-boundary]
+      :middleware [auth access-log with-error-boundary]
       ; Handler only called when ordering registration link
       ; to email, as an alternative to Suomi.fi-authentication.
-      (POST "/" _
+      (POST "/" {session :session}
         :body [login-link ::ys/login-link]
         :query-params [lang :- ::ys/language-code]
         :return ::ys/response
@@ -56,7 +57,9 @@
           (if (:open exam-session)
             (let [participant-id           (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                                 :email            (:email login-link)}))
-                  registration-url         (url-helper :yki-ui.exam-session-registration.url exam-session-id)
+                  registration-kind        (or (:registration_kind login-link) "ADMISSION")
+                  to-queue?                (= "QUEUE" registration-kind)
+                  registration-url         (url-helper (if to-queue? :yki-ui.exam-session-queue.url :yki-ui.exam-session-registration.url) exam-session-id)
                   registration-expired-url (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
                   link                     (assoc login-link :participant_id participant-id
                                                              :type "LOGIN"
@@ -64,7 +67,8 @@
                                                              :expires_at (c/date-from-now 2)
                                                              :success_redirect registration-url
                                                              :expired_link_redirect registration-expired-url
-                                                             :registration_id nil)]
+                                                             :registration_id nil
+                                                             :user_data {:previous-session-id (:yki-session-id session)})]
               (log/info "Requested login link:" login-link)
               (if
                 (login-link-db/get-recent-login-link-by-exam-session-and-participant
@@ -78,7 +82,15 @@
                       ", exam-session-id:"
                       exam-session-id)
                     (ok {:success true}))
-                (when (create-and-send-link db url-helper email-q lang link exam-session)
-                  (ok {:success true}))))
+                (when (create-and-send-link db url-helper email-q lang link exam-session to-queue?)
+                  ; If user isn't properly logged in, ie. auth-method is "SESSION", clear session details after ordering login link.
+                  ; This is done to allow users to order multiple login links to one exam session.
+                  ; The use case is mostly related to testing in DEV/QA environments, but can also be a legitimate scenario in production use.
+                  (let [auth-method   (:auth-method session)
+                        session-auth? (= "SESSION" auth-method)]
+                    (cond->
+                      (ok {:success true})
+                      session-auth?
+                      (assoc :session nil))))))
             (do (log/error "Requested login link, but registration for exam session isn't open." login-link)
                 (forbidden))))))))

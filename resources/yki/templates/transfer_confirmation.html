@@ -71,7 +71,9 @@
 
 <tr>
   <td style="padding-left: 20px; padding-top: 20px">
-    {% i18n email.transfer_confirmation.content.special_arrangements.info1 %} <b>{% i18n email.transfer_confirmation.content.special_arrangements.info2 %}</b> {% i18n email.transfer_confirmation.content.special_arrangements.info3 %}:
+    {% i18n email.transfer_confirmation.content.special_arrangements.info1 %} <b>{% i18n email.transfer_confirmation.content.special_arrangements.info2 %}</b>
+      {% i18n email.transfer_confirmation.content.special_arrangements.info3 %}
+      {% i18n email.transfer_confirmation.content.special_arrangements.info4 %}:
   </td>
 </tr>
 <tr>
@@ -82,7 +84,7 @@
 
 <tr>
   <td style="padding-left: 20px; padding-top: 20px;">
-    <b>{% i18n email.payment_success.content.line3.part1 %}</b> {% i18n email.payment_success.content.line3.part2 %}:
+    <b>{% i18n email.payment_success.content.line3.part1 %}</b> {% i18n email.payment_success.content.line3.part2 %}
   </td>
 </tr>
 <tr>
@@ -130,6 +132,12 @@
 <tr>
   <td style="padding-left: 20px;">
     <a href="{% i18n email.payment_success.content.line5.link.url %}" target="_blank">{% i18n email.payment_success.content.line5.link.text %}</a>
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.content.line6 %}:
+    <a href="{{user_portal_link}}" target="_blank">{% i18n email.payment_success.content.line6.link.text %}</a>
   </td>
 </tr>
 

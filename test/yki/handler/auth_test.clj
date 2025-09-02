@@ -17,7 +17,7 @@
         auth         (base/auth url-helper)
         environment  (base/environment "prod")
         auth-handler (base/auth-handler auth url-helper)
-        user-handler (base/user-handler auth environment)]
+        user-handler (base/user-handler auth environment url-helper)]
     (routes auth-handler user-handler)))
 
 (deftest redirect-unauthenticated-user-to-authentication-test
@@ -28,7 +28,7 @@
                                       :request-method :get))]
     (testing "unauthenticated user should be redirected with http code 303"
       (is (= (get-in response [:response :status]) 303))
-      (is (= ((get-in response [:response :headers]) "Location") "https://localhost:8080/cas-oppija/login?locale=fi&service=http://yki.localhost:8080/yki/auth/callbackFI?examSessionId=")))))
+      (is (= ((get-in response [:response :headers]) "Location") "https://localhost:8080/cas-oppija/login?locale=fi&service=http://yki.localhost:8080/yki/auth/callback/fi/ADMISSION?examSessionId=")))))
 
 (def user-1 {"last_name"        "Aakula"
              "nick_name"        "Emma"
@@ -56,8 +56,10 @@
 
 (deftest login-and-logout-with-login-link-test
   (base/insert-base-data)
-  (base/insert-login-link base/code-ok "2038-01-01")
-  (base/insert-login-link code-expired (l/format-local-time (l/local-now) :date))
+  (base/insert-login-link {:code       base/code-ok
+                           :expires-at "2038-01-01"})
+  (base/insert-login-link {:code code-expired
+                           :expires-at (l/format-local-time (l/local-now) :date)})
 
   (let [routes               (create-routes "")
         session              (peridot/session routes)
@@ -68,14 +70,13 @@
         id                   (response-body "identity")
         logout-response      (-> response
                                  (peridot/request (str routing/auth-root "/logout"))
-                                 (peridot/request (str routing/user-api-root "/identity")))
-        logout-response-body (base/body-as-json (:response logout-response))]
+                                 (peridot/request (str routing/user-api-root "/identity")))]
     (testing "after successful login link authentication session should contain user data"
       (is (= (get-in response [:response :status]) 200))
       (is (= (id "email") "test@user.com")))
     (testing "after logout session should not contain user data"
-      (is (= (get-in logout-response [:response :status]) 200))
-      (is (= (logout-response-body "identity") nil))))
+      (is (= (get-in logout-response [:response :status]) 401))
+      (is (= (get-in logout-response [:response :body]) nil))))
 
   (let [routes   (create-routes "")
         session  (peridot/session routes)

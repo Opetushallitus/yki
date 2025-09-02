@@ -140,11 +140,10 @@
         (do-post (url-helper :yki-register.exam-date) (json/write-value-as-string exam-date-req) basic-auth)
         (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string exam-session-req) basic-auth)))))
 
-(defn participant->csv-record [url-helper registration-form oid]
-  (let [{:keys [first_name last_name gender nationalities birthdate ssn certificate_lang
-                exam_lang post_office zip street_address email]} registration-form
+(defn participant->csv-record [url-helper {:keys [form is_transfered person_oid last_name first_name email zip post_office street_address]}]
+  (let [{:keys [gender nationalities birthdate ssn certificate_lang exam_lang]} form
         nationality (codes/get-converted-country-code url-helper (first nationalities))]
-    [oid
+    [person_oid
      (ssn-or-birthdate ssn birthdate)
      last_name
      first_name
@@ -155,11 +154,12 @@
      post_office
      email
      exam_lang
-     certificate_lang]))
+     certificate_lang
+     (if is_transfered 1 0)]))
 
 (defn create-participants-csv [url-helper participants]
   (with-open [writer (StringWriter.)]
-    (let [csv-data (map #(participant->csv-record url-helper (:form %) (:person_oid %)) participants)]
+    (let [csv-data (map #(participant->csv-record url-helper %) participants)]
       (csv/write-csv writer csv-data :separator \;))
     (.toString writer)))
 
@@ -170,7 +170,7 @@
         url          (str (url-helper :yki-register.participants)
                           (create-url-params exam-session))
         request      (create-participants-csv url-helper participants)]
-   (exam-session-db/init-participants-sync-status! db exam-session-id)
+    (exam-session-db/init-participants-sync-status! db exam-session-id)
     (if disabled
       (log/info "Sending disabled. Logging request" request)
       (do-post url request basic-auth "text/csv; charset=UTF-8"))
@@ -190,6 +190,5 @@
       (sync-organizer db url-helper basic-auth disabled organizer-oid nil))))
 
 (defn return-exam-session-participants-csv [db url-helper exam-session-id]
-  (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
-        csv          (create-participants-csv url-helper participants)]
-    csv))
+  (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)]
+    (create-participants-csv url-helper participants)))

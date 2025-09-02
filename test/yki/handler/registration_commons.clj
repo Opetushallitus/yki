@@ -26,7 +26,8 @@
         user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user {:db          db
                                                                                      :access-log  access-log
                                                                                      :auth        auth
-                                                                                     :environment environment}))
+                                                                                     :environment environment
+                                                                                     :onr-client (base/onr-client url-helper)}))
         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db             db
                                                                                              :url-helper     url-helper
                                                                                              :payment-helper payment-helper
@@ -74,6 +75,11 @@
                                                    :body (j/write-value-as-string {:exam_session_id 1})
                                                    :content-type "application/json"
                                                    :request-method :post))
+        identify-response     (-> session
+                                  (peridot/request (str routing/registration-api-root "/identify")
+                                                   :body (j/write-value-as-string {:exam_session_id 1})
+                                                   :content-type "application/json"
+                                                   :request-method :post))
         init-response-body    (base/body-as-json (:response init-response))
         registration-id       (init-response-body "registration_id")
         create-twice-response (-> session
@@ -93,11 +99,12 @@
                                      (str routing/registration-api-root "/" registration-id)
                                      :request-method :delete))
         get-payment           #(base/select-one (str "SELECT * FROM exam_payment_new WHERE registration_id = " registration-id))
-        get-payment-link      #(base/select-one (str "SELECT * FROM login_link WHERE registration_id = " registration-id))
+        get-payment-link      #(base/select-one (str "SELECT * FROM login_link WHERE type <> 'PERSON' AND registration_id = " registration-id))
         get-registration      #(base/select-one (str "SELECT * FROM registration WHERE id = " registration-id))
         get-email-request     #(pgq/take email-q)]
     {:session               session
      :init-response         init-response
+     :identify-response     identify-response
      :init-response-body    init-response-body
      :registration          registration
      :registration-id       registration-id

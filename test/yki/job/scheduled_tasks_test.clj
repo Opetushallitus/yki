@@ -1,7 +1,6 @@
 (ns yki.job.scheduled-tasks-test
   (:require
     [clojure.test :refer [deftest is testing use-fixtures]]
-    [clojure.string :as str]
     [clojure.java.jdbc :as jdbc]
     [clj-time.core :as t]
     [integrant.core :as ig]
@@ -96,13 +95,13 @@
      "/organisaatio-service/rest/organisaatio/v4/1.2.3.4.5" {:status       200
                                                              :content-type "application/json"
                                                              :body         (slurp "test/resources/organization.json")}
-     "/tutkinto"                                            {:status       201
+     "/yki-sp/oph/tutkinto"                                 {:status       201
                                                              :content-type "application/json"
                                                              :body         "{}"}
-     "/tutkintotilaisuus"                                   {:status       201
+     "/yki-sp/oph/tutkintotilaisuus"                        {:status       201
                                                              :content-type "application/json"
                                                              :body         "{}"}
-     "/jarjestaja"                                          {:status       201
+     "/yki-sp/oph/jarjestaja"                               {:status       201
                                                              :content-type "application/json"
                                                              :body         "{}"}}
     (let [data-sync-q     (base/data-sync-q)
@@ -150,10 +149,9 @@
 (deftest handle-exam-session-participants-sync-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
-  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (base/yesterday) "'"))
-  (base/insert-post-admission-registration (:oid base/organizer) 50 20)
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set exam_date = '" (base/two-weeks-from-now) "'"))
   (with-routes!
-    {"/osallistujat"                                                        {:status 200
+    {"/yki-sp/oph/osallistujat"                                             {:status 200
                                                                              :body   "{}"}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}
@@ -167,11 +165,11 @@
           _           (handler)
           sync_status (base/select-one "SELECT * FROM participant_sync_status")]
       (testing "should send participants to yki register and set sync status to success"
-        (is (= (count (:recordings (first @(:routes server)))) 2))
+        (is (= (count (:recordings (first @(:routes server)))) 1))
         (is (some? (:success_at sync_status))))
       (testing "should send participants only once"
         (handler)
-        (is (= (count (:recordings (first @(:routes server)))) 2))))))
+        (is (= (count (:recordings (first @(:routes server)))) 1))))))
 
 (deftest handle-exam-session-participants-failure-test
   (base/insert-base-data)
@@ -181,7 +179,7 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant_sync_status (exam_session_id, failed_at) VALUES (1, '" (base/yesterday) "')"))
 
   (with-routes!
-    {"/osallistujat"                                                        {:status 500
+    {"/yki-sp/oph/osallistujat"                                             {:status 500
                                                                              :body   "{}"}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}
@@ -197,28 +195,3 @@
           failed_at_after  (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))]
       (testing "should update failed at timestamp"
         (is (t/after? failed_at_after failed_at_before))))))
-
-(deftest handle-exam-session-queue-test
-  (base/insert-base-data)
-  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_session_queue (email, lang, exam_session_id) VALUES ('test@test.com', 'sv', 1)")
-  (let [now           (t/to-time-zone (t/now) (t/time-zone-for-id "Europe/Helsinki"))
-        at-eight-am   (t/from-time-zone (t/today-at 8 00 00) (t/time-zone-for-id "Europe/Helsinki"))
-        at-nine-pm    (t/from-time-zone (t/today-at 21 00 00) (t/time-zone-for-id "Europe/Helsinki"))
-        email-q       (base/email-q)
-        handler       (ig/init-key :yki.job.scheduled-tasks/exam-session-queue-handler {:db         (base/db)
-                                                                                        :url-helper (base/create-url-helper "")
-                                                                                        :email-q    email-q})
-        _             (handler)
-        email-request (pgq/take email-q)
-        queue         (base/select-one "SELECT * FROM exam_session_queue")]
-    ; notifications are send only between 8 - 21
-    (if (t/within? at-eight-am at-nine-pm now)
-      (do
-        (testing "should send notification"
-          (is (str/includes? (:body email-request) "Omenia, Upseerinkatu 11, 00240 ESPOO")))
-        (testing "should set last_notified_at timestamp"
-          (is (some? (:last_notified_at queue))))
-        (testing "should send notification only once a day"
-          (handler)
-          (is (nil? (pgq/take email-q)))))
-      (is (nil? email-request)))))

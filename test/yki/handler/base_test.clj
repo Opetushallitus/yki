@@ -16,8 +16,9 @@
     [yki.handler.auth]
     [yki.handler.exam-date]
     [yki.handler.exam-session]
-    [yki.handler.organizer]
     [yki.handler.login-link :as login-link]
+    [yki.handler.organizer]
+    [yki.handler.person]
     [yki.handler.quarantine]
     [yki.handler.routing :as routing]
     [yki.handler.user]
@@ -51,9 +52,6 @@
 
 (def organization
   (slurp "test/resources/organization.json"))
-
-(def post-admission
-  (slurp "test/resources/post_admission.json"))
 
 (defn days-ago [days]
   (f/unparse (f/formatter c/date-format) (t/minus (t/now) (t/days days))))
@@ -132,11 +130,13 @@
                                                           :permissions-client (permissions-client url-helper)
                                                           :cas-client         (cas-client url-helper)})))
 (defn user-handler
-  [auth env]
-  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth       auth
-                                                          :db         (db)
-                                                          :access-log (access-log)
-                                                          :environment env})))
+  [auth env url-helper]
+  (middleware/wrap-format (ig/init-key :yki.handler/user {:auth        auth
+                                                          :db          (db)
+                                                          :access-log  (access-log)
+                                                          :environment env
+                                                          :onr-client  (onr-client url-helper)})))
+
 (defn email-q []
   (ig/init-key :yki.job.job-queue/init {:db-config {:db (embedded-db/db-spec)}})
   (ig/init-key :yki.job.job-queue/email-q {}))
@@ -245,12 +245,6 @@
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('2039-05-02', '2039-01-01', '2039-03-01')")
   (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_end_date) VALUES ('2039-05-10', '2039-01-01', '2039-03-01', '2039-04-15')"))
 
-(defn insert-post-admission-dates []
-  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_start_date, post_admission_end_date)
-                                    VALUES ('2041-06-01', '2041-01-01', '2041-01-30', '2041-03-01', '2041-03-30')")
-  (jdbc/execute! @embedded-db/conn "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_start_date, post_admission_end_date, post_admission_enabled)
-                                    VALUES ('2041-07-01', '2041-01-01', '2041-01-30', '2041-03-01', '2041-03-30', true)"))
-
 (defn insert-custom-exam-date [exam-date reg-start reg-end]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date) VALUES ('" exam-date "', '" reg-start "', '" reg-end "')")))
 
@@ -274,7 +268,7 @@
   (select-one (str "(SELECT * from evaluation WHERE exam_date_id=" (select-exam-date-id-by-date exam-date) ")")))
 
 (defn insert-exam-session
-  [exam-date-id organizer-oid count]
+  [exam-date-id organizer-oid max-participants]
   (let [office-oid (str organizer-oid ".5")]
     (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
           language_code,
@@ -285,23 +279,7 @@
           published_at)
             VALUES (
               (SELECT id FROM organizer where oid = '" organizer-oid "'),
-              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null)"))))
-
-(defn insert-exam-session-with-post-admission
-  [exam-date-id organizer-oid count quota]
-  (let [office-oid (str organizer-oid ".5")]
-    (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
-          language_code,
-          level_code,
-          office_oid,
-          exam_date_id,
-          max_participants,
-          published_at,
-          post_admission_quota,
-          post_admission_active)
-            VALUES (
-              (SELECT id FROM organizer where oid = '" organizer-oid "'),
-              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " count ", null, " quota ", true)"))))
+              'fin', 'PERUS', '" office-oid "'," exam-date-id ", " max-participants ", null)"))))
 
 (defn insert-exam-session-location
   [organizer-oid lang]
@@ -410,6 +388,20 @@
                    (str "INSERT INTO exam_payment_new(state, registration_id, amount, reference, transaction_id, href)
                  VALUES (" values-str ");"))))
 
+(defn insert-persons []
+  (doseq [[oid form] {"5.4.3.2.2" registration-form-2
+                      "5.4.3.2.3" registration-form-2
+                      "5.4.3.2.1" registration-form
+                      "5.4.3.2.4" post-admission-registration-form}]
+    (let [{:keys [first_name last_name email phone_number street_address post_office zip]} form]
+      (jdbc/execute!
+        @embedded-db/conn
+        (str "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip) VALUES ("
+             (->> [oid first_name last_name email phone_number street_address post_office zip]
+                  (map #(str "'" % "'"))
+                  (str/join ","))
+             ")")))))
+
 (defn insert-registrations [state]
   (jdbc/execute! @embedded-db/conn (str
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
@@ -417,6 +409,7 @@
   (jdbc/execute! @embedded-db/conn (str
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
                                      ('5.4.3.2.1','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form) "')"))
+
   (jdbc/execute! @embedded-db/conn (str
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form, kind) values
                                      ('5.4.3.2.4','" state "', " select-exam-session ", " select-participant ",'" (j/write-value-as-string post-admission-registration-form) "', 'POST_ADMISSION')")))
@@ -426,51 +419,34 @@
                                      "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values
                                      ('5.4.3.2.3', 'EXPIRED', " select-exam-session ", " select-participant ",'" (j/write-value-as-string registration-form-2) "')")))
 
-(defn insert-login-link [code expires-at]
+(defn insert-login-link [{:keys [code participant exam-session expires-at]
+                          :or   {participant  select-participant
+                                 exam-session select-exam-session}}]
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO login_link
           (code, type, participant_id, exam_session_id, expires_at, expired_link_redirect, success_redirect)
-            VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " select-participant ", " select-exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
+            VALUES ('" (login-link/sha256-hash code) "', 'REGISTRATION', " participant ", " exam-session ", '" expires-at "', 'http://localhost/expired', 'http://localhost/success' )")))
 
 (defn get-exam-session-id []
   (:id (select-one "SELECT id from exam_session WHERE max_participants = 5")))
 
-(defn insert-post-admission-registration
-  [organizer-oid count quota]
-  (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_date(exam_date, registration_start_date, registration_end_date, post_admission_start_date, post_admission_end_date) VALUES ('" (two-weeks-from-now) "', '2019-08-01', '2019-10-01','" (two-weeks-ago) "', '" (two-weeks-from-now) "')"))
-  (let [exam-date-id        (:id (select-one (select-exam-date-id-by-date (two-weeks-from-now))))
-        office-oid          (str organizer-oid ".5")
-        insert-exam         (jdbc/execute! @embedded-db/conn (str "INSERT INTO exam_session (organizer_id,
-          language_code,
-          level_code,
-          office_oid,
-          exam_date_id,
-          max_participants,
-          published_at,
-          post_admission_quota,
-          post_admission_active)
-            VALUES (
-              (SELECT id FROM organizer where oid = '" organizer-oid "'),'fin', 'PERUS', '" office-oid "', " exam-date-id ", " count ", null, " quota ", true)"))
-        exam-session-id     (:id (select-one (str "SELECT id FROM exam_session where exam_date_id = " exam-date-id ";")))
-        user-id             (:id (select-one (str "SELECT id from participant WHERE external_user_id = 'thirdtest@user.com';")))
-        insert-registration (jdbc/execute! @embedded-db/conn (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form) values ('5.4.3.2.3','COMPLETED', " exam-session-id ", " user-id ",'" (j/write-value-as-string post-admission-registration-form) "')"))]
-    (doall insert-exam)
-    (doall insert-registration)))
-
-(defn login-with-login-link [session]
-  (-> session
-      (peridot/request (str routing/auth-root "/login?code=" code-ok))))
+(defn login-with-login-link
+  ([session]
+   (login-with-login-link session code-ok))
+  ([session code]
+   (-> session
+       (peridot/request (str routing/auth-root "/login?code=" code)))))
 
 (defn create-url-helper [uri]
   (let [uri-with-schema (str "http://" uri)]
     (ig/init-key
       :yki.util/url-helper
-      {:virkailija-host           uri
-       :oppija-host               uri
-       :yki-register-host         uri
-       :yki-host-virkailija       uri
-       :alb-host                  uri-with-schema
-       :scheme                    "http"
-       :oppija-sub-domain         "yki."})))
+      {:virkailija-host     uri
+       :oppija-host         uri
+       :yki-register-host   uri
+       :yki-host-virkailija uri
+       :alb-host            uri-with-schema
+       :scheme              "http"
+       :oppija-sub-domain   "yki."})))
 
 (defn mock-pdf-renderer []
   (reify PdfTemplateRenderer
@@ -517,6 +493,16 @@
 
 (defn no-auth-fake-session-oid-middleware [oid]
   (ig/init-key :yki.middleware.no-auth/with-fake-oid {:oid oid}))
+
+(defn person-handler
+  [auth url-helper payment-helper]
+  (middleware/wrap-format (ig/init-key :yki.handler/person {:auth           auth
+                                                            :url-helper     url-helper
+                                                            :payment-helper payment-helper
+                                                            :db             (db)
+                                                            :onr-client     (onr-client url-helper)
+                                                            :access-log     (access-log)
+                                                            :email-q        (email-q)})))
 
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)

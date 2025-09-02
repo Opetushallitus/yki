@@ -16,10 +16,10 @@
                                                       :name           "Järjestäjä Oy"
                                                       :login_url      "http://localhost:8080/login"})]
     (testing "result contains proper content"
-      (is (s/includes? rendered "Tutkinto: Suomi ylin taso"))
+      (is (s/includes? rendered "YKI-testi: Suomi ylin taso"))
       (is (s/includes? rendered "Testipäivä: 16.5.2024"))
       (is (s/includes? rendered "Testipaikka: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
-      (is (s/includes? rendered "Ilmoittaudu YKI-testiin tämän linkin kautta"))
+      (is (s/includes? rendered "Ilmoittaudu YKI-testiin tästä linkistä"))
       (is (s/includes? rendered "http://localhost:8080/login")))))
 
 (deftest render-payment-email-test
@@ -40,7 +40,7 @@
       (is (s/includes? rendered "Testdatum: 16.5.2024"))
       (is (s/includes? rendered "Testställe: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
       (is (s/includes? rendered "Examensavgift: 100,00 €"))
-      (is (s/includes? rendered "Betala avgiften senast 24.4.2024, annars återkallas din anmälan."))
+      (is (s/includes? rendered "Betala examensavgiften senast 24.4.2024</b> för att bekräfta din anmälan."))
       (is (s/includes? rendered "http://localhost:8080/payment")))))
 
 (deftest render-payment-success-email-test
@@ -78,24 +78,6 @@
         (is (s/includes? rendered "Email address: foo@bar"))
         (is (s/includes? rendered "Phone: +358123"))))))
 
-(deftest render-queue-email-test
-  (let [template "QUEUE"
-        lang     "fi"
-        rendered (template-util/render template lang {:language         "Suomi"
-                                                      :level            "Ylin taso"
-                                                      :exam_date        "2024-05-16"
-                                                      :street_address   "Katutie 13"
-                                                      :zip              "00500"
-                                                      :post_office      "Helsinki"
-                                                      :name             "Järjestäjä Oy"
-                                                      :exam_session_url "http://localhost:8080/exam-session"})]
-    (testing "result contains proper content"
-      (is (s/includes? rendered "Tutkinto: Suomi ylin taso"))
-      (is (s/includes? rendered "Testipäivä: 16.5.2024"))
-      (is (s/includes? rendered "Testipaikka: Järjestäjä Oy, Katutie 13, 00500 HELSINKI"))
-      (is (s/includes? rendered "YKI-testissä on vapaita paikkoja"))
-      (is (s/includes? rendered "http://localhost:8080/exam-session")))))
-
 (deftest render-evaluation-payment-success-email-test
   (let [template "EVALUATION_PAYMENT_SUCCESS"
         lang     "fi"
@@ -106,7 +88,7 @@
                                                       :order_time 1716336000000 ; 22.5.2024
                                                       :amount     100M})]
     (testing "result contains proper content"
-      (is (s/includes? rendered "<b>Tutkinto:</b> Suomi ylin taso"))
+      (is (s/includes? rendered "<b>YKI-testi:</b> Suomi ylin taso"))
       (is (s/includes? rendered "<b>Testipäivä:</b> 16.5.2024"))
       (is (s/includes? rendered "Osakokeet"))
       (is (s/includes? rendered "Puhuminen"))

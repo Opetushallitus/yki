@@ -25,7 +25,6 @@
       :middleware [auth access-log with-error-boundary]
       (POST "/init" request
         :body [registration-init ::ys/registration-init]
-        :return ::ys/registration-init-response
         (audit/log-participant {:request   request
                                 :target-kv {:k audit/registration-init
                                             :v (:exam_session_id registration-init)}
@@ -35,22 +34,27 @@
                                         (:session request)
                                         registration-init
                                         (:payment-config payment-helper)))
+      (POST "/identify" request
+        :body [registration-identify ::ys/registration-init]
+        (audit/log-participant {:request   request
+                                :target-kv {:k audit/registration-identify
+                                            :v (:exam_session_id registration-identify)}
+                                :change    {:type audit/create-op
+                                            :new  registration-identify}})
+        (registration/identify-registration db
+                                            (:session request)
+                                            registration-identify
+                                            (:payment-config payment-helper)))
       (context "/:id" []
         (POST "/submit" request
           :body [registration ::ys/registration]
           :path-params [id :- ::ys/id]
           :query-params [lang :- ::ys/language-code]
-          :return ::ys/response
-          (let [{:keys [oid error]} (registration/submit-registration db
-                                                                      url-helper
-                                                                      payment-helper
-                                                                      email-q
-                                                                      lang
-                                                                      (:session request)
-                                                                      id
-                                                                      registration
-                                                                      onr-client)]
-            (if oid
+          :return ::ys/submit-registration-response
+          (let [result (registration/submit-registration db url-helper payment-helper
+                                                         email-q lang (:session request)
+                                                         id registration onr-client)]
+            (if-let [oid (:oid result)]
               (do
                 (audit/log-participant {:request   request
                                         :oid       oid
@@ -58,18 +62,18 @@
                                                     :v id}
                                         :change    {:type audit/create-op
                                                     :new  registration}})
-                (ok {:success true}))
+                (ok (assoc result :success true)))
               (do
-                (log/error "Registration id:" id "failed with error" error)
+                (log/error "Registration id:" id "failed with error" (:error result))
                 (internal-server-error {:success false
-                                        :error   error})))))
+                                        :error   (:error result)})))))
         (DELETE "/" request
           :path-params [id :- ::ys/id]
           :return ::ys/response
           (let [{:keys [auth-method identity]} (:session request)
                 participant-id (registration/get-participant-id db identity)]
             (if participant-id
-              (if (registration-db/cancel-registration-for-participant! db participant-id id)
+              (if (registration-db/cancel-started-registration-for-participant! db participant-id id)
                 (do
                   (audit/log-participant {:request   request
                                           :target-kv {:k audit/registration
