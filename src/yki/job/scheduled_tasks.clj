@@ -34,8 +34,8 @@
                                                  :interval  "59 MINUTES"})
 
 (defonce person-migrator-conf {:worker-id (str (random-uuid))
-                               :task      "MIGRATE_PERSON_HANDLER"
-                               :interval  "59 MINUTES"})
+                               :task "MIGRATE_PERSON_HANDLER"
+                               :interval "59 SECONDS"})
 
 (defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_QUEUE_HANDLER"
