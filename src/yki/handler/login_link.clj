@@ -26,8 +26,9 @@
         login-url     (url-helper :yki.login-link.url code)
         email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
         link-type     (if to-queue? "LOGIN_QUEUE" (:type login-link))
+        subject       (str (localisation/get-translation lang (if to-queue? "email.login_queue.subject" "email.login.subject")))
         hashed        (sha256-hash code)
-        template-data (assoc exam-session :subject (str (localisation/get-translation lang "email.login.subject"))
+        template-data (assoc exam-session :subject subject
                                           :language (template-util/get-language (:language_code exam-session) lang)
                                           :level (template-util/get-level (:level_code exam-session) lang)
                                           :login_url login-url)]
