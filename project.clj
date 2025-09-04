@@ -10,14 +10,14 @@
                  ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
-  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.19.2"]
-                         [com.fasterxml.jackson.core/jackson-core "2.19.2"]
-                         [com.fasterxml.jackson.core/jackson-databind "2.19.2"]
-                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.19.2"]
+  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.20"]
+                         [com.fasterxml.jackson.core/jackson-core "2.20.0"]
+                         [com.fasterxml.jackson.core/jackson-databind "2.20.0"]
+                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.20.0"]
                          ; [com.layerware/pgqueue "0.5.1"] depends on a version of nippy with a known vulnerability
                          ; as there is no update for pgqueue available, let's instead fix the nippy version here
                          [com.taoensso/nippy "2.15.3"]]
-  :dependencies [[org.clojure/clojure "1.12.1"]
+  :dependencies [[org.clojure/clojure "1.12.2"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/data.json "2.5.1"]
                  [org.clojure/data.csv "1.1.0"]
@@ -40,7 +40,7 @@
                  [duct/database.sql.hikaricp "0.4.0"]
                  [buddy/buddy-auth "3.0.323"]
                  [webjure/jeesql "0.4.7"]
-                 [http-kit "2.8.0"]
+                 [http-kit "2.8.1"]
                  [ring-logger "1.1.1"]
                  [ch.qos.logback/logback-classic "1.5.18"]
                  [org.clojure/data.xml "0.0.8"]
