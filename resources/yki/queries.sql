@@ -720,7 +720,7 @@ SELECT NOT EXISTS (
 AS exists;
 
 -- name: select-registered-to-other-exam-session-on-exam-date
-SELECT es.id
+SELECT es.id, re.state
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
 WHERE re.participant_id = :participant_id

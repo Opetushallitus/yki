@@ -79,10 +79,9 @@
       :session session)))
 
 (defn- init-error-response [space-left? other-registration to-queue? exam-session-id]
-  (let [error {:error {:full                  (not space-left?)
-                       :registered            (some? other-registration)
-                       :to-queue              to-queue?
-                       :other-exam-session-id (:id other-registration)}}]
+  (let [error {:error {:full                            (not space-left?)
+                       :other-exam-session-registration other-registration
+                       :to-queue                        to-queue?}}]
     (log/warn "END: Init exam session" exam-session-id "failed with error" error)
     (conflict error)))
 
