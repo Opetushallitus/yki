@@ -120,7 +120,9 @@
   (let [oppija-authenticated?     (fn [request]
                                     (authenticated? db :oppija request))
         virkailija-authenticated? (fn [request]
-                                    (authenticated? db :virkailija request))]
+                                    (authenticated? db :virkailija request))
+        session-authenticated?    (fn [{:keys [session]}]
+                                    (= "SESSION" (:auth-method session)))]
     [{:pattern #".*/auth/cas/callback"
       :handler any-access}
      {:pattern #".*/auth/login.*"
@@ -177,6 +179,9 @@
       :on-error (fn [req _] (redirect-to-cas-oppija req url-helper))}
      {:pattern #".*/api/registration/init"
       :handler any-access}
+     {:pattern        #".*/api/registration/.*"
+      :request-method :delete
+      :handler        {:or [oppija-authenticated? session-authenticated?]}}
      {:pattern #".*/api/registration.*"
       :handler oppija-authenticated?}
      {:pattern #".*/api/exam-date/.*"
