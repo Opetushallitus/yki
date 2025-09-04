@@ -719,7 +719,7 @@ SELECT NOT EXISTS (
     HAVING (es.max_participants - COUNT(re.id)) <= 0)
 AS exists;
 
--- name: select-registered-to-exam-session-on-exam-date
+-- name: select-registered-to-other-exam-session-on-exam-date
 SELECT es.id
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
