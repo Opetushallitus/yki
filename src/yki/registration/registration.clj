@@ -78,10 +78,10 @@
            :user                   user})
       :session session)))
 
-(defn- init-error-response [space-left? not-registered? to-queue? exam-session-id]
-  (let [error {:error {:full       (not space-left?)
-                       :registered (not not-registered?)
-                       :to-queue   to-queue?}}]
+(defn- init-error-response [space-left? other-registration to-queue? exam-session-id]
+  (let [error {:error {:full                            (not space-left?)
+                       :other-exam-session-registration other-registration
+                       :to-queue                        to-queue?}}]
     (log/warn "END: Init exam session" exam-session-id "failed with error" error)
     (conflict error)))
 
@@ -135,13 +135,13 @@
       (create-registration-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config)
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
-        (let [space-left?       (registration-db/exam-session-space-left? db exam_session_id nil)
-              not-registered?   (registration-db/not-registered-to-exam-session? db participant-id exam_session_id)
-              registration-kind (if to_queue "QUEUE" "ADMISSION")]
-          (if (and not-registered?
+        (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
+              other-registration (registration-db/registered-to-other-exam-session-on-exam-date? db participant-id exam_session_id)
+              registration-kind  (if to_queue "QUEUE" "ADMISSION")]
+          (if (and (not other-registration)
                    (or to_queue space-left?))
             (create-registration db exam_session_id participant-id registration-kind session-new payment-config)
-            (init-error-response space-left? not-registered? to_queue exam_session_id)))
+            (init-error-response space-left? other-registration to_queue exam_session_id)))
         ; no registration open
         (conflict {:error {:closed true}})))))
 

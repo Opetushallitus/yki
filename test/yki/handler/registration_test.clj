@@ -100,7 +100,7 @@
                                                          :content-type "application/json"
                                                          :request-method :post))]
 
-          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
+          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "other-exam-session-registration"]) {"id" 1, "state" "SUBMITTED"}))
           (is (= (get-in create-twice-response [:response :status]) 409))))
 
       (testing "second post to another session should return conflict with proper error"
@@ -110,7 +110,7 @@
                                                          :content-type "application/json"
                                                          :request-method :post))]
 
-          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "registered"]) true))
+          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "other-exam-session-registration"]) {"id" 1, "state" "SUBMITTED"}))
           (is (= (get-in create-twice-response [:response :status]) 409))))
 
       (testing "when session is full should return conflict with proper error"

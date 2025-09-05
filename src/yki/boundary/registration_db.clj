@@ -18,7 +18,7 @@
   ; Other methods
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
-  (not-registered-to-exam-session? [db participant-id exam-session-id])
+  (registered-to-other-exam-session-on-exam-date? [db participant-id exam-session-id])
   (is-registered-to-other-exam-session? [db participant-id exam-session-id])
   (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id])
   (create-registration! [db registration])
@@ -54,15 +54,15 @@
   (get-participant-by-external-id
     [{:keys [spec]} external-id]
     (first (q/select-participant-by-external-id spec {:external_user_id external-id})))
-  (not-registered-to-exam-session?
+  (registered-to-other-exam-session-on-exam-date?
     [{:keys [spec]} participant-id exam-session-id]
-    (let [exists (first (q/select-not-registered-to-exam-session spec {:participant_id  participant-id
-                                                                       :exam_session_id exam-session-id}))]
-      (:exists exists)))
+    (first (q/select-registered-to-other-exam-session-on-exam-date
+             spec {:participant_id  participant-id
+                   :exam_session_id exam-session-id})))
   (is-registered-to-other-exam-session?
     [{:keys [spec]} participant-id exam-session-id]
     (let [exists (first (q/select-is-registered-to-other-exam-session spec {:participant_id  participant-id
-                                                                             :exam_session_id exam-session-id}))]
+                                                                            :exam_session_id exam-session-id}))]
       (:exists exists)))
   (get-started-registration-id+kind-by-participant-id
     [{:keys [spec]} participant-id exam-session-id]
@@ -85,7 +85,7 @@
     [{:keys [spec]} registration-id participant-id]
     (jdbc/with-db-transaction [tx spec]
       (q/update-registration-participant-id! tx {:registration_id registration-id
-                                                 :participant_id participant-id})))
+                                                 :participant_id  participant-id})))
   (update-participant-email!
     [{:keys [spec]} email participant-id]
     (jdbc/with-db-transaction [tx spec]
