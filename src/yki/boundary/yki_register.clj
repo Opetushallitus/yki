@@ -1,6 +1,7 @@
 (ns yki.boundary.yki-register
   (:require
     [clojure.data.csv :as csv]
+    [clojure.set :as set]
     [clojure.string :as str]
     [clojure.tools.logging :as log]
     [yki.util.http-util :as http-util]
@@ -66,6 +67,19 @@
        (do
          (log/error "Failed to sync data, error response" (remove-basic-auth response))
          (throw (Exception. (str "Could not sync request to url " url))))))))
+
+(defn- do-put [url body-as-string basic-auth content-type]
+  (let [response (http-util/do-request {:method     :put
+                                        :url        url
+                                        :headers    {"content-type" content-type}
+                                        :basic-auth [(:user basic-auth) (:password basic-auth)]
+                                        :body       body-as-string})
+        status   (str (:status response))]
+    (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
+      (log/info "Syncing data success")
+      (do
+        (log/error "Failed to sync data, error response" (remove-basic-auth response))
+        (throw (Exception. (str "Could not sync request to url " url)))))))
 
 (defn- do-delete [url basic-auth]
   (log/info "DELETE request to url" url)
@@ -192,3 +206,18 @@
 (defn return-exam-session-participants-csv [db url-helper exam-session-id]
   (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)]
     (create-participants-csv url-helper participants)))
+
+(defn sync-person
+  [url-helper basic-auth disabled person]
+  (if disabled
+    (log/info "Person sync disabled")
+    (let [oid                   (:oid person)
+          person->solki-payload {:street_address :katuosoite
+                                 :zip            :postinumero
+                                 :post_office    :postitoimipaikka
+                                 :email          :sahkoposti
+                                 :phone_number   :puhelinnumero}
+          payload               (-> person
+                                    (select-keys (keys person->solki-payload))
+                                    (set/rename-keys person->solki-payload))]
+      (do-put (url-helper :yki-register.person oid) (json/write-value-as-string payload) basic-auth "application/json"))))

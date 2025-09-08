@@ -7,6 +7,7 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.person-db :as person-db]
     [yki.boundary.registration-db :as registration-db]
+    [yki.boundary.yki-register :as yki-register]
     [yki.handler.exam-payment-new :refer [redirect-to-paytrail]]
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
@@ -36,8 +37,13 @@
       (handler request)
       (unauthorized))))
 
-(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q onr-client url-helper payment-helper]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? url-helper) (some? payment-helper)]}
+(defn- valid-solki-config? [{:keys [disabled user password]}]
+  (or disabled
+      (and (string? user)
+           (string? password))))
+
+(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q onr-client url-helper payment-helper solki-config]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? url-helper) (some? payment-helper) (valid-solki-config? solki-config)]}
   (api
     (context routing/person-api-root []
       :coercion :spec
@@ -45,23 +51,33 @@
       (GET "/" {session :session}
         ;:return ::ys/person
         (if (authorized-for-handler? session)
-          (let [oid (get-in session [:identity :oid])]
-            (if oid
-              (if-let [person (person-db/get-person db oid)]
-                (-> person
-                    (with-authorized-registrations session)
-                    (ok))
-                (not-found))
-              (unauthorized "no oid in session")))
+          (if-let [oid (get-in session [:identity :oid])]
+            (if-let [person (person-db/get-person db oid)]
+              (-> person
+                  (with-authorized-registrations session)
+                  (ok))
+              (not-found))
+            (unauthorized "no oid in session"))
           (unauthorized)))
       (POST "/" {session :session}
-        :body [person ::ys/person]
+        :body [contact ::ys/person-contact]
         :return ::ys/response
-        (let [oid (get-in session [:identity :oid])]
-          (if (person-db/upsert-person! db (assoc person :oid oid))
-            ; TODO Update person details to Solki!
-            (ok {:success true})
-            (ok {:success false}))))
+        ; TODO Is weak authentication supported?
+        (if (authorized-for-handler? session)
+          (if-let [oid (get-in session [:identity :oid])]
+            (let [person (assoc contact :oid oid)]
+              (if (person-db/update-contact-details! db person)
+                (do
+                  ; TODO Syncing person details to Solki could be orchestrated with a background job instead
+                  (yki-register/sync-person
+                    url-helper
+                    (select-keys [:user :password] solki-config)
+                    (:disabled solki-config)
+                    person)
+                  (ok {:success true}))
+                (ok {:success false})))
+            (unauthorized "no oid in session"))
+          (unauthorized)))
       (context (str routing/registration-uri "/:registration-id") []
         :path-params [registration-id :- ::ys/registration_id]
         (context "" {session :session}

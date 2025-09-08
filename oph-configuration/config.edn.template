@@ -68,6 +68,18 @@
                                    :db         #ig/ref :duct.database/sql
                                    :url-helper #ig/ref :yki.util/url-helper}
 
+ :yki.handler/person {:db             #ig/ref :duct.database/sql
+                      :auth           #ig/ref :yki.middleware.auth/with-authentication
+                      :access-log     #ig/ref :yki.middleware.access-log/with-logging
+                      :onr-client     #ig/ref :yki.boundary.onr/onr-client
+                      :email-q        #ig/ref :yki.job.job-queue/email-q
+                      :environment    #ig/ref :yki.env/environment
+                      :url-helper     #ig/ref :yki.util/url-helper
+                      :payment-helper #ig/ref :yki.util/exam-payment-helper
+                      :solki-config   {:disabled {{yki_register_participant_sync_disabled}}
+                                       :user     "{{yki_register_user}}"
+                                       :password "{{yki_register_password}}"}}
+
   :yki.boundary.cas/cas-client {:url-helper #ig/ref :yki.util/url-helper
                                 :cas-creds {:username "{{yki_cas_username}}"
                                             :password "{{yki_cas_password}}"}}

@@ -1755,6 +1755,16 @@ street_address = :street_address,
 post_office = :post_office, zip = :zip,
 modified = current_timestamp;
 
+-- name: update-person-contact-details!
+UPDATE person
+SET email = :email,
+    phone_number = :phone_number,
+    street_address = :street_address,
+    post_office = :post_office,
+    zip = :zip,
+    modified = current_timestamp
+WHERE oid = :oid;
+
 -- name: select-person
 SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip
 FROM person
