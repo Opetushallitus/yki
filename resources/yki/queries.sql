@@ -1800,4 +1800,7 @@ SET state = CASE WHEN state = 'COMPLETED'::registration_state
                  THEN 'PAID_AND_CANCELLED'::registration_state
                  ELSE 'CANCELLED'::registration_state END,
     modified=current_timestamp
-WHERE person_oid = :oid AND id = :id AND state IN ('COMPLETED', 'SUBMITTED');
+WHERE person_oid = :oid
+  AND id = :id
+  AND state IN ('COMPLETED', 'SUBMITTED')
+  AND TRUE IN (SELECT is_cancellable(r.id) FROM registration r WHERE id = :id);
