@@ -44,6 +44,8 @@
   (base/insert-unpaid-expired-registration)
   ; Make all registrations belong to person with oid 5.4.3.2.1
   (base/execute! "UPDATE registration SET person_oid='5.4.3.2.1'")
+  ; Make exam session 1 recent enough so that registrations are returned through person APIs
+  (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 month' WHERE id=1") ;
   (with-routes!
     {}
     (let [db             (base/db)
@@ -78,6 +80,45 @@
               (is (= [1 2 3 4] (->> response-data
                                     :registrations
                                     (map :id))))))
+          (testing "registrations for exam sessions over a year ago are not returned"
+            (let [fake-auth (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                         {:identity    {:oid (:oid person)}
+                                          :auth-method "SUOMIFI"})
+                  handler   (base/person-handler fake-auth url-helper payment-helper)
+                  routes    (routes handler)
+                  session   (peridot/session routes)]
+              ; Move exam session date to just over a year ago -> no registrations are to be returned
+              (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 year 1 day' WHERE id=1")
+              (let [response      (-> session
+                                      (peridot/request routing/person-api-root :request-method :get))
+                    response-data (read-response-json response)]
+                (is (= 200 (get-in response [:response :status])))
+                (is (= person (dissoc response-data :registrations)))
+                (is (= [] (->> response-data
+                               :registrations
+                               (map :id)))))
+              ; Move exam session date to exactly a year ago -> registrations should again be returned
+              (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 year' WHERE id=1")
+              (let [response      (-> session
+                                      (peridot/request routing/person-api-root :request-method :get))
+                    response-data (read-response-json response)]
+                (is (= 200 (get-in response [:response :status])))
+                (is (= person (dissoc response-data :registrations)))
+                (is (= [1 2 3 4] (->> response-data
+                                      :registrations
+                                      (map :id)))))
+              ; Access to registrations to future exam sessions should not be restricted
+              (base/execute! "UPDATE exam_date SET exam_date = current_date + interval '10 years' WHERE id=1")
+              (let [response      (-> session
+                                      (peridot/request routing/person-api-root :request-method :get))
+                    response-data (read-response-json response)]
+                (is (= 200 (get-in response [:response :status])))
+                (is (= person (dissoc response-data :registrations)))
+                (is (= [1 2 3 4] (->> response-data
+                                      :registrations
+                                      (map :id)))))
+              ; Finally, reset exam date to a month ago
+              (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 month' WHERE id=1")))
           (testing "weakly authenticated user only receives details related to registration linked with login code"
             (let [fake-auth     (ig/init-key :yki.middleware.no-auth/with-fake-session
                                              {:identity    {:oid             (:oid person)
