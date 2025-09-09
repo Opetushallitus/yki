@@ -1701,7 +1701,8 @@ ed.registration_start_date, ed.registration_end_date,
 FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-WHERE person_oid = :oid;
+WHERE person_oid = :oid
+  AND current_date - interval '1 year' <= ed.exam_date;
 
 -- name: select-registration-queue-positions
 SELECT r.id, COUNT(r2.id) AS position
@@ -1799,4 +1800,7 @@ SET state = CASE WHEN state = 'COMPLETED'::registration_state
                  THEN 'PAID_AND_CANCELLED'::registration_state
                  ELSE 'CANCELLED'::registration_state END,
     modified=current_timestamp
-WHERE person_oid = :oid AND id = :id AND state IN ('COMPLETED', 'SUBMITTED');
+WHERE person_oid = :oid
+  AND id = :id
+  AND state IN ('COMPLETED', 'SUBMITTED')
+  AND TRUE IN (SELECT is_cancellable(r.id) FROM registration r WHERE id = :id);

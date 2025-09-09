@@ -1,8 +1,6 @@
 (ns yki.handler.person-test
   (:require
     [clojure.data.json :as json]
-    [clojure.java.jdbc :as jdbc]
-    [clojure.string :as str]
     [clojure.test :refer [deftest is testing use-fixtures]]
     [compojure.core :refer [routes]]
     [integrant.core :as ig]
@@ -44,6 +42,8 @@
   (base/insert-unpaid-expired-registration)
   ; Make all registrations belong to person with oid 5.4.3.2.1
   (base/execute! "UPDATE registration SET person_oid='5.4.3.2.1'")
+  ; Make exam session 1 recent enough so that registrations are returned through person APIs
+  (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 month' WHERE id=1") ;
   (with-routes!
     {}
     (let [db             (base/db)
@@ -78,6 +78,45 @@
               (is (= [1 2 3 4] (->> response-data
                                     :registrations
                                     (map :id))))))
+          (testing "registrations for exam sessions over a year ago are not returned"
+            (let [fake-auth (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                         {:identity    {:oid (:oid person)}
+                                          :auth-method "SUOMIFI"})
+                  handler   (base/person-handler fake-auth url-helper payment-helper)
+                  routes    (routes handler)
+                  session   (peridot/session routes)]
+              ; Move exam session date to just over a year ago -> no registrations are to be returned
+              (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 year 1 day' WHERE id=1")
+              (let [response      (-> session
+                                      (peridot/request routing/person-api-root :request-method :get))
+                    response-data (read-response-json response)]
+                (is (= 200 (get-in response [:response :status])))
+                (is (= person (dissoc response-data :registrations)))
+                (is (= [] (->> response-data
+                               :registrations
+                               (map :id)))))
+              ; Move exam session date to exactly a year ago -> registrations should again be returned
+              (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 year' WHERE id=1")
+              (let [response      (-> session
+                                      (peridot/request routing/person-api-root :request-method :get))
+                    response-data (read-response-json response)]
+                (is (= 200 (get-in response [:response :status])))
+                (is (= person (dissoc response-data :registrations)))
+                (is (= [1 2 3 4] (->> response-data
+                                      :registrations
+                                      (map :id)))))
+              ; Access to registrations to future exam sessions should not be restricted
+              (base/execute! "UPDATE exam_date SET exam_date = current_date + interval '10 years' WHERE id=1")
+              (let [response      (-> session
+                                      (peridot/request routing/person-api-root :request-method :get))
+                    response-data (read-response-json response)]
+                (is (= 200 (get-in response [:response :status])))
+                (is (= person (dissoc response-data :registrations)))
+                (is (= [1 2 3 4] (->> response-data
+                                      :registrations
+                                      (map :id)))))
+              ; Finally, reset exam date to a month ago
+              (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 month' WHERE id=1")))
           (testing "weakly authenticated user only receives details related to registration linked with login code"
             (let [fake-auth     (ig/init-key :yki.middleware.no-auth/with-fake-session
                                              {:identity    {:oid             (:oid person)
@@ -118,34 +157,67 @@
   (base/insert-persons)
   (base/insert-registrations "SUBMITTED")
   (base/insert-unpaid-expired-registration)
-  ; Make all registrations belong to person with oid 5.4.3.2.1
-  (base/execute! "UPDATE registration SET person_oid='5.4.3.2.1'")
   (with-routes!
     {}
     (let [db             (base/db)
           url-helper     (base/create-url-helper (str "localhost:" port))
           payment-helper (base/create-examination-payment-helper db url-helper)
-          oid            "5.4.3.2.1"]
+          oid-1          "5.4.3.2.1"
+          oid-2          "5.4.3.2.2"]
+      ; oid-1 should own registrations 1 and 2
+      (base/execute! (str "UPDATE registration SET person_oid='" oid-1 "' WHERE id IN (1,2)"))
+      ; oid-2 should own registrations 3 and 4
+      ; update also registration 3 kind to 'ADMISSION' (from 'POST_ADMISSION') to ensure its details can be got from the /confirm endpoint
+      (base/execute! (str "UPDATE registration SET kind='ADMISSION', person_oid='" oid-2 "' WHERE id IN (3,4)"))
       (testing "strongly authenticated person can view and act on all their registrations"
-        (let [fake-auth          (ig/init-key :yki.middleware.no-auth/with-fake-session
-                                              {:identity    {:oid oid}
-                                               :auth-method "SUOMIFI"})
-              handler            (base/person-handler fake-auth url-helper payment-helper)
-              routes             (routes handler)
-              session            (peridot/session routes)
-              confirm-response-1 (-> session
-                                     (peridot/request (str routing/person-api-root routing/registration-uri "/" 1 "/confirm") :request-method :get))
-              response-data-1    (read-response-json confirm-response-1)
-              confirm-response-2 (-> session
-                                     (peridot/request (str routing/person-api-root routing/registration-uri "/" 2 "/confirm") :request-method :get))
-              response-data-2    (read-response-json confirm-response-2)]
-          (is (= 200 (get-in confirm-response-1 [:response :status])))
-          (is (= 1 (:id response-data-1)))
-          (is (= 200 (get-in confirm-response-2 [:response :status])))
-          (is (= 2 (:id response-data-2)))))
+        (testing "oid-1 can query for confirmation details of registrations 1 and 2"
+          (let [fake-auth          (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                                {:identity    {:oid oid-1}
+                                                 :auth-method "SUOMIFI"})
+                handler            (base/person-handler fake-auth url-helper payment-helper)
+                routes             (routes handler)
+                session            (peridot/session routes)
+                confirm-response-1 (-> session
+                                       (peridot/request (str routing/person-api-root routing/registration-uri "/" 1 "/confirm") :request-method :get))
+                response-data-1    (read-response-json confirm-response-1)
+                confirm-response-2 (-> session
+                                       (peridot/request (str routing/person-api-root routing/registration-uri "/" 2 "/confirm") :request-method :get))
+                response-data-2    (read-response-json confirm-response-2)
+                unauthorized-3     (-> session
+                                       (peridot/request (str routing/person-api-root routing/registration-uri "/" 3 "/confirm") :request-method :get))]
+            (is (= 200 (get-in confirm-response-1 [:response :status])))
+            (is (= 1 (:id response-data-1)))
+            (is (= 200 (get-in confirm-response-2 [:response :status])))
+            (is (= 2 (:id response-data-2)))
+            (is (= 404 (get-in unauthorized-3 [:response :status])))
+            (is (= nil (get-in unauthorized-3 [:response :body])))))
+        (testing "oid-2 can query for confirmation details of registration 3"
+          (let [fake-auth          (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                                {:identity    {:oid oid-2}
+                                                 :auth-method "SUOMIFI"})
+                handler            (base/person-handler fake-auth url-helper payment-helper)
+                routes             (routes handler)
+                session            (peridot/session routes)
+                unauthorized-1     (-> session
+                                       (peridot/request (str routing/person-api-root routing/registration-uri "/" 1 "/confirm") :request-method :get))
+                unauthorized-2     (-> session
+                                       (peridot/request (str routing/person-api-root routing/registration-uri "/" 2 "/confirm") :request-method :get))
+                confirm-response-3 (-> session
+                                       (peridot/request (str routing/person-api-root routing/registration-uri "/" 3 "/confirm") :request-method :get))
+                response-data-3    (read-response-json confirm-response-3)
+                expired-4          (-> session
+                                       (peridot/request (str routing/person-api-root routing/registration-uri "/" 4 "/confirm") :request-method :get))]
+            (is (= 404 (get-in unauthorized-1 [:response :status])))
+            (is (= nil (get-in unauthorized-1 [:response :body])))
+            (is (= 404 (get-in unauthorized-2 [:response :status])))
+            (is (= nil (get-in unauthorized-2 [:response :body])))
+            (is (= 200 (get-in confirm-response-3 [:response :status])))
+            (is (= 3 (:id response-data-3)))
+            (is (= 404 (get-in expired-4 [:response :status])))
+            (is (= nil (get-in expired-4 [:response :body]))))))
       (testing "weakly authenticated user can only access data related to registration linked with login code"
         (let [fake-auth          (ig/init-key :yki.middleware.no-auth/with-fake-session
-                                              {:identity    {:oid             oid
+                                              {:identity    {:oid             oid-1
                                                              :registration-id 1}
                                                :auth-method "EMAIL"
                                                :auth-target "PERSON"})
@@ -160,4 +232,57 @@
           (is (= 200 (get-in confirm-response-1 [:response :status])))
           (is (= 1 (:id response-data-1)))
           (is (= 401 (get-in confirm-response-2 [:response :status])))
-          (is (= nil (get-in confirm-response-2 [:response :body]))))))))
+          (is (= nil (get-in confirm-response-2 [:response :body])))))
+      (testing "user can cancel their own registrations"
+        (let [fake-auth              (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                                  {:identity    {:oid oid-1}
+                                                   :auth-method "SUOMIFI"})
+              handler                (base/person-handler fake-auth url-helper payment-helper)
+              routes                 (routes handler)
+              session                (peridot/session routes)
+              cancel!                (fn [registration-id]
+                                       (-> session
+                                           (peridot/request (str routing/person-api-root routing/registration-uri "/" registration-id "?lang=fi") :request-method :delete)))
+              get-registration-state (fn [registration-id]
+                                       (-> (str "SELECT state FROM registration WHERE id=" registration-id)
+                                           (base/select-one)
+                                           (:state)))]
+          ; Modify registration states: 1 -> SUBMITTED, 2 -> COMPLETED
+          (base/execute! "UPDATE registration SET state='COMPLETED' WHERE id=2")
+          (testing "cancellation is no longer possible if exam date is in the past"
+            ; TODO Test that cancellation succeeds if tried at 7:59am, but not if tried at 8:01am on day of exam
+            (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 day'")
+            (let [registration->expected-state {1 "SUBMITTED"
+                                                2 "COMPLETED"
+                                                3 "SUBMITTED"
+                                                4 "EXPIRED"}]
+              (doseq [[id state] registration->expected-state]
+                (let [cancel-response (cancel! id)
+                      response-data   (read-response-json cancel-response)]
+                  (is (= 200 (get-in cancel-response [:response :status])))
+                  (is (= {:success false} response-data))
+                  (is (= state
+                         (get-registration-state id)))))))
+          (testing "cancellation is possible up to 8am on the day of the exam"
+            ; TODO Test that cancellation succeeds if tried at 7:59am, but not if tried at 8:01am on day of exam
+            (base/execute! "UPDATE exam_date SET exam_date = current_date + interval '1 day'")
+            ; User can cancel their own registrations
+            (let [registration->expected-state {1 "CANCELLED"
+                                                2 "PAID_AND_CANCELLED"}]
+              (doseq [[id state] registration->expected-state]
+                (let [cancel-response (cancel! id)
+                      response-data   (read-response-json cancel-response)]
+                  (is (= 200 (get-in cancel-response [:response :status])))
+                  (is (= {:success true} response-data))
+                  (is (= state
+                         (get-registration-state id))))))
+            ; User cannot cancel others' registrations
+            (let [registration->expected-state {3 "SUBMITTED"
+                                                4 "EXPIRED"}]
+              (doseq [[id state] registration->expected-state]
+                (let [cancel-response (cancel! id)
+                      response-data   (read-response-json cancel-response)]
+                  (is (= 200 (get-in cancel-response [:response :status])))
+                  (is (= {:success false} response-data))
+                  (is (= state
+                         (get-registration-state id))))))))))))
