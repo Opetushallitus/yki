@@ -215,9 +215,10 @@
           person->solki-payload {:street_address :katuosoite
                                  :zip            :postinumero
                                  :post_office    :postitoimipaikka
-                                 :email          :sahkoposti
-                                 :phone_number   :puhelinnumero}
+                                 :email          :sahkoposti}
           payload               (-> person
                                     (select-keys (keys person->solki-payload))
                                     (set/rename-keys person->solki-payload))]
+      ; TODO This doesn't include all the details as specified in SOLKIs API spec
+      ;  Still, it's worth trying out if a partial update goes through SOLKIs validation
       (do-put (url-helper :yki-register.person oid) (json/write-value-as-string payload) basic-auth "application/json"))))

@@ -158,35 +158,43 @@
                               (map :id)
                               (into #{}))))))
           (testing "user can modify their contact details"
-            (let [fake-auth           (ig/init-key :yki.middleware.no-auth/with-fake-session
-                                                   {:identity    {:oid (:oid person)}
-                                                    :auth-method "SUOMIFI"})
-                  handler             (base/person-handler fake-auth url-helper payment-helper)
-                  routes              (routes handler)
-                  session             (peridot/session routes)
-                  new-contact-details {:email          "new_email@test.invalid"
-                                       :phone_number   "+991231231122"
-                                       :street_address "Toisiotie 9"
-                                       :post_office    "Kajaani"
-                                       :zip            "80100"}
-                  post-response       (-> session
-                                          (peridot/request
-                                            routing/person-api-root
-                                            :request-method :post
-                                            :content-type "application/json"
-                                            :body (json/write-str
-                                                    (assoc new-contact-details
-                                                      :first_name "NOT UPDATED"
-                                                      :last_name "NOT UPDATED"
-                                                      :oid "NOT UPDATED"))))
-                  post-response-data  (read-response-json post-response)
-                  get-response        (-> session
-                                          (peridot/request routing/person-api-root :request-method :get))
-                  get-response-data   (read-response-json get-response)]
+            (let [fake-auth              (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                                      {:identity    {:oid (:oid person)}
+                                                       :auth-method "SUOMIFI"})
+                  handler                (base/person-handler fake-auth url-helper payment-helper)
+                  routes                 (routes handler)
+                  session                (peridot/session routes)
+                  new-contact-details    {:email          "new_email@test.invalid"
+                                          :phone_number   "+991231231122"
+                                          :street_address "Toisiotie 9"
+                                          :post_office    "Kajaani"
+                                          :zip            "80100"}
+                  post-response          (-> session
+                                             (peridot/request
+                                               routing/person-api-root
+                                               :request-method :post
+                                               :content-type "application/json"
+                                               :body (json/write-str
+                                                       (assoc new-contact-details
+                                                         :first_name "NOT UPDATED"
+                                                         :last_name "NOT UPDATED"
+                                                         :oid "NOT UPDATED"))))
+                  post-response-data     (read-response-json post-response)
+                  get-response           (-> session
+                                             (peridot/request routing/person-api-root :request-method :get))
+                  get-response-data      (read-response-json get-response)
+                  solki-request          (first (:recordings (first @(:routes server))))
+                  expected-solki-payload {:sahkoposti       (:email new-contact-details)
+                                          :katuosoite       (:street_address new-contact-details)
+                                          :postitoimipaikka (:post_office new-contact-details)
+                                          :postinumero      (:zip new-contact-details)}]
               (is (= 200 (get-in post-response [:response :status])))
               (is (= {:success true} post-response-data))
               (is (= 200 (get-in get-response [:response :status])))
-              (is (= (merge person new-contact-details) (dissoc get-response-data :registrations))))))))))
+              (is (= (merge person new-contact-details) (dissoc get-response-data :registrations)))
+              (is (= expected-solki-payload (-> solki-request
+                                                (get-in [:request :body "content"])
+                                                (json/read-str :key-fn keyword)))))))))))
 
 (deftest person-registrations-test
   (base/insert-base-data)
