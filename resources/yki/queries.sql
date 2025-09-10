@@ -679,7 +679,33 @@ INSERT INTO registration(
                       AND es.exam_date_id =
                         (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
 
+-- name: select-person-has-other-registrations-for-same-day
+WITH exam_sessions_for_same_day AS (
+    SELECT es2.id
+    FROM registration r
+             INNER JOIN exam_session es ON r.exam_session_id = es.id
+             INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+             INNER JOIN exam_session es2 ON ed.id = es2.exam_date_id
+    WHERE r.id = :id
+)
+SELECT EXISTS (
+    SELECT r.id
+    FROM registration r
+    WHERE r.id <> :id
+      AND r.person_oid = :oid
+      AND r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day)
+      AND r.state IN ('SUBMITTED', 'COMPLETED')
+    );
+
 -- name: update-registration-to-submitted!
+WITH exam_sessions_for_same_day AS (
+    SELECT es2.id
+    FROM registration r
+    INNER JOIN exam_session es ON r.exam_session_id = es.id
+    INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+    INNER JOIN exam_session es2 ON ed.id = es2.exam_date_id
+    WHERE r.id = :id
+)
 UPDATE registration SET
   state = 'SUBMITTED',
   modified = current_timestamp,
@@ -692,7 +718,13 @@ UPDATE registration SET
 WHERE
   id = :id
   AND state = 'STARTED'
-  AND participant_id = :participant_id;
+  AND participant_id = :participant_id
+  AND NOT EXISTS (
+      SELECT r.id FROM registration r
+      WHERE r.id <> :id AND
+            r.person_oid = :oid AND
+            r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day) AND
+            r.state IN ('SUBMITTED', 'COMPLETED'));
 
 -- name: cancel-started-registration-for-participant!
 UPDATE registration SET

@@ -9,6 +9,7 @@
 (require-sql ["yki/queries.sql" :as q])
 
 (defprotocol Registration
+  (is-person-already-registered-on-exam-date? [db person-oid registration-id])
   (update-registration-details! [db registration after-fn])
   (update-participant-external-id! [db participant])
   (update-registration-participant-id! [db registration-id participant-id])
@@ -48,6 +49,11 @@
 
 (extend-protocol Registration
   Boundary
+  (is-person-already-registered-on-exam-date?
+    [{:keys [spec]} person-oid registration-id]
+    (let [exists (first (q/select-person-has-other-registrations-for-same-day spec {:oid person-oid
+                                                                                    :id  registration-id}))]
+      (:exists exists)))
   (get-participant-by-id
     [{:keys [spec]} id]
     (first (q/select-participant-by-id spec {:id id})))

@@ -368,7 +368,9 @@
               (if (= kind "ADMISSION")
                 (assoc response-base :code code)
                 response-base))
-            {:error {:create_payment true}}))
+            (let [already-registered? (registration-db/is-person-already-registered-on-exam-date? db oid registration-id)]
+              {:error {:create_payment true
+                       :registered     already-registered?}})))
         {:error {:person_creation true}})
       ; Submitting form didn't succeed due to some other reason.
       ; Likely something akin to a race condition: the registration may have expired by the time we got here
