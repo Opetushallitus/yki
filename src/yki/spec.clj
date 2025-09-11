@@ -294,6 +294,8 @@
                             :opt-un [::user_data
                                      ::registration_kind]))
 
+(s/def ::login-code ::non-blank-string)
+
 ;; registration
 
 (s/def ::first_name ::non-blank-string)

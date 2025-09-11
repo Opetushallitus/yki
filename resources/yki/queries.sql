@@ -615,6 +615,29 @@ INSERT INTO login_link(
   :user_data
 );
 
+-- name: renew-login-link<!
+INSERT INTO login_link(
+  code,
+  type,
+  participant_id,
+  exam_session_id,
+  registration_id,
+  expired_link_redirect,
+  success_redirect,
+  expires_at,
+  user_data)
+SELECT
+  :new_code,
+  type,
+  participant_id,
+  exam_session_id,
+  registration_id,
+  expired_link_redirect,
+  success_redirect,
+  (current_timestamp + interval '14 days'),
+  user_data
+FROM login_link where code = :old_code;
+
 -- name: select-recent-login-link-by-exam-session-and-participant-id
 SELECT l.id, l.created
 FROM login_link l
