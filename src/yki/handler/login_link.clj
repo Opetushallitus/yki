@@ -40,6 +40,20 @@
               :subject    (template-util/login-subject template-data)
               :body       (template-util/render link-type lang template-data)})))
 
+(defn send-renewed-link [db url-helper email-q lang login-link code]
+  (let [login-url     (url-helper :yki.login-link.url code)
+        email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
+        link-type     "LOGIN_RENEW"
+        subject       (str (localisation/get-translation lang "email.login_renew.subject"))
+        template-data {:subject subject
+                       :login_url login-url }]
+    (log/info "Login link renewed for" email ". Adding to email queue")
+    (pgq/put email-q
+             {:recipients [email]
+              :created    (System/currentTimeMillis)
+              :subject    subject
+              :body       (template-util/render link-type lang template-data)})))
+
 (defmethod ig/init-key :yki.handler/login-link [_ {:keys [db auth email-q url-helper access-log]}]
   {:pre [(some? db) (some? auth) (some? email-q) (some? url-helper) (some? access-log)]}
   (api
@@ -93,4 +107,16 @@
                       session-auth?
                       (assoc :session nil))))))
             (do (log/error "Requested login link, but registration for exam session isn't open." login-link)
-                (forbidden))))))))
+                (forbidden)))))
+      (POST "/renew" {session :session}
+        :body-params [code :- ::ys/login-code
+                      lang :- ::ys/language-code]
+        :return ::ys/response
+        (let [hashed (sha256-hash code)
+              new-code (str (random-uuid))
+              new-hashed (sha256-hash new-code)]
+          (if-let [new-login-link (login-link-db/renew-login-link! db hashed new-hashed)]
+            (do
+              (send-renewed-link db url-helper email-q lang new-login-link new-code)
+              (ok {:success true}))
+            (ok {:success false :error "No login link found"})))))))

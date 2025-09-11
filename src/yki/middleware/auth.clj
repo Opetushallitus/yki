@@ -143,7 +143,7 @@
      {:pattern        #".*/api/exam-session"
       :handler        any-access
       :request-method :get}
-     {:pattern #".*/api/login-link"
+     {:pattern #".*/api/login-link.*"
       :handler any-access}
      {:pattern #".*/api/evaluation.*"
       :handler any-access}

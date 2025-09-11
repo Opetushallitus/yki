@@ -13,7 +13,7 @@
 (defn- link-valid? [{:keys [expires_at]}]
   (t/after? expires_at (l/local-now)))
 
-(defn login [db code _lang _url-helper]
+(defn login [db code _lang url-helper]
   (try
     (if-let [login-link (login-link-db/get-login-link-by-code db (login-link/sha256-hash code))]
       (if (link-valid? login-link)
@@ -35,7 +35,9 @@
           (assoc
             (found (:success_redirect login-link))
             :session session))
-        (found (:expired_link_redirect login-link)))
+        (if (= "PERSON" (:type login-link))
+          (found (url-helper :yki-ui.user-portal.expired-link code))
+          (found (:expired_link_redirect login-link))))
       unauthorized)
     (catch Exception e
       (error e "Login link handling failed")
