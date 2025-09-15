@@ -75,9 +75,10 @@
                   response-data (read-response-json response)]
               (is (= 200 (get-in response [:response :status])))
               (is (= person (dissoc response-data :registrations)))
-              (is (= [1 2 3 4] (->> response-data
-                                    :registrations
-                                    (map :id))))))
+              (is (= #{1 2 3 4} (->> response-data
+                                     :registrations
+                                     (map :id)
+                                     (into #{}))))))
           (testing "registrations for exam sessions over a year ago are not returned"
             (let [fake-auth (ig/init-key :yki.middleware.no-auth/with-fake-session
                                          {:identity    {:oid (:oid person)}
@@ -92,9 +93,10 @@
                     response-data (read-response-json response)]
                 (is (= 200 (get-in response [:response :status])))
                 (is (= person (dissoc response-data :registrations)))
-                (is (= [] (->> response-data
-                               :registrations
-                               (map :id)))))
+                (is (= #{} (->> response-data
+                                :registrations
+                                (map :id)
+                                (into #{})))))
               ; Move exam session date to exactly a year ago -> registrations should again be returned
               (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 year' WHERE id=1")
               (let [response      (-> session
@@ -102,9 +104,10 @@
                     response-data (read-response-json response)]
                 (is (= 200 (get-in response [:response :status])))
                 (is (= person (dissoc response-data :registrations)))
-                (is (= [1 2 3 4] (->> response-data
-                                      :registrations
-                                      (map :id)))))
+                (is (= #{1 2 3 4} (->> response-data
+                                       :registrations
+                                       (map :id)
+                                       (into #{})))))
               ; Access to registrations to future exam sessions should not be restricted
               (base/execute! "UPDATE exam_date SET exam_date = current_date + interval '10 years' WHERE id=1")
               (let [response      (-> session
@@ -112,9 +115,10 @@
                     response-data (read-response-json response)]
                 (is (= 200 (get-in response [:response :status])))
                 (is (= person (dissoc response-data :registrations)))
-                (is (= [1 2 3 4] (->> response-data
-                                      :registrations
-                                      (map :id)))))
+                (is (= #{1 2 3 4} (->> response-data
+                                       :registrations
+                                       (map :id)
+                                       (into #{})))))
               ; Finally, reset exam date to a month ago
               (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 month' WHERE id=1")))
           (testing "weakly authenticated user only receives details related to registration linked with login code"
@@ -131,9 +135,10 @@
                   response-data (read-response-json response)]
               (is (= 200 (get-in response [:response :status])))
               (is (= person (dissoc response-data :registrations)))
-              (is (= [1] (->> response-data
-                              :registrations
-                              (map :id))))))
+              (is (= #{1} (->> response-data
+                               :registrations
+                               (map :id)
+                               (into #{}))))))
           (testing "no registrations are returned for weakly authenticated user in case registration linked with login code is not found"
             (let [fake-auth     (ig/init-key :yki.middleware.no-auth/with-fake-session
                                              {:identity    {:oid             (:oid person)
@@ -148,9 +153,10 @@
                   response-data (read-response-json response)]
               (is (= 200 (get-in response [:response :status])))
               (is (= person (dissoc response-data :registrations)))
-              (is (= [] (->> response-data
-                             :registrations
-                             (map :id)))))))))))
+              (is (= #{} (->> response-data
+                              :registrations
+                              (map :id)
+                              (into #{})))))))))))
 
 (deftest person-registrations-test
   (base/insert-base-data)

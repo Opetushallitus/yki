@@ -136,7 +136,7 @@
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
         (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
-              other-registration (registration-db/registered-to-other-exam-session-on-exam-date? db participant-id exam_session_id)
+              other-registration (registration-db/participant-registered-to-other-exam-session-on-exam-date? db participant-id exam_session_id)
               registration-kind  (if to_queue "QUEUE" "ADMISSION")]
           (if (and (not other-registration)
                    (or to_queue space-left?))
