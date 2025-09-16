@@ -751,7 +751,16 @@ SELECT NOT EXISTS (
     HAVING (es.max_participants - COUNT(re.id)) <= 0)
 AS exists;
 
--- name: select-registered-to-other-exam-session-on-exam-date
+-- name: select-participant-registered-to-other-exam-on-exam-date
+SELECT es.id, re.state
+FROM exam_session es
+INNER JOIN registration re ON es.id = re.exam_session_id
+WHERE re.participant_id = :participant_id
+  AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+  AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
+  AND es.id <> :exam_session_id;
+
+-- name: select-participant-registered-to-exam-on-exam-date
 SELECT es.id, re.state
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
@@ -759,7 +768,7 @@ WHERE re.participant_id = :participant_id
   AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
   AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id);
 
--- name: select-person-registered-to-other-exam-session-on-exam-date
+-- name: select-person-registered-to-exam-on-exam-date
 SELECT es.id
 FROM registration r
 INNER JOIN registration r2 ON r.person_oid = r2.person_oid
@@ -768,17 +777,6 @@ WHERE r.id = :registration_id
   AND r2.id <> r.id
   AND r2.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
   AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id);
-
--- name: select-is-registered-to-other-exam-session
-SELECT EXISTS (
-  SELECT es.id
-  FROM exam_session es
-  INNER JOIN registration re ON es.id = re.exam_session_id
-  WHERE re.participant_id = :participant_id
-    AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-    AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
-    AND es.id <> :exam_session_id
-) AS exists;
 
 -- name: select-started-registration-id-and-kind-by-participant
 SELECT re.id, re.kind

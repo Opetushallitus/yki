@@ -136,7 +136,7 @@
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
         (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
-              other-registration (registration-db/participant-registered-to-other-exam-session-on-exam-date? db participant-id exam_session_id)
+              other-registration (registration-db/participant-registered-to-exam-on-exam-date? db participant-id exam_session_id)
               registration-kind  (if to_queue "QUEUE" "ADMISSION")]
           (if (and (not other-registration)
                    (or to_queue space-left?))
@@ -148,21 +148,21 @@
 (defn identify-registration
   [db session {:keys [exam_session_id to_queue]} payment-config]
   (log/info "START: identify exam session" exam_session_id "registration")
-  (let [participant-id-session     (get-participant-id-by-session db session)
-        participant-id-other       (get-participant-id db (:identity session))
-        found-session-registration (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id))
-        found-other-registration   (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id))
-        is-registered-to-other?    (and participant-id-other (registration-db/is-registered-to-other-exam-session? db participant-id-other exam_session_id))]
+  (let [participant-id-session        (get-participant-id-by-session db session)
+        participant-id-other          (get-participant-id db (:identity session))
+        found-session-registration    (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id))
+        found-other-registration      (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id))
+        registration-to-other-session (and participant-id-other (registration-db/participant-registered-to-other-exam-on-exam-date? db participant-id-other exam_session_id))]
     ; (log/info "found-registration-id" (:id found-registration))
     (cond
       (some? found-other-registration) (create-registration-response db session exam_session_id (:id found-other-registration) (:kind found-other-registration) payment-config)
-      (some? found-session-registration) (if-not is-registered-to-other?
+      (some? found-session-registration) (if-not registration-to-other-session
                                            (do
                                              (if participant-id-other
                                                (update-registration-participant-id! db (:id found-session-registration) participant-id-other)
                                                (update-participant-external-id! db participant-id-session session))
                                              (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) payment-config))
-                                           (conflict {:error {:registered true}}))
+                                           (init-error-response true registration-to-other-session (if to_queue "QUEUE" "ADMISSION") exam_session_id))
       :else (bad-request {:reason :registration-not-found}))))
 
 (defn send-payment-link-email! [email-q lang recipient template-name template-data]

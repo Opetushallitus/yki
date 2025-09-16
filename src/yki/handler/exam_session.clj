@@ -199,7 +199,7 @@
                     (exam-session-db/init-relocated-participants-sync-status! db id)
                     (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                     (response {:success true}))
-                  (if-let [conflicting-registration (registration-db/person-registered-to-other-exam-session-on-exam-date? db registration-id to-exam-session-id)]
+                  (if-let [conflicting-registration (registration-db/person-registered-to-exam-on-exam-date? db registration-id to-exam-session-id)]
                     (do (log/info "Relocate failed because of conflicting registration" {:registration-id             registration-id
                                                                                          :to-exam-session-id          to-exam-session-id
                                                                                          :conflicting-exam-session-id (:id conflicting-registration)})
