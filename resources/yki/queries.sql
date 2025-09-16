@@ -756,7 +756,7 @@ SELECT es.id, re.state
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
 WHERE re.participant_id = :participant_id
-  AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+  AND re.state IN ('COMPLETED', 'SUBMITTED')
   AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
   AND es.id <> :exam_session_id;
 
