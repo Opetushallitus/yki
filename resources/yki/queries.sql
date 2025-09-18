@@ -615,7 +615,7 @@ INSERT INTO login_link(
   :user_data
 );
 
--- name: renew-login-link<!
+-- name: renew-user-portal-link<!
 INSERT INTO login_link(
   code,
   type,
@@ -634,9 +634,9 @@ SELECT
   registration_id,
   expired_link_redirect,
   success_redirect,
-  (current_timestamp + interval '14 days'),
+  :expires_at,
   user_data
-FROM login_link where code = :old_code;
+FROM login_link where type = 'PERSON' AND code = :old_code;
 
 -- name: select-recent-login-link-by-exam-session-and-participant-id
 SELECT l.id, l.created
