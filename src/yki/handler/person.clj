@@ -62,7 +62,6 @@
       (POST "/" {session :session}
         :body [contact ::ys/person-contact]
         :return ::ys/response
-        ; TODO Is weak authentication supported?
         (if (authorized-for-handler? session)
           (if-let [oid (get-in session [:identity :oid])]
             (let [person (assoc contact :oid oid)]
