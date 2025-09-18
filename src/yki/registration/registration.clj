@@ -187,8 +187,8 @@
         login-url       (url-helper :yki.login-link.url code)
         hashed          (sha256-hash code)
         success-url     (url-helper :yki-ui.user-portal.url)
-        expired-url     (url-helper :yki-ui.user-portal.url)
-        expiration-date (common/date-from-now 14)
+        expired-url     (url-helper :yki-ui.user-portal.expired-link)
+        expiration-date (common/date-from-now (inc 14))
         link-data       {:participant_id        participant-id
                          :exam_session_id       nil
                          :registration_id       registration-id

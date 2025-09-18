@@ -1,6 +1,7 @@
 (ns yki.auth.code-auth
   (:require [clj-time.core :as t]
             [clj-time.local :as l]
+            [clojure.string :as str]
             [clojure.tools.logging :refer [error]]
             [ring.util.http-response :refer [found ok not-found]]
             [yki.boundary.login-link-db :as login-link-db]
@@ -35,9 +36,7 @@
           (assoc
             (found (:success_redirect login-link))
             :session session))
-        (if (= "PERSON" (:type login-link))
-          (found (url-helper :yki-ui.user-portal.expired-link code))
-          (found (:expired_link_redirect login-link))))
+        (found (str/replace (:expired_link_redirect login-link) ":code" code)))
       unauthorized)
     (catch Exception e
       (error e "Login link handling failed")

@@ -40,7 +40,7 @@
               :subject    (template-util/login-subject template-data)
               :body       (template-util/render link-type lang template-data)})))
 
-(defn send-renewed-link [db url-helper email-q lang login-link code]
+(defn send-renewed-user-portal-link [db url-helper email-q lang login-link code]
   (let [login-url     (url-helper :yki.login-link.url code)
         email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
         link-type     "LOGIN_RENEW"
@@ -114,9 +114,10 @@
         :return ::ys/response
         (let [hashed (sha256-hash code)
               new-code (str (random-uuid))
-              new-hashed (sha256-hash new-code)]
-          (if-let [new-login-link (login-link-db/renew-login-link! db hashed new-hashed)]
+              new-hashed (sha256-hash new-code)
+              expires-at (c/date-from-now (inc 14))]
+          (if-let [new-login-link (login-link-db/renew-user-portal-link! db hashed new-hashed expires-at)]
             (do
-              (send-renewed-link db url-helper email-q lang new-login-link new-code)
+              (send-renewed-user-portal-link db url-helper email-q lang new-login-link new-code)
               (ok {:success true}))
             (ok {:success false :error "No login link found"})))))))

@@ -13,7 +13,7 @@
   (get-recent-login-link-by-exam-session-and-participant [db exam-session-id participant-id older-than])
   (get-login-link-by-code [db code])
   (get-login-link-by-exam-session-and-registration-id [db registration-id])
-  (renew-login-link! [db old-code new-code]))
+  (renew-user-portal-link! [db old-code new-code expires-at]))
 
 (extend-protocol LoginLinks
   Boundary
@@ -31,6 +31,6 @@
     (first (q/select-login-link-by-code spec {:code code})))
   (get-login-link-by-exam-session-and-registration-id [{:keys [spec]} registration-id]
     (first (q/select-login-link-by-exam-session-and-registration-id spec {:registration_id registration-id})))
-  (renew-login-link! [{:keys [spec]} old-code new-code]
+  (renew-user-portal-link! [{:keys [spec]} old-code new-code expires-at]
     (jdbc/with-db-transaction [tx spec]
-      (q/renew-login-link<! tx {:old_code old-code :new_code new-code}))))
+      (q/renew-user-portal-link<! tx {:old_code old-code :new_code new-code :expires_at expires-at}))))
