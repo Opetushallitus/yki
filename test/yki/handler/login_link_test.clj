@@ -12,7 +12,8 @@
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.handler.routing :as routing]
-    [yki.handler.login-link]))
+    [yki.handler.login-link]
+    [yki.util.common :as c]))
 
 (use-fixtures :once (join-fixtures [embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction]))
 
@@ -35,7 +36,12 @@
                           (let [json-body (j/write-value-as-string request-data)
                                 request   (-> (mock/request :post (str routing/login-link-api-root "?lang=fi") json-body)
                                               (mock/content-type "application/json; charset=UTF-8"))]
-                            (send-request port request email-q)))]
+                            (send-request port request email-q)))
+          renew-link! (fn [request-data]
+                        (let [json-body (j/write-value-as-string request-data)
+                              request (-> (mock/request :post (str routing/login-link-api-root "/renew") json-body)
+                                          (mock/content-type "application/json; charset=UTF-8"))]
+                          (send-request port request email-q)))]
       (testing "login link should be created with hashed code"
         (let [request-data     {:email           "test@test.com"
                                 :exam_session_id 1}
@@ -58,4 +64,17 @@
               response      (request-link! request-data)
               email-request (pgq/take email-q)]
           (is (= (:status response) 403))
-          (is (= email-request nil)))))))
+          (is (= email-request nil))))
+      (testing "user portal link should be renewed with correct expiration date"
+        (let [code "1234"
+              hashed (yki.handler.login-link/sha256-hash code)]
+          (base/insert-login-link {:code code :expires-at "2020-01-01"})
+          (base/execute! (str "UPDATE login_link SET type='PERSON' WHERE code = '" hashed "';"))
+          (let [request-data {:code code :lang "fi"}
+                response (renew-link! request-data)
+                body (base/body-as-json response)
+                renewed-link (base/select-one (str "SELECT * FROM login_link WHERE type = 'PERSON' ORDER BY id desc;"))]
+            (is (= (:status response) 200))
+            (is (= true (get body "success")))
+            (is (not= hashed (:code renewed-link)))
+            (is (= (.toDate (c/date-from-now 15)) (.toDate (:expires_at renewed-link))))))))))
