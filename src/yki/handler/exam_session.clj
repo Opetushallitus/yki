@@ -32,7 +32,7 @@
   ; Let us sidestep the issue by converting the locations array to
   ; a map of language to location when sending events to audit log.
   ; As a bonus, this should help in interpreting the audit log events.
-  (let [locations (:location exam-session)
+  (let [locations      (:location exam-session)
         lang->location (into {} (map (juxt :lang identity)) locations)]
     (assoc exam-session :location lang->location)))
 
@@ -138,24 +138,24 @@
               :return ::ys/response
               (if (exam-session-db/cancel-registration! db registration-id)
                 (do
-                  (let [registration-details (registration-db/get-registration-data-for-clerk-mail db id registration-id)
-                        lang (:lang registration-details)
-                        exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
-                        user-portal-link (if (:is_email_auth registration-details)
-                                           (registration/create-user-portal-link db url-helper
-                                                                                 (:participant_id registration-details)
-                                                                                 registration-id
-                                                                                 (:exam_date registration-details))
-                                           (url-helper :yki.login.user-portal))
-                        email-template-data            (assoc registration-details
-                                                              :contact_info exam-session-contact-info
-                                                              :user_portal_link user-portal-link)]
+                  (let [registration-details      (registration-db/get-registration-data-for-clerk-mail db id registration-id)
+                        lang                      (:lang registration-details)
+                        exam-session-contact-info (exam-session-db/get-contact-info-by-exam-session-id db id)
+                        user-portal-link          (if (:is_email_auth registration-details)
+                                                    (registration/create-user-portal-link db url-helper
+                                                                                          (:participant_id registration-details)
+                                                                                          registration-id
+                                                                                          (:exam_date registration-details))
+                                                    (url-helper :yki.login.user-portal))
+                        email-template-data       (assoc registration-details
+                                                    :contact_info exam-session-contact-info
+                                                    :user_portal_link user-portal-link)]
                     (when (= (:state registration-details) "PAID_AND_CANCELLED")
                       (log/info "Sending registration cancelled email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-cancel-registration-email!
-                       email-q
-                       lang
-                       email-template-data)))
+                        email-q
+                        lang
+                        email-template-data)))
                   (audit-log/log {:request   request
                                   :target-kv {:k audit-log/registration
                                               :v registration-id}
@@ -163,7 +163,6 @@
                   (response {:success true}))
                 (bad-request {:success false
                               :error   "Registration couldn't be cancelled"})))
-            ; TODO Is this needed in the future? Users should be able to transfer their own enrollments.
             (POST "/relocate" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :body [relocate-request ::ys/relocate-request]
@@ -173,23 +172,23 @@
                     success?           (exam-session-db/update-registration-exam-session! db to-exam-session-id registration-id oid)]
                 (if success?
                   (do
-                    (let [registration-details (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
-                          lang (:lang registration-details)
-                          exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
-                          user-portal-link (if (:is_email_auth registration-details)
-                                             (registration/create-user-portal-link db url-helper
-                                                                      (:participant_id registration-details)
-                                                                      registration-id
-                                                                      (:exam_date registration-details))
-                                             (url-helper :yki.login.user-portal))
-                          email-template-data            (assoc registration-details
-                                                                :contact_info exam-session-contact-info
-                                                                :user_portal_link user-portal-link)]
+                    (let [registration-details      (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
+                          lang                      (:lang registration-details)
+                          exam-session-contact-info (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
+                          user-portal-link          (if (:is_email_auth registration-details)
+                                                      (registration/create-user-portal-link db url-helper
+                                                                                            (:participant_id registration-details)
+                                                                                            registration-id
+                                                                                            (:exam_date registration-details))
+                                                      (url-helper :yki.login.user-portal))
+                          email-template-data       (assoc registration-details
+                                                      :contact_info exam-session-contact-info
+                                                      :user_portal_link user-portal-link)]
                       (log/info "Sending transfer confirmation email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-transfer-confirmation-email!
-                       email-q
-                       lang
-                       email-template-data))
+                        email-q
+                        lang
+                        email-template-data))
                     (audit-log/log {:request   request
                                     :target-kv {:k audit-log/registration
                                                 :v registration-id}
@@ -200,8 +199,14 @@
                     (exam-session-db/init-relocated-participants-sync-status! db id)
                     (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
                     (response {:success true}))
-                  (not-found {:success false
-                              :error   "Registration not found"}))))
+                  (if-let [conflicting-registration (registration-db/person-registered-to-exam-on-exam-date? db registration-id to-exam-session-id)]
+                    (do (log/info "Relocate failed because of conflicting registration" {:registration-id             registration-id
+                                                                                         :to-exam-session-id          to-exam-session-id
+                                                                                         :conflicting-exam-session-id (:id conflicting-registration)})
+                        (conflict {:success false
+                                   :error   :registered}))
+                    (not-found {:success false
+                                :error   "Registration not found"})))))
             (POST "/resend-confirmation-email" _
               :path-params [id :- ::ys/id
                             registration-id :- ::ys/id]
@@ -212,11 +217,11 @@
                 (if-let [payment-details (registration-db/get-completed-payment-data-for-registration db registration-id)]
                   (let [exam-session-contact-info      (exam-session-db/get-contact-info-by-exam-session-id db id)
                         exam-session-extra-information (exam-session-db/get-exam-session-location-extra-information db id lang)
-                        user-portal-link                  (if (:is_email_auth registration-details)
-                                                            (registration/create-user-portal-link db url-helper
-                                                                                                  (:participant_id registration-details)
-                                                                                                  registration-id (:exam-date registration-details))
-                                                            (url-helper :yki.login.user-portal))
+                        user-portal-link               (if (:is_email_auth registration-details)
+                                                         (registration/create-user-portal-link db url-helper
+                                                                                               (:participant_id registration-details)
+                                                                                               registration-id (:exam-date registration-details))
+                                                         (url-helper :yki.login.user-portal))
                         email-template-data            (assoc registration-details
                                                          :contact_info exam-session-contact-info
                                                          :extra_information (:extra_information exam-session-extra-information)

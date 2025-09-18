@@ -679,7 +679,33 @@ INSERT INTO registration(
                       AND es.exam_date_id =
                         (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
 
+-- name: select-person-has-other-registrations-for-same-day
+WITH exam_sessions_for_same_day AS (
+    SELECT es2.id
+    FROM registration r
+    INNER JOIN exam_session es ON r.exam_session_id = es.id
+    INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+    INNER JOIN exam_session es2 ON ed.id = es2.exam_date_id
+    WHERE r.id = :id
+)
+SELECT EXISTS (
+    SELECT r.id
+    FROM registration r
+    WHERE r.id <> :id
+      AND r.person_oid = :oid
+      AND r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day)
+      AND r.state IN ('SUBMITTED', 'COMPLETED')
+    );
+
 -- name: update-registration-to-submitted!
+WITH exam_sessions_for_same_day AS (
+    SELECT es2.id
+    FROM registration r
+    INNER JOIN exam_session es ON r.exam_session_id = es.id
+    INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+    INNER JOIN exam_session es2 ON ed.id = es2.exam_date_id
+    WHERE r.id = :id
+)
 UPDATE registration SET
   state = 'SUBMITTED',
   modified = current_timestamp,
@@ -692,7 +718,13 @@ UPDATE registration SET
 WHERE
   id = :id
   AND state = 'STARTED'
-  AND participant_id = :participant_id;
+  AND participant_id = :participant_id
+  AND NOT EXISTS (
+      SELECT r.id FROM registration r
+      WHERE r.id <> :id AND
+            r.person_oid = :oid AND
+            r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day) AND
+            r.state IN ('SUBMITTED', 'COMPLETED'));
 
 -- name: cancel-started-registration-for-participant!
 UPDATE registration SET
@@ -719,7 +751,16 @@ SELECT NOT EXISTS (
     HAVING (es.max_participants - COUNT(re.id)) <= 0)
 AS exists;
 
--- name: select-registered-to-other-exam-session-on-exam-date
+-- name: select-participant-registered-to-other-exam-on-exam-date
+SELECT es.id, re.state
+FROM exam_session es
+INNER JOIN registration re ON es.id = re.exam_session_id
+WHERE re.participant_id = :participant_id
+  AND re.state IN ('COMPLETED', 'SUBMITTED')
+  AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
+  AND es.id <> :exam_session_id;
+
+-- name: select-participant-registered-to-exam-on-exam-date
 SELECT es.id, re.state
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
@@ -727,16 +768,15 @@ WHERE re.participant_id = :participant_id
   AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
   AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id);
 
--- name: select-is-registered-to-other-exam-session
-SELECT EXISTS (
-  SELECT es.id
-  FROM exam_session es
-  INNER JOIN registration re ON es.id = re.exam_session_id
-  WHERE re.participant_id = :participant_id
-    AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-    AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
-    AND es.id <> :exam_session_id
-) AS exists;
+-- name: select-person-registered-to-exam-on-exam-date
+SELECT es.id
+FROM registration r
+INNER JOIN registration r2 ON r.person_oid = r2.person_oid
+INNER JOIN exam_session es ON es.id = r2.exam_session_id
+WHERE r.id = :registration_id
+  AND r2.id <> r.id
+  AND r2.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+  AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id);
 
 -- name: select-started-registration-id-and-kind-by-participant
 SELECT re.id, re.kind
@@ -785,6 +825,16 @@ SET state = 'EXPIRED',
 WHERE id IN (:ids) AND state IN ('STARTED', 'SUBMITTED');
 
 -- name: update-registration-exam-session!
+WITH unavailable_exam_sessions_for_person AS (
+    SELECT es2.id
+    FROM registration r
+    INNER JOIN registration r2 ON r2.person_oid = r.person_oid
+    INNER JOIN exam_session es ON r2.exam_session_id = es.id
+    INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+    INNER JOIN exam_session es2 ON es2.exam_date_id = ed.id
+    WHERE r.id = :registration_id AND
+        r2.id <> r.id AND
+        r2.state IN ('STARTED', 'SUBMITTED', 'COMPLETED'))
 UPDATE registration
 SET exam_session_id = :exam_session_id,
     kind = 'ADMISSION',
@@ -794,9 +844,20 @@ WHERE id = :registration_id
 AND EXISTS (SELECT id
             FROM exam_session
             WHERE id = :exam_session_id
-              AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid));
+              AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid))
+AND :exam_session_id NOT IN (SELECT id FROM unavailable_exam_sessions_for_person);
 
 -- name: relocate-registration-for-user<!
+WITH unavailable_exam_sessions_for_person AS (
+    SELECT es2.id
+    FROM registration r
+    INNER JOIN registration r2 ON r2.person_oid = r.person_oid
+    INNER JOIN exam_session es ON r2.exam_session_id = es.id
+    INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+    INNER JOIN exam_session es2 ON es2.exam_date_id = ed.id
+    WHERE r.id = :registration_id AND
+          r2.id <> r.id AND
+          r2.state IN ('STARTED', 'SUBMITTED', 'COMPLETED'))
 UPDATE registration
 SET exam_session_id = :target_id,
     original_exam_session_id = exam_session_id,
@@ -804,6 +865,7 @@ SET exam_session_id = :target_id,
     modified = current_timestamp
 WHERE id = :registration_id AND
       person_oid = :person_oid AND
+      :target_id NOT IN (SELECT id FROM unavailable_exam_sessions_for_person) AND
       TRUE IN (SELECT is_transferable(r.id) FROM registration r WHERE id = :registration_id);
 
 -- name: select-registration-data
@@ -1741,7 +1803,18 @@ INNER JOIN exam_session_contact esc ON esc.exam_session_id = es.id
 INNER JOIN contact c ON c.id = esc.contact_id
 WHERE r.id = :id AND r.person_oid = :oid;
 
--- name: select-transfer-target-details-by-exam-session-id
+-- name: select-registration-transfer-target-details
+WITH exam_sessions_for_same_day AS (
+    SELECT es2.id
+    FROM registration r
+    INNER JOIN registration r2 ON r.person_oid = r2.person_oid
+    INNER JOIN exam_session es ON r2.exam_session_id = es.id
+    INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+    INNER JOIN exam_session es2 ON ed.id = es2.exam_date_id
+    WHERE r.id = :registration_id AND
+          r.id <> r2.id AND
+          r2.state IN ('STARTED', 'SUBMITTED', 'COMPLETED')
+)
 SELECT
     ies.id,
     ied.exam_date AS session_date,
@@ -1765,7 +1838,8 @@ LEFT JOIN exam_session ies ON ies.id <> es.id AND ies.level_code = es.level_code
 LEFT JOIN exam_date ied ON ies.exam_date_id = ied.id
 WHERE es.id = :exam_session_id
   AND ied.exam_date >= ed.exam_date
-  AND select_registration_kind(ies.id) = 'ADMISSION';
+  AND select_registration_kind(ies.id) = 'ADMISSION'
+  AND ies.id NOT IN (SELECT id FROM exam_sessions_for_same_day);
 
 -- name: select-registration-to-confirm-details
 SELECT r.id,

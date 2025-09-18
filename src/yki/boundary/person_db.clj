@@ -47,7 +47,8 @@
 
 (defn valid-transfer-targets
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
-   The candidates must also have space for relocating and must not have existing queue; the caller of this function should ensure this."
+   The candidates must also have space for relocating and must not have existing queue; the caller of this function should ensure this.
+   Finally, the person must not already be enrolled for an exam on the date of a candidate session; also something that the caller should ensure."
   [original-exam-date candidates]
   (let [within-year?           #(let [exam-date  (f/parse (:session_date %1))
                                       limit-date (t/plus (f/parse original-exam-date) (t/years 1))]
@@ -76,7 +77,8 @@
       (let [registration-details (-> (q/select-registration-relocate-details tx {:oid oid :id registration-id})
                                      (first))
             target-candidates    (if (:is_transferable registration-details)
-                                   (q/select-transfer-target-details-by-exam-session-id tx {:exam_session_id (:exam_session_id registration-details)})
+                                   (q/select-registration-transfer-target-details tx {:exam_session_id (:exam_session_id registration-details)
+                                                                                      :registration_id registration-id})
                                    [])
             targets              (valid-transfer-targets (:session_date registration-details) target-candidates)]
         (assoc registration-details :targets targets))))
@@ -85,7 +87,8 @@
       (let [registration-details (-> (q/select-registration-relocate-details tx {:oid oid :id registration-id})
                                      (first))
             target-candidates    (if (:is_transferable registration-details)
-                                   (q/select-transfer-target-details-by-exam-session-id tx {:exam_session_id (:exam_session_id registration-details)})
+                                   (q/select-registration-transfer-target-details tx {:exam_session_id (:exam_session_id registration-details)
+                                                                                      :registration_id registration-id})
                                    [])
             valid-target-ids     (->> (valid-transfer-targets (:session_date registration-details) target-candidates)
                                       (map :id)
