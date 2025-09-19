@@ -70,7 +70,7 @@
                   ; TODO Syncing person details to Solki could be orchestrated with a background job instead
                   (yki-register/sync-person
                     url-helper
-                    (select-keys [:user :password] solki-config)
+                    (select-keys solki-config [:user :password])
                     (:disabled solki-config)
                     person)
                   (ok {:success true}))
