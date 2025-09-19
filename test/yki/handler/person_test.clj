@@ -188,6 +188,7 @@
                                           :katuosoite       (:street_address new-contact-details)
                                           :postitoimipaikka (:post_office new-contact-details)
                                           :postinumero      (:zip new-contact-details)}]
+              (is (= (get-in solki-request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
               (is (= 200 (get-in post-response [:response :status])))
               (is (= {:success true} post-response-data))
               (is (= 200 (get-in get-response [:response :status])))
