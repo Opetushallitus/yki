@@ -11,6 +11,7 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.job-db :as job-db]
     [yki.boundary.onr :as onr]
+    [yki.boundary.person-db :as person-db]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
     [yki.registration.registration :refer [send-lifted-from-queue-email!]]
@@ -23,6 +24,10 @@
 (defonce participants-sync-handler-conf {:worker-id (str (random-uuid))
                                          :task      "PARTICIPANTS_SYNC_HANDLER"
                                          :interval  "59 MINUTES"})
+
+(defonce persons-sync-handler-conf {:worker-id (str (random-uuid))
+                                    :task      "PERSONS_SYNC_HANDLER"
+                                    :interval  "179 SECONDS"})
 
 (defonce remove-old-data-handler-conf {:worker-id (str (random-uuid))
                                        :task      "REMOVE_OLD_DATA_HANDLER"
@@ -90,6 +95,24 @@
                  (exam-session-db/set-participants-sync-to-failed! db (:exam_session_id exam-session) (str retry-duration-in-days " days"))))))))
      (catch Exception e
        (log/error e "Participant sync handler failed"))))
+
+(defmethod ig/init-key ::persons-sync-handler
+  [_ {:keys [db url-helper basic-auth disabled retry-duration-in-days]}]
+  {:pre [(some? db) (some? url-helper) (some? basic-auth) (some? retry-duration-in-days)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db persons-sync-handler-conf)
+       (let [persons-to-sync (person-db/get-persons-to-sync db (str retry-duration-in-days " days"))]
+         (doseq [{:keys [id person_oid]} persons-to-sync]
+           (try
+             (let [person (person-db/get-person db person_oid)]
+               (yki-register/sync-person url-helper basic-auth disabled person)
+               (person-db/mark-person-sync-attempt! db id true))
+             (catch Exception e
+               (do
+                 (log/error e "Updating person details to Solki failed!" {:id id, :oid person_oid})
+                 (person-db/mark-person-sync-attempt! db id false)))))))
+     (catch Exception e
+       (log/error e "Persons sync handler failed"))))
 
 (defmethod ig/init-key ::email-queue-reader
   [_ {:keys [email-q handle-at-once-at-most url-helper retry-duration-in-days disabled]}]

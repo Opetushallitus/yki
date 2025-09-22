@@ -1911,3 +1911,18 @@ WHERE person_oid = :oid
   AND id = :id
   AND state IN ('COMPLETED', 'SUBMITTED')
   AND TRUE IN (SELECT is_cancellable(r.id) FROM registration r WHERE id = :id);
+
+-- name: schedule-person-to-be-synced!
+INSERT INTO person_sync_status (person_oid) VALUES (:oid);
+
+-- name: mark-successful-person-sync-attempt!
+UPDATE person_sync_status SET success_at=current_timestamp WHERE id=:id;
+
+-- name: mark-failed-person-sync-attempt!
+UPDATE person_sync_status SET failed_at=current_timestamp WHERE id=:id;
+
+-- name: select-persons-to-sync
+SELECT pss.id, pss.person_oid
+FROM person_sync_status pss
+WHERE current_timestamp < pss.created + :duration::interval
+  AND pss.success_at IS NULL;

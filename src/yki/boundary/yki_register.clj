@@ -212,13 +212,18 @@
   (if disabled
     (log/info "Person sync disabled")
     (let [oid                   (:oid person)
-          person->solki-payload {:street_address :katuosoite
+          ; TODO Get gender and nationality
+          ; TODO Convert gender to correct format
+          ; TODO Convert nationalities to correct format
+          person->solki-payload {:last_name      :sukunimi
+                                 :first_name     :etunimet
+                                 ;:gender         :sukupuoli
+                                 ;:nationality    :kansalaisuus
+                                 :street_address :katuosoite
                                  :zip            :postinumero
                                  :post_office    :postitoimipaikka
                                  :email          :sahkoposti}
           payload               (-> person
                                     (select-keys (keys person->solki-payload))
                                     (set/rename-keys person->solki-payload))]
-      ; TODO This doesn't include all the details as specified in SOLKIs API spec
-      ;  Still, it's worth trying out if a partial update goes through SOLKIs validation
       (do-put (url-helper :yki-register.person oid) (json/write-value-as-string payload) basic-auth "application/json"))))
