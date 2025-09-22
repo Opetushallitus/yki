@@ -6,6 +6,7 @@
     [integrant.core :as ig]
     [peridot.core :as peridot]
     [stub-http.core :refer [with-routes!]]
+    [yki.boundary.yki-register :as yki-register]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.handler.routing :as routing]))
@@ -183,8 +184,16 @@
                   get-response           (-> session
                                              (peridot/request routing/person-api-root :request-method :get))
                   get-response-data      (read-response-json get-response)
+                  _                      (yki-register/sync-person
+                                           url-helper
+                                           {:user     "user"
+                                            :password "pass"}
+                                           false
+                                           (merge person new-contact-details))
                   solki-request          (first (:recordings (first @(:routes server))))
-                  expected-solki-payload {:sahkoposti       (:email new-contact-details)
+                  expected-solki-payload {:sukunimi         (:last_name person)
+                                          :etunimet         (:first_name person)
+                                          :sahkoposti       (:email new-contact-details)
                                           :katuosoite       (:street_address new-contact-details)
                                           :postitoimipaikka (:post_office new-contact-details)
                                           :postinumero      (:zip new-contact-details)}]

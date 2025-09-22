@@ -37,13 +37,8 @@
       (handler request)
       (unauthorized))))
 
-(defn- valid-solki-config? [{:keys [disabled user password]}]
-  (or disabled
-      (and (string? user)
-           (string? password))))
-
-(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q onr-client url-helper payment-helper solki-config]}]
-  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? url-helper) (some? payment-helper) (valid-solki-config? solki-config)]}
+(defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q onr-client url-helper payment-helper]}]
+  {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? url-helper) (some? payment-helper)]}
   (api
     (context routing/person-api-root []
       :coercion :spec
@@ -66,14 +61,7 @@
           (if-let [oid (get-in session [:identity :oid])]
             (let [person (assoc contact :oid oid)]
               (if (person-db/update-contact-details! db person)
-                (do
-                  ; TODO Syncing person details to Solki could be orchestrated with a background job instead
-                  (yki-register/sync-person
-                    url-helper
-                    (select-keys solki-config [:user :password])
-                    (:disabled solki-config)
-                    person)
-                  (ok {:success true}))
+                (ok {:success true})
                 (ok {:success false})))
             (unauthorized "no oid in session"))
           (unauthorized)))

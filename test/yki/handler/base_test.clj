@@ -502,10 +502,7 @@
                                                             :db             (db)
                                                             :onr-client     (onr-client url-helper)
                                                             :access-log     (access-log)
-                                                            :email-q        (email-q)
-                                                            :solki-config   {:disabled false
-                                                                             :user     "user"
-                                                                             :password "pass"}})))
+                                                            :email-q        (email-q)})))
 
 (defn create-routes [port]
   (let [uri                  (str "localhost:" port)
