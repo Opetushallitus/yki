@@ -184,12 +184,14 @@
                   get-response           (-> session
                                              (peridot/request routing/person-api-root :request-method :get))
                   get-response-data      (read-response-json get-response)
-                  _                      (yki-register/sync-person
-                                           url-helper
-                                           {:user     "user"
-                                            :password "pass"}
-                                           false
-                                           (merge person new-contact-details))
+                  persons-sync-handler   (ig/init-key :yki.job.scheduled-tasks/persons-sync-handler
+                                                      {:db                     db
+                                                       :url-helper             url-helper
+                                                       :basic-auth             {:user     "user"
+                                                                                :password "pass"}
+                                                       :disabled               false
+                                                       :retry-duration-in-days 1})
+                  _                      (persons-sync-handler)
                   solki-request          (first (:recordings (first @(:routes server))))
                   expected-solki-payload {:sukunimi         (:last_name person)
                                           :etunimet         (:first_name person)

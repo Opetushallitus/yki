@@ -23,6 +23,7 @@
     [yki.handler.routing :as routing]
     [yki.handler.user]
     [yki.job.job-queue]
+    [yki.job.scheduled-tasks]
     [yki.middleware.no-auth]
     [yki.util.common :as c]
     [yki.util.pdf :refer [PdfTemplateRenderer]]
