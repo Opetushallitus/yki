@@ -40,10 +40,13 @@
 (defprotocol Person
   (get-person [db oid])
   (upsert-person! [db person])
+  (update-contact-details! [db person])
   (get-registration-relocate-details [db oid registration-id])
   (relocate-registration! [db oid registration-id target-exam-session-id])
   (get-registration-to-confirm-details [db oid registration-id])
-  (cancel-person-registration! [db oid registration-id]))
+  (cancel-person-registration! [db oid registration-id])
+  (get-persons-to-sync [db retry-duration])
+  (mark-person-sync-attempt! [db id success?]))
 
 (defn valid-transfer-targets
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
@@ -72,6 +75,11 @@
     [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]
       (q/upsert-person! tx person)))
+  (update-contact-details!
+    [{:keys [spec]} person]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-person-contact-details! tx person)
+      (q/schedule-person-to-be-synced! tx person)))
   (get-registration-relocate-details [{:keys [spec]} oid registration-id]
     (jdbc/with-db-transaction [tx spec {:read-only? true}]
       (let [registration-details (-> (q/select-registration-relocate-details tx {:oid oid :id registration-id})
@@ -103,4 +111,11 @@
     (first (q/select-registration-to-confirm-details spec {:oid oid :id registration-id})))
   (cancel-person-registration! [{:keys [spec]} oid registration-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/cancel-registration-for-person<! tx {:oid oid :id registration-id}))))
+      (q/cancel-registration-for-person<! tx {:oid oid :id registration-id})))
+  (get-persons-to-sync [{:keys [spec]} retry-duration]
+    (q/select-persons-to-sync spec {:duration retry-duration}))
+  (mark-person-sync-attempt! [{:keys [spec]} id success?]
+    (jdbc/with-db-transaction [tx spec]
+      (if success?
+        (q/mark-successful-person-sync-attempt! tx {:id id})
+        (q/mark-failed-person-sync-attempt! tx {:id id})))))

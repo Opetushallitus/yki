@@ -7,6 +7,7 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.person-db :as person-db]
     [yki.boundary.registration-db :as registration-db]
+    [yki.boundary.yki-register :as yki-register]
     [yki.handler.exam-payment-new :refer [redirect-to-paytrail]]
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
@@ -45,23 +46,25 @@
       (GET "/" {session :session}
         ;:return ::ys/person
         (if (authorized-for-handler? session)
-          (let [oid (get-in session [:identity :oid])]
-            (if oid
-              (if-let [person (person-db/get-person db oid)]
-                (-> person
-                    (with-authorized-registrations session)
-                    (ok))
-                (not-found))
-              (unauthorized "no oid in session")))
+          (if-let [oid (get-in session [:identity :oid])]
+            (if-let [person (person-db/get-person db oid)]
+              (-> person
+                  (with-authorized-registrations session)
+                  (ok))
+              (not-found))
+            (unauthorized "no oid in session"))
           (unauthorized)))
       (POST "/" {session :session}
-        :body [person ::ys/person]
+        :body [contact ::ys/person-contact]
         :return ::ys/response
-        (let [oid (get-in session [:identity :oid])]
-          (if (person-db/upsert-person! db (assoc person :oid oid))
-            ; TODO Update person details to Solki!
-            (ok {:success true})
-            (ok {:success false}))))
+        (if (authorized-for-handler? session)
+          (if-let [oid (get-in session [:identity :oid])]
+            (let [person (assoc contact :oid oid)]
+              (if (person-db/update-contact-details! db person)
+                (ok {:success true})
+                (ok {:success false})))
+            (unauthorized "no oid in session"))
+          (unauthorized)))
       (context (str routing/registration-uri "/:registration-id") []
         :path-params [registration-id :- ::ys/registration_id]
         (context "" {session :session}

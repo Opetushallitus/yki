@@ -456,4 +456,4 @@
 
 (s/def ::environment #{:dev :qa :prod})
 
-(s/def ::person (s/keys :req-un [::first_name ::last_name ::email] :opt-un [::phone_number ::street_address ::post_office ::zip]))
+(s/def ::person-contact (s/keys :req-un [::email ::phone_number ::street_address ::post_office ::zip]))
