@@ -215,26 +215,29 @@
      db
      (get-in user [:identity :external-user-id]))})
 
-(defn- registration->expiration-date [registration]
-  (let [date-str                        (:registration_end_date registration)
-        registration-end-date           (-> (f/parse-local-date date-str)
-                                            (common/next-start-of-day))
-        ; Registration and payment link expiry should be three whole days from today
-        ; => expiry at start of day 3+1 days from now.
-        ; TODO Separate expiration date calculation logic registration lifted from queue
-        ;  Can't be tied to registration end date, as the queueing period is supposed to last roughly a week longer?
-        ; New spec:
-        ; - regular admission: payment due in three whole days OR until end of registration period
-        ; - regular admission: if registration ends in less than two days' time, grant payment period of current day + one full day
-        ; - lifted from queue: payment period is current day + one full day
-        ongoing-registration-expiration (common/date-from-now (inc 3))
-        date-of-expiry                  (t/min-date
-                                          ongoing-registration-expiration
-                                          registration-end-date)]
-    {:expiration-date   date-of-expiry
-     ; We want to indicate the last possible payment date in email templates.
-     ; The last payment date will be the day before expiration date.
-     :last-payment-date (common/previous-day date-of-expiry)}))
+(defn- registration->expiration-date [registration from-queue?]
+  (if from-queue?
+    (let [expires-at (:expires_at registration)]
+      ; Lifted from queue: payment period is current day + one full day
+      ; Expiration date in DB is updated when registration is lifted from queue.
+      {:expiration-date   expires-at
+       :last-payment-date (-> expires-at
+                              (common/format-date-for-db)
+                              (f/parse-local-date))})
+    (let [date-str                        (:registration_end_date registration)
+          registration-end-date           (-> (f/parse-local-date date-str)
+                                              (common/next-start-of-day))
+          ; New spec for regular admission:
+          ; - payment due in three whole days OR until end of registration period
+          ; - IF registration ends in less than two days' time, grant payment period of current day + one full day
+          ongoing-registration-expiration (common/date-from-now (inc 3))
+          date-of-expiry                  (t/min-date
+                                            ongoing-registration-expiration
+                                            registration-end-date)]
+      {:expiration-date   date-of-expiry
+       ; We want to indicate the last possible payment date in email templates.
+       ; The last payment date will be the day before expiration date.
+       :last-payment-date (common/previous-day date-of-expiry)})))
 
 (defn- with-session-details [form {:keys [auth-method identity]}]
   (if (= auth-method "EMAIL")
@@ -255,7 +258,7 @@
     (let [registration-id          (:id registration-data)
           participant-id           (:participant_id registration-data)
           amount                   (get-payment-amount-for-registration payment-helper registration-data)
-          {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
+          {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data false)
           payment-success-url      (url-helper :exam-payment-v3.redirect registration-id lang)
           payment-link-expired-url (url-helper :yki-ui.registration.payment-link-expired.url)
           payment-link             {:participant_id        participant-id
@@ -292,7 +295,7 @@
   (let [registration-id          (:id registration-data)
         participant-id           (:participant_id registration-data)
         amount                   (get-payment-amount-for-registration payment-helper registration-data)
-        {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data)
+        {:keys [expiration-date last-payment-date]} (registration->expiration-date registration-data true)
         payment-success-url      (url-helper :exam-payment-v3.redirect registration-id lang)
         payment-link-expired-url (url-helper :yki-ui.registration.payment-link-expired.url)
         payment-link             {:participant_id        participant-id
@@ -340,13 +343,14 @@
         (let [amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
               ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
               unified-participant-id  (or (:participant_id registration-data) session-participant-id)
-              {:keys [expiration-date]} (registration->expiration-date registration-data)
+              ; For queued registrations, expiration date is not very meaningful as of yet.
+              ; If the registration is ultimately lifted from queue, the expiration date will be recalculated.
+              {:keys [expiration-date]} (registration->expiration-date registration-data false)
               update-registration     {:id             registration-id
                                        :form           form-to-persist
                                        :oid            oid
                                        :form_version   1
                                        :participant_id unified-participant-id
-                                       ; TODO Ensure expiration date is updated when registration is lifted from queue
                                        :expires_at     expiration-date
                                        :exam_fee       (:db amount)
                                        :ui_language    lang}

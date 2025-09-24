@@ -823,14 +823,13 @@ WHERE re.id = :id
 SELECT id FROM registration
 WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp;
 
--- submitted registration expires 3 days at midnight from time of creation
--- registrations lifted from queue expire at midnight one full day from the time they were lifted from queue
+-- Select registrations to expire. This routine only expires actual registrations (kind='ADMISSION').
+-- Queued registrations are expired with below query.
 -- name: select-submitted-registrations-to-expire
 SELECT id FROM registration
 WHERE state = 'SUBMITTED'
-  AND ((kind = 'ADMISSION' AND lifted_from_queue_at IS NULL AND ts_older_than(created, interval '4 days'))
-    OR (kind = 'POST_ADMISSION' AND lifted_from_queue_at IS NULL AND ts_older_than(created, interval '2 days'))
-    OR (kind = 'ADMISSION' AND lifted_from_queue_at IS NOT NULL AND ts_older_than(lifted_from_queue_at, '2 days')));
+  AND kind = 'ADMISSION'
+  AND expires_at < current_timestamp;
 
 -- queuing period ends one week before exam date
 -- name: select-queued-registrations-to-expire
@@ -897,6 +896,7 @@ SELECT re.id,
        re.exam_session_id,
        re.participant_id,
        re.kind,
+       re.expires_at,
        es.language_code,
        es.level_code,
        ed.exam_date,
@@ -931,6 +931,7 @@ SELECT re.id,
        re.exam_session_id,
        re.participant_id,
        re.kind,
+       re.expires_at,
        es.language_code,
        es.level_code,
        ed.exam_date,
@@ -1309,8 +1310,7 @@ WITH registrations_to_update AS (SELECT id
 UPDATE registration
 SET kind                 = 'ADMISSION',
     lifted_from_queue_at = current_timestamp,
-    -- TODO Fix how expires_at is calculated (pending decisions from OPH!)
-    expires_at = current_date + interval '3 days'
+    expires_at = at_midnight((current_date + '1 day'::interval)::date)
 WHERE id IN (SELECT id FROM registrations_to_update);
 
 --name: cancel-unpaid-registration-for-organizer!
