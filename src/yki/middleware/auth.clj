@@ -200,6 +200,10 @@
       :handler oppija-authenticated?}
      {:pattern #".*/api/user/identity"
       :handler any-access}
+     {:pattern #".*/api/v1/user/.*"
+      :handler oppija-authenticated?}
+     {:pattern #".*/api/v1/clerk/.*"
+      :handler virkailija-authenticated?}
      {:pattern #".*/api/user/.*"
       :handler oppija-authenticated?}
      {:pattern #".*/api.*"
