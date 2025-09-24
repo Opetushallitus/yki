@@ -1874,6 +1874,22 @@ WHERE es.id = :exam_session_id
   AND select_registration_kind(ies.id) = 'ADMISSION'
   AND ies.id NOT IN (SELECT id FROM exam_sessions_for_same_day);
 
+-- name: select-persons-without-gender-or-nationality
+WITH person_oids AS (
+    SELECT p.oid
+    FROM person p
+    WHERE p.gender IS NULL OR p.nationality_code IS NULL
+    ORDER BY p.created DESC
+    LIMIT 2000
+) SELECT DISTINCT ON (r.person_oid) r.person_oid, r.form->>'gender' AS gender, r.form->>'ssn' AS ssn
+  FROM registration r
+  WHERE
+      r.person_oid IN (SELECT oid FROM person_oids) AND
+      (COALESCE(r.form->>'gender','') <> ''
+           OR
+       COALESCE(r.form->>'ssn','') <> '')
+      ORDER BY r.person_oid, r.created DESC;
+
 -- name: select-registration-to-confirm-details
 SELECT r.id,
        r.exam_fee,

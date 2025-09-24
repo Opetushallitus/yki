@@ -37,6 +37,10 @@
                                                  :task      "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
                                                  :interval  "59 MINUTES"})
 
+(defonce person-migrator-conf {:worker-id (str (random-uuid))
+                               :task "MIGRATE_PERSON_HANDLER"
+                               :interval "59 SECONDS"})
+
 (defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_QUEUE_HANDLER"
                                           :interval  "29 SECONDS"})
@@ -196,3 +200,25 @@
            (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link!))))
      (catch Exception e
        (log/error e "Registration queue handler failed"))))
+
+(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db]}]
+  {:pre [(some? db)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db person-migrator-conf)
+       (log/info "Populating gender and nationality values for persons from past registrations")
+       ; TODO
+       ; 1. Get persons without gender / nationality
+       ; 2. Get latest registrations for those persons with the gender and nationality information
+       ; 3. Read declared nationality, gender and SSN from form
+       ; 4. Deduce gender using SSN if given and otherwise what's entered on form
+       ; 5. Update gender & nationality
+       ; 6. Rinse and repeat for next batch
+       (let [persons (person-db/get-persons-without-gender-or-nationality db)]
+         (log/info "Updating data for" (count persons) "person entries")
+         (doseq [])))
+     (catch Exception e
+       (log/error e "Person migration failed"))))
+
+(comment
+  (let [[_ db] (ig/find-derived-1 (local/current-state) :duct.database/sql)]
+    (person-db/get-persons-without-gender-or-nationality db)))
