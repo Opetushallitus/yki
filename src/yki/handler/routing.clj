@@ -57,3 +57,5 @@
 (def yki-register-debug-root (str api-root "/yki-register-debug"))
 
 (def debug-root (str virkailija-api-root "/debug"))
+
+(def proxy-api-root (str api-root "/v1"))

@@ -69,6 +69,13 @@
                                                                              :WRITING   50
                                                                              :SPEAKING  50}}}
 
+  :yki.handler/proxy                                          {:auth        #ig/ref :yki.middleware.no-auth/with-fake-oid
+                                                               :access-log  #ig/ref :yki.middleware.access-log/with-logging
+                                                               :environment #ig/ref :yki.env/environment
+                                                               :proxy-config {:endpoint "http://localhost:8083"
+                                                                              :token "03e2f9b3-d1de-4846-884e-80e6c3d0fae4"}}
+
+
 
  :yki.middleware.auth/with-authentication
  {:url-helper     #ig/ref :yki.util/url-helper

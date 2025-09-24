@@ -35,6 +35,7 @@
                                                               #ig/ref :yki.handler/yki-register-debug
                                                               #ig/ref :yki.handler/paytrail-payment-report
                                                               #ig/ref :yki.handler/debug
+                                                              #ig/ref :yki.handler/proxy
                                                               ; Important!
                                                               ; The fallback handler *must* be the last handler on this list!
                                                               ; Compojure attempts to match requests to handlers

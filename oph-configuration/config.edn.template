@@ -88,6 +88,12 @@
                                 :cas-creds {:username "{{yki_cas_username}}"
                                             :password "{{yki_cas_password}}"}}
 
+:yki.handler/proxy            {:auth        #ig/ref :yki.middleware.auth/with-authentication
+                               :access-log  #ig/ref :yki.middleware.access-log/with-logging
+                               :environment #ig/ref :yki.env/environment
+                               :proxy-config {:endpoint "{{yki_ui_api_host}}")
+                                              :token    "{{yki_backend_api_token}}"}}
+
   :yki.middleware.auth/with-authentication
     {:url-helper #ig/ref :yki.util/url-helper
      :session-config {:key "{{yki_session_cookie_secret}}"
