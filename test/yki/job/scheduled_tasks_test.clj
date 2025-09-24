@@ -74,16 +74,15 @@
   (base/insert-registrations "SUBMITTED")
   (let [[reg-one-id reg-two-id] (map :id (base/select "SELECT id FROM registration where state = 'SUBMITTED'"))]
     (jdbc/execute! @embedded-db/conn
-                   (str "UPDATE registration SET created = (current_timestamp - interval '4 days') WHERE id=" reg-one-id))
+                   (str "UPDATE registration SET expires_at = (current_timestamp - interval '1 mins') WHERE id=" reg-one-id))
     (jdbc/execute! @embedded-db/conn
-                   (str "UPDATE registration SET created = (current_timestamp - interval '3 days') WHERE id=" reg-two-id))
+                   (str "UPDATE registration SET expires_at = (current_timestamp + interval '1 mins') WHERE id=" reg-two-id))
     (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-state-handler {:db (base/db)})
           _                          (registration-state-handler)
           registration-1             (base/select-one (str "SELECT * FROM registration WHERE id=" reg-one-id ";"))
           registration-2             (base/select-one (str "SELECT * FROM registration WHERE id=" reg-two-id ";"))]
-      (testing "if registration was submitted over 3 days ago and was not yet COMPLETED, it will become EXPIRED"
-        (is (= (:state registration-1) "EXPIRED")))
-      (testing "a SUBMITTED registration that was created a day later will not yet become expired"
+      (testing "registrations that have passed their time of expiry will be expired"
+        (is (= (:state registration-1) "EXPIRED"))
         (is (= (:state registration-2) "SUBMITTED"))))))
 
 (deftest handle-exam-session-create-request-test
