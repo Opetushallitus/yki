@@ -212,17 +212,14 @@
   (if disabled
     (log/info "Person sync disabled")
     (let [oid                   (:oid person)
-          ; TODO Get gender and nationality
-          ; TODO Convert gender to correct format
-          ; TODO Convert nationalities to correct format
-          person->solki-payload {:last_name      :sukunimi
-                                 :first_name     :etunimet
-                                 ;:gender         :sukupuoli
-                                 ;:nationality    :kansalaisuus
-                                 :street_address :katuosoite
-                                 :zip            :postinumero
-                                 :post_office    :postitoimipaikka
-                                 :email          :sahkoposti}
+          person->solki-payload {:last_name        :sukunimi
+                                 :first_name       :etunimet
+                                 :gender           :sukupuoli
+                                 :nationality_code :kansalaisuus
+                                 :street_address   :katuosoite
+                                 :zip              :postinumero
+                                 :post_office      :postitoimipaikka
+                                 :email            :sahkoposti}
           payload               (-> person
                                     (select-keys (keys person->solki-payload))
                                     (set/rename-keys person->solki-payload))]

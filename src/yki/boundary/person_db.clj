@@ -39,6 +39,7 @@
 
 (defprotocol Person
   (get-person [db oid])
+  (get-full-person-details [db oid])
   (upsert-person! [db person])
   (update-contact-details! [db person])
   (get-persons-without-gender-or-nationality [db])
@@ -73,6 +74,8 @@
         (q/select-person tx {:oid oid})
         (first)
         (assoc :registrations (get-registrations-with-queue-details tx oid)))))
+  (get-full-person-details [{:keys [spec]} oid]
+    (q/select-full-person-details spec {:oid oid}))
   (get-persons-without-gender-or-nationality [{:keys [spec]}]
     (let [persons (q/select-persons-without-gender-or-nationality spec)]
       (->> persons

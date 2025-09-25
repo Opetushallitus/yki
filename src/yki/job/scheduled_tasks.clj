@@ -109,7 +109,7 @@
        (let [persons-to-sync (person-db/get-persons-to-sync db (str retry-duration-in-days " days"))]
          (doseq [{:keys [id person_oid]} persons-to-sync]
            (try
-             (let [person (person-db/get-person db person_oid)]
+             (let [person (person-db/get-full-person-details db person_oid)]
                (yki-register/sync-person url-helper basic-auth disabled person)
                (person-db/mark-person-sync-attempt! db id true))
              (catch Exception e

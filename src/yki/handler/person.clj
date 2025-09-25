@@ -7,7 +7,6 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.person-db :as person-db]
     [yki.boundary.registration-db :as registration-db]
-    [yki.boundary.yki-register :as yki-register]
     [yki.handler.exam-payment-new :refer [redirect-to-paytrail]]
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]

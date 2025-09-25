@@ -1771,6 +1771,11 @@ SELECT oid, first_name, last_name, email, phone_number, street_address, post_off
 FROM person
 WHERE oid = :oid;
 
+-- name: select-full-person-details
+SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip, gender, nationality_code
+FROM person
+WHERE oid = :oid;
+
 -- name: select-person-registrations
 SELECT r.id, r.exam_session_id, r.state, r.kind,
 ed.exam_date, es.language_code, es.level_code,
