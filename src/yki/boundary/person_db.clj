@@ -75,7 +75,7 @@
         (first)
         (assoc :registrations (get-registrations-with-queue-details tx oid)))))
   (get-full-person-details [{:keys [spec]} oid]
-    (q/select-full-person-details spec {:oid oid}))
+    (first (q/select-full-person-details spec {:oid oid})))
   (get-persons-without-gender-or-nationality [{:keys [spec]}]
     (let [persons (q/select-persons-without-gender-or-nationality spec)]
       (->> persons

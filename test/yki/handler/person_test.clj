@@ -1,6 +1,7 @@
 (ns yki.handler.person-test
   (:require
     [clojure.data.json :as json]
+    [clojure.string :as str]
     [clojure.test :refer [deftest is testing use-fixtures]]
     [compojure.core :refer [routes]]
     [integrant.core :as ig]
@@ -45,7 +46,10 @@
   ; Make exam session 1 recent enough so that registrations are returned through person APIs
   (base/execute! "UPDATE exam_date SET exam_date = current_date - interval '1 month' WHERE id=1") ;
   (with-routes!
-    {{:path "/yki-sp/oph/osallistuja/5.4.3.2.1" :method :put} {:status 200}}
+    {{:path "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" :method :get} {:status 200 :content-type "application/json"
+                                                                                                  :body   (slurp "test/resources/maatjavaltiot2_246.json")}
+
+     {:path "/yki-sp/oph/osallistuja/5.4.3.2.1" :method :put}                                    {:status 200}}
     (let [db             (base/db)
           url-helper     (base/create-url-helper (str "localhost:" port))
           payment-helper (base/create-examination-payment-helper db url-helper)]
@@ -191,13 +195,19 @@
                                                        :disabled               false
                                                        :retry-duration-in-days 1})
                   _                      (persons-sync-handler)
-                  solki-request          (first (:recordings (first @(:routes server))))
+                  solki-request          (->> @(:routes server)
+                                              (filter #(str/starts-with? (:path (:request-spec %)) "/yki-sp/oph/"))
+                                              (first)
+                                              (:recordings)
+                                              (first))
                   expected-solki-payload {:sukunimi         (:last_name person)
                                           :etunimet         (:first_name person)
                                           :sahkoposti       (:email new-contact-details)
                                           :katuosoite       (:street_address new-contact-details)
                                           :postitoimipaikka (:post_office new-contact-details)
-                                          :postinumero      (:zip new-contact-details)}]
+                                          :postinumero      (:zip new-contact-details)
+                                          :kansalaisuus     "FIN"
+                                          :sukupuoli        "M"}]
               (is (= 200 (get-in post-response [:response :status])))
               (is (= {:success true} post-response-data))
               (is (= 200 (get-in get-response [:response :status])))
