@@ -11,6 +11,7 @@
     [muuntaja.middleware :as middleware]
     [peridot.core :as peridot]
     [yki.boundary.cas]
+    [yki.boundary.yki-register :as yki-register]
     [yki.embedded-db :as embedded-db]
     [yki.env]
     [yki.handler.auth]
@@ -394,13 +395,16 @@
                       "5.4.3.2.3" registration-form-2
                       "5.4.3.2.1" registration-form
                       "5.4.3.2.4" post-admission-registration-form}]
-    (let [{:keys [first_name last_name email phone_number street_address post_office zip]} form]
+    (let [{:keys [first_name last_name email phone_number street_address post_office zip ssn gender]} form
+          gender           (yki-register/convert-gender gender ssn)
+          nationality_code "246"]
       (jdbc/execute!
         @embedded-db/conn
-        (str "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip) VALUES ("
-             (->> [oid first_name last_name email phone_number street_address post_office zip]
-                  (map #(str "'" % "'"))
-                  (str/join ","))
+        (str "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender) VALUES ("
+             (let [without-gender (->> [oid first_name last_name email phone_number street_address post_office zip nationality_code]
+                                       (map #(str "'" % "'"))
+                                       (str/join ","))]
+               (str without-gender ",cast('" gender "' as gender_code)"))
              ")")))))
 
 (defn insert-registrations [state]

@@ -1746,14 +1746,15 @@ WHERE logged_in + interval '1 week' < current_date;
 
 -- name: upsert-person!
 INSERT INTO person
-(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, gender, nationality_code) VALUES
-(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip, :gender, :nationality_code)
+(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender) VALUES
+(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip, :nationality_code, cast(:gender as gender_code))
 ON CONFLICT (oid)
 DO UPDATE SET first_name = :first_name, last_name = :last_name,
 email = :email, phone_number = :phone_number,
 street_address = :street_address,
 post_office = :post_office, zip = :zip,
-gender = :gender, nationality_code = :nationality_code,
+nationality_code = :nationality_code,
+gender = cast(:gender as gender_code),
 modified = current_timestamp;
 
 -- name: update-person-contact-details!
@@ -1900,7 +1901,7 @@ WITH person_oids AS (
 
 -- name: update-person-gender-and-nationality!
 UPDATE person
-SET gender = :gender::gender_code,
+SET gender = cast(:gender as gender_code),
     nationality_code = :nationality_code
 WHERE oid = :oid;
 

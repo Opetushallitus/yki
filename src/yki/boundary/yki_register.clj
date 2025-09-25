@@ -14,7 +14,7 @@
 
 ; HOTFIX change: if nationality null or empty, its labeled as missing and thus marked as "xxx".
 ; Find out why Solki and yki nationality codes differ sometimes, to avoid using a blacklist like this
-(defn nationality-not-supported-or-missing? [nationality]
+(defn- nationality-not-supported-or-missing? [nationality]
   (some #(= nationality %) ["ZAR" "YYY" "XKK" "" nil]))
 
 (defn- convert-level [level]
@@ -212,6 +212,8 @@
   (if disabled
     (log/info "Person sync disabled")
     (let [oid                   (:oid person)
+          nationality           (codes/get-converted-country-code url-helper (:nationality_code person))
+          converted-nationality (if (nationality-not-supported-or-missing? nationality) "xxx" nationality)
           person->solki-payload {:last_name        :sukunimi
                                  :first_name       :etunimet
                                  :gender           :sukupuoli
@@ -221,6 +223,7 @@
                                  :post_office      :postitoimipaikka
                                  :email            :sahkoposti}
           payload               (-> person
+                                    (assoc :nationality_code converted-nationality)
                                     (select-keys (keys person->solki-payload))
                                     (set/rename-keys person->solki-payload))]
       (do-put (url-helper :yki-register.person oid) (json/write-value-as-string payload) basic-auth "application/json"))))

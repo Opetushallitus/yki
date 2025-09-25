@@ -91,8 +91,7 @@
 
   :yki.job.scheduled-tasks/sync-participant-onr-data-handler {:db         #ig/ref :duct.database/sql
                                                               :onr-client #ig/ref :yki.boundary.onr/onr-client}
-  :yki.job.scheduled-tasks/migrate-person-handler            {:db         #ig/ref :duct.database/sql
-                                                              :url-helper #ig/ref :yki.util/url-helper}
+  :yki.job.scheduled-tasks/migrate-person-handler            {:db         #ig/ref :duct.database/sql}
 
   :yki.job.scheduled-tasks/registration-queue-handler        {:db             #ig/ref :duct.database/sql
                                                               :url-helper     #ig/ref :yki.util/url-helper

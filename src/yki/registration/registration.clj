@@ -254,11 +254,10 @@
                                    ssn->date
                                    common/format-date-for-db))))
 
-(defn- with-gender-and-nationality [url-helper {:keys [gender ssn nationalities] :as form}]
+(defn- with-gender-and-nationality [{:keys [gender ssn nationalities] :as form}]
   (let [gender                (yki-register/convert-gender gender ssn)
-        nationality           (codes/get-converted-country-code url-helper (first nationalities))
-        converted-nationality (if (yki-register/nationality-not-supported-or-missing? nationality) "xxx" nationality)]
-    (assoc form :gender gender :nationality_code converted-nationality)))
+        nationality           (first nationalities)]
+    (assoc form :gender gender :nationality_code nationality)))
 
 (defn- ->send-registration-email! [db url-helper payment-helper email-q lang registration-data code login-url email-auth?]
   (case (:kind registration-data)
@@ -365,7 +364,8 @@
               code                    (str (random-uuid))
               login-url               (url-helper :yki.login-link.url code)
               create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang (assoc registration-data :participant_id unified-participant-id) code login-url email-auth?)
-              update-person           (-> (with-gender-and-nationality url-helper form)
+              update-person           (-> form
+                                          (with-gender-and-nationality)
                                           (assoc :oid oid))
               person                  (person-db/upsert-person! db update-person)
               success                 (and person

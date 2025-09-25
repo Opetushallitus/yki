@@ -202,7 +202,7 @@
      (catch Exception e
        (log/error e "Registration queue handler failed"))))
 
-(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db url-helper]}]
+(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db]}]
   {:pre [(some? db)]}
   #(try
      (when (job-db/try-to-acquire-lock! db person-migrator-conf)
@@ -212,12 +212,11 @@
          (doseq [{:keys [oid gender ssn nationalities] :as person} persons]
            (try
              (let [gender                (yki-register/convert-gender gender ssn)
-                   nationality           (codes/get-converted-country-code url-helper (first nationalities))
-                   converted-nationality (if (yki-register/nationality-not-supported-or-missing? nationality) "xxx" nationality)]
+                   nationality           (first nationalities)]
                (person-db/update-person-gender-and-nationality!
                  db
                  {:oid              oid
-                  :nationality_code converted-nationality
+                  :nationality_code nationality
                   :gender           gender}))
              (catch Exception e
                (log/error e "Updating gender and nationality failed for person" (dissoc person :ssn)))))))

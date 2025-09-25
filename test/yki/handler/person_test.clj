@@ -6,7 +6,6 @@
     [integrant.core :as ig]
     [peridot.core :as peridot]
     [stub-http.core :refer [with-routes!]]
-    [yki.boundary.yki-register :as yki-register]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.handler.routing :as routing]))
@@ -199,11 +198,11 @@
                                           :katuosoite       (:street_address new-contact-details)
                                           :postitoimipaikka (:post_office new-contact-details)
                                           :postinumero      (:zip new-contact-details)}]
-              (is (= (get-in solki-request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
               (is (= 200 (get-in post-response [:response :status])))
               (is (= {:success true} post-response-data))
               (is (= 200 (get-in get-response [:response :status])))
               (is (= (merge person new-contact-details) (dissoc get-response-data :registrations)))
+              (is (= (get-in solki-request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
               (is (= expected-solki-payload (-> solki-request
                                                 (get-in [:request :body "content"])
                                                 (json/read-str :key-fn keyword)))))))))))
