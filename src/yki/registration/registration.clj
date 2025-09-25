@@ -7,11 +7,13 @@
             [clojure.tools.logging :as log]
             [pgqueue.core :as pgq]
             [ring.util.http-response :refer [bad-request ok conflict]]
+            [yki.boundary.codes :as codes]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
             [yki.boundary.person-db :as person-db]
             [yki.boundary.registration-db :as registration-db]
+            [yki.boundary.yki-register :as yki-register]
             [yki.registration.email :refer [send-enrolled-to-queue-email!]]
             [yki.spec :refer [ssn->date]]
             [yki.util.common :as common]
@@ -252,6 +254,12 @@
                                    ssn->date
                                    common/format-date-for-db))))
 
+(defn- with-gender-and-nationality [url-helper {:keys [gender ssn nationalities] :as form}]
+  (let [gender                (yki-register/convert-gender gender ssn)
+        nationality           (codes/get-converted-country-code url-helper (first nationalities))
+        converted-nationality (if (yki-register/nationality-not-supported-or-missing? nationality) "xxx" nationality)]
+    (assoc form :gender gender :nationality_code converted-nationality)))
+
 (defn- ->send-registration-email! [db url-helper payment-helper email-q lang registration-data code login-url email-auth?]
   (case (:kind registration-data)
     "ADMISSION"
@@ -357,7 +365,9 @@
               code                    (str (random-uuid))
               login-url               (url-helper :yki.login-link.url code)
               create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang (assoc registration-data :participant_id unified-participant-id) code login-url email-auth?)
-              person                  (person-db/upsert-person! db (assoc form :oid oid))
+              update-person           (-> (with-gender-and-nationality url-helper form)
+                                          (assoc :oid oid))
+              person                  (person-db/upsert-person! db update-person)
               success                 (and person
                                            (registration-db/update-registration-details!
                                              db

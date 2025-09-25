@@ -42,6 +42,7 @@
   (upsert-person! [db person])
   (update-contact-details! [db person])
   (get-persons-without-gender-or-nationality [db])
+  (update-person-gender-and-nationality! [db person])
   (get-registration-relocate-details [db oid registration-id])
   (relocate-registration! [db oid registration-id target-exam-session-id])
   (get-registration-to-confirm-details [db oid registration-id])
@@ -73,7 +74,16 @@
         (first)
         (assoc :registrations (get-registrations-with-queue-details tx oid)))))
   (get-persons-without-gender-or-nationality [{:keys [spec]}]
-    (q/select-persons-without-gender-or-nationality spec))
+    (let [persons (q/select-persons-without-gender-or-nationality spec)]
+      (->> persons
+           (map (fn [{:keys [person_oid form]}]
+                  {:oid           person_oid
+                   :gender        (:gender form)
+                   :ssn           (:ssn form)
+                   :nationalities (:nationalities form)})))))
+  (update-person-gender-and-nationality! [{:keys [spec]} person]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-person-gender-and-nationality! tx person)))
   (upsert-person!
     [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]

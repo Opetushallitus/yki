@@ -1746,13 +1746,14 @@ WHERE logged_in + interval '1 week' < current_date;
 
 -- name: upsert-person!
 INSERT INTO person
-(oid, first_name, last_name, email, phone_number, street_address, post_office, zip) VALUES
-(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip)
+(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, gender, nationality_code) VALUES
+(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip, :gender, :nationality_code)
 ON CONFLICT (oid)
 DO UPDATE SET first_name = :first_name, last_name = :last_name,
 email = :email, phone_number = :phone_number,
 street_address = :street_address,
 post_office = :post_office, zip = :zip,
+gender = :gender, nationality_code = :nationality_code,
 modified = current_timestamp;
 
 -- name: update-person-contact-details!
@@ -1881,7 +1882,9 @@ WITH person_oids AS (
     WHERE p.gender IS NULL OR p.nationality_code IS NULL
     ORDER BY p.created DESC
     LIMIT 2000
-) SELECT DISTINCT ON (r.person_oid) r.person_oid, r.form->>'gender' AS gender, r.form->>'ssn' AS ssn
+) SELECT DISTINCT ON (r.person_oid)
+      r.person_oid,
+      r.form
   FROM registration r
   WHERE
       r.person_oid IN (SELECT oid FROM person_oids) AND
@@ -1889,6 +1892,12 @@ WITH person_oids AS (
            OR
        COALESCE(r.form->>'ssn','') <> '')
       ORDER BY r.person_oid, r.created DESC;
+
+-- name: update-person-gender-and-nationality!
+UPDATE person
+SET gender = :gender::gender_code,
+    nationality_code = :nationality_code
+WHERE oid = :oid;
 
 -- name: select-registration-to-confirm-details
 SELECT r.id,

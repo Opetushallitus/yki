@@ -6,6 +6,7 @@
     [integrant.core :as ig]
     [pgqueue.core :as pgq]
     [yki.boundary.cas-ticket-db :as cas-ticket-db]
+    [yki.boundary.codes :as codes]
     [yki.boundary.debug :as debug]
     [yki.boundary.email :as email]
     [yki.boundary.exam-session-db :as exam-session-db]
@@ -38,8 +39,8 @@
                                                  :interval  "59 MINUTES"})
 
 (defonce person-migrator-conf {:worker-id (str (random-uuid))
-                               :task "MIGRATE_PERSON_HANDLER"
-                               :interval "59 SECONDS"})
+                               :task      "MIGRATE_PERSON_HANDLER"
+                               :interval  "59 SECONDS"})
 
 (defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_QUEUE_HANDLER"
@@ -201,24 +202,24 @@
      (catch Exception e
        (log/error e "Registration queue handler failed"))))
 
-(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db]}]
+(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db url-helper]}]
   {:pre [(some? db)]}
   #(try
      (when (job-db/try-to-acquire-lock! db person-migrator-conf)
        (log/info "Populating gender and nationality values for persons from past registrations")
-       ; TODO
-       ; 1. Get persons without gender / nationality
-       ; 2. Get latest registrations for those persons with the gender and nationality information
-       ; 3. Read declared nationality, gender and SSN from form
-       ; 4. Deduce gender using SSN if given and otherwise what's entered on form
-       ; 5. Update gender & nationality
-       ; 6. Rinse and repeat for next batch
        (let [persons (person-db/get-persons-without-gender-or-nationality db)]
          (log/info "Updating data for" (count persons) "person entries")
-         (doseq [])))
+         (doseq [{:keys [oid gender ssn nationalities] :as person} persons]
+           (try
+             (let [gender                (yki-register/convert-gender gender ssn)
+                   nationality           (codes/get-converted-country-code url-helper (first nationalities))
+                   converted-nationality (if (yki-register/nationality-not-supported-or-missing? nationality) "xxx" nationality)]
+               (person-db/update-person-gender-and-nationality!
+                 db
+                 {:oid              oid
+                  :nationality_code converted-nationality
+                  :gender           gender}))
+             (catch Exception e
+               (log/error e "Updating gender and nationality failed for person" (dissoc person :ssn)))))))
      (catch Exception e
        (log/error e "Person migration failed"))))
-
-(comment
-  (let [[_ db] (ig/find-derived-1 (local/current-state) :duct.database/sql)]
-    (person-db/get-persons-without-gender-or-nationality db)))

@@ -14,7 +14,7 @@
 
 ; HOTFIX change: if nationality null or empty, its labeled as missing and thus marked as "xxx".
 ; Find out why Solki and yki nationality codes differ sometimes, to avoid using a blacklist like this
-(defn- nationality-not-supported-or-missing? [nationality]
+(defn nationality-not-supported-or-missing? [nationality]
   (some #(= nationality %) ["ZAR" "YYY" "XKK" "" nil]))
 
 (defn- convert-level [level]
@@ -129,7 +129,7 @@
         (subs year 2 4)
         (if (< (Integer/valueOf ^String year) 2000) "-" "A")))))
 
-(defn- convert-gender
+(defn convert-gender
   [gender ssn]
   (if-not (str/blank? ssn)
     (let [identifier (Integer/valueOf (subs ssn 7 10))
