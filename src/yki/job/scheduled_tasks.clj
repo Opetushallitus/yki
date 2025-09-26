@@ -113,6 +113,8 @@
                (person-db/mark-person-sync-attempt! db id true))
              (catch Exception e
                (do
+                 ; TODO Syncing details to SOLKI is expected to fail with status 404 if person hasn't yet been introducted to SOLKI, ie. they have no COMPLETED registrations
+                 ; TODO In such cases we might want to not retry failed sync attempts
                  (log/error e "Updating person details to Solki failed!" {:id id, :oid person_oid})
                  (person-db/mark-person-sync-attempt! db id false)))))))
      (catch Exception e
@@ -205,13 +207,14 @@
   {:pre [(some? db)]}
   #(try
      (when (job-db/try-to-acquire-lock! db person-migrator-conf)
-       (log/info "Populating gender and nationality values for persons from past registrations")
-       (let [persons (person-db/get-persons-without-gender-or-nationality db)]
-         (log/info "Updating data for" (count persons) "person entries")
+       (let [persons       (person-db/get-persons-without-gender-or-nationality db)
+             persons-count (count persons)]
+         (when (pos-int? persons-count)
+           (log/info "Updating data for" persons-count "person entries"))
          (doseq [{:keys [oid gender ssn nationalities] :as person} persons]
            (try
-             (let [gender                (yki-register/convert-gender gender ssn)
-                   nationality           (first nationalities)]
+             (let [gender      (yki-register/convert-gender gender ssn)
+                   nationality (first nationalities)]
                (person-db/update-person-gender-and-nationality!
                  db
                  {:oid              oid
