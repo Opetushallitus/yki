@@ -1896,7 +1896,9 @@ WITH person_oids AS (
       r.person_oid IN (SELECT oid FROM person_oids) AND
       (COALESCE(r.form->>'gender','') <> ''
            OR
-       COALESCE(r.form->>'ssn','') <> '')
+       COALESCE(r.form->>'ssn','') <> ''
+           OR
+      r.form->>'nationalities' IS NOT NULL)
       ORDER BY r.person_oid, r.created DESC;
 
 -- name: update-person-gender-and-nationality!
