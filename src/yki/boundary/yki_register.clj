@@ -73,7 +73,8 @@
                                         :url        url
                                         :headers    {"content-type" content-type}
                                         :basic-auth [(:user basic-auth) (:password basic-auth)]
-                                        :body       body-as-string})
+                                        :body       body-as-string
+                                        :timeout    10000})
         status   (str (:status response))]
     (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
       (log/info "Syncing data success")

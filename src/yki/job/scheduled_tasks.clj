@@ -6,7 +6,6 @@
     [integrant.core :as ig]
     [pgqueue.core :as pgq]
     [yki.boundary.cas-ticket-db :as cas-ticket-db]
-    [yki.boundary.codes :as codes]
     [yki.boundary.debug :as debug]
     [yki.boundary.email :as email]
     [yki.boundary.exam-session-db :as exam-session-db]
