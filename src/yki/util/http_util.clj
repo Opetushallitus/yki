@@ -8,6 +8,12 @@
 
 (def csrf-value "yki")
 
+(defn sanitize-response [{:keys [body status opts]}]
+  {:method        (:method opts)
+   :url           (:url opts)
+   :status        status
+   :response-body body})
+
 (defn headers-and-cookies-settings [opts]
   (-> opts
       (update :headers merge

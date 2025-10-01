@@ -50,9 +50,6 @@
   {:kieli language_code
    :pvm   session_date})
 
-(defn- remove-basic-auth [response]
-  (update-in response [:opts] dissoc :basic-auth))
-
 (defn- do-post
   ([url body-as-string basic-auth]
    (do-post url body-as-string basic-auth "application/json; charset=UTF-8"))
@@ -65,7 +62,7 @@
      (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
        (log/info "Syncing data success")
        (do
-         (log/error "Failed to sync data, error response" (remove-basic-auth response))
+         (log/error "Failed to sync data, error response" (http-util/sanitize-response response))
          (throw (Exception. (str "Could not sync request to url " url))))))))
 
 (defn- do-put [url body-as-string basic-auth content-type]
@@ -79,7 +76,7 @@
     (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
       (log/info "Syncing data success")
       (do
-        (log/error "Failed to sync data, error response" (remove-basic-auth response))
+        (log/error "Failed to sync data, error response" (http-util/sanitize-response response))
         (throw (Exception. (str "Could not sync request to url " url)))))))
 
 (defn- do-delete [url basic-auth]
@@ -87,9 +84,9 @@
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
         status   (str (:status response))]
     (if (or (str/starts-with? status "2") (str/starts-with? status "3") (= status "404"))
-      (log/info "Deleting data success" (remove-basic-auth response))
+      (log/info "Deleting data success" (http-util/sanitize-response response))
       (do
-        (log/error "Failed to sync data, error response" (remove-basic-auth response))
+        (log/error "Failed to sync data, error response" (http-util/sanitize-response response))
         (throw (Exception. (str "Could not sync deletion " url)))))))
 
 (defn- sync-organizer
