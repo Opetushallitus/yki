@@ -108,15 +108,19 @@
        (let [persons-to-sync (person-db/get-persons-to-sync db (str retry-duration-in-days " days"))]
          (doseq [{:keys [id person_oid]} persons-to-sync]
            (try
-             (let [person (person-db/get-full-person-details db person_oid)]
-               (yki-register/sync-person url-helper basic-auth disabled person)
-               (person-db/mark-person-sync-attempt! db id true))
+             (let [person          (person-db/get-full-person-details db person_oid)
+                   solki-response  (yki-register/sync-person url-helper basic-auth disabled person)
+                   status          (:status solki-response)
+                   success?        (= 200 status)
+                   retry-if-error? (and (not success?)
+                                        (not (= 404 status)))]
+               (when (not success?)
+                 (log/error "Updating person details to Solki failed!" {:oid person_oid, :response solki-response}))
+               (person-db/mark-person-sync-attempt! db id success? retry-if-error?))
              (catch Exception e
                (do
-                 ; TODO Syncing details to SOLKI is expected to fail with status 404 if person hasn't yet been introducted to SOLKI, ie. they have no COMPLETED registrations
-                 ; TODO In such cases we might want to not retry failed sync attempts
                  (log/error e "Updating person details to Solki failed!" {:id id, :oid person_oid})
-                 (person-db/mark-person-sync-attempt! db id false)))))))
+                 (person-db/mark-person-sync-attempt! db id false true)))))))
      (catch Exception e
        (log/error e "Persons sync handler failed"))))
 

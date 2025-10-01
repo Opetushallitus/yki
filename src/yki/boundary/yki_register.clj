@@ -71,13 +71,8 @@
                                         :headers    {"content-type" content-type}
                                         :basic-auth [(:user basic-auth) (:password basic-auth)]
                                         :body       body-as-string
-                                        :timeout    10000})
-        status   (str (:status response))]
-    (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
-      (log/info "Syncing data success")
-      (do
-        (log/error "Failed to sync data, error response" (http-util/sanitize-response response))
-        (throw (Exception. (str "Could not sync request to url " url)))))))
+                                        :timeout    10000})]
+    (http-util/sanitize-response response)))
 
 (defn- do-delete [url basic-auth]
   (log/info "DELETE request to url" url)

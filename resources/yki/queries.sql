@@ -1949,13 +1949,15 @@ WHERE person_oid = :oid
 INSERT INTO person_sync_status (person_oid) VALUES (:oid);
 
 -- name: mark-successful-person-sync-attempt!
-UPDATE person_sync_status SET success_at=current_timestamp WHERE id=:id;
+UPDATE person_sync_status SET success_at=current_timestamp, should_retry=false WHERE id=:id;
 
 -- name: mark-failed-person-sync-attempt!
-UPDATE person_sync_status SET failed_at=current_timestamp WHERE id=:id;
+UPDATE person_sync_status SET failed_at=current_timestamp, should_retry=:should_retry WHERE id=:id;
 
 -- name: select-persons-to-sync
 SELECT pss.id, pss.person_oid
 FROM person_sync_status pss
 WHERE current_timestamp < pss.created + :duration::interval
-  AND pss.success_at IS NULL;
+  AND pss.success_at IS NULL
+  AND (pss.should_retry IS NULL
+      OR pss.should_retry IS true);

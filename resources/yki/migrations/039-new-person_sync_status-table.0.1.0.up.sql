@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS person_sync_status
     person_oid TEXT REFERENCES person(oid),
     success_at TIMESTAMP WITH TIME ZONE,
     failed_at TIMESTAMP WITH TIME ZONE,
+    should_retry BOOLEAN,
     created TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp
 );
 

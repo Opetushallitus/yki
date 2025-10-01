@@ -49,7 +49,7 @@
   (get-registration-to-confirm-details [db oid registration-id])
   (cancel-person-registration! [db oid registration-id])
   (get-persons-to-sync [db retry-duration])
-  (mark-person-sync-attempt! [db id success?]))
+  (mark-person-sync-attempt! [db id success? retry-if-error?]))
 
 (defn valid-transfer-targets
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
@@ -130,8 +130,8 @@
       (q/cancel-registration-for-person<! tx {:oid oid :id registration-id})))
   (get-persons-to-sync [{:keys [spec]} retry-duration]
     (q/select-persons-to-sync spec {:duration retry-duration}))
-  (mark-person-sync-attempt! [{:keys [spec]} id success?]
+  (mark-person-sync-attempt! [{:keys [spec]} id success? retry-if-error?]
     (jdbc/with-db-transaction [tx spec]
       (if success?
         (q/mark-successful-person-sync-attempt! tx {:id id})
-        (q/mark-failed-person-sync-attempt! tx {:id id})))))
+        (q/mark-failed-person-sync-attempt! tx {:id id :should_retry retry-if-error?})))))
