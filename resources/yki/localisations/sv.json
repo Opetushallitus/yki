@@ -95,7 +95,7 @@
   "email.payment_success.content.line5.link.text": "Annullering av deltagande",
   "email.payment_success.content.line5.link.url": "https://www.oph.fi/sv/koulutus-ja-tutkinnot/kieli-ja-kaantajatutkinnot/yleiset-kielitutkinnot-yki/ennen-testia#anchor-annullering-av-deltagande",
   "email.payment_success.content.line6.link.text": "Mina anmälningar",
-  "email.payment_success.content.line6": "Du kan se uppgifterna om din anmälan och annullera den via YKI-anmälningssidan",
+  "email.payment_success.content.line6": "Du kan redigera dina kontaktuppgifter, se uppgifterna om din anmälan och annullera den via YKI-anmälningssidan",
   "email.payment_success.content.line7": "Ett kvitto på den betalda examensavgiften har bifogats till meddelandet.",
   "email.payment_success.extra_information.label": "Ytterligare information från teststället",
   "email.payment_success.idDocument.bulletPoint1": "pass",

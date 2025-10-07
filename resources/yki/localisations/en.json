@@ -95,7 +95,7 @@
   "email.payment_success.content.line5.link.text": "Cancelling your test registration",
   "email.payment_success.content.line5.link.url": "https://www.oph.fi/en/koulutus-ja-tutkinnot/kieli-ja-kaantajatutkinnot/yleiset-kielitutkinnot-yki/ennen-testia#anchor-cancelling-your-test-registration",
   "email.payment_success.content.line6.link.text": "My registrations",
-  "email.payment_success.content.line6": "You can view the details of your registration or cancel it on the YKI registration page",
+  "email.payment_success.content.line6": "You can edit your contact information, view the details of your registration or cancel it on the YKI registration page",
   "email.payment_success.content.line7": "Attached to this message is a receipt for your paid test fee.",
   "email.payment_success.extra_information.label": "Additional information from the test centre",
   "email.payment_success.idDocument.bulletPoint1": "a passport",
