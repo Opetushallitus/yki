@@ -58,15 +58,14 @@
         :return ::ys/response
         (if (authorized-for-handler? session)
           (if-let [oid (get-in session [:identity :oid])]
-            (let [person (assoc contact :oid oid)]
+            (let [person      (assoc contact :oid oid)
+                  email-auth? (= "EMAIL" (:auth-method session))]
               (if (person-db/update-contact-details! db person)
-                (-> (ok {:success true})
-                    ; Update email possibly stored in session details so that it gets reflected in UI for user session header
-                    (update :session
-                            (fn [{:keys [auth-method] :as session}]
-                              (if (= "EMAIL" auth-method)
-                                (assoc-in session [:identity :email] (:email contact))
-                                session))))
+                (cond->
+                  (ok {:success true})
+                  ; Update email stored in session details so that it gets reflected in UI for user session header
+                  email-auth?
+                  (assoc-in [:session :identity :email] (:email contact)))
                 (ok {:success false})))
             (unauthorized "no oid in session"))
           (unauthorized)))
