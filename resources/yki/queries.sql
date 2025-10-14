@@ -811,16 +811,6 @@ WHERE re.participant_id = :participant_id
   AND re.state = 'STARTED'
   AND es.id = :exam_session_id;
 
--- name: select-registration
-SELECT state, exam_session_id, participant_id, es.organizer_id, ed.exam_date
-FROM registration re
-INNER JOIN participant p ON p.id = re.participant_id
-INNER JOIN exam_session es ON es.id = re.exam_session_id
-INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-WHERE re.id = :id
-  AND re.state = 'SUBMITTED'
-  AND p.external_user_id = :external_user_id;
-
 -- name: select-started-registrations-to-expire
 SELECT id FROM registration
 WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp;
