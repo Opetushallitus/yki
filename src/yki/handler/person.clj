@@ -63,11 +63,13 @@
               (log/info "Updating contact details" {:session session
                                                     :contact contact})
               (if (person-db/update-contact-details! db person)
-                (cond->
-                  (ok {:success true})
-                  ; Update email stored in session details so that it gets reflected in UI for user session header
-                  email-auth?
-                  (assoc-in [:session :identity :email] (:email contact)))
+                (if email-auth?
+                  (let [identity         (:identity session)
+                        updated-identity (assoc identity :email (:email contact))
+                        updated-session  (assoc session :identity updated-identity)]
+                    (log/info "Updated session" updated-session)
+                    (assoc (ok {:success true}) :session updated-session))
+                  (ok {:success true}))
                 (ok {:success false})))
             (unauthorized "no oid in session"))
           (unauthorized)))
