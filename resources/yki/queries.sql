@@ -981,9 +981,9 @@ SELECT re.state,
        re.exam_session_id,
        re.participant_id,
        re.kind,
-       re.form->>'email' AS email,
-       re.form->>'last_name' AS last_name,
-       re.form->>'first_name' AS first_name,
+       pe.email,
+       pe.last_name,
+       pe.first_name,
        re.form->>'certificate_lang' AS lang,
        es.language_code,
        es.level_code,
@@ -996,6 +996,7 @@ SELECT re.state,
        esl.name,
        p.external_user_id = p.email AS is_email_auth
 FROM registration re
+INNER JOIN person pe ON pe.oid = re.person_oid
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
