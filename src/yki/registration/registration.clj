@@ -176,9 +176,7 @@
      :body       (template-util/render template-name lang template-data)}))
 
 (defn create-and-send-payment-link [db email-q lang payment-link template-name template-data code login-url]
-  ; TODO Should either consider reading email preferentially from person table or ensure that email within participant table gets
-  ;  updated whenever email for corresponding person gets updated..
-  (let [email  (:email (registration-db/get-participant-by-id db (:participant_id payment-link)))
+  (let [email  (:email template-data)
         hashed (sha256-hash code)]
     (login-link-db/create-login-link! db (assoc payment-link :code hashed :user_data nil))
     (log/info "Payment link created for " email ". Adding to email queue")
@@ -255,8 +253,8 @@
                                    common/format-date-for-db))))
 
 (defn- with-gender-and-nationality [{:keys [gender ssn nationalities] :as form}]
-  (let [gender                (yki-register/convert-gender gender ssn)
-        nationality           (first nationalities)]
+  (let [gender      (yki-register/convert-gender gender ssn)
+        nationality (first nationalities)]
     (assoc form :gender gender :nationality_code nationality)))
 
 (defn- ->send-registration-email! [db url-helper payment-helper email-q lang registration-data code login-url email-auth?]
@@ -291,12 +289,11 @@
                                      login-url))
     "QUEUE"
     (let [participant-id   (:participant_id registration-data)
-          email            (:email (registration-db/get-participant-by-id db participant-id))
           user-portal-link (if email-auth?
-                             (create-user-portal-link db url-helper (:participant_id registration-data) (:id registration-data) (:exam_date registration-data))
+                             (create-user-portal-link db url-helper participant-id (:id registration-data) (:exam_date registration-data))
                              (url-helper :yki.login.user-portal))]
 
-      #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :email email :user_portal_link user-portal-link)))))
+      #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :user_portal_link user-portal-link)))))
 
 (defn send-lifted-from-queue-email! [db url-helper payment-helper email-q lang registration-data code login-url]
   (let [registration-id          (:id registration-data)
@@ -363,7 +360,12 @@
                                        :ui_language    lang}
               code                    (str (random-uuid))
               login-url               (url-helper :yki.login-link.url code)
-              create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang (assoc registration-data :participant_id unified-participant-id) code login-url email-auth?)
+              email-template-data     (assoc registration-data
+                                        :email
+                                        (or email
+                                            (:email (registration-db/get-participant-by-id db unified-participant-id)))
+                                        :participant_id unified-participant-id)
+              create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang email-template-data code login-url email-auth?)
               update-person           (-> form
                                           (with-gender-and-nationality)
                                           (assoc :oid oid))

@@ -897,12 +897,14 @@ SELECT re.id,
        esl.post_office,
        esl.zip,
        esl.name,
-       p.external_user_id = p.email AS is_email_auth
+       p.external_user_id = p.email AS is_email_auth,
+       pe.email
 FROM registration re
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 LEFT JOIN participant p ON re.participant_id = p.id
+LEFT JOIN person pe ON re.person_oid = pe.oid
 WHERE re.id = :id
   AND (re.kind IN ('ADMISSION', 'QUEUE'))
   AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >=
