@@ -60,6 +60,8 @@
           (if-let [oid (get-in session [:identity :oid])]
             (let [person      (assoc contact :oid oid)
                   email-auth? (= "EMAIL" (:auth-method session))]
+              (log/info "Updating contact details" {:session session
+                                                    :contact contact})
               (if (person-db/update-contact-details! db person)
                 (cond->
                   (ok {:success true})
