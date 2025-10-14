@@ -144,8 +144,7 @@
                         user-portal-link          (if (:is_email_auth registration-details)
                                                     (registration/create-user-portal-link db url-helper
                                                                                           (:participant_id registration-details)
-                                                                                          registration-id
-                                                                                          (:exam_date registration-details))
+                                                                                          registration-id)
                                                     (url-helper :yki.login.user-portal))
                         email-template-data       (assoc registration-details
                                                     :contact_info exam-session-contact-info
@@ -178,8 +177,7 @@
                           user-portal-link          (if (:is_email_auth registration-details)
                                                       (registration/create-user-portal-link db url-helper
                                                                                             (:participant_id registration-details)
-                                                                                            registration-id
-                                                                                            (:exam_date registration-details))
+                                                                                            registration-id)
                                                       (url-helper :yki.login.user-portal))
                           email-template-data       (assoc registration-details
                                                       :contact_info exam-session-contact-info
@@ -220,7 +218,7 @@
                         user-portal-link               (if (:is_email_auth registration-details)
                                                          (registration/create-user-portal-link db url-helper
                                                                                                (:participant_id registration-details)
-                                                                                               registration-id (:exam-date registration-details))
+                                                                                               registration-id)
                                                          (url-helper :yki.login.user-portal))
                         email-template-data            (assoc registration-details
                                                          :contact_info exam-session-contact-info

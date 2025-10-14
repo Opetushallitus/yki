@@ -1,4 +1,5 @@
 -- name: select-organizers
+
 SELECT o.oid, o.agreement_start_date, o.agreement_end_date, o.contact_name, o.contact_email, o.contact_phone_number, o.extra,
   (
     SELECT array_to_json(array_agg(lang))
@@ -732,7 +733,7 @@ WITH exam_sessions_for_same_day AS (
     WHERE r.id = :id
 )
 UPDATE registration SET
-  state = 'SUBMITTED',
+  state = :to_state::registration_state,
   modified = current_timestamp,
   form = :form,
   person_oid = :oid,
@@ -810,6 +811,16 @@ INNER JOIN registration re ON es.id = re.exam_session_id
 WHERE re.participant_id = :participant_id
   AND re.state = 'STARTED'
   AND es.id = :exam_session_id;
+
+-- name: select-registration
+SELECT state, exam_session_id, participant_id, es.organizer_id, ed.exam_date
+FROM registration re
+INNER JOIN participant p ON p.id = re.participant_id
+INNER JOIN exam_session es ON es.id = re.exam_session_id
+INNER JOIN exam_date ed ON ed.id = es.exam_date_id
+WHERE re.id = :id
+  AND re.state = 'SUBMITTED'
+  AND p.external_user_id = :external_user_id;
 
 -- name: select-started-registrations-to-expire
 SELECT id FROM registration
@@ -907,7 +918,7 @@ LEFT JOIN participant p ON re.participant_id = p.id
 LEFT JOIN person pe ON re.person_oid = pe.oid
 WHERE re.id = :id
   AND (re.kind IN ('ADMISSION', 'QUEUE'))
-  AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
+  AND (re.state IN ('STARTED', 'SUBMITTED'))
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
@@ -938,7 +949,7 @@ INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
   AND (re.kind IN ('ADMISSION', 'QUEUE'))
-  AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
+  AND (re.state IN ('STARTED', 'SUBMITTED'))
   AND esl.lang = :lang
   AND EXISTS (SELECT 1
        FROM registration as reg
@@ -1298,7 +1309,7 @@ WHERE
 WITH registrations_to_update AS (SELECT id
                                  FROM registration
                                  WHERE kind = 'QUEUE'
-                                   AND state = 'SUBMITTED'
+                                   AND state IN ('SUBMITTED')
                                    AND exam_session_id = :exam_session_id
                                  ORDER BY created ASC
                                  LIMIT 1)
@@ -1528,12 +1539,6 @@ SELECT
 FROM exam_session_location esl
 WHERE esl.exam_session_id = :id
 AND esl.lang = :lang;
-
---name: select-exam-session-exam-date
-SELECT ed.exam_date
-FROM exam_session es
-INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-WHERE es.id = :id;
 
 --name: select-evaluation-by-id
 SELECT
@@ -1865,7 +1870,7 @@ SELECT
                   lang
            FROM exam_session_location
            WHERE exam_session_id = ies.id) loc) as location,
-    (SELECT COUNT(1) FROM registration WHERE exam_session_id = ies.id AND state IN ('STARTED','SUBMITTED','COMPLETED') AND kind = 'ADMISSION') AS participants,
+    (SELECT COUNT(1) FROM registration WHERE exam_session_id = ies.id AND state IN ('STARTED','SUBMITTED', 'COMPLETED') AND kind = 'ADMISSION') AS participants,
     ies.max_participants
 FROM exam_session es
 LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
@@ -1956,3 +1961,16 @@ WHERE current_timestamp < pss.created + :duration::interval
   AND pss.success_at IS NULL
   AND (pss.should_retry IS NULL
       OR pss.should_retry IS true);
+
+-- name: select-free-registration
+SELECT source,
+       type,
+       approved,
+       matriculation_exam,
+       higher_education_concluded,
+       higher_education_concluded,
+       eb,
+       dia,
+       other
+FROM free_registration
+WHERE registration_id = :id
