@@ -648,8 +648,9 @@ AND   l.created > :older_than;
 -- name: select-login-link-by-code
 SELECT
  l.code,
- p.external_user_id,
- p.email,
+ pa.external_user_id,
+ pa.email AS participant_email,
+ pe.email AS person_email,
  l.exam_session_id,
  l.expires_at,
  l.expired_link_redirect,
@@ -659,10 +660,11 @@ SELECT
  l.user_data,
  r.person_oid
 FROM login_link l
-INNER JOIN participant p
-  ON l.participant_id = p.id
+INNER JOIN participant pa
+  ON l.participant_id = pa.id
 LEFT JOIN registration r
   ON l.registration_id = r.id
+LEFT JOIN person pe ON r.person_oid = pe.oid
 WHERE l.code = :code;
 
 -- name: select-login-link-by-exam-session-and-registration-id
