@@ -182,7 +182,7 @@
     (log/info "Payment link created for " email ". Adding to email queue")
     (send-payment-link-email! email-q lang email template-name (assoc template-data :login_url login-url))))
 
-(defn create-user-portal-link [db url-helper participant-id registration-id exam-date]
+(defn create-user-portal-link [db url-helper participant-id registration-id]
   (let [code            (str (random-uuid))
         login-url       (url-helper :yki.login-link.url code)
         hashed          (sha256-hash code)
@@ -214,6 +214,12 @@
    (registration-db/get-open-registrations-by-participant
      db
      (get-in user [:identity :external-user-id]))})
+
+(defn- validate-free-registration [db registration-data]
+  (if-let [free-registration (registration-db/get-free-registration db (:id registration-data))]
+    ;; TODO: Validate somehow?
+    free-registration
+    nil))
 
 (defn- registration->expiration-date [registration from-queue?]
   (if from-queue?
@@ -273,7 +279,7 @@
                                     :success_redirect      payment-success-url
                                     :expired_link_redirect payment-link-expired-url
                                     :type                  "PAYMENT"}
-          user-portal-link         (when email-auth? (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data)))]
+          user-portal-link         (when email-auth? (create-user-portal-link db url-helper participant-id registration-id))]
       #(create-and-send-payment-link db
                                      email-q
                                      lang
@@ -290,7 +296,7 @@
     "QUEUE"
     (let [participant-id   (:participant_id registration-data)
           user-portal-link (if email-auth?
-                             (create-user-portal-link db url-helper participant-id (:id registration-data) (:exam_date registration-data))
+                             (create-user-portal-link db url-helper participant-id (:id registration-data))
                              (url-helper :yki.login.user-portal))]
 
       #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :user_portal_link user-portal-link)))))
@@ -310,7 +316,7 @@
                                   :expired_link_redirect payment-link-expired-url
                                   :type                  "PAYMENT"}
         user-portal-link         (when (:is_email_auth registration-data)
-                                   (create-user-portal-link db url-helper participant-id registration-id (:exam_date registration-data)))]
+                                   (create-user-portal-link db url-helper participant-id registration-id))]
     (create-and-send-payment-link db
                                   email-q
                                   lang
@@ -324,6 +330,36 @@
                                     :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal)))
                                   code
                                   login-url)))
+
+
+; ->send-free-registration-email db url-helper email-q lang (assoc registration-data :participant_id unified-participant-id) email-auth? free-registration
+(defn- ->send-free-registration-email! [db url-helper email-q lang registration-data email-auth? free-registration]
+  (case (:kind registration-data)
+    "ADMISSION"
+    (let [registration-id          (:id registration-data)
+          participant-id           (:participant_id registration-data)
+          user-portal-link         (when email-auth? (create-user-portal-link db url-helper participant-id registration-id))
+          type                     (case (:source free-registration)
+                                     "KOSKI" "FREE_REGISTRATION_KOSKI"
+                                     "USER"  "FREE_REGISTRATION_USER")
+          email                    (:email (registration-db/get-participant-by-id db participant-id))]
+      #(send-payment-link-email! email-q
+                                 lang
+                                 email
+                                 type
+                                 (assoc registration-data
+                                        :language (template-util/get-language (:language_code registration-data) lang)
+                                        :level (template-util/get-level (:level_code registration-data) lang)
+                                        :login_url (or user-portal-link (url-helper :yki.login.user-portal)))))
+    "QUEUE"
+    ; TODO: Add new email templates for free queue registratio
+    (let [participant-id   (:participant_id registration-data)
+          email            (:email (registration-db/get-participant-by-id db participant-id))
+          user-portal-link (if email-auth?
+                             (create-user-portal-link db url-helper (:participant_id registration-data) (:id registration-data))
+                             (url-helper :yki.login.user-portal))]
+
+      #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :email email :user_portal_link user-portal-link)))))
 
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
@@ -344,12 +380,20 @@
                        (onr/get-or-create-person
                          onr-client
                          (assoc form-to-persist :registration_id registration-id)))]
-        (let [amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
+        (let [free-registration         (validate-free-registration db registration-data)
               ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
-              unified-participant-id  (or (:participant_id registration-data) session-participant-id)
+              unified-participant-id    (or (:participant_id registration-data) session-participant-id)
+              registration-unified      (assoc registration-data :participant_id unified-participant-id)
+              code                      (str (random-uuid))
+              login-url                 (url-helper :yki.login-link.url code)
+              amount                    (get-payment-amount-for-registration payment-helper exam-session-registration)
               ; For queued registrations, expiration date is not very meaningful as of yet.
               ; If the registration is ultimately lifted from queue, the expiration date will be recalculated.
               {:keys [expiration-date]} (registration->expiration-date registration-data false)
+              create-and-send-link-fn (if free-registration
+                                        (->send-free-registration-email! db url-helper email-q lang registration-unified email-auth? free-registration)
+                                        (->send-registration-email!      db url-helper payment-helper email-q lang registration-unified code login-url email-auth?))
+              submitted-state         (if free-registration "COMPLETED" "SUBMITTED")
               update-registration     {:id             registration-id
                                        :form           form-to-persist
                                        :oid            oid
@@ -357,7 +401,8 @@
                                        :participant_id unified-participant-id
                                        :expires_at     expiration-date
                                        :exam_fee       (:db amount)
-                                       :ui_language    lang}
+                                       :ui_language    lang
+                                       :to_state       submitted-state}
               code                    (str (random-uuid))
               login-url               (url-helper :yki.login-link.url code)
               email-template-data     (assoc registration-data
@@ -377,7 +422,8 @@
                                              create-and-send-link-fn))
               kind                    (:kind registration-data)
               response-base           {:oid               oid
-                                       :registration_kind kind}]
+                                       :registration_kind kind
+                                       :state             submitted-state}]
           (if success
             (do
               (log/info "END: Registration id" registration-id "submitted successfully")

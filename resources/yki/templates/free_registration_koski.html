@@ -1,0 +1,148 @@
+{% extends "yki/templates/base_message.html" %} {% block content %}
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n email.free_registration_koski.content.line1.part1 %} <b>{% i18n email.free_registration_koski.content.line1.part2 %}</b>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n email.payment_success.content.line1 %}:
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 10px;">
+    {% i18n common.test %}: {{language}} {{level|lower}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n common.testDay %}: {{exam_date|date-format-with-dots}}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n common.testCentre %}: {{name}}, {{street_address}}, {{zip}} {{post_office|upper}}
+  </td>
+</tr>
+
+{% if extra_information %}
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.extra_information.label %}:
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    {{ extra_information }}
+  </td>
+</tr>
+{% endif %}
+
+{% if contact_info %}
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.organizer_contact.label %}:
+  </td>
+</tr>
+{% if contact_info.name %}
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n email.payment_success.organizer_contact.name %}: {{ contact_info.name }}
+  </td>
+</tr>
+{% endif %}
+{% if contact_info.email %}
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n email.payment_success.organizer_contact.email %}: {{ contact_info.email }}
+  </td>
+</tr>
+{% endif %}
+{% if contact_info.phone_number %}
+<tr>
+  <td style="padding-left: 20px;">
+    {% i18n email.payment_success.organizer_contact.phoneNumber %}: {{ contact_info.phone_number }}
+  </td>
+</tr>
+{% endif %}
+{% endif %}
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.content.line2 %}
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px">
+    {% i18n email.payment_success.special_arrangements.info %}:
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <a href="{% i18n email.payment_success.special_arrangements.link.url %}" target="_blank">{% i18n email.payment_success.special_arrangements.link.text %}</a>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    <b>{% i18n email.payment_success.content.line3.part1 %}</b> {% i18n email.payment_success.content.line3.part2 %}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <li style="padding-left: 10px;">{% i18n email.payment_success.idDocument.bulletPoint1 %}</li>
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <li style="padding-left: 10px;">{% i18n email.payment_success.idDocument.bulletPoint2 %}</li>
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <li style="padding-left: 10px;">{% i18n email.payment_success.idDocument.bulletPoint3 %}</li>
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <li style="padding-left: 10px;">{% i18n email.payment_success.idDocument.bulletPoint4 %}</li>
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <li style="padding-left: 10px;">{% i18n email.payment_success.idDocument.bulletPoint5 %}</li>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.content.line4 %}:
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <a href="{% i18n email.payment_success.content.line4.link.url %}" target="_blank">{% i18n email.payment_success.content.line4.link.text %}</a>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.content.line5 %}:
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <a href="{% i18n email.payment_success.content.line5.link.url %}" target="_blank">{% i18n email.payment_success.content.line5.link.text %}</a>
+  </td>
+</tr>
+
+<tr>
+  <td style="padding-left: 20px; padding-top: 20px;">
+    {% i18n email.payment_success.content.line6 %}:
+    <a href="{{login_url}}" target="_blank">{% i18n email.payment_success.content.line6.link.text %}</a>
+  </td>
+</tr>
+{% endblock %}

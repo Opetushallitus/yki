@@ -94,11 +94,10 @@
       (let [payment-id                        (:id payment-details)
             exam-session-contact-info         (exam-session-db/get-contact-info-by-exam-session-id db exam-session-id)
             exam-session-extra-information    (exam-session-db/get-exam-session-location-extra-information db exam-session-id lang)
-            exam-date                         (:exam_date (exam-session-db/get-exam-session-exam-date db exam-session-id))
             user-portal-link                  (if (or email-auth? (:is_email_auth participant-details))
                                                 (registration/create-user-portal-link db url-helper
                                                                                       (:participant_id participant-details)
-                                                                                      registration-id exam-date)
+                                                                                      registration-id)
                                                 (url-helper :yki.login.user-portal))
             email-template-data               (assoc participant-details
                                                 :contact_info exam-session-contact-info

@@ -42,7 +42,8 @@
   ; Queueing
   (get-participant-and-queue-count-for-ongoing-admissions [db])
   (lift-registration-from-queue! [db exam-session-id send-email!])
-  (expire-queued-registrations-after-exam-date! [db]))
+  (expire-queued-registrations-after-exam-date! [db])
+  (get-free-registration [db registration-id]))
 
 (defn- int->boolean [value]
   (pos? value))
@@ -200,4 +201,6 @@
                      (map :id))]
         (when (seq ids)
           (q/expire-registrations-by-ids! tx {:ids ids})
-          ids)))))
+          ids))))
+  (get-free-registration [{:keys [spec]} registration-id]
+    (first (q/select-free-registration spec {:id registration-id}))))
