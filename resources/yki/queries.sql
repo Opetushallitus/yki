@@ -1130,8 +1130,8 @@ FROM participant
 WHERE id = :id;
 
 -- name: select-participant-data-by-registration-id
-SELECT p.id AS participant_id,
-       p.email,
+SELECT pa.id AS participant_id,
+       pe.email,
        es.language_code,
        es.level_code,
        esl.name,
@@ -1141,9 +1141,10 @@ SELECT p.id AS participant_id,
        ed.exam_date,
        re.form->>'last_name' AS last_name,
        re.form->>'first_name' AS first_name,
-       p.external_user_id = p.email AS is_email_auth
+       pa.external_user_id = pa.email AS is_email_auth
 FROM registration re
-INNER JOIN participant p ON p.id = re.participant_id
+INNER JOIN participant pa ON pa.id = re.participant_id
+INNER JOIN person pe ON pe.oid = re.person_oid
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
