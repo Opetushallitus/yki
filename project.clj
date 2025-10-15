@@ -17,7 +17,7 @@
                          ; [com.layerware/pgqueue "0.5.1"] depends on a version of nippy with a known vulnerability
                          ; as there is no update for pgqueue available, let's instead fix the nippy version here
                          [com.taoensso/nippy "2.15.3"]]
-  :dependencies [[org.clojure/clojure "1.12.2"]
+  :dependencies [[org.clojure/clojure "1.12.3"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/data.json "2.5.1"]
                  [org.clojure/data.csv "1.1.0"]
@@ -36,13 +36,13 @@
                  [metosin/jsonista "0.3.13"]
                  [metosin/muuntaja "0.6.11"]
                  [metosin/spec-tools "0.10.7"]
-                 [org.postgresql/postgresql "42.7.7"]
+                 [org.postgresql/postgresql "42.7.8"]
                  [duct/database.sql.hikaricp "0.4.0"]
                  [buddy/buddy-auth "3.0.323"]
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.8.1"]
                  [ring-logger "1.1.1"]
-                 [ch.qos.logback/logback-classic "1.5.18"]
+                 [ch.qos.logback/logback-classic "1.5.19"]
                  [org.clojure/data.xml "0.0.8"]
                  [fi.vm.sade.java-utils/java-cas "1.2.3-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-simple]]
@@ -93,7 +93,7 @@
                                          "-XX:+DebugNonSafepoints"]
                   :source-paths         ["dev/src"]
                   :resource-paths       ["dev/resources"]
-                  :dependencies         [[integrant/repl "0.4.0"]
+                  :dependencies         [[integrant/repl "0.5.0"]
                                          [eftest "0.6.0"]
                                          [peridot "0.5.4"]
                                          [se.haleby/stub-http "0.2.14"]
