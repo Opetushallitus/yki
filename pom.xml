@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>657cd60c29d3287a1db25f06418cf6fcb5d74958</tag>
+    <tag>ad84dab3381e8840a0f4b1f0fb5db48f725c060f</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -159,7 +159,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
-      <version>1.12.2</version>
+      <version>1.12.3</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -433,7 +433,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.7.7</version>
+      <version>42.7.8</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -523,7 +523,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.18</version>
+      <version>1.5.19</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -652,7 +652,7 @@
     <dependency>
       <groupId>integrant</groupId>
       <artifactId>repl</artifactId>
-      <version>0.4.0</version>
+      <version>0.5.0</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
