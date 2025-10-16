@@ -11,6 +11,7 @@
     [yki.boundary.exam-session-db :as exam-session-db]
     [yki.boundary.job-db :as job-db]
     [yki.boundary.onr :as onr]
+    [yki.boundary.person-db :as person-db]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
     [yki.registration.registration :refer [send-lifted-from-queue-email!]]
@@ -24,6 +25,10 @@
                                          :task      "PARTICIPANTS_SYNC_HANDLER"
                                          :interval  "59 MINUTES"})
 
+(defonce persons-sync-handler-conf {:worker-id (str (random-uuid))
+                                    :task      "PERSONS_SYNC_HANDLER"
+                                    :interval  "179 SECONDS"})
+
 (defonce remove-old-data-handler-conf {:worker-id (str (random-uuid))
                                        :task      "REMOVE_OLD_DATA_HANDLER"
                                        :interval  "1 DAY"})
@@ -31,6 +36,10 @@
 (defonce sync-onr-participant-data-handler-conf {:worker-id (str (random-uuid))
                                                  :task      "SYNC_ONR_PARTICIPANT_DATA_HANDLER"
                                                  :interval  "59 MINUTES"})
+
+(defonce person-migrator-conf {:worker-id (str (random-uuid))
+                               :task      "MIGRATE_PERSON_HANDLER"
+                               :interval  "59 SECONDS"})
 
 (defonce registration-queue-handler-conf {:worker-id (str (random-uuid))
                                           :task      "REGISTRATION_QUEUE_HANDLER"
@@ -90,6 +99,30 @@
                  (exam-session-db/set-participants-sync-to-failed! db (:exam_session_id exam-session) (str retry-duration-in-days " days"))))))))
      (catch Exception e
        (log/error e "Participant sync handler failed"))))
+
+(defmethod ig/init-key ::persons-sync-handler
+  [_ {:keys [db url-helper basic-auth disabled retry-duration-in-days]}]
+  {:pre [(some? db) (some? url-helper) (some? basic-auth) (some? retry-duration-in-days)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db persons-sync-handler-conf)
+       (let [persons-to-sync (person-db/get-persons-to-sync db (str retry-duration-in-days " days"))]
+         (doseq [{:keys [id person_oid]} persons-to-sync]
+           (try
+             (let [person          (person-db/get-full-person-details db person_oid)
+                   solki-response  (yki-register/sync-person url-helper basic-auth disabled person)
+                   status          (:status solki-response)
+                   success?        (= 200 status)
+                   retry-if-error? (and (not success?)
+                                        (not (= 404 status)))]
+               (when (not success?)
+                 (log/error "Updating person details to Solki failed!" {:oid person_oid, :response solki-response}))
+               (person-db/mark-person-sync-attempt! db id success? retry-if-error?))
+             (catch Exception e
+               (do
+                 (log/error e "Updating person details to Solki failed!" {:id id, :oid person_oid})
+                 (person-db/mark-person-sync-attempt! db id false true)))))))
+     (catch Exception e
+       (log/error e "Persons sync handler failed"))))
 
 (defmethod ig/init-key ::email-queue-reader
   [_ {:keys [email-q handle-at-once-at-most url-helper retry-duration-in-days disabled]}]
@@ -173,3 +206,25 @@
            (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link!))))
      (catch Exception e
        (log/error e "Registration queue handler failed"))))
+
+(defmethod ig/init-key ::migrate-person-handler [_ {:keys [db]}]
+  {:pre [(some? db)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db person-migrator-conf)
+       (let [persons       (person-db/get-persons-without-gender-or-nationality db)
+             persons-count (count persons)]
+         (when (pos-int? persons-count)
+           (log/info "Updating data for" persons-count "person entries"))
+         (doseq [{:keys [oid gender ssn nationalities] :as person} persons]
+           (try
+             (let [gender      (yki-register/convert-gender gender ssn)
+                   nationality (first nationalities)]
+               (person-db/update-person-gender-and-nationality!
+                 db
+                 {:oid              oid
+                  :nationality_code nationality
+                  :gender           gender}))
+             (catch Exception e
+               (log/error e "Updating gender and nationality failed for person" (dissoc person :ssn)))))))
+     (catch Exception e
+       (log/error e "Person migration failed"))))

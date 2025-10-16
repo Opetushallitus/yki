@@ -39,11 +39,17 @@
 
 (defprotocol Person
   (get-person [db oid])
+  (get-full-person-details [db oid])
   (upsert-person! [db person])
+  (update-contact-details! [db person])
+  (get-persons-without-gender-or-nationality [db])
+  (update-person-gender-and-nationality! [db person])
   (get-registration-relocate-details [db oid registration-id])
   (relocate-registration! [db oid registration-id target-exam-session-id])
   (get-registration-to-confirm-details [db oid registration-id])
-  (cancel-person-registration! [db oid registration-id]))
+  (cancel-person-registration! [db oid registration-id])
+  (get-persons-to-sync [db retry-duration])
+  (mark-person-sync-attempt! [db id success? retry-if-error?]))
 
 (defn valid-transfer-targets
   "Valid transfer targets are either within a year of the original date, or if no such exam sessions exist, the first available exam session.
@@ -68,10 +74,28 @@
         (q/select-person tx {:oid oid})
         (first)
         (assoc :registrations (get-registrations-with-queue-details tx oid)))))
+  (get-full-person-details [{:keys [spec]} oid]
+    (first (q/select-full-person-details spec {:oid oid})))
+  (get-persons-without-gender-or-nationality [{:keys [spec]}]
+    (let [persons (q/select-persons-without-gender-or-nationality spec)]
+      (->> persons
+           (map (fn [{:keys [person_oid form]}]
+                  {:oid           person_oid
+                   :gender        (:gender form)
+                   :ssn           (:ssn form)
+                   :nationalities (:nationalities form)})))))
+  (update-person-gender-and-nationality! [{:keys [spec]} person]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-person-gender-and-nationality! tx person)))
   (upsert-person!
     [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]
       (q/upsert-person! tx person)))
+  (update-contact-details!
+    [{:keys [spec]} person]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-person-contact-details! tx person)
+      (q/schedule-person-to-be-synced! tx person)))
   (get-registration-relocate-details [{:keys [spec]} oid registration-id]
     (jdbc/with-db-transaction [tx spec {:read-only? true}]
       (let [registration-details (-> (q/select-registration-relocate-details tx {:oid oid :id registration-id})
@@ -103,4 +127,11 @@
     (first (q/select-registration-to-confirm-details spec {:oid oid :id registration-id})))
   (cancel-person-registration! [{:keys [spec]} oid registration-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/cancel-registration-for-person<! tx {:oid oid :id registration-id}))))
+      (q/cancel-registration-for-person<! tx {:oid oid :id registration-id})))
+  (get-persons-to-sync [{:keys [spec]} retry-duration]
+    (q/select-persons-to-sync spec {:duration retry-duration}))
+  (mark-person-sync-attempt! [{:keys [spec]} id success? retry-if-error?]
+    (jdbc/with-db-transaction [tx spec]
+      (if success?
+        (q/mark-successful-person-sync-attempt! tx {:id id})
+        (q/mark-failed-person-sync-attempt! tx {:id id :should_retry retry-if-error?})))))

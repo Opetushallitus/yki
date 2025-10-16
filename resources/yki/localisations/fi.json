@@ -95,7 +95,7 @@
   "email.payment_success.content.line5.link.text": "Osallistumisen peruminen",
   "email.payment_success.content.line5.link.url": "https://www.oph.fi/fi/koulutus-ja-tutkinnot/kieli-ja-kaantajatutkinnot/yleiset-kielitutkinnot-yki/ennen-testia#anchor-osallistumisen-peruminen",
   "email.payment_success.content.line6.link.text": "Omat ilmoittautumiset",
-  "email.payment_success.content.line6": "Voit katsoa ilmoittautumisen tietoja tai perua sen YKI-ilmoittautumissivulla",
+  "email.payment_success.content.line6": "Voit muokata omia yhteystietojasi, katsoa ilmoittautumisen tietoja tai perua sen YKI-ilmoittautumissivulla",
   "email.payment_success.content.line7": "Viestin liitteenä on kuitti maksetusta tutkintomaksustasi.",
   "email.payment_success.extra_information.label": "Testipaikan lisätiedot",
   "email.payment_success.idDocument.bulletPoint1": "passi",

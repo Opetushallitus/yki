@@ -46,7 +46,7 @@
   {:first_name       "Fuu"
    :last_name        "Bar"
    :gender           "1"
-   :nationalities    []
+   :nationalities    ["246"]
    :birthdate        "1999-01-01"
    :certificate_lang "fi"
    :exam_lang        "fi"

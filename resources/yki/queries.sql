@@ -648,8 +648,9 @@ AND   l.created > :older_than;
 -- name: select-login-link-by-code
 SELECT
  l.code,
- p.external_user_id,
- p.email,
+ pa.external_user_id,
+ pa.email AS participant_email,
+ pe.email AS person_email,
  l.exam_session_id,
  l.expires_at,
  l.expired_link_redirect,
@@ -659,10 +660,11 @@ SELECT
  l.user_data,
  r.person_oid
 FROM login_link l
-INNER JOIN participant p
-  ON l.participant_id = p.id
+INNER JOIN participant pa
+  ON l.participant_id = pa.id
 LEFT JOIN registration r
   ON l.registration_id = r.id
+LEFT JOIN person pe ON r.person_oid = pe.oid
 WHERE l.code = :code;
 
 -- name: select-login-link-by-exam-session-and-registration-id
@@ -809,16 +811,6 @@ WHERE re.participant_id = :participant_id
   AND re.state = 'STARTED'
   AND es.id = :exam_session_id;
 
--- name: select-registration
-SELECT state, exam_session_id, participant_id, es.organizer_id, ed.exam_date
-FROM registration re
-INNER JOIN participant p ON p.id = re.participant_id
-INNER JOIN exam_session es ON es.id = re.exam_session_id
-INNER JOIN exam_date ed ON ed.id = es.exam_date_id
-WHERE re.id = :id
-  AND re.state = 'SUBMITTED'
-  AND p.external_user_id = :external_user_id;
-
 -- name: select-started-registrations-to-expire
 SELECT id FROM registration
 WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp;
@@ -905,12 +897,14 @@ SELECT re.id,
        esl.post_office,
        esl.zip,
        esl.name,
-       p.external_user_id = p.email AS is_email_auth
+       p.external_user_id = p.email AS is_email_auth,
+       pe.email
 FROM registration re
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 LEFT JOIN participant p ON re.participant_id = p.id
+LEFT JOIN person pe ON re.person_oid = pe.oid
 WHERE re.id = :id
   AND (re.kind IN ('ADMISSION', 'QUEUE'))
   AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >=
@@ -989,9 +983,9 @@ SELECT re.state,
        re.exam_session_id,
        re.participant_id,
        re.kind,
-       re.form->>'email' AS email,
-       re.form->>'last_name' AS last_name,
-       re.form->>'first_name' AS first_name,
+       pe.email,
+       pe.last_name,
+       pe.first_name,
        re.form->>'certificate_lang' AS lang,
        es.language_code,
        es.level_code,
@@ -1004,6 +998,7 @@ SELECT re.state,
        esl.name,
        p.external_user_id = p.email AS is_email_auth
 FROM registration re
+INNER JOIN person pe ON pe.oid = re.person_oid
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
@@ -1128,8 +1123,8 @@ FROM participant
 WHERE id = :id;
 
 -- name: select-participant-data-by-registration-id
-SELECT p.id AS participant_id,
-       p.email,
+SELECT pa.id AS participant_id,
+       pe.email,
        es.language_code,
        es.level_code,
        esl.name,
@@ -1139,9 +1134,10 @@ SELECT p.id AS participant_id,
        ed.exam_date,
        re.form->>'last_name' AS last_name,
        re.form->>'first_name' AS first_name,
-       p.external_user_id = p.email AS is_email_auth
+       pa.external_user_id = pa.email AS is_email_auth
 FROM registration re
-INNER JOIN participant p ON p.id = re.participant_id
+INNER JOIN participant pa ON pa.id = re.participant_id
+INNER JOIN person pe ON pe.oid = re.person_oid
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
@@ -1746,17 +1742,34 @@ WHERE logged_in + interval '1 week' < current_date;
 
 -- name: upsert-person!
 INSERT INTO person
-(oid, first_name, last_name, email, phone_number, street_address, post_office, zip) VALUES
-(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip)
+(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender) VALUES
+(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip, :nationality_code, cast(:gender as gender_code))
 ON CONFLICT (oid)
 DO UPDATE SET first_name = :first_name, last_name = :last_name,
 email = :email, phone_number = :phone_number,
 street_address = :street_address,
 post_office = :post_office, zip = :zip,
+nationality_code = :nationality_code,
+gender = cast(:gender as gender_code),
 modified = current_timestamp;
+
+-- name: update-person-contact-details!
+UPDATE person
+SET email = :email,
+    phone_number = :phone_number,
+    street_address = :street_address,
+    post_office = :post_office,
+    zip = :zip,
+    modified = current_timestamp
+WHERE oid = :oid;
 
 -- name: select-person
 SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip
+FROM person
+WHERE oid = :oid;
+
+-- name: select-full-person-details
+SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip, gender, nationality_code
 FROM person
 WHERE oid = :oid;
 
@@ -1864,6 +1877,32 @@ WHERE es.id = :exam_session_id
   AND select_registration_kind(ies.id) = 'ADMISSION'
   AND ies.id NOT IN (SELECT id FROM exam_sessions_for_same_day);
 
+-- name: select-persons-without-gender-or-nationality
+WITH person_oids AS (
+    SELECT p.oid
+    FROM person p
+    WHERE p.gender IS NULL OR p.nationality_code IS NULL
+    ORDER BY p.created DESC
+    LIMIT 2000
+) SELECT DISTINCT ON (r.person_oid)
+      r.person_oid,
+      r.form
+  FROM registration r
+  WHERE
+      r.person_oid IN (SELECT oid FROM person_oids) AND
+      (COALESCE(r.form->>'gender','') <> ''
+           OR
+       COALESCE(r.form->>'ssn','') <> ''
+           OR
+      r.form->>'nationalities' IS NOT NULL)
+      ORDER BY r.person_oid, r.created DESC;
+
+-- name: update-person-gender-and-nationality!
+UPDATE person
+SET gender = cast(:gender as gender_code),
+    nationality_code = :nationality_code
+WHERE oid = :oid;
+
 -- name: select-registration-to-confirm-details
 SELECT r.id,
        r.exam_fee,
@@ -1901,3 +1940,20 @@ WHERE person_oid = :oid
   AND id = :id
   AND state IN ('COMPLETED', 'SUBMITTED')
   AND TRUE IN (SELECT is_cancellable(r.id) FROM registration r WHERE id = :id);
+
+-- name: schedule-person-to-be-synced!
+INSERT INTO person_sync_status (person_oid) VALUES (:oid);
+
+-- name: mark-successful-person-sync-attempt!
+UPDATE person_sync_status SET success_at=current_timestamp, should_retry=false WHERE id=:id;
+
+-- name: mark-failed-person-sync-attempt!
+UPDATE person_sync_status SET failed_at=current_timestamp, should_retry=:should_retry WHERE id=:id;
+
+-- name: select-persons-to-sync
+SELECT pss.id, pss.person_oid
+FROM person_sync_status pss
+WHERE current_timestamp < pss.created + :duration::interval
+  AND pss.success_at IS NULL
+  AND (pss.should_retry IS NULL
+      OR pss.should_retry IS true);

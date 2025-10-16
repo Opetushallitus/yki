@@ -1,6 +1,7 @@
 (ns yki.boundary.yki-register
   (:require
     [clojure.data.csv :as csv]
+    [clojure.set :as set]
     [clojure.string :as str]
     [clojure.tools.logging :as log]
     [yki.util.http-util :as http-util]
@@ -49,9 +50,6 @@
   {:kieli language_code
    :pvm   session_date})
 
-(defn- remove-basic-auth [response]
-  (update-in response [:opts] dissoc :basic-auth))
-
 (defn- do-post
   ([url body-as-string basic-auth]
    (do-post url body-as-string basic-auth "application/json; charset=UTF-8"))
@@ -64,17 +62,26 @@
      (if (or (str/starts-with? status "2") (str/starts-with? status "3"))
        (log/info "Syncing data success")
        (do
-         (log/error "Failed to sync data, error response" (remove-basic-auth response))
+         (log/error "Failed to sync data, error response" (http-util/sanitize-response response))
          (throw (Exception. (str "Could not sync request to url " url))))))))
+
+(defn- do-put [url body-as-string basic-auth content-type]
+  (let [response (http-util/do-request {:method     :put
+                                        :url        url
+                                        :headers    {"content-type" content-type}
+                                        :basic-auth [(:user basic-auth) (:password basic-auth)]
+                                        :body       body-as-string
+                                        :timeout    10000})]
+    (http-util/sanitize-response response)))
 
 (defn- do-delete [url basic-auth]
   (log/info "DELETE request to url" url)
   (let [response (http-util/do-delete url {:basic-auth [(:user basic-auth) (:password basic-auth)]})
         status   (str (:status response))]
     (if (or (str/starts-with? status "2") (str/starts-with? status "3") (= status "404"))
-      (log/info "Deleting data success" (remove-basic-auth response))
+      (log/info "Deleting data success" (http-util/sanitize-response response))
       (do
-        (log/error "Failed to sync data, error response" (remove-basic-auth response))
+        (log/error "Failed to sync data, error response" (http-util/sanitize-response response))
         (throw (Exception. (str "Could not sync deletion " url)))))))
 
 (defn- sync-organizer
@@ -115,7 +122,7 @@
         (subs year 2 4)
         (if (< (Integer/valueOf ^String year) 2000) "-" "A")))))
 
-(defn- convert-gender
+(defn convert-gender
   [gender ssn]
   (if-not (str/blank? ssn)
     (let [identifier (Integer/valueOf (subs ssn 7 10))
@@ -192,3 +199,24 @@
 (defn return-exam-session-participants-csv [db url-helper exam-session-id]
   (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)]
     (create-participants-csv url-helper participants)))
+
+(defn sync-person
+  [url-helper basic-auth disabled person]
+  (if disabled
+    (log/info "Person sync disabled")
+    (let [oid                   (:oid person)
+          nationality           (codes/get-converted-country-code url-helper (:nationality_code person))
+          converted-nationality (if (nationality-not-supported-or-missing? nationality) "xxx" nationality)
+          person->solki-payload {:last_name        :sukunimi
+                                 :first_name       :etunimet
+                                 :gender           :sukupuoli
+                                 :nationality_code :kansalaisuus
+                                 :street_address   :katuosoite
+                                 :zip              :postinumero
+                                 :post_office      :postitoimipaikka
+                                 :email            :sahkoposti}
+          payload               (-> person
+                                    (assoc :nationality_code converted-nationality)
+                                    (select-keys (keys person->solki-payload))
+                                    (set/rename-keys person->solki-payload))]
+      (do-put (url-helper :yki-register.person oid) (json/write-value-as-string payload) basic-auth "application/json"))))
