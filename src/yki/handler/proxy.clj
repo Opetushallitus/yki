@@ -34,15 +34,10 @@
   {:pre [(some? auth) (some? access-log) (s/valid? ::ys/environment environment) (some? proxy-config)]}
   (let [proxy-request (partial proxy-request proxy-config)]
     (api
-     (context routing/proxy-api-root []
+     (context routing/api-root []
        :coercion (when-not (#{:qa :prod} environment) :spec)
        :middleware [auth access-log with-error-boundary]
        (context "/user" []
          (POST "/education/:registration-id" request
            :path-params [registration-id :- ::ys/id]
-           (proxy-request request)))
-       (context "/clerk" []
-         (GET "/registration/approvals" request
-           (proxy-request request))
-         (PUT "/registration" request
            (proxy-request request)))))))
