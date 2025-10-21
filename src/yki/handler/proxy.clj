@@ -13,14 +13,14 @@
     [clojure.string :as string]
     [clojure.tools.logging :refer [info]]  [yki.spec :as ys]))
 
-(defn- proxy-request [{:keys [endpoint token]} {:keys [request-method uri body-params] :as request}]
+(defn- proxy-request [{:keys [endpoint token]} {:keys [request-method uri body-params headers] :as request}]
   (let [oid         (get-in request [:session :identity :oid])
         auth        (when oid {"Authorization"
                                (str oid ":" (registration/sha256-hash (str oid token)))})
         opts        {:method request-method
                      :url (str endpoint uri)
                      :body (json/write-str body-params)
-                     :headers (merge auth {"Content-Type" "application/json"})}
+                     :headers (merge auth headers)}
         method-name (string/upper-case (name request-method))
         start       (System/currentTimeMillis)
         response    @(http/request opts)
@@ -37,7 +37,7 @@
      (context routing/api-root []
        :coercion (when-not (#{:qa :prod} environment) :spec)
        :middleware [auth access-log with-error-boundary]
-       (context "/user" []
+       (context "/public" []
          (POST "/education/:registration-id" request
            :path-params [registration-id :- ::ys/id]
            (proxy-request request)))))))
