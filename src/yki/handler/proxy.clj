@@ -27,8 +27,9 @@
         time        (- (System/currentTimeMillis) start)
         status      (:status response 500)
         _           (info "Request" method-name uri "returned" status "in" time "ms")]
-    {:status (:status response)
-     :body   (:body response)}))
+    {:status  (:status response)
+     :body    (:body response)
+     :headers {"content-type" (:content-type (:headers response))}}))
 
 (defmethod ig/init-key :yki.handler/proxy [_ {:keys [auth access-log environment proxy-config]}]
   {:pre [(some? auth) (some? access-log) (s/valid? ::ys/environment environment) (some? proxy-config)]}
