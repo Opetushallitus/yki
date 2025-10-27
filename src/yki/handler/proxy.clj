@@ -21,12 +21,7 @@
                      :body         (json/write-str body-params)
                      :headers      (merge auth headers)
                      :query-params query-params}
-        method-name (string/upper-case (name request-method))
-        start       (System/currentTimeMillis)
-        response    @(http/request opts)
-        time        (- (System/currentTimeMillis) start)
-        status      (:status response 500)
-        _           (info "Request" method-name uri "returned" status "in" time "ms")]
+        response    @(http/request opts)]
     {:status  (:status response)
      :body    (:body response)
      :headers {"content-type" (:content-type (:headers response))}}))
