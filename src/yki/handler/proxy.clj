@@ -34,6 +34,8 @@
         :coercion (when-not (#{:qa :prod} environment) :spec)
         :middleware [auth access-log with-error-boundary]
         (context "/public" []
+          (GET "/education" request
+            (proxy-request request))
           (POST "/education/:registration-id" request
             :path-params [registration-id :- ::ys/id]
             (proxy-request request))
