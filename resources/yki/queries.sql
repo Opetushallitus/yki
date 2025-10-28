@@ -830,7 +830,7 @@ INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 WHERE r.kind = 'QUEUE'
   AND r.state IN ('STARTED', 'SUBMITTED')
-  AND ed.exam_date <= (current_date + interval '1 week');
+  AND ed.exam_date < (current_date + interval '1 week');
 
 -- name: expire-registrations-by-ids!
 UPDATE registration
@@ -907,8 +907,6 @@ LEFT JOIN participant p ON re.participant_id = p.id
 LEFT JOIN person pe ON re.person_oid = pe.oid
 WHERE re.id = :id
   AND (re.kind IN ('ADMISSION', 'QUEUE'))
-  AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >=
-      (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
@@ -940,8 +938,6 @@ INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 WHERE re.id = :id
   AND (re.kind IN ('ADMISSION', 'QUEUE'))
-  AND (ed.registration_end_date + time '16:00' AT TIME ZONE 'Europe/Helsinki') >=
-      (current_timestamp AT TIME ZONE 'Europe/Helsinki')
   AND (re.state = 'STARTED' OR re.state = 'SUBMITTED')
   AND esl.lang = :lang
   AND EXISTS (SELECT 1
