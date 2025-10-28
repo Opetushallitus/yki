@@ -1293,7 +1293,10 @@ SELECT es.id AS exam_session_id,
           AND r.exam_session_id = es.id) AS queue
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-WHERE within_dt_range(now(), ed.registration_start_date, ed.registration_end_date);
+WHERE
+    within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
+    OR (ed.registration_end_date <= current_date AND
+        current_date + interval '1 week' <= ed.exam_date);
 
 -- name: lift-registration-from-queue<!
 WITH registrations_to_update AS (SELECT id
