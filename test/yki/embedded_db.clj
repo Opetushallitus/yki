@@ -29,7 +29,8 @@
 
 (defn with-migration [f]
   (let [db (ragtime.jdbc/sql-database (db-spec))
-        ms (ragtime.jdbc/load-directory "resources/yki/migrations")
+        ms (concat (ragtime.jdbc/load-directory "resources/yki/migrations")
+                   (ragtime.jdbc/load-directory "test/resources/migrations"))
         idx (core/into-index ms)]
     (core/migrate-all db idx ms))
   (f))
