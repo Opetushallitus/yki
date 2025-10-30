@@ -13,6 +13,7 @@
     [yki.spec :as ys]
     [yki.util.audit-log :as audit-log]
     [yki.util.common :refer [string->date]]
+    [yki.middleware.auth :as auth]
     [yki.registration.email :as registration-email]
     [yki.registration.registration :as registration]
     [yki.boundary.registration-db :as registration-db]))
@@ -131,7 +132,12 @@
           (GET "/" {session :session}
             :path-params [id :- ::ys/id]
             :return ::ys/participants-response
-            (response {:participants (exam-session-db/get-exam-session-participants db id oid)}))
+            (let [participants (exam-session-db/get-exam-session-participants db id oid)
+                  oph-admin?    (auth/oph-admin? (auth/get-organizations-from-session session))]
+              (response {:participants
+                         (if oph-admin?
+                           participants
+                           (map #(dissoc % :free_registration_source) participants))})))
           (context "/:registration-id" []
             (DELETE "/" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
