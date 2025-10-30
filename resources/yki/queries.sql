@@ -1266,17 +1266,20 @@ SELECT
   r.original_exam_session_id,
   oed.exam_date AS original_exam_date,
   (r.state = 'COMPLETED' AND NOT r.is_transfered) AS is_transferable,
-  r.is_transfered
+  r.is_transfered,
+  fr.free_registration_id IS NOT NULL AS is_free_registration,
+  fr.source AS free_registration_source
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 INNER JOIN person p ON r.person_oid = p.oid
 LEFT JOIN exam_session oes ON oes.id = r.original_exam_session_id
 LEFT JOIN exam_date oed ON oed.id = oes.exam_date_id
+LEFT JOIN free_registration fr ON fr.registration_id = r.id
 WHERE es.id = :id
 AND es.organizer_id IN (SELECT id FROM organizer WHERE oid = :oid)
 AND r.state != 'STARTED'
 AND r.form IS NOT NULL
-ORDER BY r.created ASC;
+ORDER BY r.created, r.id ASC;
 
 -- name: select-participant-and-queue-count-by-exam-session
 SELECT es.id AS exam_session_id,
