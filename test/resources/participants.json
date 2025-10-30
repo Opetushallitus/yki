@@ -1,6 +1,7 @@
 {
   "participants": [
     {
+      "is_free_registration": false,
       "is_transferable": true,
       "is_transfered": false,
       "form": {
@@ -33,6 +34,7 @@
       "first_name": "Iines"
     },
     {
+      "is_free_registration": false,
       "is_transferable": true,
       "is_transfered": false,
       "form": {
@@ -66,6 +68,7 @@
       "first_name": "Aku"
     },
     {
+      "is_free_registration": false,
       "is_transferable": true,
       "is_transfered": false,
       "form": {
@@ -98,6 +101,7 @@
       "zip": "12346"
     },
     {
+      "is_free_registration": false,
       "is_transferable": false,
       "is_transfered": false,
       "form": {
