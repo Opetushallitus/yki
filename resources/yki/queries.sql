@@ -1268,7 +1268,8 @@ SELECT
   (r.state = 'COMPLETED' AND NOT r.is_transfered) AS is_transferable,
   r.is_transfered,
   fr.free_registration_id IS NOT NULL AS is_free_registration,
-  fr.source AS free_registration_source
+  fr.source AS free_registration_source,
+  fr.type AS free_registration_basis
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 INNER JOIN person p ON r.person_oid = p.oid

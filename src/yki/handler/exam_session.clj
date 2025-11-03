@@ -135,10 +135,9 @@
             (let [participants (exam-session-db/get-exam-session-participants db id oid)
                   oph-admin?    (auth/oph-admin? (auth/get-organizations-from-session session))]
               (response {:participants
-                         (map #(if (or (not oph-admin?)
-                                        (nil? (:free_registration_source %)))
-                                  (dissoc % :free_registration_source) %)
-                               participants)})))
+                         (if oph-admin?
+                           participants
+                           (map #(dissoc % :free_registration_source :free_registration_basis) participants))})))
           (context "/:registration-id" []
             (DELETE "/" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
