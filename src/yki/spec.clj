@@ -368,7 +368,15 @@
 (s/def ::original_exam_session_id (s/nilable ::id))
 (s/def ::original_exam_date (s/nilable ::exam_date))
 (s/def ::is_free_registration boolean?)
-(s/def ::free_registration_source #{"KOSKI" "USER"})
+(s/def ::free_registration_source (s/nilable #{"KOSKI" "USER"}))
+(s/def ::free_registration_basis (s/nilable
+                                  #{"MatriculationExam"
+                                    "HigherEducationEnrolled"
+                                    "HigherEducationConcluded"
+                                    "DIA"
+                                    "EB"
+                                    "Other"
+                                    "None"}))
 (s/def ::exam-session-participant (s/keys :req-un [::created
                                                    ::form
                                                    ::is_transferable
