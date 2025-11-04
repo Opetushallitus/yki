@@ -1967,7 +1967,8 @@ WHERE current_timestamp < pss.created + :duration::interval
       OR pss.should_retry IS true);
 
 -- name: select-free-registration
-SELECT source,
+SELECT free_registration_id,
+       source,
        type,
        approved,
        matriculation_exam,

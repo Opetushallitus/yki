@@ -311,6 +311,7 @@
 (s/def ::exam_lang ::language-code)
 (s/def ::street_address ::non-blank-string)
 (s/def ::phone_number ::non-blank-string)
+(s/def ::free_registration_id ::id)
 
 (s/def ::registration (s/keys
                         :req-un [::first_name
@@ -325,7 +326,8 @@
                                  ::phone_number
                                  ::email]
                         :opt-un [::gender
-                                 ::nationality_desc]))
+                                 ::nationality_desc
+                                 ::free_registration_id]))
 
 (s/def ::exam_session ::exam-session)
 (s/def ::to_queue boolean?)
