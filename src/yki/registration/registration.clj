@@ -215,11 +215,10 @@
      db
      (get-in user [:identity :external-user-id]))})
 
-(defn- validate-free-registration [db registration-data]
-  (if-let [free-registration (registration-db/get-free-registration db (:id registration-data))]
-    ;; TODO: Validate somehow?
-    free-registration
-    nil))
+(defn- validate-free-registration [db registration-data id]
+  (when-let [free-registration (registration-db/get-free-registration db (:id registration-data))]
+    (when (= id (:free_registration_id free-registration))
+      free-registration)))
 
 (defn- registration->expiration-date [registration from-queue?]
   (if from-queue?
@@ -371,7 +370,8 @@
                                    (with-birthdate))
         session-participant-id (get-participant-id db identity)
         email                  (:email form)
-        started?               (= (:state exam-session-registration) "STARTED")]
+        started?               (= (:state exam-session-registration) "STARTED")
+        free-registration-id   (:free_registration_id raw-form)]
     (log/info (str "Get registration data with registration id " registration-id ", participant id " session-participant-id " and lang " lang ". Current state: " (:state exam-session-registration)))
     (when email
       (registration-db/update-participant-email! db email session-participant-id))
@@ -380,59 +380,62 @@
                        (onr/get-or-create-person
                          onr-client
                          (assoc form-to-persist :registration_id registration-id)))]
-        (let [free-registration         (validate-free-registration db registration-data)
-              ; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
-              unified-participant-id    (or (:participant_id registration-data) session-participant-id)
-              registration-unified      (assoc registration-data :participant_id unified-participant-id)
-              code                      (str (random-uuid))
-              login-url                 (url-helper :yki.login-link.url code)
-              amount                    (get-payment-amount-for-registration payment-helper exam-session-registration)
-              ; For queued registrations, expiration date is not very meaningful as of yet.
-              ; If the registration is ultimately lifted from queue, the expiration date will be recalculated.
-              {:keys [expiration-date]} (registration->expiration-date registration-data false)
-              create-and-send-link-fn (if free-registration
-                                        (->send-free-registration-email! db url-helper email-q lang registration-unified email-auth? free-registration)
-                                        (->send-registration-email!      db url-helper payment-helper email-q lang registration-unified code login-url email-auth?))
-              submitted-state         (if free-registration "COMPLETED" "SUBMITTED")
-              update-registration     {:id             registration-id
-                                       :form           form-to-persist
-                                       :oid            oid
-                                       :form_version   1
-                                       :participant_id unified-participant-id
-                                       :expires_at     expiration-date
-                                       :exam_fee       (:db amount)
-                                       :ui_language    lang
-                                       :to_state       submitted-state}
-              code                    (str (random-uuid))
-              login-url               (url-helper :yki.login-link.url code)
-              email-template-data     (assoc registration-data
-                                        :email
-                                        (or email
-                                            (:email (registration-db/get-participant-by-id db unified-participant-id)))
-                                        :participant_id unified-participant-id)
-              create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang email-template-data code login-url email-auth?)
-              update-person           (-> form
-                                          (with-gender-and-nationality)
-                                          (assoc :oid oid))
-              person                  (person-db/upsert-person! db update-person)
-              success                 (and person
-                                           (registration-db/update-registration-details!
-                                             db
-                                             update-registration
-                                             create-and-send-link-fn))
-              kind                    (:kind registration-data)
-              response-base           {:oid               oid
-                                       :registration_kind kind
-                                       :state             submitted-state}]
-          (if success
-            (do
-              (log/info "END: Registration id" registration-id "submitted successfully")
-              (if (= kind "ADMISSION")
-                (assoc response-base :code code)
-                response-base))
-            (let [already-registered? (registration-db/is-person-already-registered-on-exam-date? db oid registration-id)]
-              {:error {:create_payment true
-                       :registered     already-registered?}})))
+        (let [free-registration         (validate-free-registration db registration-data free-registration-id)]
+          (if (and free-registration-id (nil? free-registration))
+            ; Deny submit if free-registration-id was provided, but it didn't match free_registration entry in DB
+            {:error {:not_free true}}
+            (let [; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
+                  unified-participant-id    (or (:participant_id registration-data) session-participant-id)
+                  registration-unified      (assoc registration-data :participant_id unified-participant-id)
+                  code                      (str (random-uuid))
+                  login-url                 (url-helper :yki.login-link.url code)
+                  amount                    (get-payment-amount-for-registration payment-helper exam-session-registration)
+                                        ; For queued registrations, expiration date is not very meaningful as of yet.
+                                        ; If the registration is ultimately lifted from queue, the expiration date will be recalculated.
+                  {:keys [expiration-date]} (registration->expiration-date registration-data false)
+                  create-and-send-link-fn (if free-registration
+                                            (->send-free-registration-email! db url-helper email-q lang registration-unified email-auth? free-registration)
+                                            (->send-registration-email!      db url-helper payment-helper email-q lang registration-unified code login-url email-auth?))
+                  submitted-state         (if free-registration "COMPLETED" "SUBMITTED")
+                  update-registration     {:id             registration-id
+                                           :form           form-to-persist
+                                           :oid            oid
+                                           :form_version   1
+                                           :participant_id unified-participant-id
+                                           :expires_at     expiration-date
+                                           :exam_fee       (:db amount)
+                                           :ui_language    lang
+                                           :to_state       submitted-state}
+                  code                    (str (random-uuid))
+                  login-url               (url-helper :yki.login-link.url code)
+                  email-template-data     (assoc registration-data
+                                                 :email
+                                                 (or email
+                                                     (:email (registration-db/get-participant-by-id db unified-participant-id)))
+                                                 :participant_id unified-participant-id)
+                  create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang email-template-data code login-url email-auth?)
+                  update-person           (-> form
+                                              (with-gender-and-nationality)
+                                              (assoc :oid oid))
+                  person                  (person-db/upsert-person! db update-person)
+                  success                 (and person
+                                               (registration-db/update-registration-details!
+                                                db
+                                                update-registration
+                                                create-and-send-link-fn))
+                  kind                    (:kind registration-data)
+                  response-base           {:oid               oid
+                                           :registration_kind kind
+                                           :state             submitted-state}]
+              (if success
+                (do
+                  (log/info "END: Registration id" registration-id "submitted successfully")
+                  (if (= kind "ADMISSION")
+                    (assoc response-base :code code)
+                    response-base))
+                (let [already-registered? (registration-db/is-person-already-registered-on-exam-date? db oid registration-id)]
+                  {:error {:create_payment true
+                           :registered     already-registered?}})))))
         {:error {:person_creation true}})
       ; Submitting form didn't succeed due to some other reason.
       ; Likely something akin to a race condition: the registration may have expired by the time we got here
