@@ -379,6 +379,10 @@
                                     "EB"
                                     "Other"
                                     "None"}))
+(s/def ::free_registration_country (s/nilable
+                                    #{"FINLAND"
+                                      "FOREIGN"}))
+
 (s/def ::exam-session-participant (s/keys :req-un [::created
                                                    ::form
                                                    ::is_transferable
@@ -388,7 +392,9 @@
                                                    ::kind
                                                    ::state
                                                    ::is_free_registration]
-                                          :opt-un [::free_registration_source]))
+                                          :opt-un [::free_registration_source
+                                                   ::free_registration_basis
+                                                   ::free_registration_country]))
 
 (s/def :exam-session/participants (s/coll-of ::exam-session-participant))
 (s/def ::participants-response (s/keys :req-un [:exam-session/participants]))
