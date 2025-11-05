@@ -705,6 +705,12 @@ INSERT INTO registration(
                       AND es.exam_date_id =
                         (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
 
+-- name: update-started-registration-oid!
+UPDATE registration
+SET person_oid=:oid,
+    modified=current_timestamp
+WHERE id=:id AND state='STARTED';
+
 -- name: select-person-has-other-registrations-for-same-day
 WITH exam_sessions_for_same_day AS (
     SELECT es2.id
