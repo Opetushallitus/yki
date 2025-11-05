@@ -112,9 +112,10 @@
                                                                     :started_at      (t/now)
                                                                     :kind            registration-kind})
           response        (create-registration-response db session exam-session-id registration-id registration-kind payment-config)]
-      (when-let [oid (:oid (:identity session))]
-        (registration-db/update-started-registration-oid! db registration-id oid))
-      (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
+      (do
+        (when-let [oid (:oid (:identity session))]
+          (registration-db/update-started-registration-oid! db registration-id oid))
+        (log/info "END: Init exam session" exam-session-id "registration success" registration-id))
       response)
     (catch Exception e
       (cond
