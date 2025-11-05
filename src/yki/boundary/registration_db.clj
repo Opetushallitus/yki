@@ -24,6 +24,7 @@
   (person-registered-to-exam-on-exam-date? [db registration-id exam-session-id])
   (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id])
   (create-registration! [db registration])
+  (update-started-registration-oid! [db registration-id person-oid])
   (get-registration-data [db registration-id participant-id lang])
   (get-registration-and-exam-session-state [db registration-id])
   (get-registration-data-by-participant [db registration-id participant-id lang])
@@ -114,6 +115,11 @@
     [{:keys [spec]} registration]
     (jdbc/with-db-transaction [tx spec]
       (:id (q/insert-registration<! tx registration))))
+  (update-started-registration-oid!
+    [{:keys [spec]} registration-id person-oid]
+    (jdbc/with-db-transaction [tx spec]
+      (q/update-started-registration-oid! tx {:id  registration-id
+                                              :oid person-oid})))
   (update-started-registrations-to-expired!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
