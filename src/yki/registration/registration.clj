@@ -59,7 +59,7 @@
                                                        :id               participant-id}))
 
 (defn- sanitized-form [form]
-  (let [text-fields (dissoc form :nationalities)
+  (let [text-fields (dissoc form :nationalities :free_registration_id)
         sanitizer   (partial common/sanitized-string "_")
         sanitized   (update-vals text-fields sanitizer)]
     (merge form sanitized)))
