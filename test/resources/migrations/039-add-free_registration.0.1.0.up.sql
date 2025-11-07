@@ -10,6 +10,6 @@ CREATE TABLE IF NOT EXISTS free_registration (
     eb BOOLEAN NOT NULL,
     dia BOOLEAN NOT NULL,
     other BOOLEAN NOT NULL,
-    registration_id BIGINT NOT NULL
+    registration_id BIGINT NOT NULL,
+    is_foreign BOOLEAN
 );
-
