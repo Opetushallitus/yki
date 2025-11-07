@@ -334,34 +334,26 @@
                                   login-url)))
 
 
-; ->send-free-registration-email db url-helper email-q lang (assoc registration-data :participant_id unified-participant-id) email-auth? free-registration
-(defn- ->send-free-registration-email! [db url-helper email-q lang registration-data email-auth? free-registration]
-  (case (:kind registration-data)
-    "ADMISSION"
-    (let [registration-id          (:id registration-data)
-          participant-id           (:participant_id registration-data)
-          user-portal-link         (when email-auth? (create-user-portal-link db url-helper participant-id registration-id))
-          type                     (case (:source free-registration)
-                                     "KOSKI" "FREE_REGISTRATION_KOSKI"
-                                     "USER"  "FREE_REGISTRATION_USER")
-          email                    (:email (registration-db/get-participant-by-id db participant-id))]
+; ->send-free-registration-email url-helper email-q lang (assoc registration-data :participant_id unified-participant-id) free-registration
+(defn- ->send-free-registration-email! [url-helper email-q lang registration-data free-registration]
+  (let [type             (case (:source free-registration)
+                           "KOSKI" "FREE_REGISTRATION_KOSKI"
+                           "USER" "FREE_REGISTRATION_USER")
+        email            (:email registration-data)
+        user-portal-link (url-helper :yki.login.user-portal)]
+    (case (:kind registration-data)
+      "ADMISSION"
       #(send-payment-link-email! email-q
                                  lang
                                  email
                                  type
                                  (assoc registration-data
-                                        :language (template-util/get-language (:language_code registration-data) lang)
-                                        :level (template-util/get-level (:level_code registration-data) lang)
-                                        :login_url (or user-portal-link (url-helper :yki.login.user-portal)))))
-    "QUEUE"
-    ; TODO: Add new email templates for free queue registratio
-    (let [participant-id   (:participant_id registration-data)
-          email            (:email (registration-db/get-participant-by-id db participant-id))
-          user-portal-link (if email-auth?
-                             (create-user-portal-link db url-helper (:participant_id registration-data) (:id registration-data))
-                             (url-helper :yki.login.user-portal))]
-
-      #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :email email :user_portal_link user-portal-link)))))
+                                   :language (template-util/get-language (:language_code registration-data) lang)
+                                   :level (template-util/get-level (:level_code registration-data) lang)
+                                   :login_url user-portal-link))
+      "QUEUE"
+      ; TODO: Add new email templates for free queue registratio
+      #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :user_portal_link user-portal-link)))))
 
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
@@ -383,22 +375,16 @@
                        (onr/get-or-create-person
                          onr-client
                          (assoc form-to-persist :registration_id registration-id)))]
-        (let [free-registration         (validate-free-registration db registration-data free-registration-id)]
+        (let [free-registration (validate-free-registration db registration-data free-registration-id)]
           (if (and free-registration-id (nil? free-registration))
             ; Deny submit if free-registration-id was provided, but it didn't match free_registration entry in DB
             {:error {:not_free true}}
             (let [; Use the same participant id for registration and the payment link as otherwise the payment link won't work.
-                  unified-participant-id    (or (:participant_id registration-data) session-participant-id)
-                  registration-unified      (assoc registration-data :participant_id unified-participant-id)
-                  code                      (str (random-uuid))
-                  login-url                 (url-helper :yki.login-link.url code)
-                  amount                    (get-payment-amount-for-registration payment-helper exam-session-registration)
-                                        ; For queued registrations, expiration date is not very meaningful as of yet.
-                                        ; If the registration is ultimately lifted from queue, the expiration date will be recalculated.
+                  unified-participant-id  (or (:participant_id registration-data) session-participant-id)
+                  amount                  (get-payment-amount-for-registration payment-helper exam-session-registration)
+                  ; For queued registrations, expiration date is not very meaningful as of yet.
+                  ; If the registration is ultimately lifted from queue, the expiration date will be recalculated.
                   {:keys [expiration-date]} (registration->expiration-date registration-data false)
-                  create-and-send-link-fn (if free-registration
-                                            (->send-free-registration-email! db url-helper email-q lang registration-unified email-auth? free-registration)
-                                            (->send-registration-email!      db url-helper payment-helper email-q lang registration-unified code login-url email-auth?))
                   submitted-state         (if free-registration "COMPLETED" "SUBMITTED")
                   update-registration     {:id             registration-id
                                            :form           form-to-persist
@@ -412,20 +398,22 @@
                   code                    (str (random-uuid))
                   login-url               (url-helper :yki.login-link.url code)
                   email-template-data     (assoc registration-data
-                                                 :email
-                                                 (or email
-                                                     (:email (registration-db/get-participant-by-id db unified-participant-id)))
-                                                 :participant_id unified-participant-id)
-                  create-and-send-link-fn (->send-registration-email! db url-helper payment-helper email-q lang email-template-data code login-url email-auth?)
+                                            :email
+                                            (or email
+                                                (:email (registration-db/get-participant-by-id db unified-participant-id)))
+                                            :participant_id unified-participant-id)
+                  create-and-send-link-fn (if free-registration
+                                            (->send-free-registration-email! url-helper email-q lang email-template-data free-registration)
+                                            (->send-registration-email! db url-helper payment-helper email-q lang email-template-data code login-url email-auth?))
                   update-person           (-> form
                                               (with-gender-and-nationality)
                                               (assoc :oid oid))
                   person                  (person-db/upsert-person! db update-person)
                   success                 (and person
                                                (registration-db/update-registration-details!
-                                                db
-                                                update-registration
-                                                create-and-send-link-fn))
+                                                 db
+                                                 update-registration
+                                                 create-and-send-link-fn))
                   kind                    (:kind registration-data)
                   response-base           {:oid               oid
                                            :registration_kind kind
