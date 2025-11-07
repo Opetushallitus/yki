@@ -137,7 +137,7 @@
               (response {:participants
                          (if oph-admin?
                            participants
-                           (map #(dissoc % :free_registration_source :free_registration_basis) participants))})))
+                           (map #(dissoc % :free_registration_source :free_registration_basis :free_registration_is_foreign) participants))})))
           (context "/:registration-id" []
             (DELETE "/" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
