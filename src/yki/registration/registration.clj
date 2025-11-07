@@ -72,6 +72,8 @@
         email                     (when authenticated-by-email? (:external-user-id (:identity session)))
         user                      (assoc (:identity session) :email email)
         exam-fee                  (get-in payment-config [:amount (keyword (:level_code exam-session))])]
+    (when-let [oid (:oid (:identity session))]
+      (registration-db/update-started-registration-oid! db registration-id oid))
     (assoc
       (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
            :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
@@ -112,10 +114,7 @@
                                                                     :started_at      (t/now)
                                                                     :kind            registration-kind})
           response        (create-registration-response db session exam-session-id registration-id registration-kind payment-config)]
-      (do
-        (when-let [oid (:oid (:identity session))]
-          (registration-db/update-started-registration-oid! db registration-id oid))
-        (log/info "END: Init exam session" exam-session-id "registration success" registration-id))
+      (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
       response)
     (catch Exception e
       (cond
