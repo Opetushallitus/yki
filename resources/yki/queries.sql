@@ -1282,7 +1282,8 @@ SELECT
   r.is_transfered,
   fr.free_registration_id IS NOT NULL AS is_free_registration,
   fr.source AS free_registration_source,
-  fr.type AS free_registration_basis
+  fr.type AS free_registration_basis,
+  fr.is_foreign AS free_registration_is_foreign
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 INNER JOIN person p ON r.person_oid = p.oid
