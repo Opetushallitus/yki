@@ -1810,10 +1810,12 @@ ed.registration_start_date, ed.registration_end_date,
        is_transferable(r.id) AS is_transferable,
        is_cancellable(r.id) AS is_cancellable,
        r.is_transfered,
-       r.lifted_from_queue_at
+       r.lifted_from_queue_at,
+       fr.free_registration_id IS NOT NULL AS is_free_registration
 FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+LEFT JOIN free_registration fr ON r.id = fr.registration_id
 WHERE person_oid = :oid
   AND current_date - interval '1 year' <= ed.exam_date;
 
