@@ -335,9 +335,7 @@
 
 ; ->send-free-registration-email url-helper email-q lang (assoc registration-data :participant_id unified-participant-id) free-registration
 (defn- ->send-free-registration-email! [url-helper email-q lang registration-data free-registration]
-  (let [type             (case (:source free-registration)
-                           "KOSKI" "FREE_REGISTRATION_KOSKI"
-                           "USER" "FREE_REGISTRATION_USER")
+  (let [type             "FREE_REGISTRATION"
         email            (:email registration-data)
         user-portal-link (url-helper :yki.login.user-portal)]
     (case (:kind registration-data)
@@ -351,7 +349,6 @@
                                    :level (template-util/get-level (:level_code registration-data) lang)
                                    :login_url user-portal-link))
       "QUEUE"
-      ; TODO: Add new email templates for free queue registratio
       #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :user_portal_link user-portal-link)))))
 
 (defn submit-registration-abstract-flow

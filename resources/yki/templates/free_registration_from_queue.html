@@ -1,13 +1,21 @@
 {% extends "yki/templates/base_message.html" %} {% block content %}
 <tr>
   <td style="padding-left: 20px;">
-    {% i18n email.free_registration_koski.content.line1.part1 %} <b>{% i18n email.free_registration_koski.content.line1.part2 %}</b>
+    {% i18n email.free_registration_from_queue.content.line1 %}
+    <b>{% i18n email.free_registration.content.line1.part1 %}</b>
+    {% i18n email.free_registration.content.line1.part2 %}:
+  </td>
+</tr>
+<tr>
+<tr>
+  <td style="padding-left: 20px;">
+    <a href="{% i18n email.free_registration.content.line1.link.url %}" target="_blank">{% i18n email.free_registration.content.line1.link.text %}</a>
   </td>
 </tr>
 
 <tr>
-  <td style="padding-left: 20px;">
-    {% i18n email.payment_success.content.line1 %}:
+  <td style="padding-left: 20px; padding-top: 10px;">
+    <b>{% i18n email.payment_success.content.line1 %}:</b>
   </td>
 </tr>
 
