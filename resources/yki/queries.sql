@@ -1777,7 +1777,8 @@ INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 INNER JOIN organizer o on es.organizer_id = o.id
 LEFT JOIN exam_session oes ON r.original_exam_session_id = oes.id
 LEFT JOIN exam_date oed ON oes.exam_date_id = oed.id
-WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= r.modified AND
+WHERE r.state = 'COMPLETED' AND
+    (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= r.modified AND
     r.modified < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
 
 -- name: select-unpaid-new-exam-payments-by-registration-id
