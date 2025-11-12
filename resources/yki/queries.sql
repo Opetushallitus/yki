@@ -1817,7 +1817,8 @@ INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN free_registration fr ON r.id = fr.registration_id
 WHERE person_oid = :oid
-  AND current_date - interval '1 year' <= ed.exam_date;
+  AND current_date - interval '1 year' <= ed.exam_date
+  AND state <> 'STARTED';
 
 -- name: select-registration-queue-positions
 SELECT r.id, COUNT(r2.id) AS position
