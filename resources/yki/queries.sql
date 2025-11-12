@@ -915,16 +915,19 @@ SELECT re.id,
        esl.zip,
        esl.name,
        p.external_user_id = p.email AS is_email_auth,
-       pe.email
+       pe.email,
+       fr.free_registration_id
 FROM registration re
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 LEFT JOIN participant p ON re.participant_id = p.id
 LEFT JOIN person pe ON re.person_oid = pe.oid
+LEFT JOIN free_registration fr ON fr.registration_id = re.id
 WHERE re.id = :id
   AND (re.kind IN ('ADMISSION', 'QUEUE'))
-  AND (re.state IN ('STARTED', 'SUBMITTED'))
+  AND ((re.state IN ('STARTED', 'SUBMITTED'))
+       OR (re.state IN ('COMPLETED') AND fr.free_registration_id IS NOT NULL))
   AND esl.lang = :lang
   AND re.participant_id = :participant_id;
 
@@ -1317,8 +1320,9 @@ WHERE
         current_date + interval '1 week' <= ed.exam_date);
 
 -- name: lift-registration-from-queue<!
-WITH registrations_to_update AS (SELECT id
+WITH registrations_to_update AS (SELECT id, free_registration_id
                                  FROM registration
+                                 LEFT JOIN free_registration ON registration_id = id
                                  WHERE kind = 'QUEUE'
                                    AND state IN ('SUBMITTED')
                                    AND exam_session_id = :exam_session_id
@@ -1326,9 +1330,17 @@ WITH registrations_to_update AS (SELECT id
                                  LIMIT 1)
 UPDATE registration
 SET kind                 = 'ADMISSION',
+    state                = CASE WHEN free_registration_id IS NOT NULL
+                                     THEN 'COMPLETED'::registration_state
+                                     ELSE 'SUBMITTED'::registration_state
+                           END,
     lifted_from_queue_at = current_timestamp,
-    expires_at = at_midnight((current_date + '1 day'::interval)::date)
-WHERE id IN (SELECT id FROM registrations_to_update);
+    expires_at           = CASE WHEN free_registration_id IS NULL
+                                     THEN at_midnight((current_date + '1 day'::interval)::date)
+                                     ELSE expires_at
+                           END
+    FROM registrations_to_update
+WHERE registration.id = registrations_to_update.id
 
 --name: cancel-unpaid-registration-for-organizer!
 UPDATE registration

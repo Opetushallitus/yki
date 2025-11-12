@@ -351,6 +351,17 @@
       "QUEUE"
       #(send-enrolled-to-queue-email! email-q lang (assoc registration-data :user_portal_link user-portal-link)))))
 
+(defn send-lifted-from-queue-for-free-email! [url-helper email-q lang registration-data]
+  (let [email (:email registration-data)]
+    (send-payment-link-email! email-q
+                              lang
+                              email
+                              "FREE_REGISTRATION_FROM_QUEUE"
+                              (assoc registration-data
+                                     :language (template-util/get-language (:language_code registration-data) lang)
+                                     :level (template-util/get-level (:level_code registration-data) lang)
+                                     :login_url (url-helper :yki.login.user-portal)))))
+
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
   (let [form                   (sanitized-form raw-form)
