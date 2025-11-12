@@ -384,7 +384,11 @@
                   ; For queued registrations, expiration date is not very meaningful as of yet.
                   ; If the registration is ultimately lifted from queue, the expiration date will be recalculated.
                   {:keys [expiration-date]} (registration->expiration-date registration-data false)
-                  submitted-state         (if free-registration "COMPLETED" "SUBMITTED")
+                  kind                    (:kind registration-data)
+                  submitted-state         (case kind
+                                            "QUEUE"
+                                            "SUBMITTED"
+                                            (if free-registration "COMPLETED" "SUBMITTED"))
                   update-registration     {:id             registration-id
                                            :form           form-to-persist
                                            :oid            oid
@@ -413,7 +417,6 @@
                                                  db
                                                  update-registration
                                                  create-and-send-link-fn))
-                  kind                    (:kind registration-data)
                   response-base           {:oid               oid
                                            :registration_kind kind
                                            :state             submitted-state}]
