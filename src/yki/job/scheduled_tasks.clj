@@ -14,7 +14,7 @@
     [yki.boundary.person-db :as person-db]
     [yki.boundary.registration-db :as registration-db]
     [yki.boundary.yki-register :as yki-register]
-    [yki.registration.registration :refer [send-lifted-from-queue-email!]]
+    [yki.registration.registration :refer [send-lifted-from-queue-email! send-lifted-from-queue-for-free-email!]]
     [yki.job.job-queue]))
 
 (defonce registration-state-handler-conf {:worker-id (str (random-uuid))
@@ -196,8 +196,11 @@
                                              (let [lang                (or ui_language "fi")
                                                    email-template-data (registration-db/get-registration-data db id participant_id lang)
                                                    code                (str (random-uuid))
-                                                   login-url           (url-helper :yki.login-link.url code)]
-                                               (send-lifted-from-queue-email! db url-helper payment-helper email-q lang email-template-data code login-url)))
+                                                   login-url           (url-helper :yki.login-link.url code)
+                                                   free?               (:free_registration_id email-template-data)]
+                                               (if free?
+                                                 (send-lifted-from-queue-for-free-email! url-helper email-q lang email-template-data)
+                                                 (send-lifted-from-queue-email!          db url-helper payment-helper email-q lang email-template-data code login-url))))
              exam-session-details          (registration-db/get-participant-and-queue-count-for-ongoing-admissions db)]
          (doseq [{:keys [exam_session_id max_participants participants queue]} exam-session-details
                  :let [available-places (- max_participants participants)
