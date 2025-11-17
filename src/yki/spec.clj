@@ -392,7 +392,7 @@
                                                    ::is_free_registration]
                                           :opt-un [::free_registration_source
                                                    ::free_registration_basis
-                                                   ::free_registration_is_finnish]))
+                                                   ::free_registration_is_foreign]))
 
 (s/def :exam-session/participants (s/coll-of ::exam-session-participant))
 (s/def ::participants-response (s/keys :req-un [:exam-session/participants]))
