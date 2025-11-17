@@ -1264,7 +1264,6 @@ INNER JOIN person p ON p.oid = r.person_oid
 WHERE r.exam_session_id = :id
 AND r.state = 'COMPLETED';
 
--- TODO Consider moving more of form contents under person table
 -- name: select-exam-session-participants
 SELECT
   r.created,
@@ -1746,13 +1745,10 @@ LEFT JOIN exam_date oed ON oes.exam_date_id = oed.id
 WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= epn.paid_at AND
       epn.paid_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
 
--- TODO r.modified is not a reliable source of truth for when free registration was used!
--- TODO Also does not take into account that registrations can be cancelled.
--- TODO Cleanest would probably be to add a new timestamp column to either registration or free_registration
 -- name: select-free-registrations-for-timerange
 SELECT
     0 as amount,
-    r.modified AS paid_at,
+    fr.created_at AS paid_at,
     fr.source,
     fr.is_foreign,
     fr.matriculation_exam,
@@ -1778,8 +1774,8 @@ INNER JOIN organizer o on es.organizer_id = o.id
 LEFT JOIN exam_session oes ON r.original_exam_session_id = oes.id
 LEFT JOIN exam_date oed ON oes.exam_date_id = oed.id
 WHERE r.state = 'COMPLETED' AND
-    (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= r.modified AND
-    r.modified < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
+    (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= fr.created_at AND
+    fr.created_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
 
 -- name: select-unpaid-new-exam-payments-by-registration-id
 SELECT epn.href
