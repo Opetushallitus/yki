@@ -2,8 +2,6 @@ CREATE TABLE IF NOT EXISTS free_registration (
     free_registration_id BIGSERIAL PRIMARY KEY,
     source VARCHAR(255) NOT NULL,
     type VARCHAR(255) NOT NULL,
-    approved BOOLEAN,
-    comment TEXT,
     matriculation_exam BOOLEAN NOT NULL,
     higher_education_concluded BOOLEAN NOT NULL,
     higher_education_enrolled BOOLEAN NOT NULL,
@@ -11,5 +9,13 @@ CREATE TABLE IF NOT EXISTS free_registration (
     dia BOOLEAN NOT NULL,
     other BOOLEAN NOT NULL,
     registration_id BIGINT NOT NULL,
-    is_foreign BOOLEAN
+    is_foreign BOOLEAN,
+    version INTEGER DEFAULT 0 NOT NULL,
+    created_by TEXT,
+    modified_by TEXT,
+    deleted_by TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    modified_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE
+
 );
