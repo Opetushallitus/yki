@@ -1992,7 +1992,6 @@ WHERE current_timestamp < pss.created + :duration::interval
 SELECT free_registration_id,
        source,
        type,
-       approved,
        matriculation_exam,
        higher_education_concluded,
        higher_education_concluded,
