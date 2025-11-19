@@ -228,3 +228,10 @@
                 response-body           (j/read-value body json-mapper)]
             (is (= 409 status))
             (is (= {:error {:registration_kind true}} response-body))))))))
+
+(deftest free-registration-test
+  (testing "submitting registration form with matching free registration id"
+    (testing "should immediately enroll user to exam session if available registration kind is 'ADMISSION'")
+    (testing "should enroll user to queue if available registration kind is 'QUEUE'"
+      (testing "and lifting registration from queue should immediately enroll user to session")))
+  (testing "submitting registration form with unmatching free registration id should yield error"))

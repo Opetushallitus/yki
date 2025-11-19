@@ -2,8 +2,6 @@
   (:require
     [clojure.data.json :as json]
     [clojure.spec.alpha :as s]
-    [clojure.string :as string]
-    [clojure.tools.logging :refer [info]]
     [compojure.api.sweet :refer [api context GET POST]]
     [integrant.core :as ig]
     [org.httpkit.client :as http]
@@ -38,7 +36,4 @@
             (proxy-request request))
           (POST "/education/:registration-id" request
             :path-params [registration-id :- ::ys/id]
-            (proxy-request request))
-          (GET "/uploadPostPolicy/:exam-event-id" request
-            :path-params [exam-event-id :- ::ys/id]
             (proxy-request request)))))))
