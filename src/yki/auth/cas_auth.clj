@@ -1,6 +1,7 @@
 (ns yki.auth.cas-auth
   (:require [clojure.data.xml :as xml]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [found see-other]]
             [yki.boundary.cas :as cas]
@@ -124,12 +125,14 @@
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
                 sn firstName nationalIdentificationNumber]} cas-attributes
+        _            (log/info "Oppija logged in with cas-attributes:" cas-attributes)
         {:strs [etunimet
                 sukunimi
                 kutsumanimi
                 oidHenkilo
-                kansalaisuus]} (onr/get-person-by-ssn onr-client nationalIdentificationNumber)
-
+                kansalaisuus]
+         :as   onr-response} (onr/get-person-by-ssn onr-client nationalIdentificationNumber)
+        _            (log/info "ONR get-person-by-ssn returned attributes:" onr-response)
         address      {:post_office    VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip            VakinainenKotimainenLahiosoitePostinumero
                       :street_address VakinainenKotimainenLahiosoiteS}
