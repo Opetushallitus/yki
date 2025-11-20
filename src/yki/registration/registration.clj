@@ -356,9 +356,9 @@
                               email
                               "FREE_REGISTRATION_FROM_QUEUE"
                               (assoc registration-data
-                                     :language (template-util/get-language (:language_code registration-data) lang)
-                                     :level (template-util/get-level (:level_code registration-data) lang)
-                                     :login_url (url-helper :yki.login.user-portal)))))
+                                :language (template-util/get-language (:language_code registration-data) lang)
+                                :level (template-util/get-level (:level_code registration-data) lang)
+                                :login_url (url-helper :yki.login.user-portal)))))
 
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
@@ -377,9 +377,9 @@
       (registration-db/update-participant-email! db email session-participant-id))
     (if-let [registration-data (when started? (get-registration-data db registration-id session-participant-id lang))]
       (if-let [oid (or (:oid identity)
-                       (onr/get-or-create-person
-                         onr-client
-                         (assoc form-to-persist :registration_id registration-id)))]
+                       ((onr/get-or-create-person
+                          onr-client
+                          (assoc form-to-persist :registration_id registration-id)) "oidHenkilo"))]
         (let [free-registration (validate-free-registration db registration-data free-registration-id)]
           (if (and free-registration-id (nil? free-registration))
             ; Deny submit if free-registration-id was provided, but it didn't match free_registration entry in DB
