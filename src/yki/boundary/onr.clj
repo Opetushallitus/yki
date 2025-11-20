@@ -40,15 +40,18 @@
   [{:keys [email first_name last_name gender exam_lang nationalities birthdate ssn]
     :as   registration}
    attempt]
-  (let [basic-fields {:yhteystieto   [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
-                                       :yhteystietoArvo   email}]
-                      :etunimet      first_name
-                      :kutsumanimi   (first-names->nickname first_name)
-                      :sukunimi      last_name
-                      :sukupuoli     (if (str/blank? gender) nil gender)
-                      :asiointiKieli {:kieliKoodi exam_lang}
-                      :kansalaisuus  (extract-nationalities nationalities)
-                      :henkiloTyyppi "OPPIJA"}]
+  (let [basic-fields (cond-> {:henkiloTyyppi "OPPIJA"
+                              :etunimet      first_name
+                              :kutsumanimi   (first-names->nickname first_name)
+                              :sukunimi      last_name
+                              :kansalaisuus  (extract-nationalities nationalities)}
+                             (not (str/blank? email))
+                             (assoc :yhteystieto [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
+                                                   :yhteystietoArvo   email}])
+                             (not (str/blank? gender))
+                             (assoc :sukupuoli gender)
+                             (not (str/blank? exam_lang))
+                             (assoc :asiointiKieli {:kieliKoodi exam_lang}))]
     (if (has-ssn? {:ssn ssn})
       (assoc
         basic-fields
