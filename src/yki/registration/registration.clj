@@ -332,8 +332,6 @@
                                   code
                                   login-url)))
 
-
-; ->send-free-registration-email url-helper email-q lang (assoc registration-data :participant_id unified-participant-id) free-registration
 (defn- ->send-free-registration-email! [url-helper email-q lang registration-data free-registration]
   (let [type             "FREE_REGISTRATION"
         email            (:email registration-data)
