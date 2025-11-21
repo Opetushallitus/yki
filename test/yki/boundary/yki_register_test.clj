@@ -8,6 +8,7 @@
     [jsonista.core :as j]
     [yki.embedded-db :as embedded-db]
     [yki.boundary.exam-session-db :as exam-session-db]
+    [yki.boundary.onr :as onr]
     [yki.boundary.yki-register :as yki-register]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
@@ -26,6 +27,8 @@
                               :pvm        "2039-05-02"
                               :jarjestaja "1.2.3.5"})
 
+(def participant-onr-map {"5.4.3.2.2" "301079-900U" "5.4.3.2.1" "010199-9012" "5.4.3.2.4" "301079-083N" })
+
 (deftest sync-exam-session-requests-test
   (let [organizer            (j/read-value (slurp "test/resources/organizer.json") (j/object-mapper {:decode-key-fn true}))
         organization         (j/read-value (slurp "test/resources/organization.json"))
@@ -43,25 +46,25 @@
                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
-    (let [person-fields [:first_name :last_name :email :zip :post_office :street_address]]
-      (testing "should create valid csv line with birth date"
-        (let [participant (merge {:form          (apply dissoc base/registration-form person-fields)
-                                  :person_oid    "5.4.3.2.1"
-                                  :is_transfered false}
-                                 (select-keys base/registration-form person-fields))
-              result      (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) participant)
-              csv-record  ["5.4.3.2.1" "010199-9012" "Ankka" "Aku" "M" "xxx" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi" 0]]
-          (is (= result csv-record))))
+      (let [person-fields [:first_name :last_name :email :zip :post_office :street_address]]
+        (testing "should create valid csv line with birth date"
+          (let [participant (merge {:form          (apply dissoc base/registration-form person-fields)
+                                    :person_oid    "5.4.3.2.1"
+                                    :is_transfered false}
+                                   (select-keys base/registration-form person-fields))
+                result      (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) {"5.4.3.2.1" "010199-9012"} participant)
+                csv-record  ["5.4.3.2.1" "010199-9012" "Ankka" "Aku" "M" "xxx" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi" 0]]
+            (is (= result csv-record))))
 
-      (testing "should create valid csv line with ssn"
-        (let [registration-form-with-ssn (dissoc (assoc base/registration-form :ssn "010199-9034" :nationalities ["246"]) :gender)
-              participant                (merge {:form          (apply dissoc registration-form-with-ssn person-fields)
-                                                 :person_oid    "5.4.3.2.1"
-                                                 :is_transfered true}
-                                                (select-keys registration-form-with-ssn person-fields))
-              result                     (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) participant)
-              csv-record                 ["5.4.3.2.1" "010199-9034" "Ankka" "Aku" "M" "FIN" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi" 1]]
-          (is (= result csv-record)))))))
+        (testing "should create valid csv line with ssn"
+          (let [registration-form-with-ssn (dissoc (assoc base/registration-form :ssn "010199-9034" :nationalities ["246"]) :gender)
+                participant                (merge {:form          (apply dissoc registration-form-with-ssn person-fields)
+                                                   :person_oid    "5.4.3.2.1"
+                                                   :is_transfered true}
+                                                  (select-keys registration-form-with-ssn person-fields))
+                result                     (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port)) {"5.4.3.2.1" "010199-9034"} participant)
+                csv-record                 ["5.4.3.2.1" "010199-9034" "Ankka" "Aku" "M" "FIN" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi" 1]]
+            (is (= result csv-record)))))))
 
 (deftest delete-exam-session-and-organizer-test
   (base/insert-base-data)
@@ -96,14 +99,15 @@
                                                                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}
        "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                               {:status 200 :content-type "application/json"
                                                                                                                              :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
-      (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
-            db              (base/db)
-            url-helper      (base/create-url-helper (str "localhost:" port))
-            _               (yki-register/sync-exam-session-participants db url-helper {:user "user" :password "pass"} false exam-session-id)
-            request         (first (:recordings (first @(:routes server))))
-            req-body        (get-in request [:request :body "postData"])]
-        (is (= (get-in request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
-        (is (= req-body csv)))))
+        (with-redefs [onr/list-ssn-by-oids (constantly participant-onr-map)]
+          (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
+                db              (base/db)
+                url-helper      (base/create-url-helper (str "localhost:" port))
+                _               (yki-register/sync-exam-session-participants db url-helper {} {:user "user" :password "pass"} false exam-session-id)
+                request         (first (:recordings (first @(:routes server))))
+                req-body        (get-in request [:request :body "postData"])]
+            (is (= (get-in request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
+            (is (= req-body csv))))))
   (testing "participants csv should look up contact details for participant from the person table"
     (let [old-email "aa@al.fi"
           new-email "updated@test.invalid"]
@@ -114,13 +118,14 @@
                                                                                                                                :body   (slurp "test/resources/maatjavaltiot2_246.json")}
          "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                               {:status 200 :content-type "application/json"
                                                                                                                                :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
-        (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
-              db              (base/db)
-              url-helper      (base/create-url-helper (str "localhost:" port))
-              _               (yki-register/sync-exam-session-participants db url-helper {:user "user" :password "pass"} false exam-session-id)
-              request         (first (:recordings (first @(:routes server))))
-              req-body        (get-in request [:request :body "postData"])]
-          (is (= req-body (str/replace csv old-email new-email))))))))
+          (with-redefs [onr/list-ssn-by-oids (constantly participant-onr-map)]
+            (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
+                  db              (base/db)
+                  url-helper      (base/create-url-helper (str "localhost:" port))
+                  _               (yki-register/sync-exam-session-participants db url-helper {} {:user "user" :password "pass"} false exam-session-id)
+                  request         (first (:recordings (first @(:routes server))))
+                  req-body        (get-in request [:request :body "postData"])]
+              (is (= req-body (str/replace csv old-email new-email)))))))))
 
 (deftest sync-exam-session-participants-schedule-test
   (base/insert-base-data)

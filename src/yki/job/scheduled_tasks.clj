@@ -83,7 +83,7 @@
        (log/error e "Registration state handler failed"))))
 
 (defmethod ig/init-key ::participants-sync-handler
-  [_ {:keys [db url-helper basic-auth disabled retry-duration-in-days]}]
+  [_ {:keys [db url-helper onr-client basic-auth disabled retry-duration-in-days]}]
   {:pre [(some? db) (some? url-helper) (some? basic-auth) (some? retry-duration-in-days)]}
   #(try
      (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
@@ -92,7 +92,7 @@
          (log/info "Synchronizing participants of exam sessions" exam-sessions)
          (doseq [exam-session exam-sessions]
            (try
-             (yki-register/sync-exam-session-participants db url-helper basic-auth disabled (:exam_session_id exam-session))
+             (yki-register/sync-exam-session-participants db url-helper onr-client basic-auth disabled (:exam_session_id exam-session))
              (catch Exception e
                (do
                  (log/error e "Failed to synchronize participants of exam session" exam-session)
@@ -160,7 +160,7 @@
        (log/error e "Old data removal failed"))))
 
 (defmethod ig/init-key ::sync-participant-onr-data-handler [_ {:keys [db onr-client]}]
-  {:pre [(some? db) (some? onr-client)]}
+  {:pre [(some? db)]}
   #(try
      (when (job-db/try-to-acquire-lock! db sync-onr-participant-data-handler-conf)
        (log/info "Participant ONR data syncing started")

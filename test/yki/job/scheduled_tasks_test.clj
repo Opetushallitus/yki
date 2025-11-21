@@ -8,11 +8,14 @@
     [pgqueue.core :as pgq]
     [stub-http.core :refer [with-routes!]]
     [yki.boundary.exam-session-db :as exam-session-db]
+    [yki.boundary.onr :as onr]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.job.scheduled-tasks]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
+
+(def participant-onr-map {"5.4.3.2.2" "301079-900U" "5.4.3.2.1" "010199-9012" "5.4.3.2.4" "301079-083N" })
 
 (def email-req
   {:recipients ["test@test.com"]
@@ -156,19 +159,20 @@
                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
-    (let [handler     (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db                     (base/db)
-                                                                                       :disabled               false
-                                                                                       :basic-auth             {:user "user" :password "pass"}
-                                                                                       :retry-duration-in-days 14
-                                                                                       :url-helper             (base/create-url-helper (str "localhost:" port))})
-          _           (handler)
-          sync_status (base/select-one "SELECT * FROM participant_sync_status")]
-      (testing "should send participants to yki register and set sync status to success"
-        (is (= (count (:recordings (first @(:routes server)))) 1))
-        (is (some? (:success_at sync_status))))
-      (testing "should send participants only once"
-        (handler)
-        (is (= (count (:recordings (first @(:routes server)))) 1))))))
+      (with-redefs [onr/list-ssn-by-oids (constantly participant-onr-map )]
+        (let [handler     (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db                     (base/db)
+                                                                                           :disabled               false
+                                                                                           :basic-auth             {:user "user" :password "pass"}
+                                                                                           :retry-duration-in-days 14
+                                                                                           :url-helper             (base/create-url-helper (str "localhost:" port))})
+              _           (handler)
+              sync_status (base/select-one "SELECT * FROM participant_sync_status")]
+          (testing "should send participants to yki register and set sync status to success"
+            (is (= (count (:recordings (first @(:routes server)))) 1))
+            (is (some? (:success_at sync_status))))
+          (testing "should send participants only once"
+            (handler)
+            (is (= (count (:recordings (first @(:routes server)))) 1)))))))
 
 (deftest handle-exam-session-participants-failure-test
   (base/insert-base-data)
@@ -184,13 +188,14 @@
                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
-    (let [handler          (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db                     (base/db)
-                                                                                            :disabled               false
-                                                                                            :basic-auth             {:user "user" :password "pass"}
-                                                                                            :retry-duration-in-days 14
-                                                                                            :url-helper             (base/create-url-helper (str "localhost:" port))})
-          failed_at_before (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))
-          _                (handler)
-          failed_at_after  (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))]
-      (testing "should update failed at timestamp"
-        (is (t/after? failed_at_after failed_at_before))))))
+      (with-redefs [onr/list-ssn-by-oids (constantly participant-onr-map)]
+        (let [handler          (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db                     (base/db)
+                                                                                                :disabled               false
+                                                                                                :basic-auth             {:user "user" :password "pass"}
+                                                                                                :retry-duration-in-days 14
+                                                                                                :url-helper             (base/create-url-helper (str "localhost:" port))})
+              failed_at_before (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))
+              _                (handler)
+              failed_at_after  (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))]
+          (testing "should update failed at timestamp"
+            (is (t/after? failed_at_after failed_at_before)))))))
