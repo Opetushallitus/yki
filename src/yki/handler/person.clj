@@ -36,6 +36,14 @@
       (handler request)
       (unauthorized))))
 
+(defn- is-presentable?
+  "Person entity is initialized already after returning from Suomi.fi authentication,
+  in which case the created person entity may not contain all the details needed for the user portal UI.
+  This happens when the person has not yet submitted any registration form.
+  In such cases, return instead a not found response."
+  [{:keys [email]}]
+  (some? email))
+
 (defmethod ig/init-key :yki.handler/person [_ {:keys [db auth access-log email-q onr-client url-helper payment-helper]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? onr-client) (some? email-q) (some? url-helper) (some? payment-helper)]}
   (api
@@ -46,11 +54,12 @@
         ;:return ::ys/person
         (if (authorized-for-handler? session)
           (if-let [oid (get-in session [:identity :oid])]
-            (if-let [person (person-db/get-person db oid)]
-              (-> person
-                  (with-authorized-registrations session)
-                  (ok))
-              (not-found))
+            (let [person (person-db/get-person db oid)]
+              (if (is-presentable? person)
+                (-> person
+                    (with-authorized-registrations session)
+                    (ok))
+                (not-found)))
             (unauthorized "no oid in session"))
           (unauthorized)))
       (POST "/" {session :session}
