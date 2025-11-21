@@ -7,7 +7,6 @@
             [clojure.tools.logging :as log]
             [pgqueue.core :as pgq]
             [ring.util.http-response :refer [bad-request ok conflict]]
-            [yki.boundary.codes :as codes]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
@@ -73,7 +72,13 @@
         user                      (assoc (:identity session) :email email)
         exam-fee                  (get-in payment-config [:amount (keyword (:level_code exam-session))])]
     (when-let [oid (:oid (:identity session))]
-      (registration-db/update-started-registration-oid! db registration-id oid))
+      (registration-db/update-started-registration-oid! db registration-id oid)
+      (person-db/ensure-person-exists!
+        db
+        (->
+          session
+          :identity
+          (select-keys [:oid :first_name :last_name]))))
     (assoc
       (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
            :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))

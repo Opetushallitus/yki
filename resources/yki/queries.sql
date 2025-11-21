@@ -1798,6 +1798,11 @@ WHERE logged_in + interval '1 week' < current_date;
 DELETE FROM cas_oppija_ticketstore
 WHERE logged_in + interval '1 week' < current_date;
 
+-- name: ensure-person-exists!
+INSERT INTO person (oid, first_name, last_name) VALUES (:oid, :first_name, :last_name)
+ON CONFLICT (oid, first_name, last_name)
+DO NOTHING;
+
 -- name: upsert-person!
 INSERT INTO person
 (oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender) VALUES
