@@ -133,14 +133,11 @@
                 VakinainenKotimainenLahiosoitePostinumero
                 VakinainenKotimainenLahiosoiteS
                 sn firstName nationalIdentificationNumber]} cas-attributes
-        _            (log/info "Oppija logged in with cas-attributes:" cas-attributes)
         {:strs [etunimet
                 sukunimi
                 kutsumanimi
                 oidHenkilo
-                kansalaisuus]
-         :as   onr-response} (get-or-create-onr-person onr-client cas-attributes)
-        _            (log/info "get-or-create-onr-person returned attributes:" onr-response)
+                kansalaisuus]} (get-or-create-onr-person onr-client cas-attributes)
         address      {:post_office    VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip            VakinainenKotimainenLahiosoitePostinumero
                       :street_address VakinainenKotimainenLahiosoiteS}
