@@ -13,11 +13,12 @@
     [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.spec :as ys]))
 
-(defmethod ig/init-key :yki.handler/yki-register-debug [_ {:keys [access-log auth basic-auth db url-helper]}]
+(defmethod ig/init-key :yki.handler/yki-register-debug [_ {:keys [access-log auth basic-auth db url-helper onr-client]}]
   {:pre [(some? access-log)
          (some? auth)
          (some? basic-auth)
          (some? db)
+         (some? onr-client)
          (some? url-helper)]}
   (api
     (context routing/yki-register-debug-root []
@@ -27,7 +28,7 @@
       (GET "/:id" _
         :path-params [id :- ::ys/id]
         (log/warn (str "Request yki-register CSV export for debug purposes for exam-session " id))
-        (-> (ok (return-exam-session-participants-csv db url-helper id))
+        (-> (ok (return-exam-session-participants-csv db url-helper onr-client id))
             (assoc-in [:headers "Content-Type"] "text/csv")))
       (context "/sync/exam-session" []
         :coercion :spec
@@ -45,6 +46,6 @@
         (POST "/:id/participants" _
           :path-params [id :- ::ys/id]
           (log/info "Manually forcing participants off exam session" id "to be synced to Solki")
-          (if (sync-exam-session-participants db url-helper basic-auth false id)
+          (if (sync-exam-session-participants db url-helper onr-client basic-auth false id)
             (ok {:success true})
             (internal-server-error)))))))

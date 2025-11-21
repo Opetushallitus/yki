@@ -7,6 +7,7 @@
     [yki.util.http-util :as http-util]
     [yki.boundary.organizer-db :as organizer-db]
     [yki.boundary.exam-session-db :as exam-session-db]
+    [yki.boundary.onr :as onr]
     [yki.boundary.organization :as organization]
     [yki.boundary.codes :as codes]
     [jsonista.core :as json])
@@ -147,9 +148,12 @@
         (do-post (url-helper :yki-register.exam-date) (json/write-value-as-string exam-date-req) basic-auth)
         (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string exam-session-req) basic-auth)))))
 
-(defn participant->csv-record [url-helper {:keys [form is_transfered person_oid last_name first_name email zip post_office street_address]}]
+(defn participant->csv-record [url-helper oid->ssn {:keys [form is_transfered person_oid last_name first_name email zip post_office street_address]}]
   (let [{:keys [gender nationalities birthdate ssn certificate_lang exam_lang]} form
-        nationality (codes/get-converted-country-code url-helper (first nationalities))]
+        nationality (codes/get-converted-country-code url-helper (first nationalities))
+        form_ssn    ssn
+        ssn         (get oid->ssn person_oid)]
+    (println person_oid " ----> " ssn "(old: " form_ssn ")")
     [person_oid
      (ssn-or-birthdate ssn birthdate)
      last_name
@@ -164,19 +168,22 @@
      certificate_lang
      (if is_transfered 1 0)]))
 
-(defn create-participants-csv [url-helper participants]
+(defn create-participants-csv [url-helper participants oid->ssn]
   (with-open [writer (StringWriter.)]
-    (let [csv-data (map #(participant->csv-record url-helper %) participants)]
+    (let [csv-data (map #(participant->csv-record url-helper oid->ssn %) participants)]
       (csv/write-csv writer csv-data :separator \;))
     (.toString writer)))
 
 (defn sync-exam-session-participants
-  [db url-helper basic-auth disabled exam-session-id]
+  [db url-helper onr-client basic-auth disabled exam-session-id]
   (let [exam-session (exam-session-db/get-exam-session-by-id db exam-session-id)
         participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
+        oid->ssn    (->> participants
+                         (map :person_oid)
+                         (onr/list-ssn-by-oids onr-client))
         url          (str (url-helper :yki-register.participants)
                           (create-url-params exam-session))
-        request      (create-participants-csv url-helper participants)]
+        request      (create-participants-csv url-helper participants oid->ssn)]
     (exam-session-db/init-participants-sync-status! db exam-session-id)
     (if disabled
       (log/info "Sending disabled. Logging request" request)
@@ -196,9 +203,11 @@
         (sync-exam-session url-helper basic-auth disabled exam-session))
       (sync-organizer db url-helper basic-auth disabled organizer-oid nil))))
 
-(defn return-exam-session-participants-csv [db url-helper exam-session-id]
-  (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)]
-    (create-participants-csv url-helper participants)))
+(defn return-exam-session-participants-csv [db url-helper onr-client exam-session-id]
+  (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
+        onr->ssn      (when onr-client (->> participants (map :person_oid)
+                                            (onr/list-persons-by-oids onr-client)))]
+    (create-participants-csv url-helper participants onr->ssn)))
 
 (defn sync-person
   [url-helper basic-auth disabled person]

@@ -70,6 +70,7 @@
                                                               :retry-duration-in-days 14}
 
   :yki.job.scheduled-tasks/participants-sync-handler         {:db                     #ig/ref :duct.database/sql
+                                                              :onr-client             #ig/ref :yki.boundary.onr/onr-client
                                                               :disabled               true
                                                               :basic-auth             {:user "user" :password "pass"}
                                                               :url-helper             #ig/ref :yki.util/url-helper
@@ -215,6 +216,7 @@
                                                               :auth       #ig/ref :yki.middleware.auth/with-authentication
                                                               :basic-auth {:user "user" :password "pass"}
                                                               :db         #ig/ref :duct.database/sql
+                                                              :onr-client #ig/ref :yki.boundary.onr/onr-client
                                                               :url-helper #ig/ref :yki.util/url-helper}
 
   :yki.handler/paytrail-payment-report                       {:payment-helper #ig/ref :yki.util/exam-payment-helper}
