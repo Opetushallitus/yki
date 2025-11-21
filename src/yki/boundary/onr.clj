@@ -40,18 +40,15 @@
   [{:keys [email first_name last_name gender exam_lang nationalities birthdate ssn]
     :as   registration}
    attempt]
-  (let [basic-fields (cond-> {:henkiloTyyppi "OPPIJA"
-                              :etunimet      first_name
-                              :kutsumanimi   (first-names->nickname first_name)
-                              :sukunimi      last_name
-                              :kansalaisuus  (extract-nationalities nationalities)}
-                             (not (str/blank? email))
-                             (assoc :yhteystieto [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
-                                                   :yhteystietoArvo   email}])
-                             (not (str/blank? gender))
-                             (assoc :sukupuoli gender)
-                             (not (str/blank? exam_lang))
-                             (assoc :asiointiKieli {:kieliKoodi exam_lang}))]
+  (let [basic-fields {:yhteystieto   [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
+                                       :yhteystietoArvo   email}]
+                      :etunimet      first_name
+                      :kutsumanimi   (first-names->nickname first_name)
+                      :sukunimi      last_name
+                      :sukupuoli     (if (str/blank? gender) nil gender)
+                      :asiointiKieli {:kieliKoodi exam_lang}
+                      :kansalaisuus  (extract-nationalities nationalities)
+                      :henkiloTyyppi "OPPIJA"}]
     (if (has-ssn? {:ssn ssn})
       (assoc
         basic-fields
@@ -140,12 +137,33 @@
           :else
           (log/error "ONR get-or-create-person request:" (str onr-person " status: " status " : " (:body response))))))))
 
+(defn- get-or-create-person-from-cas-attributes [cas-client onr-url {:keys [first_name last_name ssn]}]
+  (let [onr-person {:henkiloTyyppi      "OPPIJA"
+                    :etunimet           first_name
+                    :kutsumanimi        (first-names->nickname first_name)
+                    :sukunimi           last_name
+                    :hetu               (str/upper-case ssn)
+                    :eiSuomalaistaHetua false}
+        response   (cas/cas-authenticated-post cas-client onr-url onr-person)
+        status     (response->status response)]
+    (case status
+      ; Created new person or returned existing (unlikely, but perhaps possible due to eg. race conditions)
+      (200 201)
+      (response->body response)
+      ; Other response statuses are unexpected
+      (log/error "ONR get-or-create-person-from-cas-attributes failed:" (str onr-person " status: " status " : " (:body response))))))
+
+(defn- is-registration-form-data? [person]
+  (some? (:email person)))
+
 (defrecord OnrClient [url-helper cas-client]
   Onr
-  (get-or-create-person [_ registration]
+  (get-or-create-person [_ person]
     (let [url   (url-helper :onr-service.get-or-create-person)
           tries 3]
-      (get-or-create-person-with-retries cas-client url registration tries)))
+      (if (is-registration-form-data? person)
+        (get-or-create-person-with-retries cas-client url person tries)
+        (get-or-create-person-from-cas-attributes cas-client url person))))
   (get-person-by-oid [_ oid]
     (let [url (url-helper :onr-service.person-by-oid oid)
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]

@@ -124,8 +124,7 @@
   (if-let [person-oid (:personOid cas-attributes)]
     (onr/get-person-by-oid onr-client person-oid)
     (let [{:keys [sn firstName nationalIdentificationNumber]} cas-attributes]
-      (onr/get-or-create-person onr-client {:email      nil
-                                            :first_name firstName
+      (onr/get-or-create-person onr-client {:first_name firstName
                                             :last_name  sn
                                             :ssn        nationalIdentificationNumber}))))
 
