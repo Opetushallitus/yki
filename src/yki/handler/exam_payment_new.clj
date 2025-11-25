@@ -39,21 +39,32 @@
     ; Other values are unexpected. Redirect to error page.
     (url-helper :yki-ui.registration.payment-error.url (:exam_session_id registration))))
 
-(defn- payment->json [{:keys [amount exam_date last_name first_name email language_code level_code organizer_name paid_at reference original_exam_date]}]
-  {:organizer          organizer_name
-   :paid_at            (format-datetime-for-export paid_at)
-   :exam_date          exam_date
-   :exam_language      (template-util/get-language language_code "fi")
-   :exam_level         (template-util/get-level level_code "fi")
-   :original_exam_date original_exam_date
-   :last_name          last_name
-   :first_name         first_name
-   :email              email
-   :amount             (->>
-                         (/ amount 100)
-                         (double)
-                         (format "%.2f"))
-   :reference          reference})
+(defn- payment->json [{:keys [amount exam_date last_name first_name email language_code level_code organizer_name paid_at reference original_exam_date
+                              source is_foreign matriculation_exam higher_education_concluded higher_education_enrolled eb dia other]}]
+  {:organizer                     organizer_name
+   :paid_at                       (format-datetime-for-export paid_at)
+   :exam_date                     exam_date
+   :exam_language                 (template-util/get-language language_code "fi")
+   :exam_level                    (template-util/get-level level_code "fi")
+   :original_exam_date            original_exam_date
+   :last_name                     last_name
+   :first_name                    first_name
+   :email                         email
+   :amount                        (->>
+                                    (/ amount 100)
+                                    (double)
+                                    (format "%.2f"))
+   :reference                     reference
+   :is_free_registration          (boolean (some? source))
+   ; Free registration
+   :fr_source                     source
+   :fr_is_foreign                 is_foreign
+   :fr_matriculation_exam         matriculation_exam
+   :fr_higher_education_concluded higher_education_concluded
+   :fr_higher_education_enrolled  higher_education_enrolled
+   :fr_dia                        dia
+   :fr_eb                         eb
+   :fr_other                      other})
 
 (defn- with-organizer-names [url-helper payments]
   (when (seq payments)
@@ -167,7 +178,8 @@
                 to-exclusive       (-> (LocalDate/parse to)
                                        (.plusDays 1))
                 completed-payments (payment-db/get-completed-payments-for-timerange db from-inclusive to-exclusive)
-                result             (->> completed-payments
+                free-registrations (payment-db/get-free-registrations-for-timerange db from-inclusive to-exclusive)
+                result             (->> (concat completed-payments free-registrations)
                                         (with-organizer-names url-helper)
                                         (map payment->json)
                                         (sort-by (juxt :organizer :last_name :first_name)))]

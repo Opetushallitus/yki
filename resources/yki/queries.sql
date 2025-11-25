@@ -1264,7 +1264,6 @@ INNER JOIN person p ON p.oid = r.person_oid
 WHERE r.exam_session_id = :id
 AND r.state = 'COMPLETED';
 
--- TODO Consider moving more of form contents under person table
 -- name: select-exam-session-participants
 SELECT
   r.created,
@@ -1745,6 +1744,38 @@ LEFT JOIN exam_session oes ON r.original_exam_session_id = oes.id
 LEFT JOIN exam_date oed ON oes.exam_date_id = oed.id
 WHERE (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= epn.paid_at AND
       epn.paid_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
+
+-- name: select-free-registrations-for-timerange
+SELECT
+    0 as amount,
+    fr.created_at AS paid_at,
+    fr.source,
+    fr.is_foreign,
+    fr.matriculation_exam,
+    fr.higher_education_concluded,
+    fr.higher_education_enrolled,
+    fr.eb,
+    fr.dia,
+    fr.other,
+    p.last_name,
+    p.first_name,
+    p.email,
+    es.language_code,
+    es.level_code,
+    ed.exam_date,
+    o.oid,
+    oed.exam_date AS original_exam_date
+FROM registration r
+INNER JOIN free_registration fr ON r.id = fr.registration_id
+INNER JOIN person p ON r.person_oid = p.oid
+INNER JOIN exam_session es ON r.exam_session_id = es.id
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+INNER JOIN organizer o on es.organizer_id = o.id
+LEFT JOIN exam_session oes ON r.original_exam_session_id = oes.id
+LEFT JOIN exam_date oed ON oes.exam_date_id = oed.id
+WHERE r.state = 'COMPLETED' AND
+    (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= fr.created_at AND
+    fr.created_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
 
 -- name: select-unpaid-new-exam-payments-by-registration-id
 SELECT epn.href

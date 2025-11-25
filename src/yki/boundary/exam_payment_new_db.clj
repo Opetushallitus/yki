@@ -6,12 +6,18 @@
 
 (defprotocol ExamPaymentNew
   (get-completed-payments-for-timerange [_ from-inclusive to-exclusive])
+  (get-free-registrations-for-timerange [_ from-inclusive to-exclusive])
   (mark-payment-as-cancelled! [_ id]))
 
 (extend-protocol ExamPaymentNew
   Boundary
   (get-completed-payments-for-timerange [{:keys [spec]} from-inclusive to-exclusive]
     (q/select-completed-new-exam-payments-for-timerange
+      spec
+      {:from_inclusive from-inclusive
+       :to_exclusive   to-exclusive}))
+  (get-free-registrations-for-timerange [{:keys [spec]} from-inclusive to-exclusive]
+    (q/select-free-registrations-for-timerange
       spec
       {:from_inclusive from-inclusive
        :to_exclusive   to-exclusive}))
