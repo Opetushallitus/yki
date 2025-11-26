@@ -70,7 +70,8 @@
         authenticated-by-session? (= (:auth-method session) "SESSION")
         email                     (when authenticated-by-email? (:external-user-id (:identity session)))
         user                      (assoc (:identity session) :email email)
-        exam-fee                  (get-in payment-config [:amount (keyword (:level_code exam-session))])]
+        exam-fee                  (get-in payment-config [:amount (keyword (:level_code exam-session))])
+        expires-in                (registration-db/get-started-registration-expires-in db registration-id)]
     (when-let [oid (:oid (:identity session))]
       (registration-db/update-started-registration-oid! db registration-id oid)
       (person-db/ensure-person-exists!
@@ -84,7 +85,8 @@
            :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
            :registration_id        registration-id
            :registration_kind      registration-kind
-           :user                   user})
+           :user                   user
+           :expires_in             expires-in})
       :session session)))
 
 (defn- init-error-response [space-left? other-registration to-queue? exam-session-id]

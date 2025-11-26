@@ -1,5 +1,6 @@
 (ns yki.boundary.registration-db
-  (:require [clojure.java.jdbc :as jdbc]
+  (:require [clj-time.core :as t]
+            [clojure.java.jdbc :as jdbc]
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
@@ -40,6 +41,7 @@
   (update-started-registrations-to-expired! [db])
   (update-submitted-registrations-to-expired! [db])
   (cancel-started-registration-for-participant! [db participant-id registration-id])
+  (get-started-registration-expires-in [db registration-id])
   ; Queueing
   (get-participant-and-queue-count-for-ongoing-admissions [db])
   (lift-registration-from-queue! [db exam-session-id send-email!])
@@ -189,6 +191,12 @@
         spec
         {:id             registration-id
          :participant_id participant-id})))
+  (get-started-registration-expires-in [{:keys [spec]} registration-id]
+    (let [expires-at (q/select-started-registration-expires-at spec {:id registration-id})
+          now        (t/now)]
+      (if (and expires-at (t/before? now expires-at))
+        (t/in-seconds (t/interval (t/now) expires-at))
+        0)))
   (get-participant-and-queue-count-for-ongoing-admissions [{:keys [spec]}]
     (q/select-participant-and-queue-count-by-exam-session spec))
   (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email!]
