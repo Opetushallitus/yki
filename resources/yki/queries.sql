@@ -828,6 +828,12 @@ WHERE re.id = :id
   AND re.state = 'SUBMITTED'
   AND p.external_user_id = :external_user_id;
 
+-- name: select-started-registration-expires-at
+-- single?: true
+SELECT (started_at + interval '30 minutes') AS expires_at
+FROM registration
+WHERE id = :id AND state = 'STARTED';
+
 -- name: select-started-registrations-to-expire
 SELECT id FROM registration
 WHERE state = 'STARTED' AND (started_at + interval '30 minutes') < current_timestamp;

@@ -51,14 +51,16 @@
            get-email-request     :get-email-request} (common-bindings server)]
       (testing "post init endpoint should create registration with status STARTED"
         (is (= (get-in init-response [:response :status]) 200))
-        (is (= init-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))
+        (is (= (dissoc init-response-body "expires_in") (j/read-value (slurp "test/resources/init_registration_response.json"))))
+        (is (number? (init-response-body "expires_in")))
         (is (= (:state registration) "STARTED"))
         (is (some? (:started_at registration))))
 
       (testing "second post before submitting should return init data"
         (let [create-twice-response-body (base/body-as-json (:response create-twice-response))]
           (is (= (get-in create-twice-response [:response :status]) 200))
-          (is (= create-twice-response-body (j/read-value (slurp "test/resources/init_registration_response.json"))))))
+          (is (= (dissoc create-twice-response-body "expires_in") (j/read-value (slurp "test/resources/init_registration_response.json"))))
+          (is (number? (create-twice-response-body "expires_in")))))
 
       (testing "post identify endpoint should identify registration"
         (is (= (get-in identify-response [:response :status]) 200))
