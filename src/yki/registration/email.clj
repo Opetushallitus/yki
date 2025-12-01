@@ -85,12 +85,15 @@
 
 (defn send-cancel-registration-email! [email-q email-language template-data]
   (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
-        exam-language (template-util/get-language (:language_code template-data) email-language)]
+        exam-language (template-util/get-language (:language_code template-data) email-language)
+        template      (if (:is_free_registration template-data)
+                        "cancel_free_registration"
+                        "cancel_registration")]
     (pgq/put email-q
              {:recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
-              :subject     (template-util/subject "cancel_registration" email-language template-data)
-              :body        (template-util/render "cancel_registration" email-language (assoc template-data :language exam-language :level exam-level))})))
+              :subject     (template-util/subject template email-language template-data)
+              :body        (template-util/render template email-language (assoc template-data :language exam-language :level exam-level))})))
 
 (defn send-cancel-queue-email! [email-q email-language template-data]
   (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
