@@ -64,53 +64,55 @@
       (throw (ex-info "Functionality for URL not implemented" {})))))
 
 (deftest get-or-create-person-test
-  (let [url-helper (base/create-url-helper "localhost")]
+  (let [url-helper        (base/create-url-helper "localhost")
+        registration->oid (fn [onr-client registration]
+                            ((get-or-create-person onr-client registration) "oidHenkilo"))]
     (testing "If a new person is created from person details, its OID is returned"
       (let [onr-search-statistics (atom [])
             respond               (constantly (created {:oidHenkilo "5.4.3.2.1"}))
             cas-client            (->MockCasClient url-helper respond onr-search-statistics)
             onr-client            (->OnrClient url-helper cas-client)]
-        (is (= "5.4.3.2.1" (get-or-create-person onr-client base/registration-form)))
-        (is (= "5.4.3.2.1" (get-or-create-person onr-client (dissoc base/registration-form :ssn))))
-        (is (= "5.4.3.2.1" (get-or-create-person onr-client base/registration-form)))
+        (is (= "5.4.3.2.1" (registration->oid onr-client base/registration-form)))
+        (is (= "5.4.3.2.1" (registration->oid onr-client (dissoc base/registration-form :ssn))))
+        (is (= "5.4.3.2.1" (registration->oid onr-client base/registration-form)))
         (is (= [:ssn :email :ssn] @onr-search-statistics))))
     (testing "Existing ONR person is always returned if matched with SSN"
       (let [onr-search-statistics (atom [])
             respond               (constantly (found {:oidHenkilo "5.4.3.2.1"}))
             cas-client            (->MockCasClient url-helper respond onr-search-statistics)
             onr-client            (->OnrClient url-helper cas-client)]
-        (is (= "5.4.3.2.1" (get-or-create-person onr-client base/registration-form)))
-        (is (= "5.4.3.2.1" (get-or-create-person onr-client {:ssn        (:ssn base/registration-form)
-                                                             :first_name "Joku"
-                                                             :last_name  "Nimi"})))
+        (is (= "5.4.3.2.1" (registration->oid onr-client base/registration-form)))
+        (is (= "5.4.3.2.1" (registration->oid onr-client {:ssn        (:ssn base/registration-form)
+                                                          :first_name "Joku"
+                                                          :last_name  "Nimi"})))
         (is (= [:ssn :ssn] @onr-search-statistics))))
     (testing "If SSN is not present, person is searched first with email and then with name+birthdate"
       (let [onr-search-statistics (atom [])
-            respond (fn [body stats]
-                      (case (count stats)
-                        1
-                        (found {:oidHenkilo "1.1.1.1.1"
-                                :syntymaaika "other-than-requested"})
-                        2
-                        (found (merge {:oidHenkilo "2.2.2.2.2"}
-                                      (select-keys body [:syntymaaika :sukunimi :kutsumanimi])))))
-            cas-client (->MockCasClient url-helper respond onr-search-statistics)
-            onr-client (->OnrClient url-helper cas-client)]
-        (is (= "2.2.2.2.2" (get-or-create-person onr-client (dissoc base/registration-form :ssn))))
+            respond               (fn [body stats]
+                                    (case (count stats)
+                                      1
+                                      (found {:oidHenkilo  "1.1.1.1.1"
+                                              :syntymaaika "other-than-requested"})
+                                      2
+                                      (found (merge {:oidHenkilo "2.2.2.2.2"}
+                                                    (select-keys body [:syntymaaika :sukunimi :kutsumanimi])))))
+            cas-client            (->MockCasClient url-helper respond onr-search-statistics)
+            onr-client            (->OnrClient url-helper cas-client)]
+        (is (= "2.2.2.2.2" (registration->oid onr-client (dissoc base/registration-form :ssn))))
         (is (= [:email :name+birthdate] @onr-search-statistics))))
     (testing "If searching by email and name+birthdate yield incorrect matches, creation of a new person is forced by searching with empty identifications"
       (let [onr-search-statistics (atom [])
-            respond (fn [body stats]
-                      (case (count stats)
-                        1
-                        (found {:oidHenkilo "1.1.1.1.1"
-                                :syntymaaika "other-than-requested"})
-                        2
-                        (found (merge {:oidHenkilo "2.2.2.2.2" :syntymaaika "this-wont-match"}
-                                      (select-keys body [:sukunimi :kutsumanimi])))
-                        3
-                        (created (assoc body :oidHenkilo "3.3.3.3.3"))))
-            cas-client (->MockCasClient url-helper respond onr-search-statistics)
-            onr-client (->OnrClient url-helper cas-client)]
-        (is (= "3.3.3.3.3" (get-or-create-person onr-client (dissoc base/registration-form :ssn))))
+            respond               (fn [body stats]
+                                    (case (count stats)
+                                      1
+                                      (found {:oidHenkilo  "1.1.1.1.1"
+                                              :syntymaaika "other-than-requested"})
+                                      2
+                                      (found (merge {:oidHenkilo "2.2.2.2.2" :syntymaaika "this-wont-match"}
+                                                    (select-keys body [:sukunimi :kutsumanimi])))
+                                      3
+                                      (created (assoc body :oidHenkilo "3.3.3.3.3"))))
+            cas-client            (->MockCasClient url-helper respond onr-search-statistics)
+            onr-client            (->OnrClient url-helper cas-client)]
+        (is (= "3.3.3.3.3" (registration->oid onr-client (dissoc base/registration-form :ssn))))
         (is (= [:email :name+birthdate :no-identifications] @onr-search-statistics))))))

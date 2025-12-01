@@ -7,7 +7,6 @@
             [clojure.tools.logging :as log]
             [pgqueue.core :as pgq]
             [ring.util.http-response :refer [bad-request ok conflict]]
-            [yki.boundary.codes :as codes]
             [yki.boundary.exam-session-db :as exam-session-db]
             [yki.boundary.login-link-db :as login-link-db]
             [yki.boundary.onr :as onr]
@@ -73,7 +72,13 @@
         user                      (assoc (:identity session) :email email)
         exam-fee                  (get-in payment-config [:amount (keyword (:level_code exam-session))])]
     (when-let [oid (:oid (:identity session))]
-      (registration-db/update-started-registration-oid! db registration-id oid))
+      (registration-db/update-started-registration-oid! db registration-id oid)
+      (person-db/ensure-person-exists!
+        db
+        (->
+          session
+          :identity
+          (select-keys [:oid :first_name :last_name]))))
     (assoc
       (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
            :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
@@ -332,8 +337,6 @@
                                   code
                                   login-url)))
 
-
-; ->send-free-registration-email url-helper email-q lang (assoc registration-data :participant_id unified-participant-id) free-registration
 (defn- ->send-free-registration-email! [url-helper email-q lang registration-data free-registration]
   (let [type             "FREE_REGISTRATION"
         email            (:email registration-data)
@@ -358,9 +361,9 @@
                               email
                               "FREE_REGISTRATION_FROM_QUEUE"
                               (assoc registration-data
-                                     :language (template-util/get-language (:language_code registration-data) lang)
-                                     :level (template-util/get-level (:level_code registration-data) lang)
-                                     :login_url (url-helper :yki.login.user-portal)))))
+                                :language (template-util/get-language (:language_code registration-data) lang)
+                                :level (template-util/get-level (:level_code registration-data) lang)
+                                :login_url (url-helper :yki.login.user-portal)))))
 
 (defn submit-registration-abstract-flow
   [db url-helper payment-helper email-q lang session registration-id raw-form onr-client exam-session-registration]
@@ -379,9 +382,9 @@
       (registration-db/update-participant-email! db email session-participant-id))
     (if-let [registration-data (when started? (get-registration-data db registration-id session-participant-id lang))]
       (if-let [oid (or (:oid identity)
-                       (onr/get-or-create-person
-                         onr-client
-                         (assoc form-to-persist :registration_id registration-id)))]
+                       ((onr/get-or-create-person
+                          onr-client
+                          (assoc form-to-persist :registration_id registration-id)) "oidHenkilo"))]
         (let [free-registration (validate-free-registration db registration-data free-registration-id)]
           (if (and free-registration-id (nil? free-registration))
             ; Deny submit if free-registration-id was provided, but it didn't match free_registration entry in DB

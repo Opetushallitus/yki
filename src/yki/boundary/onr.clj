@@ -102,55 +102,68 @@
 
 (defprotocol Onr
   (get-or-create-person [this person])
-  (get-person-by-ssn [this ssn])
   (get-person-by-oid [this oid])
   (list-persons-by-oids [this oids]))
 
 (defn- get-or-create-person-with-retries [cas-client onr-url registration max-attempts]
   (loop [attempt 1
-         oid     nil]
+         val     nil]
     (if (< max-attempts attempt)
       (do
         (log/error
-          (str "Retries exhausted. Returning OID of last match. Registration id: "
+          (str "Retries exhausted. Returning last match. Registration id: "
                (:registration_id registration)
                ", OID: "
-               oid))
-        oid)
+               (val "oidHenkilo")))
+        val)
       (let [onr-person (registration->onr-person registration attempt)
             response   (cas/cas-authenticated-post cas-client onr-url onr-person)
             status     (response->status response)]
         (cond
 
-          ; New person created within ONR -> return the OID returned in response
+          ; New person created within ONR -> return response body
           (= 201 status)
-          ((response->body response) "oidHenkilo")
+          (response->body response)
 
-          ; Found an existing person in ONR -> check details and return OID if they look like a reasonable match
+          ; Found an existing person in ONR -> check and return details if they look like a reasonable match
           ; Otherwise try again with slightly altered identification details to avoid using someone else's OID.
           (= 200 status)
-          (let [json-body (response->body response)
-                oid       (json-body "oidHenkilo")]
+          (let [json-body (response->body response)]
             (if (returned-person-details-match? registration json-body)
-              oid
-              (recur (inc attempt) oid)))
+              json-body
+              (recur (inc attempt) json-body)))
 
           ; Else log error
           :else
           (log/error "ONR get-or-create-person request:" (str onr-person " status: " status " : " (:body response))))))))
 
+(defn- get-or-create-person-from-cas-attributes [cas-client onr-url {:keys [first_name last_name ssn]}]
+  (let [onr-person {:henkiloTyyppi      "OPPIJA"
+                    :etunimet           first_name
+                    :kutsumanimi        (first-names->nickname first_name)
+                    :sukunimi           last_name
+                    :hetu               (str/upper-case ssn)
+                    :eiSuomalaistaHetua false}
+        response   (cas/cas-authenticated-post cas-client onr-url onr-person)
+        status     (response->status response)]
+    (case status
+      ; Created new person or returned existing (unlikely, but perhaps possible due to eg. race conditions)
+      (200 201)
+      (response->body response)
+      ; Other response statuses are unexpected
+      (log/error "ONR get-or-create-person-from-cas-attributes failed:" (str onr-person " status: " status " : " (:body response))))))
+
+(defn- is-registration-form-data? [person]
+  (some? (:email person)))
+
 (defrecord OnrClient [url-helper cas-client]
   Onr
-  (get-or-create-person [_ registration]
+  (get-or-create-person [_ person]
     (let [url   (url-helper :onr-service.get-or-create-person)
           tries 3]
-      (get-or-create-person-with-retries cas-client url registration tries)))
-  (get-person-by-ssn [_ ssn]
-    (let [url (url-helper :onr-service.person-by-ssn ssn)
-          {:keys [status body]} (cas/cas-authenticated-get cas-client url)]
-      (if (= 200 status)
-        (json/read-value body)
-        (log/info "ONR get-person-by-ssn error:" status))))
+      (if (is-registration-form-data? person)
+        (get-or-create-person-with-retries cas-client url person tries)
+        (get-or-create-person-from-cas-attributes cas-client url person))))
   (get-person-by-oid [_ oid]
     (let [url (url-helper :onr-service.person-by-oid oid)
           {:keys [status body]} (cas/cas-authenticated-get cas-client url)]

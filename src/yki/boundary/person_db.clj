@@ -40,6 +40,7 @@
 (defprotocol Person
   (get-person [db oid])
   (get-full-person-details [db oid])
+  (ensure-person-exists! [db oid])
   (upsert-person! [db person])
   (update-contact-details! [db person])
   (get-persons-without-gender-or-nationality [db])
@@ -87,6 +88,9 @@
   (update-person-gender-and-nationality! [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]
       (q/update-person-gender-and-nationality! tx person)))
+  (ensure-person-exists! [{:keys [spec]} person]
+    (jdbc/with-db-transaction [tx spec]
+      (q/ensure-person-exists! tx person)))
   (upsert-person!
     [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]

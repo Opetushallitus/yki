@@ -1,6 +1,7 @@
 (ns yki.auth.cas-auth
   (:require [clojure.data.xml :as xml]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [found see-other]]
             [yki.boundary.cas :as cas]
@@ -119,6 +120,14 @@
                                   :attributes])]
     (assoc (process-attributes attributes) :success? success :failureMessage failure)))
 
+(defn get-or-create-onr-person [onr-client cas-attributes]
+  (if-let [person-oid (:personOid cas-attributes)]
+    (onr/get-person-by-oid onr-client person-oid)
+    (let [{:keys [sn firstName nationalIdentificationNumber]} cas-attributes]
+      (onr/get-or-create-person onr-client {:first_name firstName
+                                            :last_name  sn
+                                            :ssn        nationalIdentificationNumber}))))
+
 (defn oppija-login-response [exam-session-id to-user-portal? to-queue? session ticket cas-attributes url-helper onr-client]
   (let [{:keys [VakinainenKotimainenLahiosoitePostitoimipaikkaS
                 VakinainenKotimainenLahiosoitePostinumero
@@ -128,8 +137,7 @@
                 sukunimi
                 kutsumanimi
                 oidHenkilo
-                kansalaisuus]} (onr/get-person-by-ssn onr-client nationalIdentificationNumber)
-
+                kansalaisuus]} (get-or-create-onr-person onr-client cas-attributes)
         address      {:post_office    VakinainenKotimainenLahiosoitePostitoimipaikkaS
                       :zip            VakinainenKotimainenLahiosoitePostinumero
                       :street_address VakinainenKotimainenLahiosoiteS}
