@@ -1,6 +1,5 @@
 (ns yki.handler.person
   (:require
-    [clojure.tools.logging :as log]
     [compojure.api.sweet :refer [api context GET POST DELETE]]
     [integrant.core :as ig]
     [ring.util.http-response :refer [ok not-found unauthorized]]
@@ -125,35 +124,4 @@
                 (not-found))))
           (GET "/payment-redirect" {session :session}
             :query-params [lang :- ::ys/lang]
-            (redirect-to-paytrail db payment-helper url-helper lang session registration-id))
-          (GET "/relocate" {session :session}
-            (let [oid     (get-in session [:identity :oid])
-                  results (person-db/get-registration-relocate-details db oid registration-id)]
-              (ok results)))
-          (POST "/relocate" {session :session}
-            :query-params [lang :- ::ys/lang]
-            :body [relocate-request ::ys/relocate-request]
-            :return ::ys/response
-            (let [oid                (get-in session [:identity :oid])
-                  to-exam-session-id (:to_exam_session_id relocate-request)
-                  result             (person-db/relocate-registration! db oid registration-id to-exam-session-id)]
-              (if result
-                (let [registration-details      (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)
-                      exam-session-contact-info (exam-session-db/get-contact-info-by-exam-session-id db to-exam-session-id)
-                      user-portal-link          (if (:is_email_auth registration-details)
-                                                  (create-user-portal-link db url-helper
-                                                                           (:participant_id registration-details)
-                                                                           registration-id)
-                                                  (url-helper :yki.login.user-portal))
-                      email-template-data       (assoc registration-details
-                                                  :contact_info exam-session-contact-info
-                                                  :user_portal_link user-portal-link)
-                      original-exam-session-id  (:original_exam_session_id result)]
-                  (exam-session-db/init-relocated-participants-sync-status! db original-exam-session-id)
-                  (exam-session-db/init-relocated-participants-sync-status! db to-exam-session-id)
-                  (send-transfer-confirmation-email! email-q lang email-template-data)
-                  (log/info "Successfully relocated registration" {:registration-id          registration-id
-                                                                   :original_exam_session_id original-exam-session-id
-                                                                   :exam_session_id          to-exam-session-id})
-                  (ok {:success true}))
-                (ok {:success false})))))))))
+            (redirect-to-paytrail db payment-helper url-helper lang session registration-id)))))))
