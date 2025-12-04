@@ -16,6 +16,7 @@
     [yki.middleware.auth :as auth]
     [yki.registration.email :as registration-email]
     [yki.registration.registration :as registration]
+    [yki.boundary.onr :as onr]
     [yki.boundary.registration-db :as registration-db]))
 
 (defn- send-to-queue [data-sync-q exam-session type]
@@ -37,7 +38,7 @@
         lang->location (into {} (map (juxt :lang identity)) locations)]
     (assoc exam-session :location lang->location)))
 
-(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q pdf-renderer url-helper]}]
+(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q pdf-renderer url-helper onr-client]}]
   {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? pdf-renderer) (some? url-helper)]}
   (fn [oid]
     (context "/" []
@@ -132,12 +133,22 @@
           (GET "/" {session :session}
             :path-params [id :- ::ys/id]
             :return ::ys/participants-response
-            (let [participants (exam-session-db/get-exam-session-participants db id oid)
-                  oph-admin?    (auth/oph-admin? (auth/get-organizations-from-session session))]
+            (let [participants     (exam-session-db/get-exam-session-participants db id oid)
+                  oid->ssn         (if (some? onr-client)
+                                     (->> participants
+                                          (map :person_oid)
+                                          (onr/list-ssn-by-oids onr-client))
+                                     {})
+                  oph-admin?       (auth/oph-admin? (auth/get-organizations-from-session session))
+                  ssn-participants (map #(assoc-in
+                                          (dissoc % :person_oid)
+                                          [:form :ssn]
+                                          (oid->ssn (get % :person_oid)))
+                                        participants)]
               (response {:participants
                          (if oph-admin?
-                           participants
-                           (map #(dissoc % :free_registration_source :free_registration_basis :free_registration_is_foreign) participants))})))
+                           ssn-participants
+                           (map #(dissoc % :free_registration_source :free_registration_basis :free_registration_is_foreign) ssn-participants))})))
           (context "/:registration-id" []
             (DELETE "/" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
