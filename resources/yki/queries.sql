@@ -1273,7 +1273,8 @@ SELECT
   fr.free_registration_id IS NOT NULL AS is_free_registration,
   fr.source AS free_registration_source,
   fr.type AS free_registration_basis,
-  fr.is_foreign AS free_registration_is_foreign
+  fr.is_foreign AS free_registration_is_foreign,
+  r.person_oid
 FROM exam_session es
 INNER JOIN registration r ON es.id = r.exam_session_id
 INNER JOIN person p ON r.person_oid = p.oid

@@ -34,7 +34,9 @@
                                   "participants"
                                   #(map (fn [data]
                                           (let [registration-id (data "registration_id")]
-                                            (assoc data "created" (str (id->created registration-id)))))
+                                            (-> data
+                                                (assoc "created" (str (id->created registration-id)))
+                                                (assoc-in ["form" "ssn"] nil))))
                                         %))]
       (is (= "application/json; charset=utf-8" (get (:headers response) "Content-Type")))
       (is (= 200 (:status response)))
