@@ -1018,13 +1018,15 @@ SELECT re.state,
        esl.post_office,
        esl.zip,
        esl.name,
-       p.external_user_id = p.email AS is_email_auth
+       p.external_user_id = p.email AS is_email_auth,
+       fr.free_registration_id IS NOT NULL AS is_free_registration
 FROM registration re
 INNER JOIN person pe ON pe.oid = re.person_oid
 INNER JOIN exam_session es ON es.id = re.exam_session_id
 INNER JOIN exam_date ed ON ed.id = es.exam_date_id
 INNER JOIN exam_session_location esl ON esl.exam_session_id = es.id
 LEFT JOIN participant p ON re.participant_id = p.id
+LEFT JOIN free_registration fr ON re.id = fr.registration_id
 WHERE re.id = :id
   AND re.exam_session_id = :exam_session_id
   AND re.state IN ('COMPLETED', 'PAID_AND_CANCELLED', 'SUBMITTED', 'CANCELLED')
