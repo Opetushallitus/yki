@@ -884,26 +884,6 @@ AND EXISTS (SELECT id
               AND organizer_id IN (SELECT id FROM organizer WHERE oid = :oid))
 AND :exam_session_id NOT IN (SELECT id FROM unavailable_exam_sessions_for_person);
 
--- name: relocate-registration-for-user<!
-WITH unavailable_exam_sessions_for_person AS (
-    SELECT es2.id
-    FROM registration r
-    INNER JOIN registration r2 ON r2.person_oid = r.person_oid
-    INNER JOIN exam_session es ON r2.exam_session_id = es.id
-    INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-    INNER JOIN exam_session es2 ON es2.exam_date_id = ed.id
-    WHERE r.id = :registration_id AND
-          r2.id <> r.id AND
-          r2.state IN ('STARTED', 'SUBMITTED', 'COMPLETED'))
-UPDATE registration
-SET exam_session_id = :target_id,
-    original_exam_session_id = exam_session_id,
-    is_transfered = TRUE,
-    modified = current_timestamp
-WHERE id = :registration_id AND
-      person_oid = :person_oid AND
-      :target_id NOT IN (SELECT id FROM unavailable_exam_sessions_for_person) AND
-      TRUE IN (SELECT is_transferable(r.id) FROM registration r WHERE id = :registration_id);
 
 -- name: select-registration-data
 SELECT re.id,
@@ -1887,69 +1867,6 @@ AND r2.kind = 'QUEUE'
 AND r2.state IN ('STARTED', 'SUBMITTED')
 AND r.id IN (:ids)
 GROUP BY r.id;
-
--- name: select-registration-relocate-details
-SELECT r.id,
-       es.id AS exam_session_id,
-       is_transferable(r.id) AS is_transferable,
-       ed.exam_date AS session_date,
-       es.level_code,
-       es.language_code,
-       (SELECT array_to_json(array_agg(loc))
-        FROM (SELECT name,
-                     street_address,
-                     post_office,
-                     zip,
-                     other_location_info,
-                     extra_information,
-                     lang
-              FROM exam_session_location
-              WHERE exam_session_id = es.id) loc) as location,
-        c.email AS contact_email
-FROM registration r
-INNER JOIN exam_session es ON r.exam_session_id = es.id
-INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-INNER JOIN exam_session_contact esc ON esc.exam_session_id = es.id
-INNER JOIN contact c ON c.id = esc.contact_id
-WHERE r.id = :id AND r.person_oid = :oid;
-
--- name: select-registration-transfer-target-details
-WITH exam_sessions_for_same_day AS (
-    SELECT es2.id
-    FROM registration r
-    INNER JOIN registration r2 ON r.person_oid = r2.person_oid
-    INNER JOIN exam_session es ON r2.exam_session_id = es.id
-    INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-    INNER JOIN exam_session es2 ON ed.id = es2.exam_date_id
-    WHERE r.id = :registration_id AND
-          r.id <> r2.id AND
-          r2.state IN ('STARTED', 'SUBMITTED', 'COMPLETED')
-)
-SELECT
-    ies.id,
-    ied.exam_date AS session_date,
-    ies.level_code,
-    ies.language_code,
-    (SELECT array_to_json(array_agg(loc))
-     FROM (SELECT name,
-                  street_address,
-                  post_office,
-                  zip,
-                  other_location_info,
-                  extra_information,
-                  lang
-           FROM exam_session_location
-           WHERE exam_session_id = ies.id) loc) as location,
-    (SELECT COUNT(1) FROM registration WHERE exam_session_id = ies.id AND state IN ('STARTED','SUBMITTED', 'COMPLETED') AND kind = 'ADMISSION') AS participants,
-    ies.max_participants
-FROM exam_session es
-LEFT JOIN exam_date ed ON es.exam_date_id = ed.id
-LEFT JOIN exam_session ies ON ies.id <> es.id AND ies.level_code = es.level_code AND ies.language_code = es.language_code AND ies.organizer_id = es.organizer_id
-LEFT JOIN exam_date ied ON ies.exam_date_id = ied.id
-WHERE es.id = :exam_session_id
-  AND ied.exam_date >= ed.exam_date
-  AND select_registration_kind(ies.id) = 'ADMISSION'
-  AND ies.id NOT IN (SELECT id FROM exam_sessions_for_same_day);
 
 -- name: select-persons-without-gender-or-nationality
 WITH person_oids AS (
