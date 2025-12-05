@@ -138,7 +138,7 @@
                           (dissoc :birthdate)
                           (assoc :ssn ssn)))
         (let [registration (get-registration)]
-          (is (= ssn (get-in registration [:form :ssn])))
+          (is (nil? (get-in registration [:form :ssn])))
           (is (= inferred-birthdate (get-in registration [:form :birthdate]))))))))
 
 (deftest registration-cancellation-test
@@ -228,4 +228,3 @@
                 response-body           (j/read-value body json-mapper)]
             (is (= 409 status))
             (is (= {:error {:registration_kind true}} response-body))))))))
-

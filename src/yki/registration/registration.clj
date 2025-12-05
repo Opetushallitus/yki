@@ -402,8 +402,9 @@
                                             "QUEUE"
                                             "SUBMITTED"
                                             (if free-registration "COMPLETED" "SUBMITTED"))
+                  form-without-ssn        (dissoc form-to-persist :ssn)
                   update-registration     {:id             registration-id
-                                           :form           form-to-persist
+                                           :form           form-without-ssn
                                            :oid            oid
                                            :form_version   1
                                            :participant_id unified-participant-id
