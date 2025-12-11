@@ -171,6 +171,7 @@ SELECT
   r.id AS registration_id,
   r.form,
   r.state,
+  r.person_oid,
   ed.exam_date,
   es.language_code
 FROM quarantine q
