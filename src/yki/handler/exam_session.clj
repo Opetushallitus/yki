@@ -39,7 +39,7 @@
     (assoc exam-session :location lang->location)))
 
 (defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q pdf-renderer url-helper onr-client]}]
-  {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? pdf-renderer) (some? url-helper)]}
+  {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? pdf-renderer) (some? url-helper) (some? onr-client)]}
   (fn [oid]
     (context "/" []
       (GET "/" []
@@ -134,12 +134,10 @@
             :path-params [id :- ::ys/id]
             :return ::ys/participants-response
             (let [participants     (exam-session-db/get-exam-session-participants db id oid)
-                  oid->ssn         (if (some? onr-client)
-                                     (->> participants
+                  oph-admin?       (auth/oph-admin? (auth/get-organizations-from-session session))
+                  oid->ssn         (->> participants
                                           (map :person_oid)
                                           (onr/list-ssn-by-oids onr-client))
-                                     {})
-                  oph-admin?       (auth/oph-admin? (auth/get-organizations-from-session session))
                   ssn-participants (map #(assoc-in
                                           (dissoc % :person_oid)
                                           [:form :ssn]

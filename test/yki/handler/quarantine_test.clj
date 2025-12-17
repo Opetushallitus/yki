@@ -10,6 +10,7 @@
     [stub-http.core :refer [with-routes!]]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
+    [yki.handler.registration-commons :refer [common-route-specs]]
     [yki.handler.routing :as routing]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
@@ -24,13 +25,14 @@
 (defn create-handlers [port]
   (let [access-log         (base/access-log)
         db                 (base/db)
-        url-helper         (base/create-url-helper (str "localhost" port))
+        url-helper         (base/create-url-helper (str "localhost:" port))
         quarantine-handler (ig/init-key
                              :yki.handler/quarantine
                              {:access-log access-log
                               :auth       (base/no-auth-fake-session-oid-middleware session-virkailija-oid)
                               :db         db
-                              :url-helper url-helper})]
+                              :url-helper url-helper
+                              :onr-client (base/onr-client url-helper)})]
     (core/routes quarantine-handler)))
 
 (deftest get-quarantines-test
@@ -58,7 +60,7 @@
   (base/insert-registrations "SUBMITTED")
   (base/insert-quarantine base/quarantine-form)
   (with-routes!
-    {}
+    common-route-specs
     (let [handler     (create-handlers port)
           session     (peridot/session handler)
           get-matches (fn []

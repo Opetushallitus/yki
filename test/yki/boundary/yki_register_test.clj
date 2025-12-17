@@ -4,6 +4,7 @@
     [clojure.string :as str]
     [clojure.test :refer [deftest is testing use-fixtures]]
     [yki.handler.base-test :as base]
+    [yki.handler.registration-commons :refer [common-route-specs]]
     [stub-http.core :refer [with-routes!]]
     [jsonista.core :as j]
     [yki.embedded-db :as embedded-db]
@@ -26,8 +27,6 @@
                               :taso       "PT"
                               :pvm        "2039-05-02"
                               :jarjestaja "1.2.3.5"})
-
-(def participant-onr-map {"5.4.3.2.2" "301079-900U" "5.4.3.2.1" "010199-9012" "5.4.3.2.4" "301079-083N" })
 
 (deftest sync-exam-session-requests-test
   (let [organizer            (j/read-value (slurp "test/resources/organizer.json") (j/object-mapper {:decode-key-fn true}))
@@ -92,40 +91,37 @@
   (base/insert-base-data)
   (base/insert-persons)
   (base/insert-registrations "COMPLETED")
+  (defn routes [port]
+    (merge (common-route-specs port)
+           {{:path "/yki-sp/oph/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
+            "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246"                                               {:status 200 :content-type "application/json"
+                                                                                                                                  :body   (slurp "test/resources/maatjavaltiot2_246.json")}
+            "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                               {:status 200 :content-type "application/json"
+                                                                                                                                  :body   (slurp "test/resources/maatjavaltiot2_180.json")}}))
   (testing "should send participants as csv and add basic auth header"
-    (with-routes!
-      {{:path "/yki-sp/oph/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
-       "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246"                                               {:status 200 :content-type "application/json"
-                                                                                                                             :body   (slurp "test/resources/maatjavaltiot2_246.json")}
-       "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                               {:status 200 :content-type "application/json"
-                                                                                                                             :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
-        (with-redefs [onr/list-ssn-by-oids (constantly participant-onr-map)]
-          (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
-                db              (base/db)
-                url-helper      (base/create-url-helper (str "localhost:" port))
-                _               (yki-register/sync-exam-session-participants db url-helper {} {:user "user" :password "pass"} false exam-session-id)
-                request         (first (:recordings (first @(:routes server))))
-                req-body        (get-in request [:request :body "postData"])]
-            (is (= (get-in request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
-            (is (= req-body csv))))))
-  (testing "participants csv should look up contact details for participant from the person table"
-    (let [old-email "aa@al.fi"
-          new-email "updated@test.invalid"]
-      (jdbc/execute! @embedded-db/conn (str "UPDATE person SET email='" new-email "' WHERE email='" old-email "'"))
-      (with-routes!
-        {{:path "/yki-sp/oph/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
-         "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246"                                               {:status 200 :content-type "application/json"
-                                                                                                                               :body   (slurp "test/resources/maatjavaltiot2_246.json")}
-         "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                               {:status 200 :content-type "application/json"
-                                                                                                                               :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
-          (with-redefs [onr/list-ssn-by-oids (constantly participant-onr-map)]
+    (with-routes! routes
+        (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
+              db              (base/db)
+              url-helper      (base/create-url-helper (str "localhost:" port))
+              onr-client      (base/onr-client url-helper)
+              _               (yki-register/sync-exam-session-participants db url-helper onr-client {:user "user" :password "pass"} false exam-session-id)
+              request         (first (:recordings (first (filter #(= "/yki-sp/oph/osallistujat" (get-in % [:request-spec :path])) @(:routes server)))))
+              req-body        (get-in request [:request :body "postData"])]
+          (is (= (get-in request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
+          (is (= req-body csv)))))
+    (testing "participants csv should look up contact details for participant from the person table"
+      (with-routes! routes
+          (let [old-email "aa@al.fi"
+                new-email "updated@test.invalid"]
+            (jdbc/execute! @embedded-db/conn (str "UPDATE person SET email='" new-email "' WHERE email='" old-email "'"))
             (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
                   db              (base/db)
                   url-helper      (base/create-url-helper (str "localhost:" port))
-                  _               (yki-register/sync-exam-session-participants db url-helper {} {:user "user" :password "pass"} false exam-session-id)
-                  request         (first (:recordings (first @(:routes server))))
+                  onr-client      (base/onr-client url-helper)
+                  _               (yki-register/sync-exam-session-participants db url-helper onr-client {:user "user" :password "pass"} false exam-session-id)
+                  request         (first (:recordings (first (filter #(= "/yki-sp/oph/osallistujat" (get-in % [:request-spec :path])) @(:routes server)))))
                   req-body        (get-in request [:request :body "postData"])]
-              (is (= req-body (str/replace csv old-email new-email)))))))))
+              (is (= req-body (str/replace csv old-email new-email))))))))
 
 (deftest sync-exam-session-participants-schedule-test
   (base/insert-base-data)

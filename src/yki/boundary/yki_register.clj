@@ -153,7 +153,6 @@
         nationality (codes/get-converted-country-code url-helper (first nationalities))
         form_ssn    ssn
         ssn         (get oid->ssn person_oid)]
-    (println person_oid " ----> " ssn "(old: " form_ssn ")")
     [person_oid
      (ssn-or-birthdate ssn birthdate)
      last_name
