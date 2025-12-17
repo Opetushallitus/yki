@@ -43,7 +43,8 @@
                                                                      :url-helper   url-helper
                                                                      :email-q      (base/email-q)
                                                                      :data-sync-q  (base/data-sync-q)
-                                                                     :pdf-renderer (base/mock-pdf-renderer)})
+                                                                     :pdf-renderer (base/mock-pdf-renderer)
+                                                                     :onr-client   (base/onr-client url-helper)})
 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
         user-handler         (ig/init-key :yki.handler/user {:db db :auth auth :access-log (base/access-log)

@@ -87,6 +87,16 @@
                                                                  :method :post
                                                                  :body   "ST-1-FFDFHDSJK2"}})
 
+(def onr-mock-routes
+  {"/oppijanumerorekisteri-service/s2s/findOrCreateHenkiloPerustieto" {:status 200 :content-type "application/json" :method :post
+                                         :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}
+   "/oppijanumerorekisteri-service/s2s/henkilo/perustiedotAsAdmin"    {:status 200 :content-type "application/json" :method :post
+                                         :body   (j/write-value-as-string
+                                                  [{:oidHenkilo "5.4.3.2.2" :hetu "301079-900U"}
+                                                   {:oidHenkilo "5.4.3.2.1" :hetu "010199-9012"}
+                                                   {:oidHenkilo "5.4.3.2.4" :hetu "301079-083N"}
+                                                   {:oidHenkilo "5.4.3.2.3" :hetu "301079-900U"}])}})
+
 (defn body [response]
   (slurp (:body response) :encoding "UTF-8"))
 
@@ -517,7 +527,8 @@
                                                                      :url-helper   url-helper
                                                                      :email-q      (email-q)
                                                                      :pdf-renderer (mock-pdf-renderer)
-                                                                     :data-sync-q  (data-sync-q)})
+                                                                     :data-sync-q  (data-sync-q)
+                                                                     :onr-client   (onr-client url-helper)})
 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
 
@@ -526,7 +537,8 @@
         quarantine-handler   (middleware/wrap-format (ig/init-key :yki.handler/quarantine {:access-log (access-log)
                                                                                            :auth       auth
                                                                                            :db         db
-                                                                                           :url-helper url-helper}))
+                                                                                           :url-helper url-helper
+                                                                                           :onr-client (onr-client url-helper)}))
         organizer-handler    (middleware/wrap-format (ig/init-key :yki.handler/organizer {:db                   db
                                                                                           :auth                 auth
                                                                                           :data-sync-q          (data-sync-q)

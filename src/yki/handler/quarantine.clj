@@ -29,7 +29,7 @@
     quarantine))
 
 (defmethod ig/init-key :yki.handler/quarantine [_ {:keys [access-log auth db url-helper onr-client]}]
-  {:pre [(some? access-log) (some? auth) (some? db) (some? url-helper)]}
+  {:pre [(some? access-log) (some? auth) (some? db) (some? url-helper) (some? onr-client)]}
   (api
     (context routing/quarantine-api-root []
       :middleware [auth access-log with-error-boundary]
@@ -86,11 +86,9 @@
       (GET "/matches" _
         :return ::ys/quarantine-matches-response
         (let [matches          (quarantine-db/get-quarantine-matches db)
-              oid->ssn         (if (and (some? onr-client) (not-empty matches))
-                                 (->> matches
-                                      (map :person_oid)
-                                      (onr/list-ssn-by-oids onr-client))
-                                 {})
+              oid->ssn         (->> matches
+                                    (map :person_oid)
+                                    (onr/list-ssn-by-oids onr-client))
               matches-with-ssn (mapv #(assoc-in
                                        (dissoc % :person_oid)
                                        [:form :ssn]

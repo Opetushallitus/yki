@@ -84,7 +84,7 @@
 
 (defmethod ig/init-key ::participants-sync-handler
   [_ {:keys [db url-helper onr-client basic-auth disabled retry-duration-in-days]}]
-  {:pre [(some? db) (some? url-helper) (some? basic-auth) (some? retry-duration-in-days)]}
+  {:pre [(some? db) (some? url-helper) (some? onr-client) (some? basic-auth) (some? retry-duration-in-days)]}
   #(try
      (when (job-db/try-to-acquire-lock! db participants-sync-handler-conf)
        (log/info "Check participants sync")

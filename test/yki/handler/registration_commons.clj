@@ -63,8 +63,7 @@
 
 (defn common-route-specs [server]
   (merge (base/cas-mock-routes (:port server))
-         {"/oppijanumerorekisteri-service/s2s/findOrCreateHenkiloPerustieto" {:status 200 :content-type "application/json"
-                                                                              :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}}))
+         base/onr-mock-routes))
 
 (defn common-bindings [server]
   (let [email-q               (base/email-q)

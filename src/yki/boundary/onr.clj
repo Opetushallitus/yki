@@ -186,15 +186,16 @@
            (seqable? oids)
            (counted? oids)
            (<= 5000 (count oids))]}
-    (let [url (url-helper :onr-service.list-person-details)
-          {:keys [status body]} (cas/cas-authenticated-post cas-client url {:henkiloOids oids})]
-      (if (= 200 status)
-        (->> (json/read-value body)
-             (map #(vector
-                     (get % "oidHenkilo")
-                     (get % "hetu")))
-             (into {}))
-        (log/error "ONR list-ssn-by-oids error:" status)))))
+    (if (empty? oids) []
+        (let [url (url-helper :onr-service.list-person-details)
+              {:keys [status body]} (cas/cas-authenticated-post cas-client url {:henkiloOids oids})]
+          (if (= 200 status)
+            (->> (json/read-value body)
+                 (map #(vector
+                        (get % "oidHenkilo")
+                        (get % "hetu")))
+                 (into {}))
+            (log/error "ONR list-ssn-by-oids error:" status))))))
 
 (defmethod ig/init-key :yki.boundary.onr/onr-client [_ {:keys [url-helper cas-client]}]
   (let [onr-cas-client (cas-client (url-helper :onr-service))]
