@@ -690,13 +690,15 @@ INSERT INTO registration(
   exam_session_id,
   participant_id,
   started_at,
-  kind
+  kind,
+  strong_auth
 ) SELECT
   'STARTED',
   :exam_session_id,
   :participant_id,
   :started_at,
-  :kind::registration_kind
+  :kind::registration_kind,
+  :strong_auth
   -- only one registration per participant on same exam date
   WHERE NOT EXISTS (SELECT es.id
                     FROM exam_session es
@@ -747,7 +749,9 @@ UPDATE registration SET
   form_version = :form_version,
   expires_at = :expires_at,
   exam_fee = :exam_fee,
-  ui_language = :ui_language
+  ui_language = :ui_language,
+  strong_auth = :strong_auth,
+  ssn_given = :ssn_given
 WHERE
   id = :id
   AND state = 'STARTED'

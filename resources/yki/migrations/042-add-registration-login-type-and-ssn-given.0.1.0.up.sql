@@ -1,0 +1,2 @@
+ALTER TABLE registration ADD COLUMN IF NOT EXISTS strong_auth BOOLEAN;
+ALTER TABLE registration ADD COLUMN IF NOT EXISTS ssn_given BOOLEAN;

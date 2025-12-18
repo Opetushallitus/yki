@@ -119,7 +119,8 @@
     (let [registration-id (registration-db/create-registration! db {:exam_session_id exam-session-id
                                                                     :participant_id  participant-id
                                                                     :started_at      (t/now)
-                                                                    :kind            registration-kind})
+                                                                    :kind            registration-kind
+                                                                    :strong_auth     (= (:auth-method session) "SUOMIFI")})
           response        (create-registration-response db session exam-session-id registration-id registration-kind payment-config)]
       (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
       response)
@@ -411,7 +412,9 @@
                                            :expires_at     expiration-date
                                            :exam_fee       (:db amount)
                                            :ui_language    lang
-                                           :to_state       submitted-state}
+                                           :to_state       submitted-state
+                                           :strong_auth    (= (:auth-method session) "SUOMIFI")
+                                           :ssn_given      (str/blank? (:ssn form-to-persist))}
                   code                    (str (random-uuid))
                   login-url               (url-helper :yki.login-link.url code)
                   email-template-data     (assoc registration-data
