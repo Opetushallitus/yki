@@ -414,7 +414,7 @@
                                            :ui_language    lang
                                            :to_state       submitted-state
                                            :strong_auth    (= (:auth-method session) "SUOMIFI")
-                                           :ssn_given      (str/blank? (:ssn form-to-persist))}
+                                           :ssn_given      (not (str/blank? (:ssn form-to-persist)))}
                   code                    (str (random-uuid))
                   login-url               (url-helper :yki.login-link.url code)
                   email-template-data     (assoc registration-data
