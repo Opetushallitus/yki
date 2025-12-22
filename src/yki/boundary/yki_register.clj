@@ -177,9 +177,9 @@
   [db url-helper onr-client basic-auth disabled exam-session-id]
   (let [exam-session (exam-session-db/get-exam-session-by-id db exam-session-id)
         participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
-        oid->ssn    (->> participants
-                         (map :person_oid)
-                         (onr/list-ssn-by-oids onr-client))
+        oid->ssn     (->> participants
+                          (map :person_oid)
+                          (onr/list-ssn-by-oids onr-client))
         url          (str (url-helper :yki-register.participants)
                           (create-url-params exam-session))
         request      (create-participants-csv url-helper participants oid->ssn)]
@@ -204,8 +204,9 @@
 
 (defn return-exam-session-participants-csv [db url-helper onr-client exam-session-id]
   (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
-        onr->ssn      (when onr-client (->> participants (map :person_oid)
-                                            (onr/list-persons-by-oids onr-client)))]
+        onr->ssn     (->> participants
+                          (map :person_oid)
+                          (onr/list-ssn-by-oids onr-client))]
     (create-participants-csv url-helper participants onr->ssn)))
 
 (defn sync-person
