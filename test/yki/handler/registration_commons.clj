@@ -15,27 +15,30 @@
     [pgqueue.core :as pgq]))
 
 (defn create-handlers
-  [email-q port]
-  (let [db                   (sql/->Boundary @embedded-db/conn)
-        url-helper           (base/create-url-helper (str "localhost:" port))
-        payment-helper       (base/create-examination-payment-helper db url-helper)
-        auth                 (base/auth url-helper)
-        access-log           (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
-        auth-handler         (base/auth-handler auth url-helper)
-        environment          (base/environment "prod")
-        user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user {:db          db
-                                                                                     :access-log  access-log
-                                                                                     :auth        auth
-                                                                                     :environment environment
-                                                                                     :onr-client (base/onr-client url-helper)}))
-        registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db             db
-                                                                                             :url-helper     url-helper
-                                                                                             :payment-helper payment-helper
-                                                                                             :email-q        email-q
-                                                                                             :access-log     access-log
-                                                                                             :onr-client     (base/onr-client url-helper)
-                                                                                             :auth           auth}))]
-    (core/routes registration-handler auth-handler user-handler)))
+  ([email-q port]
+   (let [url-helper (base/create-url-helper (str "localhost:" port))
+         auth       (base/auth url-helper)]
+     (create-handlers email-q port auth)))
+  ([email-q port auth]
+   (let [db                   (sql/->Boundary @embedded-db/conn)
+         url-helper           (base/create-url-helper (str "localhost:" port))
+         payment-helper       (base/create-examination-payment-helper db url-helper)
+         access-log           (ig/init-key :yki.middleware.access-log/with-logging {:env "unit-test"})
+         auth-handler         (base/auth-handler auth url-helper)
+         environment          (base/environment "prod")
+         user-handler         (middleware/wrap-format (ig/init-key :yki.handler/user {:db          db
+                                                                                      :access-log  access-log
+                                                                                      :auth        auth
+                                                                                      :environment environment
+                                                                                      :onr-client  (base/onr-client url-helper)}))
+         registration-handler (middleware/wrap-format (ig/init-key :yki.handler/registration {:db             db
+                                                                                              :url-helper     url-helper
+                                                                                              :payment-helper payment-helper
+                                                                                              :email-q        email-q
+                                                                                              :access-log     access-log
+                                                                                              :onr-client     (base/onr-client url-helper)
+                                                                                              :auth           auth}))]
+     (core/routes registration-handler auth-handler user-handler))))
 
 (defn fill-exam-session [registrations kind]
   (dotimes [_ registrations]

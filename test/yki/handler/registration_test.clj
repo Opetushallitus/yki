@@ -1,8 +1,11 @@
 (ns yki.handler.registration-test
-  (:require [clojure.test :refer [deftest use-fixtures testing is]]
+  (:require [clojure.java.jdbc :as jdbc]
+            [clojure.test :refer [deftest use-fixtures testing is]]
             [clojure.string :as str]
+            [integrant.core :as ig]
             [jsonista.core :as j]
             [peridot.core :as peridot]
+            [pgqueue.core :as pgq]
             [stub-http.core :refer [with-routes!]]
             [yki.embedded-db :as embedded-db]
             [yki.handler.base-test :as base]
@@ -230,8 +233,88 @@
             (is (= {:error {:registration_kind true}} response-body))))))))
 
 (deftest free-registration-test
-  (testing "submitting registration form with matching free registration id"
-    (testing "should immediately enroll user to exam session if available registration kind is 'ADMISSION'")
-    (testing "should enroll user to queue if available registration kind is 'QUEUE'"
-      (testing "and lifting registration from queue should immediately enroll user to session")))
-  (testing "submitting registration form with unmatching free registration id should yield error"))
+  (insert-initial-data!)
+  (base/execute! "INSERT INTO participant (external_user_id) VALUES ('1.2.3.5.001')")
+  (with-routes!
+    common-route-specs
+    (let [email-q                   (base/email-q)
+          oid                       "1.2.3.5.001"
+          fake-session              {:identity    {:oid              oid
+                                                   :first_name       "Etu"
+                                                   :last_name        "Suku"
+                                                   :external-user-id oid
+                                                   :registration-id  1}
+                                     :auth-method "SUOMIFI"}
+          auth                      (ig/init-key :yki.middleware.no-auth/with-fake-session fake-session)
+          url-helper                (base/create-url-helper (str "localhost:" port))
+          handlers                  (create-handlers email-q (:port server) auth)
+          session                   (peridot/session handlers)
+          email-q                   (base/email-q)
+          get-registration          (fn [registration-id] (base/select-one (str "SELECT * FROM registration WHERE id = " registration-id)))
+          init-registration!        (fn [exam-session-id]
+                                      (-> session
+                                          (peridot/request (str routing/registration-api-root "/init")
+                                                           :body (j/write-value-as-string {:exam_session_id exam-session-id})
+                                                           :content-type "application/json"
+                                                           :request-method :post)))
+          insert-free-registration! (fn [registration-id]
+                                      (jdbc/execute!
+                                        @embedded-db/conn
+                                        (str "INSERT INTO free_registration (source, type, matriculation_exam, higher_education_concluded, higher_education_enrolled, eb, dia, other, registration_id, is_foreign) VALUES ('KOSKI', 'HigherEducationConcluded', true, false, false, false, false, false, " registration-id ", false)")
+                                        {:return-keys true}))
+          submit-registration!      (fn [registration-id form]
+                                      (-> session
+                                          (peridot/request (str routing/registration-api-root "/" registration-id "/submit" "?lang=fi")
+                                                           :body (j/write-value-as-string form)
+                                                           :content-type "application/json"
+                                                           :request-method :post)))
+          cancel-registration!      (fn [registration-id]
+                                      (base/execute! (str "UPDATE registration SET state='CANCELLED' WHERE id=" registration-id)))]
+      (testing "submitting registration form with matching free registration id"
+        (testing "should immediately enroll user to exam session if available registration kind is 'ADMISSION'"
+          (let [init-response        (init-registration! 1)
+                init-response-body   (base/body-as-json (:response init-response))
+                registration-id      (init-response-body "registration_id")
+                free-registration-id (:free_registration_id (insert-free-registration! registration-id))]
+            (is (= "STARTED" (:state (get-registration registration-id))))
+            (submit-registration! registration-id (assoc registration-form-data :free_registration_id free-registration-id))
+            (is (= "COMPLETED" (:state (get-registration registration-id))))
+            (let [email (pgq/take email-q)]
+              (is (str/includes? (:subject email) "Ilmoittautuminen YKI-testiin onnistui"))
+              (is (str/includes? (:body email) "Sinun ei tarvitse maksaa tutkintomaksua YKI-testiin.")))
+            (cancel-registration! registration-id)))
+        (testing "should enroll user to queue if available registration kind is 'QUEUE'"
+          (let [init-response        (init-registration! 1)
+                init-response-body   (base/body-as-json (:response init-response))
+                registration-id      (init-response-body "registration_id")
+                free-registration-id (:free_registration_id (insert-free-registration! registration-id))]
+            (is (= "STARTED" (:state (get-registration registration-id))))
+            (base/execute! (str "UPDATE registration SET kind='QUEUE' WHERE id=" registration-id))
+            (submit-registration! registration-id (assoc registration-form-data :free_registration_id free-registration-id))
+            (is (= "SUBMITTED" (:state (get-registration registration-id))))
+            (let [email (pgq/take email-q)]
+              (is (str/includes? (:subject email) "Ilmoittautuminen jonoon (YKI)"))
+              (is (str/includes? (:body email) "Olet ilmoittautunut jonoon")))
+            (testing "and lifting registration from queue should immediately enroll user to session"
+              (let [registration-state-handler (ig/init-key :yki.job.scheduled-tasks/registration-queue-handler
+                                                            {:db             (base/db)
+                                                             :url-helper     url-helper
+                                                             :payment-helper {}
+                                                             :email-q        email-q})
+                    _                          (registration-state-handler)]
+                (is (= "COMPLETED" (:state (get-registration registration-id))))
+                (let [email (pgq/take email-q)]
+                  (is (str/includes? (:subject email) "Olet saanut paikan YKI-testiin jonosta"))
+                  (is (str/includes? (:body email) "Sinun ei tarvitse maksaa tutkintomaksua YKI-testiin."))))
+              (cancel-registration! registration-id)))))
+      (testing "submitting registration form with unmatching free registration id should yield error"
+        (let [init-response        (init-registration! 1)
+              init-response-body   (base/body-as-json (:response init-response))
+              registration-id      (init-response-body "registration_id")
+              free-registration-id (:free_registration_id (insert-free-registration! registration-id))]
+          (is (= "STARTED" (:state (get-registration registration-id))))
+          (let [status (-> (submit-registration! registration-id (assoc registration-form-data :free_registration_id (+ 999 free-registration-id)))
+                           (:response)
+                           (:status))]
+            (is (= 500 status)))
+          (is (= "STARTED" (:state (get-registration registration-id)))))))))
