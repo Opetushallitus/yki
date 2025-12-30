@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS registration_change_event (
     exam_session_id BIGSERIAL REFERENCES exam_session (id) NOT NULL,
     registration_state registration_state NOT NULL,
     registration_kind registration_kind NOT NULL,
-    original_exam_session_id BIGSERIAL REFERENCES exam_session (id),
+    original_exam_session_id BIGINT REFERENCES exam_session (id) DEFAULT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
     created_by TEXT,
     author_type TEXT NOT NULL
