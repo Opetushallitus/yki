@@ -25,7 +25,7 @@
   (participant-registered-to-exam-on-exam-date? [db participant-id exam-session-id])
   (person-registered-to-exam-on-exam-date? [db registration-id exam-session-id])
   (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id])
-  (create-registration! [db registration])
+  (create-registration! [db session registration])
   (update-started-registration-oid! [db registration-id person-oid])
   (get-registration-data [db registration-id participant-id lang])
   (get-registration-and-exam-session-state [db registration-id])
@@ -122,7 +122,7 @@
            (after-fn)
            update-success))))
   (create-registration!
-    [{:keys [spec]} registration]
+    [{:keys [spec]} session registration]
     (jdbc/with-db-transaction [tx spec]
       (when-let [created (q/insert-registration<! tx registration)]
         (q/insert-registration-change-event!
@@ -130,7 +130,8 @@
           (merge
             (registration->change-event created)
             {:event       "CREATE"
-             :author_type "USER"}))
+             :author_type "USER"
+             :created_by  (get-in session [:identity :oid])}))
         (:id created))))
   (update-started-registration-oid!
     [{:keys [spec]} registration-id person-oid]

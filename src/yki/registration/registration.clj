@@ -116,11 +116,12 @@
 
 (defn- create-registration [db exam-session-id participant-id registration-kind session payment-config]
   (try
-    (let [registration-id (registration-db/create-registration! db {:exam_session_id exam-session-id
-                                                                    :participant_id  participant-id
-                                                                    :started_at      (t/now)
-                                                                    :kind            registration-kind
-                                                                    :strong_auth     (= (:auth-method session) "SUOMIFI")})
+    (let [registration-id (registration-db/create-registration! db session
+                                                                {:exam_session_id exam-session-id
+                                                                 :participant_id  participant-id
+                                                                 :started_at      (t/now)
+                                                                 :kind            registration-kind
+                                                                 :strong_auth     (= (:auth-method session) "SUOMIFI")})
           response        (create-registration-response db session exam-session-id registration-id registration-kind payment-config)]
       (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
       response)
