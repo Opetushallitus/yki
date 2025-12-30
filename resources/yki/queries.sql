@@ -714,8 +714,8 @@ VALUES (
         :event,
         :registration_id,
         :exam_session_id,
-        :registration_state,
-        :registration_kind,
+        cast(:registration_state as registration_state),
+        cast(:registration_kind as registration_kind),
         :original_exam_session_id,
         :created_by,
         :author_type
