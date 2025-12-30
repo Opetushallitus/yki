@@ -708,6 +708,19 @@ INSERT INTO registration(
                       AND es.exam_date_id =
                         (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
 
+-- name: insert-registration-change-event!
+INSERT INTO registration_change_event (event, registration_id, exam_session_id, registration_state, registration_kind, original_exam_session_id, created_by, author_type)
+VALUES (
+        :event,
+        :registration_id,
+        :exam_session_id,
+        :registration_state,
+        :registration_kind,
+        :original_exam_session_id,
+        :created_by,
+        :author_type
+       );
+
 -- name: update-started-registration-oid!
 UPDATE registration
 SET person_oid=:oid,

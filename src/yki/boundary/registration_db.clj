@@ -1,6 +1,7 @@
 (ns yki.boundary.registration-db
   (:require [clj-time.core :as t]
             [clojure.java.jdbc :as jdbc]
+            [clojure.set :as set]
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
@@ -50,6 +51,13 @@
 
 (defn- int->boolean [value]
   (pos? value))
+
+(defn- registration->change-event [registration]
+  (-> registration
+      (select-keys [:id :kind :state :exam_session_id :original_exam_session_id])
+      (set/rename-keys {:id    :registration_id
+                        :kind  :registration_kind
+                        :state :registration_state})))
 
 (extend-protocol Registration
   Boundary
@@ -116,7 +124,14 @@
   (create-registration!
     [{:keys [spec]} registration]
     (jdbc/with-db-transaction [tx spec]
-      (:id (q/insert-registration<! tx registration))))
+      (when-let [created (q/insert-registration<! tx registration)]
+        (q/insert-registration-change-event!
+          tx
+          (merge
+            (registration->change-event created)
+            {:event       "CREATE"
+             :author_type "USER"}))
+        (:id created))))
   (update-started-registration-oid!
     [{:keys [spec]} registration-id person-oid]
     (jdbc/with-db-transaction [tx spec]
