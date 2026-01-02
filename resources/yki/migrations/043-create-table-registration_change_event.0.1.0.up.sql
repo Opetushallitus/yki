@@ -13,3 +13,6 @@ CREATE TABLE IF NOT EXISTS registration_change_event (
 
 CREATE INDEX IF NOT EXISTS registration_change_event_exam_session_id_created_at
 ON registration_change_event (exam_session_id, created_at);
+
+CREATE INDEX IF NOT EXISTS registration_change_event_original_exam_session_id_created_at
+ON registration_change_event (original_exam_session_id, created_at);
