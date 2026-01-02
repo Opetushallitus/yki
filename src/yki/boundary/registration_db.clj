@@ -122,9 +122,9 @@
            (q/insert-registration-change-event!
              tx
              (merge (registration->change-event updated)
-                    {:event "SUBMIT"
+                    {:event       "SUBMIT"
                      :author_type "USER"
-                     :created_by (get-in session [:identity :oid])}))
+                     :created_by  (get-in session [:identity :oid])}))
            (after-fn)
            updated))))
   (create-registration!
@@ -204,6 +204,12 @@
         (fn update-payment-and-registration-states! []
           (let [updated-payment-details (q/update-new-exam-payment-to-paid<! tx {:id payment-id})
                 updated-registration    (q/complete-registration<! tx {:id registration-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event updated-registration)
+                     {:event       "COMPLETE_PAYMENT"
+                      :author_type "INTEGRATION"
+                      :created_by  nil}))
             (when (= "COMPLETED" (:state updated-registration))
               (after-fn updated-payment-details))
             updated-registration)))))
