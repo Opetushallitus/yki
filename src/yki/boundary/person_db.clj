@@ -3,6 +3,7 @@
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
+            [yki.registration.change-event :refer [registration->change-event]]
             [yki.util.common :as common])
   (:import [duct.database.sql Boundary]))
 
@@ -85,7 +86,14 @@
     (first (q/select-registration-to-confirm-details spec {:oid oid :id registration-id})))
   (cancel-person-registration! [{:keys [spec]} oid registration-id]
     (jdbc/with-db-transaction [tx spec]
-      (q/cancel-registration-for-person<! tx {:oid oid :id registration-id})))
+      (let [canceled (q/cancel-registration-for-person<! tx {:oid oid :id registration-id})]
+        (q/insert-registration-change-event!
+          tx
+          (merge (registration->change-event canceled)
+                 {:event       "CANCEL"
+                  :author_type "USER"
+                  :created_by  oid}))
+        canceled)))
   (get-persons-to-sync [{:keys [spec]} retry-duration]
     (q/select-persons-to-sync spec {:duration retry-duration}))
   (mark-person-sync-attempt! [{:keys [spec]} id success? retry-if-error?]
