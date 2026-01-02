@@ -1,10 +1,10 @@
 (ns yki.boundary.registration-db
   (:require [clj-time.core :as t]
             [clojure.java.jdbc :as jdbc]
-            [clojure.set :as set]
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
+            [yki.registration.change-event :refer [registration->change-event]]
             [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 
@@ -51,13 +51,6 @@
 
 (defn- int->boolean [value]
   (pos? value))
-
-(defn- registration->change-event [registration]
-  (-> registration
-      (select-keys [:id :kind :state :exam_session_id :original_exam_session_id])
-      (set/rename-keys {:id    :registration_id
-                        :kind  :registration_kind
-                        :state :registration_state})))
 
 (extend-protocol Registration
   Boundary
