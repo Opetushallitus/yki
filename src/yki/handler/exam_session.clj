@@ -153,7 +153,7 @@
             (DELETE "/" request
               :path-params [id :- ::ys/id registration-id :- ::ys/id]
               :return ::ys/response
-              (if (exam-session-db/cancel-registration! db registration-id)
+              (if (exam-session-db/cancel-registration! db (:session request) registration-id)
                 (do
                   (let [registration-details      (registration-db/get-registration-data-for-clerk-mail db id registration-id)
                         lang                      (:lang registration-details)

@@ -237,7 +237,7 @@ INSERT INTO quarantine_review (
 ON CONFLICT ON CONSTRAINT quarantine_review_unique_quarantine_registration_combination
 DO UPDATE SET quarantined = :quarantined, reviewer_oid = :reviewer_oid, updated = current_timestamp;
 
--- name: cancel-registration!
+-- name: cancel-registration<!
 UPDATE registration SET
     state =
         CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
@@ -311,14 +311,6 @@ SELECT es.office_oid
 FROM exam_session es
 INNER JOIN organizer o ON es.organizer_id = o.id
 WHERE o.oid = :oid;
-
--- name: select-exam-session-organizer-oid
--- single?: true
-SELECT o.oid
-FROM exam_session es
-INNER JOIN organizer o ON es.organizer_id = o.id
-INNER JOIN registration r ON r.exam_session_id = es.id
-WHERE r.id = :id;
 
 -- name: select-exam-sessions
 SELECT
@@ -1353,18 +1345,6 @@ SET kind                 = 'ADMISSION',
                            END
     FROM registrations_to_update
 WHERE registration.id = registrations_to_update.id;
-
---name: cancel-unpaid-registration-for-organizer!
-UPDATE registration
-SET state = 'CANCELLED'
-WHERE id = :id
-  AND state NOT IN ('COMPLETED', 'PAID_AND_CANCELLED')
-  AND exam_session_id IN (SELECT id
-                          FROM exam_session
-                          WHERE organizer_id IN
-                                (SELECT id
-                                 FROM organizer
-                                 WHERE oid = :oid));
 
 -- name: select-organizer-exam-dates
 SELECT
