@@ -1,6 +1,7 @@
 (ns yki.boundary.registration-db
   (:require [clj-time.core :as t]
             [clojure.java.jdbc :as jdbc]
+            [clojure.tools.logging :as log]
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
@@ -41,7 +42,7 @@
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
   (update-submitted-registrations-to-expired! [db])
-  (cancel-started-registration-for-participant! [db participant-id registration-id])
+  (cancel-started-registration-for-participant! [db session participant-id registration-id])
   (get-started-registration-expires-in [db registration-id])
   ; Queueing
   (get-participant-and-queue-count-for-ongoing-admissions [db])
@@ -49,8 +50,15 @@
   (expire-queued-registrations-after-exam-date! [db])
   (get-free-registration [db registration-id]))
 
-(defn- int->boolean [value]
-  (pos? value))
+(defn- expire-registrations! [tx ids]
+  (when (seq ids)
+    (let [expired (q/expire-registrations-by-ids! tx {:ids ids})]
+      (when (not= expired (count ids))
+        (log/error "Mismatch between expected and actual expired ids count! Statistics from registration_change_event entries are likely distorted as a result!"
+                   {:actual   expired
+                    :expected (count ids)}))
+      (q/insert-registration-change-events-for-expired-ids! tx {:ids ids})
+      ids)))
 
 (extend-protocol Registration
   Boundary
@@ -142,17 +150,13 @@
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-started-registrations-to-expire tx)
                      (map :id))]
-        (when (seq ids)
-          (q/expire-registrations-by-ids! tx {:ids ids})
-          ids))))
+        (expire-registrations! tx ids))))
   (update-submitted-registrations-to-expired!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-submitted-registrations-to-expire tx)
                      (map :id))]
-        (when (seq ids)
-          (q/expire-registrations-by-ids! tx {:ids ids})
-          ids))))
+        (expire-registrations! tx ids))))
   (get-participant-data-by-registration-id
     [{:keys [spec]} registration-id]
     (first (q/select-participant-data-by-registration-id spec {:id registration-id})))
@@ -208,12 +212,22 @@
                         :author_type "INTEGRATION"
                         :created_by  nil})))
             updated-registration)))))
-  (cancel-started-registration-for-participant! [{:keys [spec]} participant-id registration-id]
-    (int->boolean
-      (q/cancel-started-registration-for-participant!
-        spec
-        {:id             registration-id
-         :participant_id participant-id})))
+  (cancel-started-registration-for-participant! [{:keys [spec]} session participant-id registration-id]
+    (jdbc/with-db-transaction [tx spec]
+      (rollback-on-exception
+        tx
+        (fn cancel-registration! []
+          (when-let [canceled (q/cancel-started-registration-for-participant<!
+                                spec
+                                {:id             registration-id
+                                 :participant_id participant-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event canceled)
+                     {:event       "CANCEL"
+                      :author_type "USER"
+                      :created_by  (get-in session [:identity :oid])}))
+            canceled)))))
   (get-started-registration-expires-in [{:keys [spec]} registration-id]
     (let [expires-at (q/select-started-registration-expires-at spec {:id registration-id})
           now        (t/now)]
@@ -239,8 +253,6 @@
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-queued-registrations-to-expire tx)
                      (map :id))]
-        (when (seq ids)
-          (q/expire-registrations-by-ids! tx {:ids ids})
-          ids))))
+        (expire-registrations! tx ids))))
   (get-free-registration [{:keys [spec]} registration-id]
     (first (q/select-free-registration spec {:id registration-id}))))

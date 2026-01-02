@@ -721,6 +721,12 @@ VALUES (
         :author_type
        );
 
+-- name: insert-registration-change-events-for-expired-ids!
+INSERT INTO registration_change_event (event, registration_id, exam_session_id, registration_state, registration_kind, author_type)
+SELECT 'EXPIRE', id, exam_session_id, state, kind, 'AUTOMATION'
+FROM registration
+WHERE state = 'EXPIRED' AND id IN (:ids);
+
 -- name: update-started-registration-oid!
 UPDATE registration
 SET person_oid=:oid,
@@ -776,7 +782,7 @@ WHERE
             r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day) AND
             r.state IN ('SUBMITTED', 'COMPLETED'));
 
--- name: cancel-started-registration-for-participant!
+-- name: cancel-started-registration-for-participant<!
 UPDATE registration SET
   state = 'CANCELLED',
   modified = current_timestamp
