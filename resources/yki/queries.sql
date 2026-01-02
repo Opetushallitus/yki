@@ -745,7 +745,7 @@ SELECT EXISTS (
       AND r.state IN ('SUBMITTED', 'COMPLETED')
     );
 
--- name: update-registration-to-submitted!
+-- name: update-registration-to-submitted<!
 WITH exam_sessions_for_same_day AS (
     SELECT es2.id
     FROM registration r
@@ -1346,7 +1346,7 @@ SET kind                 = 'ADMISSION',
                                      ELSE expires_at
                            END
     FROM registrations_to_update
-WHERE registration.id = registrations_to_update.id
+WHERE registration.id = registrations_to_update.id;
 
 --name: cancel-unpaid-registration-for-organizer!
 UPDATE registration

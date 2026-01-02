@@ -12,7 +12,7 @@
 
 (defprotocol Registration
   (is-person-already-registered-on-exam-date? [db person-oid registration-id])
-  (update-registration-details! [db registration after-fn])
+  (update-registration-details! [db session registration after-fn])
   (update-participant-external-id! [db participant])
   (update-registration-participant-id! [db registration-id participant-id])
   (get-registration-data-for-new-payment [db registration-id external-user-id])
@@ -114,13 +114,19 @@
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-email! tx {:email email :id participant-id})))
   (update-registration-details!
-    [{:keys [spec]} registration after-fn]
+    [{:keys [spec]} session registration after-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
         tx
-        #(when-let [update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
+        #(when-let [updated (q/update-registration-to-submitted<! tx registration)]
+           (q/insert-registration-change-event!
+             tx
+             (merge (registration->change-event updated)
+                    {:event "SUBMIT"
+                     :author_type "USER"
+                     :created_by (get-in session [:identity :oid])}))
            (after-fn)
-           update-success))))
+           updated))))
   (create-registration!
     [{:keys [spec]} session registration]
     (jdbc/with-db-transaction [tx spec]
@@ -217,13 +223,16 @@
     (q/select-participant-and-queue-count-by-exam-session spec))
   (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email!]
     (jdbc/with-db-transaction [tx spec]
-      ; TODO rollback-on-exception does not seem to reliably rollback changes!
-      ; For instance, if an error is thrown when sending email,
-      ; it appears that the registration will end up being lifted from queue.
       (rollback-on-exception
         tx
         (fn lift-registration-and-notify! []
-          (let [registration (q/lift-registration-from-queue<! spec {:exam_session_id exam-session-id})]
+          (let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event registration->change-event)
+                     {:event       "LIFT_FROM_QUEUE"
+                      :author_type "AUTOMATION"
+                      :created_by  nil}))
             (send-email! registration))))))
   (expire-queued-registrations-after-exam-date! [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]

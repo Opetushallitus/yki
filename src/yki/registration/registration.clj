@@ -433,6 +433,7 @@
                   success                 (and person
                                                (registration-db/update-registration-details!
                                                  db
+                                                 session
                                                  update-registration
                                                  create-and-send-link-fn))
                   response-base           {:oid               oid
