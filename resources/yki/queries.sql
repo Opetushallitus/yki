@@ -877,7 +877,7 @@ SET state = 'EXPIRED',
     modified = current_timestamp
 WHERE id IN (:ids) AND state IN ('STARTED', 'SUBMITTED');
 
--- name: update-registration-exam-session!
+-- name: update-registration-exam-session<!
 WITH unavailable_exam_sessions_for_person AS (
     SELECT es2.id
     FROM registration r

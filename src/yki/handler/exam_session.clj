@@ -141,9 +141,9 @@
                                           (onr/list-ssn-by-oids onr-client))
                                      {})
                   ssn-participants (map #(assoc-in
-                                          (dissoc % :person_oid)
-                                          [:form :ssn]
-                                          (oid->ssn (get % :person_oid)))
+                                           (dissoc % :person_oid)
+                                           [:form :ssn]
+                                           (oid->ssn (get % :person_oid)))
                                         participants)]
               (response {:participants
                          (if oph-admin?
@@ -185,7 +185,7 @@
               :return ::ys/response
               (log/info "Start relocating registration" registration-id "from session" id "to session" (:to_exam_session_id relocate-request))
               (let [to-exam-session-id (:to_exam_session_id relocate-request)
-                    success?           (exam-session-db/update-registration-exam-session! db to-exam-session-id registration-id oid)]
+                    success?           (exam-session-db/update-registration-exam-session! db (:session request) to-exam-session-id registration-id oid)]
                 (if success?
                   (do
                     (let [registration-details      (registration-db/get-registration-data-for-clerk-mail db to-exam-session-id registration-id)

@@ -76,7 +76,7 @@
   (set-participants-sync-to-success! [db exam-session-id])
   (set-participants-sync-to-failed! [db exam-session-id retry-duration])
   (cancel-registration! [db session registration-id])
-  (update-registration-exam-session! [db to-exam-session-id registration-id oid])
+  (update-registration-exam-session! [db session to-exam-session-id registration-id oid])
   (get-exam-session-by-id [db id])
   (get-exam-session-registration-by-registration-id [db registration-id])
   (get-exam-session-with-location [db id lang])
@@ -126,31 +126,45 @@
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-sync-to-failed! tx {:exam_session_id exam-session-id :interval interval})))
   (update-registration-exam-session!
-    [{:keys [spec]} to-exam-session-id registration-id oid]
+    [{:keys [spec]} session to-exam-session-id registration-id oid]
     (jdbc/with-db-transaction [tx spec]
-      (let [{exam-session-id :id exam-date :exam_date} (q/select-registration-details-for-transfer tx {:id registration-id})
-            valid-transfer-targets (get-transfer-targets-for-exam-session
-                                     tx
-                                     exam-date
-                                     exam-session-id)]
-        (if (some #{to-exam-session-id} valid-transfer-targets)
-          (int->boolean (q/update-registration-exam-session!
-                          tx
-                          {:exam_session_id to-exam-session-id
-                           :registration_id registration-id
-                           :oid             oid}))
-          false))))
+      (rollback-on-exception
+        tx
+        (fn do-relocate! []
+          (let [{exam-session-id :id exam-date :exam_date} (q/select-registration-details-for-transfer tx {:id registration-id})
+                valid-transfer-targets (get-transfer-targets-for-exam-session
+                                         tx
+                                         exam-date
+                                         exam-session-id)]
+            (if (some #{to-exam-session-id} valid-transfer-targets)
+              (when-let [updated (q/update-registration-exam-session<!
+                                   tx
+                                   {:exam_session_id to-exam-session-id
+                                    :registration_id registration-id
+                                    :oid             oid})]
+                (q/insert-registration-change-event!
+                  tx
+                  (merge (registration->change-event updated)
+                         {:event                    "RELOCATE"
+                          :author_type              "CLERK"
+                          :created_by               (get-in session [:identity :oid])
+                          :original_exam_session_id exam-session-id}))
+                updated)
+              false))))))
   (cancel-registration!
     [{:keys [spec]} session registration-id]
     (jdbc/with-db-transaction [tx spec]
-      (when-let [canceled (q/cancel-registration! tx {:id registration-id})]
-        (q/insert-registration-change-event!
-          tx
-          (merge (registration->change-event canceled)
-                 {:event       "CANCEL"
-                  :author_type "CLERK"
-                  :created_by  (get-in session [:identity :oid])}))
-        canceled)))
+      (rollback-on-exception
+        tx
+        (fn do-cancel! []
+          (when-let [canceled (q/cancel-registration<! tx {:id registration-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event canceled)
+                     {:event       "CANCEL"
+                      :author_type "CLERK"
+                      :created_by  (get-in session [:identity :oid])}))
+            canceled)))))
   (update-exam-session!
     [{:keys [spec]} oid id exam-session]
     (jdbc/with-db-transaction [tx spec]
