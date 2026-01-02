@@ -196,15 +196,17 @@
         tx
         (fn update-payment-and-registration-states! []
           (let [updated-payment-details (q/update-new-exam-payment-to-paid<! tx {:id payment-id})
-                updated-registration    (q/complete-registration<! tx {:id registration-id})]
-            (q/insert-registration-change-event!
-              tx
-              (merge (registration->change-event updated-registration)
-                     {:event       "COMPLETE_PAYMENT"
-                      :author_type "INTEGRATION"
-                      :created_by  nil}))
-            (when (= "COMPLETED" (:state updated-registration))
+                updated-registration    (q/complete-registration<! tx {:id registration-id})
+                new-state               (:state updated-registration)]
+            (when (= "COMPLETED" new-state)
               (after-fn updated-payment-details))
+            (when (#{"COMPLETED" "PAID_AND_CANCELLED"} new-state)
+              (q/insert-registration-change-event!
+                tx
+                (merge (registration->change-event updated-registration)
+                       {:event       "COMPLETE_PAYMENT"
+                        :author_type "INTEGRATION"
+                        :created_by  nil})))
             updated-registration)))))
   (cancel-started-registration-for-participant! [{:keys [spec]} participant-id registration-id]
     (int->boolean

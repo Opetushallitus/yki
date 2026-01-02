@@ -86,7 +86,7 @@
     (first (q/select-registration-to-confirm-details spec {:oid oid :id registration-id})))
   (cancel-person-registration! [{:keys [spec]} oid registration-id]
     (jdbc/with-db-transaction [tx spec]
-      (let [canceled (q/cancel-registration-for-person<! tx {:oid oid :id registration-id})]
+      (when-let [canceled (q/cancel-registration-for-person<! tx {:oid oid :id registration-id})]
         (q/insert-registration-change-event!
           tx
           (merge (registration->change-event canceled)
