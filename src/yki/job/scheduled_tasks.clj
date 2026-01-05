@@ -45,6 +45,10 @@
                                           :task      "REGISTRATION_QUEUE_HANDLER"
                                           :interval  "29 SECONDS"})
 
+(defonce exam-session-statistics-handler-conf {:worker-id (str (random-uuid))
+                                               :task      "EXAM_SESSION_STATISTICS_HANDLER"
+                                               :interval  "57 MINUTES"})
+
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
   Rethrows exceptions if retry until limit is not reached so that message is not
@@ -200,7 +204,7 @@
                                                    free?               (:free_registration_id email-template-data)]
                                                (if free?
                                                  (send-lifted-from-queue-for-free-email! url-helper email-q lang email-template-data)
-                                                 (send-lifted-from-queue-email!          db url-helper payment-helper email-q lang email-template-data code login-url))))
+                                                 (send-lifted-from-queue-email! db url-helper payment-helper email-q lang email-template-data code login-url))))
              exam-session-details          (registration-db/get-participant-and-queue-count-for-ongoing-admissions db)]
          (doseq [{:keys [exam_session_id max_participants participants queue]} exam-session-details
                  :let [available-places (- max_participants participants)
@@ -231,3 +235,34 @@
                (log/error e "Updating gender and nationality failed for person" (dissoc person :ssn)))))))
      (catch Exception e
        (log/error e "Person migration failed"))))
+
+(defn- get-statistics-entry [db {:keys [id last_processed_event]}]
+  (if (some? last_processed_event)
+    ; TODO Diff from last statistics entry not implemented yet!
+    ; TODO Get events since last_processed_event
+    ; TODO Reduce over events
+    ; TODO Add differences to previous statistics entry
+    ; TODO Keep track of max timestamps all the time...
+    ; TODO Update last_processed_event
+    nil
+    (let [{:keys [participants queue]} (exam-session-db/get-initial-statistics-for-exam-session db id)
+          now (t/now)]
+      {:exam_session_id       id
+       :last_processed_event  now
+       :max_participants_at   now
+       :max_queue_at          now
+       :participants          participants
+       :max_participant_count participants
+       :queue                 queue
+       :max_queue_count       queue})))
+
+(defmethod ig/init-key ::exam-session-statistics-handler [_ {:keys [db]}]
+  {:pre [(some? db)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db exam-session-statistics-handler-conf)
+       (let [exam-sessions-to-sync (exam-session-db/get-exam-sessions-for-statistics-sync db)]
+         (doseq [exam-session exam-sessions-to-sync]
+           (when-let [statistics-to-insert (get-statistics-entry db exam-session)]
+             (exam-session-db/update-exam-session-statistics! db statistics-to-insert)))))
+     (catch Exception e
+       (log/error e "Exam session statistics handler failed"))))

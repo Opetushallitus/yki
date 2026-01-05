@@ -1965,4 +1965,22 @@ SELECT free_registration_id,
        dia,
        other
 FROM free_registration
-WHERE registration_id = :id
+WHERE registration_id = :id;
+
+-- name: select-exam-sessions-for-statistics-sync
+SELECT es.id, ess.last_processed_event
+FROM exam_session es
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+LEFT JOIN exam_session_statistics ess ON es.id = ess.exam_session_id
+WHERE within_dt_range(now(), ed.registration_start_date - interval '1 day', ed.exam_date + interval '1 day');
+
+-- name: select-initial-statistics-for-exam-session
+SELECT
+    (SELECT COUNT(*) FROM registration r WHERE r.exam_session_id = es.id AND r.kind = 'ADMISSION' AND r.state IN ('STARTED', 'SUBMITTED', 'COMPLETED')) AS participants,
+    (SELECT COUNT(*) FROM registration r WHERE r.exam_session_id = es.id AND r.kind = 'QUEUE' AND r.state IN ('STARTED', 'SUBMITTED')) AS queue
+FROM exam_session es
+WHERE es.id = :id;
+
+-- name: insert-exam-session-statistics!
+INSERT INTO exam_session_statistics (exam_session_id, last_processed_event, participants, queue, max_participant_count, max_queue_count, max_participants_at, max_queue_at)
+VALUES (:exam_session_id, :last_processed_event, :participants, :queue, :max_participant_count, :max_queue_count, :max_participants_at, :max_queue_at);
