@@ -237,7 +237,7 @@ INSERT INTO quarantine_review (
 ON CONFLICT ON CONSTRAINT quarantine_review_unique_quarantine_registration_combination
 DO UPDATE SET quarantined = :quarantined, reviewer_oid = :reviewer_oid, updated = current_timestamp;
 
--- name: cancel-registration!
+-- name: cancel-registration<!
 UPDATE registration SET
     state =
         CASE WHEN state = 'COMPLETED'::registration_state THEN 'PAID_AND_CANCELLED'::registration_state
@@ -311,14 +311,6 @@ SELECT es.office_oid
 FROM exam_session es
 INNER JOIN organizer o ON es.organizer_id = o.id
 WHERE o.oid = :oid;
-
--- name: select-exam-session-organizer-oid
--- single?: true
-SELECT o.oid
-FROM exam_session es
-INNER JOIN organizer o ON es.organizer_id = o.id
-INNER JOIN registration r ON r.exam_session_id = es.id
-WHERE r.id = :id;
 
 -- name: select-exam-sessions
 SELECT
@@ -708,6 +700,25 @@ INSERT INTO registration(
                       AND es.exam_date_id =
                         (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
 
+-- name: insert-registration-change-event!
+INSERT INTO registration_change_event (event, registration_id, exam_session_id, registration_state, registration_kind, original_exam_session_id, created_by, author_type)
+VALUES (
+        :event,
+        :registration_id,
+        :exam_session_id,
+        cast(:registration_state as registration_state),
+        cast(:registration_kind as registration_kind),
+        :original_exam_session_id,
+        :created_by,
+        :author_type
+       );
+
+-- name: insert-registration-change-events-for-expired-ids!
+INSERT INTO registration_change_event (event, registration_id, exam_session_id, registration_state, registration_kind, author_type)
+SELECT 'EXPIRE', id, exam_session_id, state, kind, 'AUTOMATION'
+FROM registration
+WHERE state = 'EXPIRED' AND id IN (:ids);
+
 -- name: update-started-registration-oid!
 UPDATE registration
 SET person_oid=:oid,
@@ -732,7 +743,7 @@ SELECT EXISTS (
       AND r.state IN ('SUBMITTED', 'COMPLETED')
     );
 
--- name: update-registration-to-submitted!
+-- name: update-registration-to-submitted<!
 WITH exam_sessions_for_same_day AS (
     SELECT es2.id
     FROM registration r
@@ -763,7 +774,7 @@ WHERE
             r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day) AND
             r.state IN ('SUBMITTED', 'COMPLETED'));
 
--- name: cancel-started-registration-for-participant!
+-- name: cancel-started-registration-for-participant<!
 UPDATE registration SET
   state = 'CANCELLED',
   modified = current_timestamp
@@ -866,7 +877,7 @@ SET state = 'EXPIRED',
     modified = current_timestamp
 WHERE id IN (:ids) AND state IN ('STARTED', 'SUBMITTED');
 
--- name: update-registration-exam-session!
+-- name: update-registration-exam-session<!
 WITH unavailable_exam_sessions_for_person AS (
     SELECT es2.id
     FROM registration r
@@ -1333,19 +1344,7 @@ SET kind                 = 'ADMISSION',
                                      ELSE expires_at
                            END
     FROM registrations_to_update
-WHERE registration.id = registrations_to_update.id
-
---name: cancel-unpaid-registration-for-organizer!
-UPDATE registration
-SET state = 'CANCELLED'
-WHERE id = :id
-  AND state NOT IN ('COMPLETED', 'PAID_AND_CANCELLED')
-  AND exam_session_id IN (SELECT id
-                          FROM exam_session
-                          WHERE organizer_id IN
-                                (SELECT id
-                                 FROM organizer
-                                 WHERE oid = :oid));
+WHERE registration.id = registrations_to_update.id;
 
 -- name: select-organizer-exam-dates
 SELECT

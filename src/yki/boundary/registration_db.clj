@@ -1,9 +1,11 @@
 (ns yki.boundary.registration-db
   (:require [clj-time.core :as t]
             [clojure.java.jdbc :as jdbc]
+            [clojure.tools.logging :as log]
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
+            [yki.registration.change-event :refer [registration->change-event]]
             [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 
@@ -11,7 +13,7 @@
 
 (defprotocol Registration
   (is-person-already-registered-on-exam-date? [db person-oid registration-id])
-  (update-registration-details! [db registration after-fn])
+  (update-registration-details! [db session registration after-fn])
   (update-participant-external-id! [db participant])
   (update-registration-participant-id! [db registration-id participant-id])
   (get-registration-data-for-new-payment [db registration-id external-user-id])
@@ -24,7 +26,7 @@
   (participant-registered-to-exam-on-exam-date? [db participant-id exam-session-id])
   (person-registered-to-exam-on-exam-date? [db registration-id exam-session-id])
   (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id])
-  (create-registration! [db registration])
+  (create-registration! [db session registration])
   (update-started-registration-oid! [db registration-id person-oid])
   (get-registration-data [db registration-id participant-id lang])
   (get-registration-and-exam-session-state [db registration-id])
@@ -40,7 +42,7 @@
   (get-or-create-participant! [db participant])
   (update-started-registrations-to-expired! [db])
   (update-submitted-registrations-to-expired! [db])
-  (cancel-started-registration-for-participant! [db participant-id registration-id])
+  (cancel-started-registration-for-participant! [db session participant-id registration-id])
   (get-started-registration-expires-in [db registration-id])
   ; Queueing
   (get-participant-and-queue-count-for-ongoing-admissions [db])
@@ -48,8 +50,15 @@
   (expire-queued-registrations-after-exam-date! [db])
   (get-free-registration [db registration-id]))
 
-(defn- int->boolean [value]
-  (pos? value))
+(defn- expire-registrations! [tx ids]
+  (when (seq ids)
+    (let [expired (q/expire-registrations-by-ids! tx {:ids ids})]
+      (when (not= expired (count ids))
+        (log/error "Mismatch between expected and actual expired ids count! Statistics from registration_change_event entries are likely distorted as a result!"
+                   {:actual   expired
+                    :expected (count ids)}))
+      (q/insert-registration-change-events-for-expired-ids! tx {:ids ids})
+      ids)))
 
 (extend-protocol Registration
   Boundary
@@ -106,17 +115,31 @@
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-email! tx {:email email :id participant-id})))
   (update-registration-details!
-    [{:keys [spec]} registration after-fn]
+    [{:keys [spec]} session registration after-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
         tx
-        #(when-let [update-success (int->boolean (q/update-registration-to-submitted! tx registration))]
+        #(when-let [updated (q/update-registration-to-submitted<! tx registration)]
+           (q/insert-registration-change-event!
+             tx
+             (merge (registration->change-event updated)
+                    {:event       "SUBMIT"
+                     :author_type "USER"
+                     :created_by  (get-in session [:identity :oid])}))
            (after-fn)
-           update-success))))
+           updated))))
   (create-registration!
-    [{:keys [spec]} registration]
+    [{:keys [spec]} session registration]
     (jdbc/with-db-transaction [tx spec]
-      (:id (q/insert-registration<! tx registration))))
+      (when-let [created (q/insert-registration<! tx registration)]
+        (q/insert-registration-change-event!
+          tx
+          (merge
+            (registration->change-event created)
+            {:event       "CREATE"
+             :author_type "USER"
+             :created_by  (get-in session [:identity :oid])}))
+        (:id created))))
   (update-started-registration-oid!
     [{:keys [spec]} registration-id person-oid]
     (jdbc/with-db-transaction [tx spec]
@@ -127,17 +150,13 @@
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-started-registrations-to-expire tx)
                      (map :id))]
-        (when (seq ids)
-          (q/expire-registrations-by-ids! tx {:ids ids})
-          ids))))
+        (expire-registrations! tx ids))))
   (update-submitted-registrations-to-expired!
     [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-submitted-registrations-to-expire tx)
                      (map :id))]
-        (when (seq ids)
-          (q/expire-registrations-by-ids! tx {:ids ids})
-          ids))))
+        (expire-registrations! tx ids))))
   (get-participant-data-by-registration-id
     [{:keys [spec]} registration-id]
     (first (q/select-participant-data-by-registration-id spec {:id registration-id})))
@@ -181,16 +200,34 @@
         tx
         (fn update-payment-and-registration-states! []
           (let [updated-payment-details (q/update-new-exam-payment-to-paid<! tx {:id payment-id})
-                updated-registration    (q/complete-registration<! tx {:id registration-id})]
-            (when (= "COMPLETED" (:state updated-registration))
+                updated-registration    (q/complete-registration<! tx {:id registration-id})
+                new-state               (:state updated-registration)]
+            (when (= "COMPLETED" new-state)
               (after-fn updated-payment-details))
+            (when (#{"COMPLETED" "PAID_AND_CANCELLED"} new-state)
+              (q/insert-registration-change-event!
+                tx
+                (merge (registration->change-event updated-registration)
+                       {:event       "COMPLETE_PAYMENT"
+                        :author_type "INTEGRATION"
+                        :created_by  nil})))
             updated-registration)))))
-  (cancel-started-registration-for-participant! [{:keys [spec]} participant-id registration-id]
-    (int->boolean
-      (q/cancel-started-registration-for-participant!
-        spec
-        {:id             registration-id
-         :participant_id participant-id})))
+  (cancel-started-registration-for-participant! [{:keys [spec]} session participant-id registration-id]
+    (jdbc/with-db-transaction [tx spec]
+      (rollback-on-exception
+        tx
+        (fn cancel-registration! []
+          (when-let [canceled (q/cancel-started-registration-for-participant<!
+                                spec
+                                {:id             registration-id
+                                 :participant_id participant-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event canceled)
+                     {:event       "CANCEL"
+                      :author_type "USER"
+                      :created_by  (get-in session [:identity :oid])}))
+            canceled)))))
   (get-started-registration-expires-in [{:keys [spec]} registration-id]
     (let [expires-at (q/select-started-registration-expires-at spec {:id registration-id})
           now        (t/now)]
@@ -201,20 +238,21 @@
     (q/select-participant-and-queue-count-by-exam-session spec))
   (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email!]
     (jdbc/with-db-transaction [tx spec]
-      ; TODO rollback-on-exception does not seem to reliably rollback changes!
-      ; For instance, if an error is thrown when sending email,
-      ; it appears that the registration will end up being lifted from queue.
       (rollback-on-exception
         tx
         (fn lift-registration-and-notify! []
-          (let [registration (q/lift-registration-from-queue<! spec {:exam_session_id exam-session-id})]
+          (let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event registration)
+                     {:event       "LIFT_FROM_QUEUE"
+                      :author_type "AUTOMATION"
+                      :created_by  nil}))
             (send-email! registration))))))
   (expire-queued-registrations-after-exam-date! [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-queued-registrations-to-expire tx)
                      (map :id))]
-        (when (seq ids)
-          (q/expire-registrations-by-ids! tx {:ids ids})
-          ids))))
+        (expire-registrations! tx ids))))
   (get-free-registration [{:keys [spec]} registration-id]
     (first (q/select-free-registration spec {:id registration-id}))))

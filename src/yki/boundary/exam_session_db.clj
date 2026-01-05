@@ -7,6 +7,7 @@
             [duct.database.sql]
             [jeesql.core :refer [require-sql]]
             [yki.boundary.db-extensions]
+            [yki.registration.change-event :refer [registration->change-event]]
             [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 
@@ -74,16 +75,14 @@
   (init-relocated-participants-sync-status! [db exam-session-id])
   (set-participants-sync-to-success! [db exam-session-id])
   (set-participants-sync-to-failed! [db exam-session-id retry-duration])
-  (cancel-registration! [db registration-id])
-  (cancel-unpaid-registration! [db registration-id oid])
-  (update-registration-exam-session! [db to-exam-session-id registration-id oid])
+  (cancel-registration! [db session registration-id])
+  (update-registration-exam-session! [db session to-exam-session-id registration-id oid])
   (get-exam-session-by-id [db id])
   (get-exam-session-registration-by-registration-id [db registration-id])
   (get-exam-session-with-location [db id lang])
   (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
   (get-exam-sessions-to-be-synced [db retry-duration])
-  (get-exam-session-organizer-oid [db registration-id])
   (get-exam-sessions [db from]
     "Get exam sessions with exam date at least 'from'")
   (get-exam-sessions-for-oid [db oid from]
@@ -127,28 +126,45 @@
     (jdbc/with-db-transaction [tx spec]
       (q/update-participant-sync-to-failed! tx {:exam_session_id exam-session-id :interval interval})))
   (update-registration-exam-session!
-    [{:keys [spec]} to-exam-session-id registration-id oid]
+    [{:keys [spec]} session to-exam-session-id registration-id oid]
     (jdbc/with-db-transaction [tx spec]
-      (let [{exam-session-id :id exam-date :exam_date} (q/select-registration-details-for-transfer tx {:id registration-id})
-            valid-transfer-targets (get-transfer-targets-for-exam-session
-                                     tx
-                                     exam-date
-                                     exam-session-id)]
-        (if (some #{to-exam-session-id} valid-transfer-targets)
-          (int->boolean (q/update-registration-exam-session!
-                          tx
-                          {:exam_session_id to-exam-session-id
-                           :registration_id registration-id
-                           :oid             oid}))
-          false))))
+      (rollback-on-exception
+        tx
+        (fn do-relocate! []
+          (let [{exam-session-id :id exam-date :exam_date} (q/select-registration-details-for-transfer tx {:id registration-id})
+                valid-transfer-targets (get-transfer-targets-for-exam-session
+                                         tx
+                                         exam-date
+                                         exam-session-id)]
+            (if (some #{to-exam-session-id} valid-transfer-targets)
+              (when-let [updated (q/update-registration-exam-session<!
+                                   tx
+                                   {:exam_session_id to-exam-session-id
+                                    :registration_id registration-id
+                                    :oid             oid})]
+                (q/insert-registration-change-event!
+                  tx
+                  (merge (registration->change-event updated)
+                         {:event                    "RELOCATE"
+                          :author_type              "CLERK"
+                          :created_by               (get-in session [:identity :oid])
+                          :original_exam_session_id exam-session-id}))
+                updated)
+              false))))))
   (cancel-registration!
-    [{:keys [spec]} registration-id]
+    [{:keys [spec]} session registration-id]
     (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/cancel-registration! tx {:id registration-id}))))
-  (cancel-unpaid-registration!
-    [{:keys [spec]} registration-id oid]
-    (jdbc/with-db-transaction [tx spec]
-      (int->boolean (q/cancel-unpaid-registration-for-organizer! tx {:id registration-id :oid oid}))))
+      (rollback-on-exception
+        tx
+        (fn do-cancel! []
+          (when-let [canceled (q/cancel-registration<! tx {:id registration-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event canceled)
+                     {:event       "CANCEL"
+                      :author_type "CLERK"
+                      :created_by  (get-in session [:identity :oid])}))
+            canceled)))))
   (update-exam-session!
     [{:keys [spec]} oid id exam-session]
     (jdbc/with-db-transaction [tx spec]
@@ -186,8 +202,6 @@
     (q/select-exam-session-participants spec {:id id :oid oid}))
   (get-completed-exam-session-participants [{:keys [spec]} id]
     (q/select-completed-exam-session-participants spec {:id id}))
-  (get-exam-session-organizer-oid [{:keys [spec]} id]
-    (q/select-exam-session-organizer-oid spec {:id id}))
   (get-exam-sessions [{:keys [spec]} from]
     (q/select-exam-sessions spec {:from from}))
   (get-exam-sessions-for-oid [{:keys [spec]} oid from]
