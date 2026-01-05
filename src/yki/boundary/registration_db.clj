@@ -244,7 +244,7 @@
           (let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id})]
             (q/insert-registration-change-event!
               tx
-              (merge (registration->change-event registration->change-event)
+              (merge (registration->change-event registration)
                      {:event       "LIFT_FROM_QUEUE"
                       :author_type "AUTOMATION"
                       :created_by  nil}))
