@@ -4,10 +4,11 @@ CREATE TABLE IF NOT EXISTS exam_session_statistics (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp,
     last_processed_event TIMESTAMP WITH TIME ZONE NOT NULL,
     participants INTEGER NOT NULL,
-    queue INTEGER NOT NULL
-    -- TODO Also max counts of participants and queue?
-    -- TODO Separately also max allowed participants?
-    -- TODO Time of highest participant / queue counts?
+    queue INTEGER NOT NULL,
+    max_participant_count INTEGER NOT NULL,
+    max_queue_count INTEGER NOT NULL,
+    max_participants_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    max_queue_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS exam_session_statistics_exam_session_id ON
