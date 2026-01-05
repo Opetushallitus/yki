@@ -1968,10 +1968,11 @@ FROM free_registration
 WHERE registration_id = :id;
 
 -- name: select-exam-sessions-for-statistics-sync
-SELECT es.id, ess.last_processed_event
+SELECT
+    es.id,
+    (SELECT ess.last_processed_event FROM exam_session_statistics ess WHERE ess.exam_session_id = es.id ORDER BY ess.last_processed_event DESC LIMIT 1) AS last_processed_event
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
-LEFT JOIN exam_session_statistics ess ON es.id = ess.exam_session_id
 WHERE within_dt_range(now(), ed.registration_start_date - interval '1 day', ed.exam_date + interval '1 day');
 
 -- name: select-initial-statistics-for-exam-session
