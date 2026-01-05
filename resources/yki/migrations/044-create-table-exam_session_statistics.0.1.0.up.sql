@@ -13,3 +13,5 @@ CREATE TABLE IF NOT EXISTS exam_session_statistics (
 
 CREATE INDEX IF NOT EXISTS exam_session_statistics_exam_session_id ON
 exam_session_statistics (exam_session_id);
+
+INSERT INTO task_lock (task, last_executed) VALUES ('EXAM_SESSION_STATISTICS_HANDLER', '-infinity');
