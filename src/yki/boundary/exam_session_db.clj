@@ -89,7 +89,10 @@
     "Get exam sessions by oid and with (optional) exam date at least 'from'")
   (remove-old-entries-from-exam-session-queue! [db])
   (get-contact-info-by-exam-session-id [db id])
-  (get-exam-session-location-extra-information [db id lang]))
+  (get-exam-session-location-extra-information [db id lang])
+  (get-exam-sessions-for-statistics-sync [db])
+  (get-initial-statistics-for-exam-session [db exam-session-id])
+  (update-exam-session-statistics! [db statistics]))
 
 (extend-protocol ExamSessions
   Boundary
@@ -216,8 +219,13 @@
   (get-contact-info-by-exam-session-id
     [{:keys [spec]} id]
     (first (q/select-exam-session-contact-info spec {:id id})))
-
   (get-exam-session-location-extra-information
     [{:keys [spec]} id lang]
     (first (q/select-exam-session-extra-information spec {:id   id
-                                                          :lang lang}))))
+                                                          :lang lang})))
+  (get-exam-sessions-for-statistics-sync [{:keys [spec]}]
+    (q/select-exam-sessions-for-statistics-sync spec))
+  (get-initial-statistics-for-exam-session [{:keys [spec]} exam-session-id]
+    (first (q/select-initial-statistics-for-exam-session spec {:id exam-session-id})))
+  (update-exam-session-statistics! [{:keys [spec]} statistics]
+    (q/insert-exam-session-statistics! spec statistics)))
