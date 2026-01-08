@@ -218,7 +218,7 @@
         tx
         (fn cancel-registration! []
           (when-let [canceled (q/cancel-started-registration-for-participant<!
-                                spec
+                                tx
                                 {:id             registration-id
                                  :participant_id participant-id})]
             (q/insert-registration-change-event!

@@ -91,7 +91,9 @@
   (get-contact-info-by-exam-session-id [db id])
   (get-exam-session-location-extra-information [db id lang])
   (get-exam-sessions-for-statistics-sync [db])
+  (get-exam-session-statistics [{:keys [spec]} statistics-id])
   (get-initial-statistics-for-exam-session [db exam-session-id])
+  (get-unprocessed-events-for-exam-session [{:keys [spec]} exam-session-id last-processed-event])
   (update-exam-session-statistics! [db statistics]))
 
 (extend-protocol ExamSessions
@@ -225,7 +227,13 @@
                                                           :lang lang})))
   (get-exam-sessions-for-statistics-sync [{:keys [spec]}]
     (q/select-exam-sessions-for-statistics-sync spec))
+  (get-exam-session-statistics [{:keys [spec]} statistics-id]
+    (q/select-exam-session-statistics spec {:id statistics-id}))
   (get-initial-statistics-for-exam-session [{:keys [spec]} exam-session-id]
     (first (q/select-initial-statistics-for-exam-session spec {:id exam-session-id})))
+  (get-unprocessed-events-for-exam-session [{:keys [spec]} exam-session-id last-processed-event]
+    (q/select-unprocessed-change-events-for-exam-session
+      spec
+      {:exam_session_id exam-session-id :last_processed_event last-processed-event}))
   (update-exam-session-statistics! [{:keys [spec]} statistics]
     (q/insert-exam-session-statistics! spec statistics)))

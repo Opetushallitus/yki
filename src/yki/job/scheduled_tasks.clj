@@ -236,15 +236,56 @@
      (catch Exception e
        (log/error e "Person migration failed"))))
 
-(defn- get-statistics-entry [db {:keys [id last_processed_event]}]
-  (if (some? last_processed_event)
-    ; TODO Diff from last statistics entry not implemented yet!
-    ; TODO Get events since last_processed_event
-    ; TODO Reduce over events
-    ; TODO Add differences to previous statistics entry
-    ; TODO Keep track of max timestamps all the time...
-    ; TODO Update last_processed_event
-    nil
+(defn- statistics+event->statistics [{:keys [exam_session_id participants queue max_participants_count max_queue_count max_participants_at max_queue_at]
+                                      :as   statistics}
+                                     {:keys [id created_at event registration_state registration_kind original_exam_session_id]
+                                      :as   change-event}]
+  (try
+    (let [queue?                   (= registration_kind "QUEUE")
+          update-participants      (if queue?
+                                     identity
+                                     (case event
+                                       ("CREATE" "LIFT_FROM_QUEUE")
+                                       inc
+                                       ("CANCEL" "EXPIRE")
+                                       dec
+                                       "RELOCATE"
+                                       (if (= exam_session_id (:exam_session_id change-event))
+                                         inc dec)
+                                       ("SUBMIT" "COMPLETE_PAYMENT")
+                                       identity))
+          update-queue             (if queue?
+                                     (case event
+                                       "CREATE"
+                                       inc
+                                       ("CANCEL" "EXPIRE")
+                                       dec
+                                       "SUBMIT"
+                                       identity)
+                                     (case event
+                                       "LIFT_FROM_QUEUE"
+                                       dec
+                                       identity))
+          new-participants         (update-participants participants)
+          new-queue                (update-queue queue)
+          has-new-max-participants (< max_participants_count new-participants)
+          has-new-max-queue        (< max_queue_count new-queue)]
+      {:exam_session_id       exam_session_id
+       :last_processed_event  created_at
+       :max_participants_at   (if has-new-max-participants created_at max_participants_at)
+       :max_queue_at          (if has-new-max-queue created_at max_queue_at)
+       :participants          new-participants
+       :max_participant_count (if has-new-max-participants new-participants max_participants_count)
+       :max_queue_count       (if has-new-max-queue new-queue max_queue_count)})
+    (catch Exception e
+      (log/error e "Caught error while processing change event; ignoring change event, potentially distorting statistics! Change event id:" id)
+      statistics)))
+
+(defn- get-statistics-entry [db {:keys [id last_processed_event previous_statistics_id]}]
+  (if (some? previous_statistics_id)
+    (let [previous-statistics (exam-session-db/get-exam-session-statistics db previous_statistics_id)
+          new-events          (exam-session-db/get-unprocessed-events-for-exam-session db id last_processed_event)]
+      (reduce statistics+event->statistics previous-statistics new-events))
     (let [{:keys [participants queue]} (exam-session-db/get-initial-statistics-for-exam-session db id)
           now (t/now)]
       {:exam_session_id       id
