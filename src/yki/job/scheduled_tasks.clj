@@ -326,7 +326,9 @@
   {:pre [(some? db)]}
   #(try
      (when (job-db/try-to-acquire-lock! db exam-session-statistics-handler-conf)
+       (log/info "Exam session statistics handler started")
        (let [exam-sessions-to-sync (exam-session-db/get-exam-sessions-for-statistics-sync db)]
+         (log/info "Found exam sessions to sync" (map :id exam-sessions-to-sync))
          (doseq [exam-session exam-sessions-to-sync]
            (when-let [statistics-to-insert (get-statistics-entry db exam-session)]
              (exam-session-db/update-exam-session-statistics! db statistics-to-insert)))))
