@@ -236,9 +236,9 @@
      (catch Exception e
        (log/error e "Person migration failed"))))
 
-(defn- statistics+event->statistics [{:keys [exam_session_id participants queue max_participants_count max_queue_count max_participants_at max_queue_at]
+(defn- statistics+event->statistics [{:keys [exam_session_id participants queue max_participant_count max_queue_count max_participants_at max_queue_at]
                                       :as   statistics}
-                                     {:keys [id created_at event registration_state registration_kind original_exam_session_id]
+                                     {:keys [id created_at event registration_kind]
                                       :as   change-event}]
   (try
     (let [queue?                   (= registration_kind "QUEUE")
@@ -268,14 +268,15 @@
                                        identity))
           new-participants         (update-participants participants)
           new-queue                (update-queue queue)
-          has-new-max-participants (< max_participants_count new-participants)
+          has-new-max-participants (< max_participant_count new-participants)
           has-new-max-queue        (< max_queue_count new-queue)]
       {:exam_session_id       exam_session_id
        :last_processed_event  created_at
        :max_participants_at   (if has-new-max-participants created_at max_participants_at)
        :max_queue_at          (if has-new-max-queue created_at max_queue_at)
        :participants          new-participants
-       :max_participant_count (if has-new-max-participants new-participants max_participants_count)
+       :queue                 new-queue
+       :max_participant_count (if has-new-max-participants new-participants max_participant_count)
        :max_queue_count       (if has-new-max-queue new-queue max_queue_count)})
     (catch Exception e
       (log/error e "Caught error while processing change event; ignoring change event, potentially distorting statistics! Change event id:" id)
@@ -296,6 +297,30 @@
        :max_participant_count participants
        :queue                 queue
        :max_queue_count       queue})))
+
+(comment
+  (let [now           (t/now)
+        initial-state {:exam_session_id       1
+                       :last_processed_event  now
+                       :max_participants_at   now
+                       :max_queue_at          now
+                       :participants          3
+                       :max_participant_count 3
+                       :queue                 1
+                       :max_queue_count       1}
+        events        [{:exam_session_id   2
+                        :event             "RELOCATE"
+                        :registration_kind "ADMISSION"
+                        :created_at        (t/plus now (t/minutes 1))}
+                       {:exam_session_id   1
+                        :event             "CREATE"
+                        :registration_kind "QUEUE"
+                        :created_at        (t/plus now (t/minutes 2))}
+                       {:exam_session_id   1
+                        :event             "LIFT_FROM_QUEUE"
+                        :registration_kind "ADMISSION"
+                        :created_at        (t/plus now (t/minutes 3))}]]
+    (reduce statistics+event->statistics initial-state events)))
 
 (defmethod ig/init-key ::exam-session-statistics-handler [_ {:keys [db]}]
   {:pre [(some? db)]}
