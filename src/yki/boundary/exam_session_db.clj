@@ -228,7 +228,7 @@
   (get-exam-sessions-for-statistics-sync [{:keys [spec]}]
     (q/select-exam-sessions-for-statistics-sync spec))
   (get-exam-session-statistics [{:keys [spec]} statistics-id]
-    (q/select-exam-session-statistics spec {:id statistics-id}))
+    (first (q/select-exam-session-statistics spec {:id statistics-id})))
   (get-initial-statistics-for-exam-session [{:keys [spec]} exam-session-id]
     (first (q/select-initial-statistics-for-exam-session spec {:id exam-session-id})))
   (get-unprocessed-events-for-exam-session [{:keys [spec]} exam-session-id last-processed-event]
