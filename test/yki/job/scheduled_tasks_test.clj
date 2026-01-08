@@ -1,5 +1,6 @@
 (ns yki.job.scheduled-tasks-test
   (:require
+    [clojure.string :as str]
     [clojure.test :refer [deftest is testing use-fixtures]]
     [clojure.java.jdbc :as jdbc]
     [clj-time.core :as t]
@@ -8,7 +9,6 @@
     [pgqueue.core :as pgq]
     [stub-http.core :refer [with-routes!]]
     [yki.boundary.exam-session-db :as exam-session-db]
-    [yki.boundary.onr :as onr]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.job.scheduled-tasks]))
@@ -200,3 +200,170 @@
           failed_at_after  (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))]
       (testing "should update failed at timestamp"
         (is (t/after? failed_at_after failed_at_before))))))
+
+(defn- insert-change-event! [{:keys [event exam_session_id registration_id registration_state registration_kind original_exam_session_id author_type created_at]}]
+  (let [sql-format           #(cond
+                                (string? %)
+                                (str "'" % "'")
+                                (inst? %)
+                                (str "'" % "'")
+                                (nil? %)
+                                "NULL"
+                                :else
+                                %)
+        sql-formatted-values (str "("
+                                  (->> [event exam_session_id registration_id registration_state registration_kind original_exam_session_id author_type created_at]
+                                       (map sql-format)
+                                       (str/join ","))
+                                  ")")]
+    (base/execute! (str "INSERT INTO registration_change_event (event, exam_session_id, registration_id, registration_state, registration_kind, original_exam_session_id, author_type, created_at) VALUES " sql-formatted-values))))
+
+(deftest exam-session-statistics-handler-test
+  (base/insert-base-data)
+  (let [handler                               (ig/init-key :yki.job.scheduled-tasks/exam-session-statistics-handler {:db (base/db)})
+        clear-task-lock!                      #(base/execute! "UPDATE task_lock SET last_executed='-infinity' WHERE task='EXAM_SESSION_STATISTICS_HANDLER'")
+        exam-session-id                       (:id (base/select-one "SELECT id FROM exam_session"))
+        select-latest-exam-session-statistics #(base/select-one (str "SELECT * FROM exam_session_statistics WHERE exam_session_id=" exam-session-id " ORDER BY last_processed_event DESC LIMIT 1"))
+        participant-1                         (:id (base/select-one base/select-participant))
+        participant-2                         (inc participant-1)]
+    (testing "initial state"
+      (is (= nil (select-latest-exam-session-statistics))))
+    (testing "no exam session statistics are generated if time of execution is not roughly between registration start date and exam date"
+      (clear-task-lock!)
+      (handler)
+      (is (= nil (select-latest-exam-session-statistics))))
+    (testing "first run of handler yields initial statistics for exam session based on actual registration counts"
+      (base/execute! "UPDATE exam_date SET registration_start_date=(current_date - interval '1 week'), exam_date=(current_date + interval '2 weeks')")
+      (base/execute! (str "UPDATE exam_session SET max_participants=1 WHERE id=" exam-session-id))
+      (base/execute! (str "INSERT INTO registration (participant_id, exam_session_id, state, kind) VALUES ("
+                          (str/join "," [participant-1, exam-session-id, "'STARTED'", "'ADMISSION'"])
+                          "), ("
+                          (str/join "," [participant-2, exam-session-id, "'STARTED'", "'QUEUE'"])
+                          ")"))
+      (clear-task-lock!)
+      (handler)
+      (let [{:keys [participants max_participant_count queue max_queue_count]} (select-latest-exam-session-statistics)]
+        (is (= 1 participants max_participant_count queue max_queue_count))))
+    (testing "later runs of handler aggregate change events on top of initial statistics entry"
+      (let [{:keys [last_processed_event]} (select-latest-exam-session-statistics)]
+        ; +1 to queue, +1 to max_queue
+        (insert-change-event! {:event              "CREATE"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "STARTED"
+                               :registration_kind  "QUEUE"
+                               :author_type        "USER"
+                               :created_at         (t/plus last_processed_event (t/seconds 1))})
+        ; +1 to queue, +1 to max_queue
+        (insert-change-event! {:event              "CREATE"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "STARTED"
+                               :registration_kind  "QUEUE"
+                               :author_type        "USER"
+                               :created_at         (t/plus last_processed_event (t/seconds 2))})
+        ; +1 to participants, +1 to max_participants, -1 to queue
+        (insert-change-event! {:event              "LIFT_FROM_QUEUE"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "SUBMITTED"
+                               :registration_kind  "ADMISSION"
+                               :author_type        "USER"
+                               :created_at         (t/plus last_processed_event (t/seconds 3))})
+        ; no change to counts
+        (insert-change-event! {:event              "COMPLETE_PAYMENT"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "COMPLETED"
+                               :registration_kind  "ADMISSION"
+                               :author_type        "INTEGRATION"
+                               :created_at         (t/plus last_processed_event (t/seconds 4))})
+        (clear-task-lock!)
+        (handler)
+        (is (= {:participants          2
+                :queue                 2
+                :max_participant_count 2
+                :max_queue_count       3}
+               (-> (select-latest-exam-session-statistics)
+                   (select-keys [:participants :queue :max_participant_count :max_queue_count])))))
+      (let [{:keys [last_processed_event]} (select-latest-exam-session-statistics)]
+        ; +1 to max_participants, +1 to participants
+        (insert-change-event! {:event              "CREATE"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "STARTED"
+                               :registration_kind  "ADMISSION"
+                               :author_type        "USER"
+                               :created_at         (t/plus last_processed_event (t/seconds 1))})
+        ; no change to counts
+        (insert-change-event! {:event              "SUBMIT"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "SUBMITTED"
+                               :registration_kind  "ADMISSION"
+                               :author_type        "USER"
+                               :created_at         (t/plus last_processed_event (t/seconds 2))})
+        ; -1 to participants
+        (insert-change-event! {:event              "EXPIRE"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "PAID_AND_CANCELLED"
+                               :registration_kind  "ADMISSION"
+                               :author_type        "AUTOMATION"
+                               :created_at         (t/plus last_processed_event (t/seconds 3))})
+        ; -1 to queue
+        (insert-change-event! {:event              "CANCEL"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "CANCELLED"
+                               :registration_kind  "QUEUE"
+                               :author_type        "CLERK"
+                               :created_at         (t/plus last_processed_event (t/seconds 4))})
+        (clear-task-lock!)
+        (handler)
+        (is (= {:participants          2
+                :queue                 1
+                :max_participant_count 3
+                :max_queue_count       3}
+               (-> (select-latest-exam-session-statistics)
+                   (select-keys [:participants :queue :max_participant_count :max_queue_count])))))
+      (let [{:keys [last_processed_event]} (select-latest-exam-session-statistics)]
+        (base/insert-exam-session 2 (:oid base/organizer) 1)
+        ; +1 to participants
+        (insert-change-event! {:event              "CREATE"
+                               :exam_session_id    exam-session-id
+                               :registration_id    1
+                               :registration_state "STARTED"
+                               :registration_kind  "ADMISSION"
+                               :author_type        "USER"
+                               :created_at         (t/plus last_processed_event (t/seconds 1))})
+        ; relocate TO exam session of interest
+        ; =>
+        ; +1 to participants, +1 to max_participants
+        (insert-change-event! {:event                    "RELOCATE"
+                               :exam_session_id          exam-session-id
+                               :registration_id          1
+                               :registration_state       "COMPLETED"
+                               :registration_kind        "ADMISSION"
+                               :author_type              "USER"
+                               :original_exam_session_id (inc exam-session-id)
+                               :created_at               (t/plus last_processed_event (t/seconds 2))})
+        ; relocate FROM exam session of interest
+        ; =>
+        ; -1 to participants
+        (insert-change-event! {:event                    "RELOCATE"
+                               :exam_session_id          (inc exam-session-id)
+                               :registration_id          1
+                               :registration_state       "COMPLETED"
+                               :registration_kind        "ADMISSION"
+                               :author_type              "USER"
+                               :original_exam_session_id exam-session-id
+                               :created_at               (t/plus last_processed_event (t/seconds 3))})
+        (clear-task-lock!)
+        (handler)
+        (is (= {:participants          3
+                :queue                 1
+                :max_participant_count 4
+                :max_queue_count       3}
+               (-> (select-latest-exam-session-statistics)
+                   (select-keys [:participants :queue :max_participant_count :max_queue_count]))))))))
