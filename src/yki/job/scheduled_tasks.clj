@@ -270,58 +270,61 @@
           new-queue                (update-queue queue)
           has-new-max-participants (< max_participant_count new-participants)
           has-new-max-queue        (< max_queue_count new-queue)]
-      {:exam_session_id       exam_session_id
-       :last_processed_event  created_at
-       :max_participants_at   (if has-new-max-participants created_at max_participants_at)
-       :max_queue_at          (if has-new-max-queue created_at max_queue_at)
-       :participants          new-participants
-       :queue                 new-queue
-       :max_participant_count (if has-new-max-participants new-participants max_participant_count)
-       :max_queue_count       (if has-new-max-queue new-queue max_queue_count)})
+      {:exam_session_id         exam_session_id
+       :last_processed_event_id id
+       :max_participants_at     (if has-new-max-participants created_at max_participants_at)
+       :max_queue_at            (if has-new-max-queue created_at max_queue_at)
+       :participants            new-participants
+       :queue                   new-queue
+       :max_participant_count   (if has-new-max-participants new-participants max_participant_count)
+       :max_queue_count         (if has-new-max-queue new-queue max_queue_count)})
     (catch Exception e
       (log/error e "Caught error while processing change event; ignoring change event, potentially distorting statistics! Change event id:" id)
       statistics)))
 
-(defn- get-statistics-entry [db {:keys [id last_processed_event previous_statistics_id]}]
+(defn- get-statistics-entry [db {:keys [id last_processed_event_id previous_statistics_id]}]
   (if (some? previous_statistics_id)
     (let [previous-statistics (exam-session-db/get-exam-session-statistics db previous_statistics_id)
-          new-events          (exam-session-db/get-unprocessed-events-for-exam-session db id last_processed_event)]
+          new-events          (exam-session-db/get-unprocessed-events-for-exam-session db id last_processed_event_id)]
       (if (seq new-events)
         (reduce statistics+event->statistics previous-statistics new-events)
         nil))
     (let [{:keys [participants queue]} (exam-session-db/get-initial-statistics-for-exam-session db id)
           now (t/now)]
-      {:exam_session_id       id
-       :last_processed_event  now
-       :max_participants_at   now
-       :max_queue_at          now
-       :participants          participants
-       :max_participant_count participants
-       :queue                 queue
-       :max_queue_count       queue})))
+      {:exam_session_id         id
+       :last_processed_event_id nil
+       :max_participants_at     now
+       :max_queue_at            now
+       :participants            participants
+       :max_participant_count   participants
+       :queue                   queue
+       :max_queue_count         queue})))
 
 (comment
   (let [now           (t/now)
-        initial-state {:exam_session_id       1
-                       :last_processed_event  now
-                       :max_participants_at   now
-                       :max_queue_at          now
-                       :participants          3
-                       :max_participant_count 3
-                       :queue                 1
-                       :max_queue_count       1}
+        initial-state {:exam_session_id         1
+                       :last_processed_event_id nil
+                       :max_participants_at     now
+                       :max_queue_at            now
+                       :participants            3
+                       :max_participant_count   3
+                       :queue                   1
+                       :max_queue_count         1}
         events        [{:exam_session_id   2
                         :event             "RELOCATE"
                         :registration_kind "ADMISSION"
-                        :created_at        (t/plus now (t/minutes 1))}
+                        :created_at        (t/plus now (t/minutes 1))
+                        :id 3}
                        {:exam_session_id   1
                         :event             "CREATE"
                         :registration_kind "QUEUE"
-                        :created_at        (t/plus now (t/minutes 2))}
+                        :created_at        (t/plus now (t/minutes 2))
+                        :id 5}
                        {:exam_session_id   1
                         :event             "LIFT_FROM_QUEUE"
                         :registration_kind "ADMISSION"
-                        :created_at        (t/plus now (t/minutes 3))}]]
+                        :created_at        (t/plus now (t/minutes 3))
+                        :id 9}]]
     (reduce statistics+event->statistics initial-state events)))
 
 (defmethod ig/init-key ::exam-session-statistics-handler [_ {:keys [db]}]
