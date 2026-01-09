@@ -286,7 +286,9 @@
   (if (some? previous_statistics_id)
     (let [previous-statistics (exam-session-db/get-exam-session-statistics db previous_statistics_id)
           new-events          (exam-session-db/get-unprocessed-events-for-exam-session db id last_processed_event)]
-      (reduce statistics+event->statistics previous-statistics new-events))
+      (if (seq new-events)
+        (reduce statistics+event->statistics previous-statistics new-events)
+        nil))
     (let [{:keys [participants queue]} (exam-session-db/get-initial-statistics-for-exam-session db id)
           now (t/now)]
       {:exam_session_id       id
