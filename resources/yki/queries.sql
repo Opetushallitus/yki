@@ -1970,10 +1970,15 @@ WHERE registration_id = :id;
 -- name: select-exam-sessions-for-statistics-sync
 SELECT
     es.id,
-    (SELECT ess.last_processed_event FROM exam_session_statistics ess WHERE ess.exam_session_id = es.id ORDER BY ess.last_processed_event DESC LIMIT 1) AS last_processed_event
+    (SELECT ess.id FROM exam_session_statistics ess WHERE ess.exam_session_id = es.id ORDER BY ess.id DESC LIMIT 1) AS previous_statistics_id,
+    (SELECT ess.last_processed_event_id FROM exam_session_statistics ess WHERE ess.exam_session_id = es.id ORDER BY ess.id DESC LIMIT 1) AS last_processed_event_id
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 WHERE within_dt_range(now(), ed.registration_start_date - interval '1 day', ed.exam_date + interval '1 day');
+
+-- name: select-exam-session-statistics
+SELECT * FROM exam_session_statistics
+WHERE id = :id;
 
 -- name: select-initial-statistics-for-exam-session
 SELECT
@@ -1982,6 +1987,13 @@ SELECT
 FROM exam_session es
 WHERE es.id = :id;
 
+-- name: select-unprocessed-change-events-for-exam-session
+SELECT id, created_at, event, exam_session_id, original_exam_session_id, registration_state, registration_kind
+FROM registration_change_event
+WHERE (exam_session_id = :exam_session_id OR original_exam_session_id = :exam_session_id)
+  AND id > COALESCE(:last_processed_event_id, -1)
+ORDER BY id;
+
 -- name: insert-exam-session-statistics!
-INSERT INTO exam_session_statistics (exam_session_id, last_processed_event, participants, queue, max_participant_count, max_queue_count, max_participants_at, max_queue_at)
-VALUES (:exam_session_id, :last_processed_event, :participants, :queue, :max_participant_count, :max_queue_count, :max_participants_at, :max_queue_at);
+INSERT INTO exam_session_statistics (exam_session_id, last_processed_event_id, participants, queue, max_participant_count, max_queue_count, max_participants_at, max_queue_at)
+VALUES (:exam_session_id, :last_processed_event_id, :participants, :queue, :max_participant_count, :max_queue_count, :max_participants_at, :max_queue_at);
