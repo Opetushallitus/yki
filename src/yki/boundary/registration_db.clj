@@ -50,6 +50,10 @@
   (expire-queued-registrations-after-exam-date! [db])
   (get-free-registration [db registration-id]))
 
+(defn get-registration-data-with-tx
+         [tx registration-id participant-id lang]
+         (first (q/select-registration-data tx {:id registration-id :participant_id participant-id :lang lang})))
+
 (defn- expire-registrations! [tx ids]
   (when (seq ids)
     (let [expired (q/expire-registrations-by-ids! tx {:ids ids})]
@@ -248,7 +252,7 @@
                      {:event       "LIFT_FROM_QUEUE"
                       :author_type "AUTOMATION"
                       :created_by  nil}))
-            (send-email! registration))))))
+            (send-email! tx registration))))))
   (expire-queued-registrations-after-exam-date! [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-queued-registrations-to-expire tx)
