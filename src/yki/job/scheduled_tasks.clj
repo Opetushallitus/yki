@@ -196,9 +196,9 @@
   #(try
      (when (job-db/try-to-acquire-lock! db registration-queue-handler-conf)
        (log/info "Registration queue handler started")
-       (let [create-and-send-payment-link! (fn [{:keys [id participant_id ui_language]}]
+       (let [create-and-send-payment-link! (fn [tx {:keys [id participant_id ui_language]}]
                                              (let [lang                (or ui_language "fi")
-                                                   email-template-data (registration-db/get-registration-data db id participant_id lang)
+                                                   email-template-data (registration-db/get-registration-data-with-tx tx id participant_id lang)
                                                    code                (str (random-uuid))
                                                    login-url           (url-helper :yki.login-link.url code)
                                                    free?               (:free_registration_id email-template-data)]
