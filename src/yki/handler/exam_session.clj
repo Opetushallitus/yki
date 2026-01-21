@@ -135,11 +135,9 @@
             :return ::ys/participants-response
             (let [participants     (exam-session-db/get-exam-session-participants db id oid)
                   oph-admin?       (auth/oph-admin? (auth/get-organizations-from-session session))
-                  oid->ssn         (if oph-admin?
-                                     (->> participants
-                                          (map :person_oid)
-                                          (onr/list-ssn-by-oids onr-client))
-                                     {})
+                  oid->ssn         (->> participants
+                                        (map :person_oid)
+                                        (onr/list-ssn-by-oids onr-client))
                   ssn-participants (map #(assoc-in
                                            (dissoc % :person_oid)
                                            [:form :ssn]
