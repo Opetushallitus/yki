@@ -36,9 +36,10 @@
         :middleware [auth access-log wrap-params]
         (POST "/:id" _
           :path-params [id :- ::ys/id]
-          (log/info "Manually forcing exam session" id "to be synced to Solki")
+          :query-params [{delete :- boolean? nil}]
+          (log/info "Force Solki exam session sync" {:id id :delete delete})
           (if-let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-            (if (sync-exam-session-and-organizer db url-helper basic-auth false {:type         "CREATED"
+            (if (sync-exam-session-and-organizer db url-helper basic-auth false {:type         (if delete "DELETE" "CREATED")
                                                                                  :exam-session exam-session})
               (ok {:success true})
               (internal-server-error))
