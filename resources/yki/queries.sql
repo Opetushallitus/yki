@@ -1833,6 +1833,7 @@ WHERE oid = :oid;
 SELECT r.id, r.exam_session_id, r.state, r.kind,
 ed.exam_date, es.language_code, es.level_code,
 ed.registration_start_date, ed.registration_end_date,
+re.state AS evaluation_state,
        (SELECT array_to_json(array_agg(loc))
         FROM (SELECT name,
                      street_address,
@@ -1857,9 +1858,10 @@ FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN free_registration fr ON r.id = fr.registration_id
-WHERE person_oid = :oid
+LEFT JOIN registration_evaluation re ON r.id = re.registration_id
+WHERE r.person_oid = :oid
   AND current_date - interval '1 year' <= ed.exam_date
-  AND state <> 'STARTED';
+  AND r.state <> 'STARTED';
 
 -- name: select-registration-queue-positions
 SELECT r.id, COUNT(r2.id) AS position
