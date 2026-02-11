@@ -1,7 +1,6 @@
 (ns yki.auth.cas-auth
   (:require [clojure.data.xml :as xml]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [found see-other]]
             [yki.boundary.cas :as cas]
@@ -44,12 +43,14 @@
             username        (cas/validate-ticket auth-cas-client ticket)
             _               (cas-ticket-db/create-ticket! db :virkailija ticket)
             permissions     (permissions/virkailija-by-username permissions-client username)
+            _               (info "Got virkailija permissions:" permissions)
             person-oid      (:oidHenkilo permissions)
             person          (onr/get-person-by-oid onr-client person-oid)
             lang            (or (some #{(get-in person ["asiointiKieli" "kieliKoodi"])}
                                       ["fi" "sv"])
                                 "fi")
             organizations   (get-organizations-with-yki-permissions (:organisaatiot permissions))
+            _               (info "Got organizations with YKI permissions:" organizations)
             oph-admin?      (auth/oph-admin? organizations)
             session         (:session request)
             redirect-uri    (if (:success-redirect session)
