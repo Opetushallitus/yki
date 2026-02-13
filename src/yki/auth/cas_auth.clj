@@ -24,9 +24,9 @@
    :permissions (filter yki-permission? (:kayttooikeudet org))})
 
 (defn- get-organizations-with-yki-permissions [organizations]
-  (filter
-    #(not-empty (:permissions %))
-    (map yki-permissions organizations)))
+  (->> organizations
+       (map yki-permissions)
+       (filter #(not-empty (:permissions %)))))
 
 (defn create-redirect-uri-from-session
   [session url-helper]

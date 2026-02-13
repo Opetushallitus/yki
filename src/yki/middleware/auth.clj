@@ -19,7 +19,7 @@
 
 (def organizer-role "JARJESTAJA")
 
-(def read-all-organizers-permission "JARJESTAJAREKISTERI_LUKUOIKEUS")
+(def extensive-read-access "ILMOITTAUTUMISET_R")
 
 (def organizer-routes
   ["*/organizer/:oid"
@@ -90,8 +90,11 @@
   "Checks if user has read access to all organizers and exam sessions through SOLKI access group"
   [request]
   (let [session-orgs (get-organizations-from-session (:session request))]
-    ; TODO Should the organization associated with the extended read permissions be OPH (= oph-oid) or perhaps Solki?
-    (allowed-organization-for-role? session-orgs oph-oid read-all-organizers-permission)))
+    (->> session-orgs
+         (mapcat :permissions)
+         (map (juxt :palvelu :oikeus))
+         (filter #(= % ["YKI" extensive-read-access]))
+         (first))))
 
 (defn- redirect-to-cas-oppija
   [{:keys [query-params session]} url-helper]
