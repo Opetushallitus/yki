@@ -86,15 +86,18 @@
   [request]
   (oph-admin? (get-organizations-from-session (:session request))))
 
+(defn has-extensive-read-access?
+  [organizations]
+  (->> organizations
+       (mapcat :permissions)
+       (map (juxt :palvelu :oikeus))
+       (some #(= % ["YKI" extensive-read-access]))))
+
 (defn solki-read-access
   "Checks if user has read access to all organizers and exam sessions through SOLKI access group"
   [request]
   (let [session-orgs (get-organizations-from-session (:session request))]
-    (->> session-orgs
-         (mapcat :permissions)
-         (map (juxt :palvelu :oikeus))
-         (filter #(= % ["YKI" extensive-read-access]))
-         (first))))
+    (has-extensive-read-access? session-orgs)))
 
 (defn- redirect-to-cas-oppija
   [{:keys [query-params session]} url-helper]
