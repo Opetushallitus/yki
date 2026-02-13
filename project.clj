@@ -100,5 +100,5 @@
                                          [com.opentable.components/otj-pg-embedded "1.1.1"]
                                          [kerodon "0.9.1"]
                                          [com.clojure-goes-fast/clj-async-profiler "1.6.2"]]
-                  :managed-dependencies [[org.testcontainers/testcontainers "1.21.3"]
-                                         [org.testcontainers/postgresql "1.21.3"]]}})
+                  :managed-dependencies [[org.testcontainers/testcontainers "1.21.4"]
+                                         [org.testcontainers/postgresql "1.21.4"]]}})
