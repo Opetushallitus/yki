@@ -28,11 +28,12 @@
     (context routing/organizer-api-root []
       :middleware [auth access-log with-error-boundary]
       :coercion :spec
-      (GET "/" {session :session}
+      (GET "/" request
         :return ::ys/organizers-response
-        (if (auth/oph-admin? (auth/get-organizations-from-session session))
+        (if (or (auth/oph-admin-access request)
+                (auth/solki-read-access request))
           (response {:organizers (organizer-db/get-organizers db)})
-          (response {:organizers (organizer-db/get-organizers-by-oids db (get-oids session))})))
+          (response {:organizers (organizer-db/get-organizers-by-oids db (get-oids (:session request)))})))
       (POST "/" request
         :body [organizer ::ys/organizer-type]
         :return ::ys/response
