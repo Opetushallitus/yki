@@ -19,6 +19,8 @@
 
 (def organizer-role "JARJESTAJA")
 
+(def extensive-read-access "ILMOITTAUTUMISET_R")
+
 (def organizer-routes
   ["*/organizer/:oid"
    "*/organizer/:oid/*"])
@@ -83,6 +85,19 @@
   "Checks if user has YKI admin role for OPH organization"
   [request]
   (oph-admin? (get-organizations-from-session (:session request))))
+
+(defn has-extensive-read-access?
+  [organizations]
+  (->> organizations
+       (mapcat :permissions)
+       (map (juxt :palvelu :oikeus))
+       (some #(= % ["YKI" extensive-read-access]))))
+
+(defn solki-read-access
+  "Checks if user has read access to all organizers and exam sessions through SOLKI access group"
+  [request]
+  (let [session-orgs (get-organizations-from-session (:session request))]
+    (has-extensive-read-access? session-orgs)))
 
 (defn- redirect-to-cas-oppija
   [{:keys [query-params session]} url-helper]
@@ -155,8 +170,12 @@
       :request-method #{:post :put :delete}}
      {:pattern #".*/api/virkailija/.*/resend-confirmation-email"
       :handler {:and [virkailija-authenticated? oph-admin-access]}}
-     {:pattern #".*/api/virkailija/organizer/.*/exam-session.*"
-      :handler {:and [virkailija-authenticated? {:or [oph-admin-access permission-to-organization]}]}}
+     {:pattern        #".*/api/virkailija/organizer/.*/exam-session.*"
+      :handler        {:and [virkailija-authenticated? {:or [oph-admin-access solki-read-access permission-to-organization]}]}
+      :request-method :get}
+     {:pattern        #".*/api/virkailija/organizer/.*/exam-session.*"
+      :handler        {:and [virkailija-authenticated? {:or [oph-admin-access permission-to-organization]}]}
+      :request-method #{:post :put :delete}}
      {:pattern        #".*/api/virkailija/organizer"
       :handler        virkailija-authenticated?
       :request-method :get}

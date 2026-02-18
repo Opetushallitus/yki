@@ -1,7 +1,6 @@
 (ns yki.auth.cas-auth
   (:require [clojure.data.xml :as xml]
             [clojure.string :as str]
-            [clojure.tools.logging :as log]
             [clojure.tools.logging :refer [info error]]
             [ring.util.http-response :refer [found see-other]]
             [yki.boundary.cas :as cas]
@@ -25,37 +24,43 @@
    :permissions (filter yki-permission? (:kayttooikeudet org))})
 
 (defn- get-organizations-with-yki-permissions [organizations]
-  (filter
-    #(not-empty (:permissions %))
-    (map yki-permissions organizations)))
+  (->> organizations
+       (map yki-permissions)
+       (filter #(not-empty (:permissions %)))))
 
 (defn create-redirect-uri-from-session
   [session url-helper]
-  (let [organizations (get-in session [:identity :organizations])
-        oph-admin?    (auth/oph-admin? organizations)
-        lang          (get-in session [:identity :lang])]
-    (url-helper (if oph-admin? :yki.admin.cas.login-success.redirect
-                               :yki.organizer.cas.login-success.redirect) lang)))
+  (let [organizations             (get-in session [:identity :organizations])
+        redirect-to-organizer-ui? (or (auth/oph-admin? organizations)
+                                      (auth/has-extensive-read-access? organizations))
+        lang                      (get-in session [:identity :lang])]
+    (url-helper
+      (if redirect-to-organizer-ui?
+        :yki.admin.cas.login-success.redirect
+        :yki.organizer.cas.login-success.redirect)
+      lang)))
 
 (defn virkailija-login [ticket request cas-client permissions-client onr-client url-helper db]
   (try
     (if ticket
-      (let [auth-cas-client (cas-client (url-helper :cas-client))
-            username        (cas/validate-ticket auth-cas-client ticket)
-            _               (cas-ticket-db/create-ticket! db :virkailija ticket)
-            permissions     (permissions/virkailija-by-username permissions-client username)
-            person-oid      (:oidHenkilo permissions)
-            person          (onr/get-person-by-oid onr-client person-oid)
-            lang            (or (some #{(get-in person ["asiointiKieli" "kieliKoodi"])}
-                                      ["fi" "sv"])
-                                "fi")
-            organizations   (get-organizations-with-yki-permissions (:organisaatiot permissions))
-            oph-admin?      (auth/oph-admin? organizations)
-            session         (:session request)
-            redirect-uri    (if (:success-redirect session)
-                              (str (:success-redirect session) "?lang=" lang)
-                              (url-helper (if oph-admin? :yki.admin.cas.login-success.redirect
-                                                         :yki.organizer.cas.login-success.redirect) lang))]
+      (let [auth-cas-client           (cas-client (url-helper :cas-client))
+            username                  (cas/validate-ticket auth-cas-client ticket)
+            _                         (cas-ticket-db/create-ticket! db :virkailija ticket)
+            permissions               (permissions/virkailija-by-username permissions-client username)
+            person-oid                (:oidHenkilo permissions)
+            person                    (onr/get-person-by-oid onr-client person-oid)
+            lang                      (or (some #{(get-in person ["asiointiKieli" "kieliKoodi"])}
+                                                ["fi" "sv"])
+                                          "fi")
+            organizations             (get-organizations-with-yki-permissions (:organisaatiot permissions))
+            redirect-to-organizer-ui? (or (auth/oph-admin? organizations)
+                                          (auth/has-extensive-read-access? organizations))
+            session                   (:session request)
+            redirect-uri              (if (:success-redirect session)
+                                        (str (:success-redirect session) "?lang=" lang)
+                                        (url-helper (if redirect-to-organizer-ui?
+                                                      :yki.admin.cas.login-success.redirect
+                                                      :yki.organizer.cas.login-success.redirect) lang))]
         (info "User" username "logged in")
         (if (empty? organizations)
           unauthorized
