@@ -49,7 +49,7 @@
     {{:path "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" :method :get} {:status 200 :content-type "application/json"
                                                                                                   :body   (slurp "test/resources/maatjavaltiot2_246.json")}
 
-     {:path "/yki-sp/oph/osallistuja/5.4.3.2.1" :method :put}                                    {:status 200}}
+     {:path "/oph/osallistuja/5.4.3.2.1" :method :put}                                           {:status 200}}
     (let [db             (base/db)
           url-helper     (base/create-url-helper (str "localhost:" port))
           payment-helper (base/create-examination-payment-helper db url-helper)]
@@ -196,7 +196,7 @@
                                                        :retry-duration-in-days 1})
                   _                      (persons-sync-handler)
                   solki-request          (->> @(:routes server)
-                                              (filter #(str/starts-with? (:path (:request-spec %)) "/yki-sp/oph/"))
+                                              (filter #(str/starts-with? (:path (:request-spec %)) "/oph/"))
                                               (first)
                                               (:recordings)
                                               (first))
