@@ -51,7 +51,7 @@
                         :kansalaisuus  (extract-nationalities nationalities)
                         :henkiloTyyppi "OPPIJA"}
                        native_language
-                       (assoc :aidinkieli {:kieliKoodi native_language}))]
+                       (assoc :aidinkieli {:kieliKoodi (str/lower-case native_language)}))]
     (if (has-ssn? {:ssn ssn})
       (assoc
         basic-fields
