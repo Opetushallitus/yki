@@ -71,6 +71,8 @@
 
 (s/def ::exam-language-code (s/and string? #(= (count %) 3)))
 (s/def ::language-code #{"fi" "sv" "en"})
+(s/def ::koodisto-language-code (s/and ::non-blank-string #(= (count %) 2)))
+
 (s/def ::gender-code #{"" "1" "2"})
 
 (defn date? [maybe-date]
@@ -312,6 +314,8 @@
 (s/def ::street_address (s/and ::non-blank-string #(<= (count %) 100)))
 (s/def ::phone_number ::non-blank-string)
 (s/def ::free_registration_id ::id)
+(s/def ::preferred_name (s/nilable ::non-blank-string))
+(s/def ::native_language (s/nilable ::koodisto-language-code))
 
 (s/def ::registration (s/keys
                         :req-un [::first_name
@@ -327,6 +331,8 @@
                                  ::email]
                         :opt-un [::gender
                                  ::nationality_desc
+                                 ::native_language
+                                 ::preferred_name
                                  ::free_registration_id]))
 
 (s/def ::exam_session ::exam-session)
@@ -463,13 +469,13 @@
                         ::cas-identity (s/keys :req-un [::username])))
 
 (s/def ::user-identity-response (s/keys
-                                 :req-un [::identity]
-                                 :opt-un [::auth-method]))
+                                  :req-un [::identity]
+                                  :opt-un [::auth-method]))
 
 (s/def ::exam_session_id pos-int?)
 (s/def ::expires_at ::date-type)
 (s/def ::open-registration (s/keys :req-un [::exam_session_id ::expires_at]))
-(s/def ::open_registrations (s/coll-of ::open-registration) )
+(s/def ::open_registrations (s/coll-of ::open-registration))
 
 (s/def ::user-open-registrations-response (s/keys :req-un [::open_registrations]))
 
