@@ -96,13 +96,13 @@
             "/organisaatio-service/rest/organisaatio/v4/1.2.3.4.5" {:status       200
                                                                     :content-type "application/json"
                                                                     :body         (slurp "test/resources/organization.json")}
-            "/yki-sp/oph/tutkinto"                                 {:status       201
+            "/oph/tutkinto"                                        {:status       201
                                                                     :content-type "application/json"
                                                                     :body         "{}"}
-            "/yki-sp/oph/tutkintotilaisuus"                        {:status       201
+            "/oph/tutkintotilaisuus"                               {:status       201
                                                                     :content-type "application/json"
                                                                     :body         "{}"}
-            "/yki-sp/oph/jarjestaja"                               {:status       201
+            "/oph/jarjestaja"                                      {:status       201
                                                                     :content-type "application/json"
                                                                     :body         "{}"}})
     (let [data-sync-q     (base/data-sync-q)
@@ -152,7 +152,7 @@
   (base/insert-registrations "COMPLETED")
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set exam_date = '" (base/two-weeks-from-now) "'"))
   (with-routes!
-    {"/yki-sp/oph/osallistujat"                                             {:status 200
+    {"/oph/osallistujat"                                                    {:status 200
                                                                              :body   "{}"}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}
@@ -182,7 +182,7 @@
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant_sync_status (exam_session_id, failed_at) VALUES (1, '" (base/yesterday) "')"))
 
   (with-routes!
-    {"/yki-sp/oph/osallistujat"                                             {:status 500
+    {"/oph/osallistujat"                                                    {:status 500
                                                                              :body   "{}"}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}

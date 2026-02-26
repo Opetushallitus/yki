@@ -9,7 +9,6 @@
     [jsonista.core :as j]
     [yki.embedded-db :as embedded-db]
     [yki.boundary.exam-session-db :as exam-session-db]
-    [yki.boundary.onr :as onr]
     [yki.boundary.yki-register :as yki-register]))
 
 (use-fixtures :each embedded-db/with-postgres embedded-db/with-migration embedded-db/with-transaction)
@@ -69,8 +68,8 @@
   (base/insert-base-data)
   (testing "should send delete requests"
     (with-routes!
-      {{:path "/yki-sp/oph/tutkintotilaisuus" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 202}
-       {:path "/yki-sp/oph/jarjestaja" :query-params {:oid "1.2.3.4"}}                                                           {:status 202}}
+      {{:path "/oph/tutkintotilaisuus" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 202}
+       {:path "/oph/jarjestaja" :query-params {:oid "1.2.3.4"}}                                                           {:status 202}}
       (let [exam-session-id          (:id (base/select-one "SELECT id FROM exam_session"))
             db                       (base/db)
             es                       (exam-session-db/get-exam-session-by-id db exam-session-id)
@@ -93,7 +92,7 @@
   (base/insert-registrations "COMPLETED")
   (defn routes [port]
     (merge (common-route-specs port)
-           {{:path "/yki-sp/oph/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
+           {{:path "/oph/osallistujat" :query-params {:kieli "fin" :taso "PT" :pvm "2018-01-27" :jarjestaja "1.2.3.4.5"}} {:status 200}
             "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246"                                               {:status 200 :content-type "application/json"
                                                                                                                                   :body   (slurp "test/resources/maatjavaltiot2_246.json")}
             "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180"                                               {:status 200 :content-type "application/json"
@@ -105,7 +104,7 @@
               url-helper      (base/create-url-helper (str "localhost:" port))
               onr-client      (base/onr-client url-helper)
               _               (yki-register/sync-exam-session-participants db url-helper onr-client {:user "user" :password "pass"} false exam-session-id)
-              request         (first (:recordings (first (filter #(= "/yki-sp/oph/osallistujat" (get-in % [:request-spec :path])) @(:routes server)))))
+              request         (first (:recordings (first (filter #(= "/oph/osallistujat" (get-in % [:request-spec :path])) @(:routes server)))))
               req-body        (get-in request [:request :body "postData"])]
           (is (= (get-in request [:request :headers :authorization]) "Basic dXNlcjpwYXNz"))
           (is (= req-body csv)))))
@@ -119,7 +118,7 @@
                   url-helper      (base/create-url-helper (str "localhost:" port))
                   onr-client      (base/onr-client url-helper)
                   _               (yki-register/sync-exam-session-participants db url-helper onr-client {:user "user" :password "pass"} false exam-session-id)
-                  request         (first (:recordings (first (filter #(= "/yki-sp/oph/osallistujat" (get-in % [:request-spec :path])) @(:routes server)))))
+                  request         (first (:recordings (first (filter #(= "/oph/osallistujat" (get-in % [:request-spec :path])) @(:routes server)))))
                   req-body        (get-in request [:request :body "postData"])]
               (is (= req-body (str/replace csv old-email new-email))))))))
 
