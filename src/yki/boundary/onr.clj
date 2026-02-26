@@ -40,7 +40,7 @@
   [{:keys [email first_name last_name preferred_name gender exam_lang nationalities native_language birthdate ssn]
     :as   registration}
    attempt]
-  (let [basic-fields (some->
+  (let [basic-fields (cond->
                        {:yhteystieto   [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
                                          :yhteystietoArvo   email}]
                         :etunimet      first_name
