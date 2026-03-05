@@ -37,18 +37,21 @@
     nil))
 
 (defn- registration->onr-person
-  [{:keys [email first_name last_name gender exam_lang nationalities birthdate ssn]
+  [{:keys [email first_name last_name preferred_name gender exam_lang nationalities native_language birthdate ssn]
     :as   registration}
    attempt]
-  (let [basic-fields {:yhteystieto   [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
-                                       :yhteystietoArvo   email}]
-                      :etunimet      first_name
-                      :kutsumanimi   (first-names->nickname first_name)
-                      :sukunimi      last_name
-                      :sukupuoli     (if (str/blank? gender) nil gender)
-                      :asiointiKieli {:kieliKoodi exam_lang}
-                      :kansalaisuus  (extract-nationalities nationalities)
-                      :henkiloTyyppi "OPPIJA"}]
+  (let [basic-fields (cond->
+                       {:yhteystieto   [{:yhteystietoTyyppi "YHTEYSTIETO_SAHKOPOSTI"
+                                         :yhteystietoArvo   email}]
+                        :etunimet      first_name
+                        :kutsumanimi   (or preferred_name (first-names->nickname first_name))
+                        :sukunimi      last_name
+                        :sukupuoli     (if (str/blank? gender) nil gender)
+                        :asiointiKieli {:kieliKoodi exam_lang}
+                        :kansalaisuus  (extract-nationalities nationalities)
+                        :henkiloTyyppi "OPPIJA"}
+                       native_language
+                       (assoc :aidinkieli {:kieliKoodi (str/lower-case native_language)}))]
     (if (has-ssn? {:ssn ssn})
       (assoc
         basic-fields
@@ -186,16 +189,17 @@
            (seqable? oids)
            (counted? oids)
            (<= 5000 (count oids))]}
-    (if (empty? oids) []
-        (let [url (url-helper :onr-service.list-person-details)
-              {:keys [status body]} (cas/cas-authenticated-post cas-client url {:henkiloOids oids})]
-          (if (= 200 status)
-            (->> (json/read-value body)
-                 (map #(vector
-                        (get % "oidHenkilo")
-                        (get % "hetu")))
-                 (into {}))
-            (log/error "ONR list-ssn-by-oids error:" status))))))
+    (if (empty? oids)
+      []
+      (let [url (url-helper :onr-service.list-person-details)
+            {:keys [status body]} (cas/cas-authenticated-post cas-client url {:henkiloOids oids})]
+        (if (= 200 status)
+          (->> (json/read-value body)
+               (map #(vector
+                       (get % "oidHenkilo")
+                       (get % "hetu")))
+               (into {}))
+          (log/error "ONR list-ssn-by-oids error:" status))))))
 
 (defmethod ig/init-key :yki.boundary.onr/onr-client [_ {:keys [url-helper cas-client]}]
   (let [onr-cas-client (cas-client (url-helper :onr-service))]
