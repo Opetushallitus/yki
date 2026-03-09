@@ -414,10 +414,10 @@
       (jdbc/execute!
         @embedded-db/conn
         (str "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender, country_code) VALUES ("
-             (let [without-gender (->> [oid first_name last_name email phone_number street_address post_office zip nationality_code country_code]
+             (let [without-gender-and-country (->> [oid first_name last_name email phone_number street_address post_office zip nationality_code]
                                        (map #(str "'" % "'"))
                                        (str/join ","))]
-               (str without-gender ",cast('" gender "' as gender_code)"))
+               (str without-gender-and-country ",cast('" gender "' as gender_code), '" country_code "'"))
              ")")))))
 
 (defn insert-registrations [state]

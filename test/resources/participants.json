@@ -11,6 +11,7 @@
         "nationalities": [
           "246"
         ],
+        "country_code": "246",
         "certificate_lang": "fi",
         "email": "aa@al.fi",
         "phone_number": "+3584012346",
@@ -46,6 +47,7 @@
         "nationalities": [
           "180"
         ],
+        "country_code": "246",
         "email": "aa@al.fi",
         "phone_number": "+3584012345",
         "post_office": "Ankkalinna",
@@ -79,6 +81,7 @@
         "nationalities": [
           "246"
         ],
+        "country_code": "246",
         "email": "roope@al.fi",
         "phone_number": "+3584012347",
         "last_name": "Ankka",
@@ -112,6 +115,7 @@
         "nationalities": [
           "246"
         ],
+        "country_code": "246",
         "email": "aa@al.fi",
         "phone_number": "+3584012346",
         "last_name": "Ankka",
