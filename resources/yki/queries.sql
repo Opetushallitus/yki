@@ -1798,8 +1798,8 @@ DO NOTHING;
 
 -- name: upsert-person!
 INSERT INTO person
-(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender) VALUES
-(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip, :nationality_code, cast(:gender as gender_code))
+(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender, country_code) VALUES
+(:oid, :first_name, :last_name, :email, :phone_number, :street_address, :post_office, :zip, :nationality_code, cast(:gender as gender_code), :country_code)
 ON CONFLICT (oid)
 DO UPDATE SET first_name = :first_name, last_name = :last_name,
 email = :email, phone_number = :phone_number,
@@ -1807,6 +1807,7 @@ street_address = :street_address,
 post_office = :post_office, zip = :zip,
 nationality_code = :nationality_code,
 gender = cast(:gender as gender_code),
+country_code = :country_code,
 modified = current_timestamp;
 
 -- name: update-person-contact-details!
@@ -1816,16 +1817,17 @@ SET email = :email,
     street_address = :street_address,
     post_office = :post_office,
     zip = :zip,
+    country_code = :country_code,
     modified = current_timestamp
 WHERE oid = :oid;
 
 -- name: select-person
-SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip
+SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip, country_code
 FROM person
 WHERE oid = :oid;
 
 -- name: select-full-person-details
-SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip, gender, nationality_code
+SELECT oid, first_name, last_name, email, phone_number, street_address, post_office, zip, country_code, gender, nationality_code
 FROM person
 WHERE oid = :oid;
 

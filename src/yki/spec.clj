@@ -316,11 +316,13 @@
 (s/def ::free_registration_id ::id)
 (s/def ::preferred_name (s/nilable ::non-blank-string))
 (s/def ::native_language (s/nilable ::koodisto-language-code))
+(s/def ::country_code (s/nilable (s/and ::non-blank-string #(<= (count %) 3))))
 
 (s/def ::registration (s/keys
                         :req-un [::first_name
                                  ::last_name
                                  ::nationalities
+                                 ::country_code
                                  ::certificate_lang
                                  ::exam_lang
                                  (or ::birthdate ::ssn)
@@ -481,4 +483,4 @@
 
 (s/def ::environment #{:dev :qa :prod})
 
-(s/def ::person-contact (s/keys :req-un [::email ::phone_number ::street_address ::post_office ::zip]))
+(s/def ::person-contact (s/keys :req-un [::email ::phone_number ::street_address ::post_office ::zip ::country_code]))
