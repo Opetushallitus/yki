@@ -80,8 +80,14 @@
   (update-contact-details!
     [{:keys [spec]} person]
     (jdbc/with-db-transaction [tx spec]
-      (q/update-person-contact-details! tx person)
-      (q/schedule-person-to-be-synced! tx person)))
+      (let [person-with-country-code
+            (if (contains? person :country_code)
+              person
+              (if-let [existing (first (q/select-person tx {:oid (:oid person)}))]
+                (assoc person :country_code (:country_code existing))
+                person))]
+        (q/update-person-contact-details! tx person-with-country-code)
+        (q/schedule-person-to-be-synced! tx person))))
   (get-registration-to-confirm-details [{:keys [spec]} oid registration-id]
     (first (q/select-registration-to-confirm-details spec {:oid oid :id registration-id})))
   (cancel-person-registration! [{:keys [spec]} oid registration-id]

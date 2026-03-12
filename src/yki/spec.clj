@@ -483,4 +483,13 @@
 
 (s/def ::environment #{:dev :qa :prod})
 
-(s/def ::person-contact (s/keys :req-un [::email ::phone_number ::street_address ::post_office ::zip ::country_code]))
+;; Person contact details used in /person endpoint.
+;; Country code is optional here because the current frontend
+;; modify-contact-details view does not send it yet.
+(s/def ::person-contact
+  (s/keys :req-un [::email
+                   ::phone_number
+                   ::street_address
+                   ::post_office
+                   ::zip]
+          :opt-un [::country_code]))
