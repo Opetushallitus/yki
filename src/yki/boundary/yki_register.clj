@@ -203,10 +203,6 @@
         (sync-exam-session url-helper basic-auth disabled exam-session))
       (sync-organizer db url-helper basic-auth disabled organizer-oid nil))))
 
-(5240 5242 5243  5241 5245 5248 5251 5252 5253  5255   5261  5263   5266)
-
-failing: 5257 5254 5247 5244 5265 5256 5262
-
 (defn return-exam-session-participants-csv [db url-helper onr-client exam-session-id]
   (let [participants (exam-session-db/get-completed-exam-session-participants db exam-session-id)
         onr->ssn     (->> participants
