@@ -64,6 +64,24 @@
                 csv-record                 ["5.4.3.2.1" "010199-9034" "Ankka" "Aku" "M" "FIN" "FIN" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi" 1]]
             (is (= result csv-record)))))))
 
+(deftest create-participant-csv-line-missing-country-test
+  (with-routes!
+    {}
+    (let [person-fields [:first_name :last_name :email :zip :post_office :street_address]]
+      (testing "missing country codes should not call koodisto (and should become xxx)"
+        (let [registration-form (-> base/registration-form
+                                    (assoc :nationalities nil :country_code nil)
+                                    (dissoc :gender))
+              participant       (merge {:form          (apply dissoc registration-form person-fields)
+                                        :person_oid    "5.4.3.2.1"
+                                        :is_transfered false}
+                                       (select-keys registration-form person-fields))
+              result            (yki-register/participant->csv-record (base/create-url-helper (str "localhost:" port))
+                                                                      {"5.4.3.2.1" "010199-9012"}
+                                                                      participant)
+              csv-record        ["5.4.3.2.1" "010199-9012" "Ankka" "Aku" "M" "xxx" "xxx" "Katu 3" "12345" "Ankkalinna" "aa@al.fi" "fi" "fi" 0]]
+          (is (= result csv-record)))))))
+
 (deftest delete-exam-session-and-organizer-test
   (base/insert-base-data)
   (testing "should send delete requests"
