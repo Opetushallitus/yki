@@ -32,7 +32,8 @@
       "street_address": "Katu 4",
       "zip": "12346",
       "last_name": "Ankka",
-      "first_name": "Iines"
+      "first_name": "Iines",
+      "country_code": "246"
     },
     {
       "is_free_registration": false,
@@ -67,7 +68,8 @@
       "street_address": "Katu 3",
       "zip": "12345",
       "last_name": "Ankka",
-      "first_name": "Aku"
+      "first_name": "Aku",
+      "country_code": "246"
     },
     {
       "is_free_registration": false,
@@ -101,7 +103,8 @@
       "first_name": "Roope",
       "post_office": "Ankkalinna",
       "street_address": "Katu 5",
-      "zip": "12346"
+      "zip": "12346",
+      "country_code": "246"
     },
     {
       "is_free_registration": false,
@@ -135,7 +138,8 @@
       "first_name": "Iines",
       "post_office": "Ankkalinna",
       "street_address": "Katu 4",
-      "zip": "12346"
+      "zip": "12346",
+      "country_code": "246"
     }
   ]
 }
