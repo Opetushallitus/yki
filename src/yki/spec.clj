@@ -322,7 +322,6 @@
                         :req-un [::first_name
                                  ::last_name
                                  ::nationalities
-                                 ::country_code
                                  ::certificate_lang
                                  ::exam_lang
                                  (or ::birthdate ::ssn)
@@ -331,7 +330,8 @@
                                  ::street_address
                                  ::phone_number
                                  ::email]
-                        :opt-un [::gender
+                        :opt-un [::country_code
+                                 ::gender
                                  ::nationality_desc
                                  ::native_language
                                  ::preferred_name

@@ -44,7 +44,7 @@
                                                                              :body   (slurp "test/resources/maatjavaltiot2_246.json")}
      "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
                                                                              :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
-      (let [person-fields [:first_name :last_name :email :zip :post_office :street_address]]
+      (let [person-fields [:first_name :last_name :email :zip :post_office :street_address :country_code]]
         (testing "should create valid csv line with birth date"
           (let [participant (merge {:form          (apply dissoc base/registration-form person-fields)
                                     :person_oid    "5.4.3.2.1"
@@ -67,7 +67,7 @@
 (deftest create-participant-csv-line-missing-country-test
   (with-routes!
     {}
-    (let [person-fields [:first_name :last_name :email :zip :post_office :street_address]]
+    (let [person-fields [:first_name :last_name :email :zip :post_office :street_address :country_code]]
       (testing "missing country codes should not call koodisto (and should become xxx)"
         (let [registration-form (-> base/registration-form
                                     (assoc :nationalities nil :country_code nil)

@@ -1262,7 +1262,7 @@ DELETE FROM participant_sync_status
 WHERE exam_session_id = :exam_session_id;
 
 -- name: select-completed-exam-session-participants
-SELECT r.form, r.person_oid, r.is_transfered, p.last_name, p.first_name, p.email, p.zip, p.post_office, p.street_address
+SELECT r.form, r.person_oid, r.is_transfered, p.last_name, p.first_name, p.email, p.zip, p.post_office, p.street_address, p.country_code
 FROM registration r
 INNER JOIN person p ON p.oid = r.person_oid
 WHERE r.exam_session_id = :id
@@ -1279,6 +1279,7 @@ SELECT
   p.zip,
   p.post_office,
   p.street_address,
+  p.country_code,
   r.state,
   r.id AS registration_id,
   r.kind,
