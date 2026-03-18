@@ -3,4 +3,4 @@
             [ragtime.jdbc :as ragtime-jdbc]))
 
 (defmethod ig/init-key :yki/migrations [_ _]
-  (vec (ragtime-jdbc/load-directory "resources/yki/migrations")))
+  (vec (ragtime-jdbc/load-resources "yki/migrations")))
