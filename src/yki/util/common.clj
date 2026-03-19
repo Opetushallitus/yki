@@ -1,8 +1,15 @@
 (ns yki.util.common
-  (:require [clj-time.core :as t]
+  (:require [buddy.core.codecs :refer [bytes->hex]]
+            [buddy.core.hash :as hash]
+            [clj-time.core :as t]
             [clj-time.format :as f]
             [clj-time.coerce :as c]
             [clojure.string :as str]))
+
+(defn sha256-hash [code]
+  (-> code
+      (hash/sha256)
+      (bytes->hex)))
 
 (def date-format "YYYY-MM-dd")
 (def finnish-date-formatter (f/formatter "d.M.YYYY"))

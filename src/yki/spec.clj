@@ -337,8 +337,9 @@
 
 (s/def ::exam_session ::exam-session)
 (s/def ::to_queue boolean?)
+(s/def ::partial_exam_type #{"ALL_PARTS" "READ" "SPEAK" "LISTEN" "WRITE"})
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]
-                                   :opt-un [::to_queue]))
+                                   :opt-un [::to_queue ::partial_exam_type]))
 
 (s/def ::registration_id ::id)
 

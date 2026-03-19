@@ -155,7 +155,8 @@
                                                               :payment-helper #ig/ref :yki.util/exam-payment-helper
                                                               :email-q        #ig/ref :yki.job.job-queue/email-q
                                                               :onr-client     #ig/ref :yki.boundary.onr/onr-client
-                                                              :access-log     #ig/ref :yki.middleware.access-log/with-logging}
+                                                              :access-log     #ig/ref :yki.middleware.access-log/with-logging
+                                                              :proxy-config   {}}
 
   :yki.handler/user                                          {:db          #ig/ref :duct.database/sql
                                                               :auth        #ig/ref :yki.middleware.auth/with-authentication

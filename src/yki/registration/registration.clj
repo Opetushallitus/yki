@@ -1,7 +1,5 @@
 (ns yki.registration.registration
-  (:require [buddy.core.codecs :refer [bytes->hex]]
-            [buddy.core.hash :as hash]
-            [clj-time.core :as t]
+  (:require [clj-time.core :as t]
             [clj-time.format :as f]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
@@ -13,17 +11,13 @@
             [yki.boundary.person-db :as person-db]
             [yki.boundary.registration-db :as registration-db]
             [yki.boundary.yki-register :as yki-register]
+            [yki.boundary.yki-v2 :as yki-v2]
             [yki.registration.email :refer [send-enrolled-to-queue-email!]]
             [yki.spec :refer [ssn->date]]
             [yki.util.common :as common]
             [yki.util.exam-payment-helper :refer [get-payment-amount-for-registration]]
             [yki.util.template-util :as template-util])
   (:import (org.postgresql.util PSQLException)))
-
-(defn sha256-hash [code]
-  (-> code
-      (hash/sha256)
-      (bytes->hex)))
 
 (defn get-participant-id
   [db identity]
@@ -137,10 +131,9 @@
           (conflict {:error {:full       false
                              :registered false}}))))))
 (defn init-registration
-  [db session {:keys [exam_session_id to_queue]} payment-config]
+  [db session {:keys [exam_session_id to_queue partial_exam_type]} payment-config proxy-params]
   (log/info "START: Init exam session" exam_session_id "registration")
   (let [session-new          (get-or-create-session session)
-        ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
         participant-id       (get-or-create-participant db (:identity session-new))
         started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
     (log/info "started-registration-id" (:id started-registration))
@@ -153,7 +146,16 @@
               registration-kind  (if to_queue "QUEUE" "ADMISSION")]
           (if (and (not other-registration)
                    (or to_queue space-left?))
-            (create-registration db exam_session_id participant-id registration-kind session-new payment-config)
+            ; DO NOT MERGE UNTIL THIS IS CONTROLLED BY A FLAG
+            (if true
+              (yki-v2/init-registration proxy-params
+                                        exam_session_id
+                                        to_queue
+                                        partial_exam_type
+                                        (get-in session-new [:identity :oid])
+                                        participant-id
+                                        (= (:auth-method session-new) "SUOMIFI"))
+              (create-registration db exam_session_id participant-id registration-kind session-new payment-config))
             (init-error-response space-left? other-registration to_queue exam_session_id)))
         ; no registration open
         (conflict {:error {:closed true}})))))
@@ -188,7 +190,7 @@
 
 (defn create-and-send-payment-link [db email-q lang payment-link template-name template-data code login-url]
   (let [email  (:email template-data)
-        hashed (sha256-hash code)]
+        hashed (common/sha256-hash code)]
     (login-link-db/create-login-link! db (assoc payment-link :code hashed :user_data nil))
     (log/info "Payment link created for " email ". Adding to email queue")
     (send-payment-link-email! email-q lang email template-name (assoc template-data :login_url login-url))))
@@ -196,7 +198,7 @@
 (defn create-user-portal-link [db url-helper participant-id registration-id]
   (let [code            (str (random-uuid))
         login-url       (url-helper :yki.login-link.url code)
-        hashed          (sha256-hash code)
+        hashed          (common/sha256-hash code)
         success-url     (url-helper :yki-ui.user-portal.url)
         expired-url     (url-helper :yki-ui.user-portal.expired-link)
         expiration-date (common/date-from-now (inc 14))

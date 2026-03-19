@@ -17,7 +17,7 @@
     (str (subs external-user-id 0 7) "****")
     external-user-id))
 
-(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client]}]
+(defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client proxy-config]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? url-helper) (some? email-q) (some? onr-client)]}
   (api
     (context routing/registration-api-root []
@@ -33,7 +33,8 @@
         (registration/init-registration db
                                         (:session request)
                                         registration-init
-                                        (:payment-config payment-helper)))
+                                        (:payment-config payment-helper)
+                                        proxy-config))
       (POST "/identify" request
         :body [registration-identify ::ys/registration-init]
         (audit/log-participant {:request   request

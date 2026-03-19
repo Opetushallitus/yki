@@ -50,12 +50,14 @@
                                                                     :WRITING   100
                                                                     :SPEAKING  100}}}
 
- :yki.handler/registration               {:db         #ig/ref :duct.database/sql
-                                          :auth       #ig/ref :yki.middleware.auth/with-authentication
-                                          :url-helper #ig/ref :yki.util/url-helper
-                                          :email-q    #ig/ref :yki.job.job-queue/email-q
-                                          :onr-client #ig/ref :yki.boundary.onr/onr-client
-                                          :access-log #ig/ref :yki.middleware.access-log/with-logging}
+ :yki.handler/registration               {:db           #ig/ref :duct.database/sql
+                                          :auth         #ig/ref :yki.middleware.auth/with-authentication
+                                          :url-helper   #ig/ref :yki.util/url-helper
+                                          :email-q      #ig/ref :yki.job.job-queue/email-q
+                                          :onr-client   #ig/ref :yki.boundary.onr/onr-client
+                                          :access-log   #ig/ref :yki.middleware.access-log/with-logging
+                                          :proxy-config {:endpoint "http://localhost:8083"
+                                                         :token    "03e2f9b3-d1de-4846-884e-80e6c3d0fae4"}}
 
  :yki.handler/exam-session-public        {:db             #ig/ref :duct.database/sql
                                           :environment    #ig/ref :yki.env/environment
