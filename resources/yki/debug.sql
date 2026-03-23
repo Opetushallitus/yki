@@ -1,11 +1,19 @@
 -- name: select-participant-onr-data
-SELECT participant_onr.*, last_exam_session.exam_date FROM participant_onr
-LEFT JOIN (SELECT r.participant_id, max(ed.exam_date) AS exam_date
-           FROM exam_date ed
-           JOIN exam_session es ON ed.id = es.exam_date_id
-           JOIN registration r ON es.id = r.exam_session_id
-           GROUP BY r.participant_id) last_exam_session
+SELECT participant_onr.*, last_exam_session.exam_date, registration_evaluation.state AS evaluation_state
+FROM participant_onr
+LEFT JOIN (
+  SELECT DISTINCT ON (r.participant_id)
+    r.participant_id,
+    r.id AS registration_id,
+    ed.exam_date
+  FROM registration r
+  JOIN exam_session es ON es.id = r.exam_session_id
+  JOIN exam_date ed ON ed.id = es.exam_date_id
+  ORDER BY r.participant_id, ed.exam_date DESC, r.id DESC
+) last_exam_session
 ON last_exam_session.participant_id = participant_onr.participant_id
+LEFT JOIN registration_evaluation
+ON registration_evaluation.registration_id = last_exam_session.registration_id
 WHERE is_individualized = false;
 
 -- name: select-participants-for-onr-check
