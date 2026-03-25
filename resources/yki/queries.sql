@@ -323,6 +323,7 @@ SELECT
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
+  e.type,
   (SELECT COUNT(1)
    FROM registration re
    WHERE re.exam_session_id = e.id

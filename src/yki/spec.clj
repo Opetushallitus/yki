@@ -234,6 +234,7 @@
 (s/def ::upcoming_admission boolean?)
 (s/def ::transfer_targets (s/coll-of pos-int?))
 (s/def ::available_registration_kind ::registration-kind)
+(s/def ::exam_session_type #{"FULL" "READ_SPEAK" "LISTEN_WRITE"})
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -253,7 +254,8 @@
                                        ::organizer_oid
                                        ::transfer_targets
                                        ::upcoming_admission
-                                       ::available_registration_kind]))
+                                       ::available_registration_kind
+                                       ::exam_session_type]))
 
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
