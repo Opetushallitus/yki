@@ -164,6 +164,7 @@
                         :last_name        "Ankka"
                         :gender           "1"
                         :nationalities    ["180"]
+                        :country_code     "246"
                         :birthdate        "1999-01-01"
                         :ssn              "010199-9012"
                         :certificate_lang "fi"
@@ -178,6 +179,7 @@
                           :last_name        "Ankka"
                           :gender           nil
                           :nationalities    ["246"]
+                          :country_code     "246"
                           :ssn              "301079-900U"
                           :certificate_lang "fi"
                           :exam_lang        "fi"
@@ -191,6 +193,7 @@
                                        :last_name        "Ankka"
                                        :gender           nil
                                        :nationalities    ["246"]
+                                       :country_code     "246"
                                        :ssn              "301079-083N"
                                        :certificate_lang "fi"
                                        :exam_lang        "fi"
@@ -405,16 +408,16 @@
                       "5.4.3.2.3" registration-form-2
                       "5.4.3.2.1" registration-form
                       "5.4.3.2.4" post-admission-registration-form}]
-    (let [{:keys [first_name last_name email phone_number street_address post_office zip ssn gender]} form
+    (let [{:keys [first_name last_name email phone_number street_address post_office zip ssn gender country_code]} form
           gender           (yki-register/convert-gender gender ssn)
           nationality_code "246"]
       (jdbc/execute!
         @embedded-db/conn
-        (str "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender) VALUES ("
-             (let [without-gender (->> [oid first_name last_name email phone_number street_address post_office zip nationality_code]
+        (str "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender, country_code) VALUES ("
+             (let [without-gender-and-country (->> [oid first_name last_name email phone_number street_address post_office zip nationality_code]
                                        (map #(str "'" % "'"))
                                        (str/join ","))]
-               (str without-gender ",cast('" gender "' as gender_code)"))
+               (str without-gender-and-country ",cast('" gender "' as gender_code), '" country_code "'"))
              ")")))))
 
 (defn insert-registrations [state]

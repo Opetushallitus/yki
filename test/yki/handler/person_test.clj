@@ -34,7 +34,7 @@
       (slurp)
       (json/read-str :key-fn keyword)))
 
-(def person-fields [:oid :first_name :last_name :email :phone_number :street_address :post_office :zip])
+(def person-fields [:oid :first_name :last_name :email :phone_number :street_address :post_office :zip :country_code])
 
 (deftest person-details-test
   (base/insert-base-data)
@@ -172,7 +172,8 @@
                                           :phone_number   "+991231231122"
                                           :street_address "Toisiotie 9"
                                           :post_office    "Kajaani"
-                                          :zip            "80100"}
+                                          :zip            "80100"
+                                          :country_code   "246"}
                   post-response          (-> session
                                              (peridot/request
                                                routing/person-api-root
@@ -207,7 +208,8 @@
                                           :postitoimipaikka (:post_office new-contact-details)
                                           :postinumero      (:zip new-contact-details)
                                           :kansalaisuus     "FIN"
-                                          :sukupuoli        "M"}]
+                                          :sukupuoli        "M"
+                                          :maa              "FIN"}]
               (is (= 200 (get-in post-response [:response :status])))
               (is (= {:success true} post-response-data))
               (is (= 200 (get-in get-response [:response :status])))

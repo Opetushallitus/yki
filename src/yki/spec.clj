@@ -316,6 +316,7 @@
 (s/def ::free_registration_id ::id)
 (s/def ::preferred_name (s/nilable ::non-blank-string))
 (s/def ::native_language (s/nilable ::koodisto-language-code))
+(s/def ::country_code (s/nilable (s/and ::non-blank-string #(<= (count %) 3))))
 
 (s/def ::registration (s/keys
                         :req-un [::first_name
@@ -329,7 +330,8 @@
                                  ::street_address
                                  ::phone_number
                                  ::email]
-                        :opt-un [::gender
+                        :opt-un [::country_code
+                                 ::gender
                                  ::nationality_desc
                                  ::native_language
                                  ::preferred_name
@@ -481,4 +483,13 @@
 
 (s/def ::environment #{:dev :qa :prod})
 
-(s/def ::person-contact (s/keys :req-un [::email ::phone_number ::street_address ::post_office ::zip]))
+;; Person contact details used in /person endpoint.
+;; Country code is optional here because the current frontend
+;; modify-contact-details view does not send it yet.
+(s/def ::person-contact
+  (s/keys :req-un [::email
+                   ::phone_number
+                   ::street_address
+                   ::post_office
+                   ::zip]
+          :opt-un [::country_code]))
