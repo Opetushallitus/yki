@@ -37,6 +37,7 @@ psql -h localhost -U admin -c 'create database yki'
 To begin developing, start with a REPL.
 
 ```sh
+rm -rf target/ # macos load migration files twice otherwise
 lein repl
 ```
 and load the development environment

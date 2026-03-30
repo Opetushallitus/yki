@@ -20,6 +20,7 @@ Copy `local-configuration/local.edn.template` to `local-configuration/local.edn`
 ## Starting the server
 
 ```sh
+rm -rf target/ # macos load migration files twice otherwise
 lein repl
 ```
 
