@@ -26,6 +26,11 @@ lsp/
 # Visual Studio Code metadata
 .vscode
 
+# vim temporary files
+*~
+*.swp
+*.swo
+
 # Visual Studio Code extensions
 .calva/
 
