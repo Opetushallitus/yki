@@ -350,16 +350,7 @@ SELECT
   (now() AT TIME ZONE 'Europe/Helsinki' <
     (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') +
      time '16:00')) AS upcoming_admission,
-  select_registration_kind(e.id) AS available_registration_kind,
-  (SELECT json_build_object(
-    'ALL_PARTS', COUNT(id) FILTER (WHERE type = 'ALL_PARTS'),
-    'READ',      COUNT(id) FILTER (WHERE type = 'READ'),
-    'SPEAK',     COUNT(id) FILTER (WHERE type = 'SPEAK'),
-    'LISTEN',    COUNT(id) FILTER (WHERE type = 'LISTEN'),
-    'WRITE',     COUNT(id) FILTER (WHERE type = 'WRITE')
-) FROM exam_session_ticket
-  WHERE exam_session_id = e.id
-    AND registration_id IS NULL) AS free_tickets
+  select_registration_kind(e.id) AS available_registration_kind
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
