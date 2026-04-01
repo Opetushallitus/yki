@@ -693,14 +693,16 @@ INSERT INTO registration(
   participant_id,
   started_at,
   kind,
-  strong_auth
+  strong_auth,
+  partial_exam_type
 ) SELECT
   'STARTED',
   :exam_session_id,
   :participant_id,
   :started_at,
   :kind::registration_kind,
-  :strong_auth
+  :strong_auth,
+  COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type
   -- only one registration per participant on same exam date
   WHERE NOT EXISTS (SELECT es.id
                     FROM exam_session es
@@ -802,9 +804,10 @@ SELECT NOT EXISTS (
 	FROM exam_session es
 	LEFT JOIN registration re ON es.id = re.exam_session_id
 	WHERE re.exam_session_id = :exam_session_id
-    AND re.id != COALESCE(:registration_id, 0)
-	  AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-      AND re.kind = 'ADMISSION'
+        AND re.id != COALESCE(:registration_id, 0)
+        AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+        AND re.kind = 'ADMISSION'
+        AND (re.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type OR re.partial_exam_type = :partial_exam_type::exam_session_ticket_type)
 	GROUP BY es.max_participants
     HAVING (es.max_participants - COUNT(re.id)) <= 0)
 AS exists;
@@ -837,12 +840,13 @@ WHERE r.id = :registration_id
   AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id);
 
 -- name: select-started-registration-id-and-kind-by-participant
-SELECT re.id, re.kind
+SELECT re.id, re.kind, re.partial_exam_type
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
 WHERE re.participant_id = :participant_id
   AND re.state = 'STARTED'
-  AND es.id = :exam_session_id;
+  AND es.id = :exam_session_id
+  AND COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type = re.partial_exam_type;
 
 -- name: select-registration
 SELECT state, exam_session_id, participant_id, es.organizer_id, ed.exam_date

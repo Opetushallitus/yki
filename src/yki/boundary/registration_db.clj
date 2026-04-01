@@ -25,7 +25,7 @@
   (participant-registered-to-other-exam-on-exam-date? [db participant-id exam-session-id])
   (participant-registered-to-exam-on-exam-date? [db participant-id exam-session-id])
   (person-registered-to-exam-on-exam-date? [db registration-id exam-session-id])
-  (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id])
+  (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id partial-exam-type])
   (create-registration! [db session registration])
   (update-started-registration-oid! [db registration-id person-oid])
   (get-registration-data [db registration-id participant-id lang])
@@ -35,7 +35,7 @@
   (get-registration-data-for-clerk-mail [db exam-session-id registration-id])
   (get-completed-payment-data-for-registration [db registration-id])
   (get-open-registrations-by-participant [db participant-id])
-  (exam-session-space-left? [db exam-session-id registration-id])
+  (exam-session-space-left? [db exam-session-id registration-id partial-exam-type])
   (exam-session-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
   (get-participant-data-by-registration-id [db registration-id])
@@ -93,13 +93,15 @@
              spec {:registration_id registration-id
                    :exam_session_id exam-session-id})))
   (get-started-registration-id+kind-by-participant-id
-    [{:keys [spec]} participant-id exam-session-id]
-    (first (q/select-started-registration-id-and-kind-by-participant spec {:participant_id  participant-id
-                                                                           :exam_session_id exam-session-id})))
+    [{:keys [spec]} participant-id exam-session-id partial-exam-type]
+    (first (q/select-started-registration-id-and-kind-by-participant spec {:participant_id    participant-id
+                                                                           :exam_session_id   exam-session-id
+                                                                           :partial_exam_type partial-exam-type})))
   (exam-session-space-left?
-    [{:keys [spec]} exam-session-id registration-id]
+    [{:keys [spec]} exam-session-id registration-id partial-exam-type]
     (let [exists (first (q/select-exam-session-space-left spec {:exam_session_id exam-session-id
-                                                                :registration_id registration-id}))]
+                                                                :registration_id registration-id
+                                                                :partial_exam_type partial-exam-type}))]
       (:exists exists)))
   (exam-session-registration-open?
     [{:keys [spec]} id]

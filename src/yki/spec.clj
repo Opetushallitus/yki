@@ -341,8 +341,10 @@
 
 (s/def ::exam_session ::exam-session)
 (s/def ::to_queue boolean?)
+(s/def ::exam_session_type #{"ALL_PARTS" "READ" "SPEAK" "LISTEN" "WRITE"})
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]
-                                   :opt-un [::to_queue]))
+                                   :opt-un [::to_queue
+                                            ::partial_exam_type]))
 
 (s/def ::registration_id ::id)
 
@@ -370,7 +372,8 @@
                                                      ::is_strongly_identified
                                                      ::user
                                                      ::registration_id
-                                                     ::registration_kind]))
+                                                     ::registration_kind
+                                                     ::partial_exam_type]))
 
 ;; exam session participant
 (s/def ::state ::non-blank-string)

@@ -64,7 +64,7 @@
     (merge form sanitized)))
 
 (defn- create-registration-response
-  [db session exam-session-id registration-id registration-kind payment-config]
+  [db session exam-session-id registration-id registration-kind partial-exam-type payment-config]
   (let [exam-session              (exam-session-db/get-exam-session-by-id db exam-session-id)
         authenticated-by-email?   (= (:auth-method session) "EMAIL")
         authenticated-by-session? (= (:auth-method session) "SESSION")
@@ -86,7 +86,8 @@
            :registration_id        registration-id
            :registration_kind      registration-kind
            :user                   user
-           :expires_in             expires-in})
+           :expires_in             expires-in
+           :partial_exam_type      partial-exam-type})
       :session session)))
 
 (defn- init-error-response [space-left? other-registration to-queue? exam-session-id]
@@ -114,15 +115,16 @@
       (str/starts-with?
         "registration to queue is not available"))))
 
-(defn- create-registration [db exam-session-id participant-id registration-kind session payment-config]
+(defn- create-registration [db exam-session-id participant-id registration-kind partial-exam-type session payment-config]
   (try
     (let [registration-id (registration-db/create-registration! db session
-                                                                {:exam_session_id exam-session-id
-                                                                 :participant_id  participant-id
-                                                                 :started_at      (t/now)
-                                                                 :kind            registration-kind
-                                                                 :strong_auth     (= (:auth-method session) "SUOMIFI")})
-          response        (create-registration-response db session exam-session-id registration-id registration-kind payment-config)]
+                                                                {:exam_session_id   exam-session-id
+                                                                 :participant_id    participant-id
+                                                                 :started_at        (t/now)
+                                                                 :kind              registration-kind
+                                                                 :strong_auth       (= (:auth-method session) "SUOMIFI")
+                                                                 :partial_exam_type partial-exam-type})
+          response        (create-registration-response db session exam-session-id registration-id registration-kind partial-exam-type payment-config)]
       (log/info "END: Init exam session" exam-session-id "registration success" registration-id)
       response)
     (catch Exception e
@@ -137,44 +139,44 @@
           (conflict {:error {:full       false
                              :registered false}}))))))
 (defn init-registration
-  [db session {:keys [exam_session_id to_queue]} payment-config]
+  [db session {:keys [exam_session_id to_queue partial_exam_type]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
   (let [session-new          (get-or-create-session session)
         ;participant-id          (get-or-create-participant db {:external-user-id "teppo.teikalainen@test.invalid"})
         participant-id       (get-or-create-participant db (:identity session-new))
-        started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id)]
+        started-registration (registration-db/get-started-registration-id+kind-by-participant-id db participant-id exam_session_id partial_exam_type)]
     (log/info "started-registration-id" (:id started-registration))
     (if started-registration
-      (create-registration-response db session-new exam_session_id (:id started-registration) (:kind started-registration) payment-config)
+      (create-registration-response db session-new exam_session_id (:id started-registration) (:kind started-registration) (:partial_exam_type started-registration) payment-config)
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
-        (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil)
+        (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil partial_exam_type)
               other-registration (registration-db/participant-registered-to-exam-on-exam-date? db participant-id exam_session_id)
               registration-kind  (if to_queue "QUEUE" "ADMISSION")]
           (if (and (not other-registration)
                    (or to_queue space-left?))
-            (create-registration db exam_session_id participant-id registration-kind session-new payment-config)
+            (create-registration db exam_session_id participant-id registration-kind partial_exam_type session-new payment-config)
             (init-error-response space-left? other-registration to_queue exam_session_id)))
         ; no registration open
         (conflict {:error {:closed true}})))))
 
 (defn identify-registration
-  [db session {:keys [exam_session_id to_queue]} payment-config]
+  [db session {:keys [exam_session_id to_queue partial_exam_type]} payment-config]
   (log/info "START: identify exam session" exam_session_id "registration")
   (let [participant-id-session        (get-participant-id-by-session db session)
         participant-id-other          (get-participant-id db (:identity session))
-        found-session-registration    (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id))
-        found-other-registration      (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id))
+        found-session-registration    (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id partial_exam_type))
+        found-other-registration      (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id partial_exam_type))
         registration-to-other-session (and participant-id-other (registration-db/participant-registered-to-other-exam-on-exam-date? db participant-id-other exam_session_id))]
     ; (log/info "found-registration-id" (:id found-registration))
     (cond
-      (some? found-other-registration) (create-registration-response db session exam_session_id (:id found-other-registration) (:kind found-other-registration) payment-config)
+      (some? found-other-registration) (create-registration-response db session exam_session_id (:id found-other-registration) (:kind found-other-registration) (:partial_exam_type found-other-registration) payment-config)
       (some? found-session-registration) (if-not registration-to-other-session
                                            (do
                                              (if participant-id-other
                                                (update-registration-participant-id! db (:id found-session-registration) participant-id-other)
                                                (update-participant-external-id! db participant-id-session session))
-                                             (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) payment-config))
+                                             (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) (:partial_exam_type found-session-registration) payment-config))
                                            (init-error-response true registration-to-other-session (if to_queue "QUEUE" "ADMISSION") exam_session_id))
       :else (bad-request {:reason :registration-not-found}))))
 
