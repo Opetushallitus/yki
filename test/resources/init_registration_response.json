@@ -53,6 +53,7 @@
     "external-user-id": "test@user.com",
     "email": "test@user.com"
   },
+  "partial_exam_type": "ALL_PARTS",
   "registration_id": 1,
   "registration_kind": "ADMISSION"
 }

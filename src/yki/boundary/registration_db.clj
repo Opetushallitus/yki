@@ -145,7 +145,7 @@
             {:event       "CREATE"
              :author_type "USER"
              :created_by  (get-in session [:identity :oid])}))
-        (:id created))))
+        (select-keys created [:id :partial_exam_type]))))
   (update-started-registration-oid!
     [{:keys [spec]} registration-id person-oid]
     (jdbc/with-db-transaction [tx spec]
