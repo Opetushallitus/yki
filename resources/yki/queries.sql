@@ -867,6 +867,14 @@ WHERE re.participant_id = :participant_id
   AND es.id = :exam_session_id
   AND COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type = re.partial_exam_type;
 
+-- name: select-started-registration-kind-and-type-by-id
+SELECT re.id, re.kind, re.partial_exam_type, re.participant_id
+FROM exam_session es
+INNER JOIN registration re ON es.id = re.exam_session_id
+WHERE re.state = 'STARTED'
+  AND es.id = :exam_session_id
+  AND re.id = :registration_id;
+
 -- name: select-registration
 SELECT state, exam_session_id, participant_id, es.organizer_id, ed.exam_date
 FROM registration re
