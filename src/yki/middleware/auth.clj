@@ -9,7 +9,8 @@
     [ring.middleware.session :refer [wrap-session]]
     [ring.middleware.session.cookie :refer [cookie-store]]
     [ring.util.http-response :refer [found see-other]]
-    [yki.boundary.cas-ticket-db :as cas-ticket-db]))
+    [yki.boundary.cas-ticket-db :as cas-ticket-db])
+  (:import (java.net URLEncoder)))
 
 (def backend (session-backend))
 
@@ -120,10 +121,11 @@
                                    to-user-portal?
                                    (url-helper :yki-ui.user-portal.url)
                                    to-queue?
-                                   (url-helper :yki-ui.exam-session-queue.url exam-session-id)
+                                   (url-helper :yki-ui.exam-session-queue.url exam-session-id registration-id)
                                    :else
-                                   (url-helper :yki-ui.exam-session-registration.url exam-session-id))
-        login-url                (str (url-helper :cas-oppija.login lang) cas-success-redirect)]
+                                   (url-helper :yki-ui.exam-session-registration.url exam-session-id registration-id))
+        login-url                (str (url-helper :cas-oppija.login lang)
+                                      (URLEncoder/encode ^String cas-success-redirect "UTF-8"))]
     (assoc
       (see-other login-url)
       :session
