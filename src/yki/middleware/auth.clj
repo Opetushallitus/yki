@@ -103,6 +103,7 @@
   [{:keys [query-params session]} url-helper]
   (log/info "Redirect to cas-oppija")
   (let [{exam-session-id "examSessionId"
+         registration-id "registrationId"
          query-lang      "lang"
          to-user-portal  "toUserPortal"
          to-queue        "toQueue"} query-params
@@ -114,7 +115,7 @@
         to-user-portal?          (if (string? to-user-portal)
                                    (parse-boolean to-user-portal)
                                    false)
-        cas-success-redirect     (url-helper "cas-oppija.login-success" lang (if to-queue? "QUEUE" "ADMISSION") exam-session-id)
+        cas-success-redirect     (url-helper "cas-oppija.login-success" lang (if to-queue? "QUEUE" "ADMISSION") exam-session-id registration-id)
         session-success-redirect (cond
                                    to-user-portal?
                                    (url-helper :yki-ui.user-portal.url)

@@ -72,8 +72,9 @@
             (let [participant-id           (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                                 :email            (:email login-link)}))
                   registration-kind        (or (:registration_kind login-link) "ADMISSION")
+                  registration-id          (:registration_id login-link)
                   to-queue?                (= "QUEUE" registration-kind)
-                  registration-url         (url-helper (if to-queue? :yki-ui.exam-session-queue.url :yki-ui.exam-session-registration.url) exam-session-id)
+                  registration-url         (url-helper (if to-queue? :yki-ui.exam-session-queue.url :yki-ui.exam-session-registration.url) exam-session-id registration-id)
                   registration-expired-url (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
                   link                     (assoc login-link :participant_id participant-id
                                                              :type "LOGIN"

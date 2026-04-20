@@ -350,7 +350,21 @@ SELECT
   (now() AT TIME ZONE 'Europe/Helsinki' <
     (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') +
      time '16:00')) AS upcoming_admission,
-  select_registration_kind(e.id) AS available_registration_kind
+  select_registration_kind(e.id, 'ALL_PARTS') AS available_registration_kind,
+  CASE e.type
+    WHEN 'FULL' THEN
+      json_build_object('ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'))
+    WHEN 'READ_SPEAK' THEN
+      json_build_object(
+        'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+        'READ', select_registration_kind(e.id, 'READ'),
+        'SPEAK', select_registration_kind(e.id, 'SPEAK'))
+    WHEN 'LISTEN_WRITE' THEN
+      json_build_object(
+        'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+        'LISTEN', select_registration_kind(e.id, 'LISTEN'),
+        'WRITE', select_registration_kind(e.id, 'WRITE'))
+  END AS partial_registration_kind
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -490,7 +504,21 @@ o.oid AS organizer_oid,
  (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') +
   time '16:00')) AS upcoming_admission,
 within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) AS open,
-select_registration_kind(e.id) AS available_registration_kind
+select_registration_kind(e.id, 'ALL_PARTS') AS available_registration_kind,
+CASE e.type
+  WHEN 'FULL' THEN
+    json_build_object('ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'))
+  WHEN 'READ_SPEAK' THEN
+    json_build_object(
+      'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+      'READ', select_registration_kind(e.id, 'READ'),
+      'SPEAK', select_registration_kind(e.id, 'SPEAK'))
+  WHEN 'LISTEN_WRITE' THEN
+    json_build_object(
+      'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+      'LISTEN', select_registration_kind(e.id, 'LISTEN'),
+      'WRITE', select_registration_kind(e.id, 'WRITE'))
+END AS partial_registration_kind
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id

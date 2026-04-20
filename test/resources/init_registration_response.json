@@ -7,6 +7,9 @@
     "registration_start_date": "2017-12-01",
     "open": true,
     "available_registration_kind": "ADMISSION",
+    "partial_registration_kind": {
+      "ALL_PARTS": "ADMISSION"
+    },
     "max_participants": 5,
     "pa_participants": 0,
     "language_code": "fin",

@@ -234,6 +234,7 @@
 (s/def ::upcoming_admission boolean?)
 (s/def ::transfer_targets (s/coll-of pos-int?))
 (s/def ::available_registration_kind ::registration-kind)
+(s/def ::partial_registration_kind (s/map-of keyword? ::registration-kind))
 (s/def ::exam_session_type #{"FULL" "READ_SPEAK" "LISTEN_WRITE"})
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
@@ -255,6 +256,7 @@
                                        ::transfer_targets
                                        ::upcoming_admission
                                        ::available_registration_kind
+                                       ::partial_registration_kind
                                        ::exam_session_type]))
 
 (s/def ::exam_sessions (s/coll-of ::exam-session))
@@ -344,7 +346,8 @@
 (s/def ::exam_session_type #{"ALL_PARTS" "READ" "SPEAK" "LISTEN" "WRITE"})
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]
                                    :opt-un [::to_queue
-                                            ::partial_exam_type]))
+                                            ::partial_exam_type
+                                            ::registration_id]))
 
 (s/def ::registration_id ::id)
 
