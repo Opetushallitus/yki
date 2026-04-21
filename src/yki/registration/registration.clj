@@ -74,12 +74,12 @@
         expires-in                (registration-db/get-started-registration-expires-in db registration-id)]
     (when-let [oid (:oid (:identity session))]
       (registration-db/update-started-registration-oid! db registration-id oid)
-      (person-db/ensure-person-exists!
-       db
-       (->
-        session
-        :identity
-        (select-keys [:oid :first_name :last_name]))))
+      ;; oid may be set without name details, when logged in through user portal email link
+      (let [{:keys [first_name last_name]} (:identity session)]
+        (when (not-any? str/blank? [first_name last_name])
+          (person-db/ensure-person-exists!
+           db
+           {:oid oid :first_name first_name :last_name last_name}))))
     (assoc
      (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
           :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
