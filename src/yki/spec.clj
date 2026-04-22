@@ -484,7 +484,7 @@
 
 (s/def ::exam_session_id pos-int?)
 (s/def ::expires_at ::date-type)
-(s/def ::open-registration (s/keys :req-un [::exam_session_id ::expires_at]))
+(s/def ::open-registration (s/keys :req-un [::exam_session_id ::expires_at ::registration_id]))
 (s/def ::open_registrations (s/coll-of ::open-registration))
 
 (s/def ::user-open-registrations-response (s/keys :req-un [::open_registrations]))

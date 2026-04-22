@@ -1078,7 +1078,7 @@ FROM registration re
 WHERE re.id = :id;
 
 -- name: select-open-registrations-by-participant
-SELECT re.exam_session_id, (started_at + interval '30 minutes') AS expires_at
+SELECT re.exam_session_id, (started_at + interval '30 minutes') AS expires_at, re.id AS registration_id
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 WHERE p.external_user_id = :external_user_id
