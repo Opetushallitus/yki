@@ -72,6 +72,7 @@
             (let [participant-id           (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                                 :email            (:email login-link)}))
                   registration-kind        (or (:registration_kind login-link) "ADMISSION")
+                  ;; TODO check that reg_id matches reg participant
                   registration-id          (:registration_id login-link)
                   to-queue?                (= "QUEUE" registration-kind)
                   registration-url         (url-helper (if to-queue? :yki-ui.exam-session-queue.url :yki-ui.exam-session-registration.url) exam-session-id registration-id)
@@ -82,7 +83,7 @@
                                                              :expires_at (c/date-from-now 2)
                                                              :success_redirect registration-url
                                                              :expired_link_redirect registration-expired-url
-                                                             :registration_id nil
+                                                             :registration_id registration-id
                                                              :user_data {:previous-session-id (:yki-session-id session)})]
               (log/info "Requested login link:" login-link)
               (if

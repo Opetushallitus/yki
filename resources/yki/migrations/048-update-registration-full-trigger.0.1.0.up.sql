@@ -1,9 +1,3 @@
--- Allow max_participants to be null for partial-exam sessions, and add per-pool limits.
--- Conditional so the migration applies cleanly if these changes are already in place.
-ALTER TABLE exam_session ALTER COLUMN max_participants DROP NOT NULL;
-ALTER TABLE exam_session ADD COLUMN IF NOT EXISTS max_participants_read_listen INTEGER;
-ALTER TABLE exam_session ADD COLUMN IF NOT EXISTS max_participants_speak_write INTEGER;
-
 -- Drop the old single-argument version; the new version takes a partial_exam_type parameter.
 DROP FUNCTION IF EXISTS select_registration_kind(bigint);
 
