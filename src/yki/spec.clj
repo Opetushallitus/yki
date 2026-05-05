@@ -298,7 +298,8 @@
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
                             :opt-un [::user_data
-                                     ::registration_kind]))
+                                     ::registration_kind
+                                     ::registration_id]))
 
 (s/def ::login-code ::non-blank-string)
 
