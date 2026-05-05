@@ -958,6 +958,7 @@ SELECT re.id,
        esl.zip,
        esl.name,
        p.external_user_id = p.email AS is_email_auth,
+       p.external_user_id,
        pe.email,
        fr.free_registration_id
 FROM registration re
@@ -2043,3 +2044,10 @@ ORDER BY id;
 -- name: insert-exam-session-statistics!
 INSERT INTO exam_session_statistics (exam_session_id, last_processed_event_id, participants, queue, max_participant_count, max_queue_count, max_participants_at, max_queue_at)
 VALUES (:exam_session_id, :last_processed_event_id, :participants, :queue, :max_participant_count, :max_queue_count, :max_participants_at, :max_queue_at);
+
+-- name: check-registration-id-matches-session
+SELECT re.id
+FROM registration re
+LEFT JOIN participant p ON re.participant_id = p.id
+WHERE re.id = :id
+AND (re.participant_id = :participant_id OR p.external_user_id = :external_user_id);

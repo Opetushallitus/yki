@@ -49,7 +49,8 @@
   (get-participant-and-queue-count-for-ongoing-admissions [db])
   (lift-registration-from-queue! [db exam-session-id send-email!])
   (expire-queued-registrations-after-exam-date! [db])
-  (get-free-registration [db registration-id]))
+  (get-free-registration [db registration-id])
+  (check-registration-id-matches-session [db registration-id participant-id external-user-id]))
 
 (defn get-registration-data-with-tx
   [tx registration-id participant-id lang]
@@ -266,4 +267,8 @@
                      (map :id))]
         (expire-registrations! tx ids))))
   (get-free-registration [{:keys [spec]} registration-id]
-    (first (q/select-free-registration spec {:id registration-id}))))
+    (first (q/select-free-registration spec {:id registration-id})))
+  (check-registration-id-matches-session
+    [{:keys [spec]} registration-id participant-id external-user-id]
+    (first (q/check-registration-id-matches-session spec {:id registration-id :participant_id participant-id :external_user_id external-user-id})))
+  )

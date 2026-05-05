@@ -72,8 +72,8 @@
             (let [participant-id           (:id (registration-db/get-or-create-participant! db {:external_user_id (:email login-link)
                                                                                                 :email            (:email login-link)}))
                   registration-kind        (or (:registration_kind login-link) "ADMISSION")
-                  ;; TODO check that reg_id matches reg participant
                   registration-id          (:registration_id login-link)
+                  registration-matches     (registration-db/check-registration-id-matches-session db registration-id participant-id (:yki-session-id session))
                   to-queue?                (= "QUEUE" registration-kind)
                   registration-url         (url-helper (if to-queue? :yki-ui.exam-session-queue.url :yki-ui.exam-session-registration.url) exam-session-id registration-id)
                   registration-expired-url (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
@@ -86,28 +86,31 @@
                                                              :registration_id registration-id
                                                              :user_data {:previous-session-id (:yki-session-id session)})]
               (log/info "Requested login link:" login-link)
-              (if
-                (login-link-db/get-recent-login-link-by-exam-session-and-participant
-                  db
-                  exam-session-id
-                  participant-id
-                  (t/minus (t/now) (t/minutes 5)))
-                (do (log/info
-                      "Found recent login-link for email and exam session. Not sending another email yet to avoid flooding the email service. Email:"
-                      (:email login-link)
-                      ", exam-session-id:"
-                      exam-session-id)
-                    (ok {:success true}))
-                (when (create-and-send-link db url-helper email-q lang link exam-session to-queue?)
-                  ; If user isn't properly logged in, ie. auth-method is "SESSION", clear session details after ordering login link.
-                  ; This is done to allow users to order multiple login links to one exam session.
-                  ; The use case is mostly related to testing in DEV/QA environments, but can also be a legitimate scenario in production use.
-                  (let [auth-method   (:auth-method session)
-                        session-auth? (= "SESSION" auth-method)]
-                    (cond->
-                      (ok {:success true})
-                      session-auth?
-                      (assoc :session nil))))))
+              (if (and registration-id (nil? registration-matches))
+                (do (log/error "Requested login link, but participant doesn't match registration")
+                    (forbidden))
+                (if
+                    (login-link-db/get-recent-login-link-by-exam-session-and-participant
+                     db
+                     exam-session-id
+                     participant-id
+                     (t/minus (t/now) (t/minutes 5)))
+                  (do (log/info
+                       "Found recent login-link for email and exam session. Not sending another email yet to avoid flooding the email service. Email:"
+                       (:email login-link)
+                       ", exam-session-id:"
+                       exam-session-id)
+                      (ok {:success true}))
+                  (when (create-and-send-link db url-helper email-q lang link exam-session to-queue?)
+                                        ; If user isn't properly logged in, ie. auth-method is "SESSION", clear session details after ordering login link.
+                                        ; This is done to allow users to order multiple login links to one exam session.
+                                        ; The use case is mostly related to testing in DEV/QA environments, but can also be a legitimate scenario in production use.
+                    (let [auth-method   (:auth-method session)
+                          session-auth? (= "SESSION" auth-method)]
+                      (cond->
+                          (ok {:success true})
+                        session-auth?
+                        (assoc :session nil)))))))
             (do (log/error "Requested login link, but registration for exam session isn't open." login-link)
                 (forbidden)))))
       (POST "/renew" {session :session}
