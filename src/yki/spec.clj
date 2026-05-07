@@ -224,6 +224,11 @@
 (s/def ::office_oid (s/nilable ::oid))
 (s/def ::session_date ::date-type)
 (s/def ::max_participants pos-int?)
+(s/def ::max_participants_read_listen (s/nilable pos-int?))
+(s/def ::max_participants_speak_write (s/nilable pos-int?))
+(s/def ::start_time (s/and (s/nilable string?) #(<= (count %) 5)))
+(s/def ::start_time_read_listen (s/and (s/nilable string?) #(<= (count %) 5)))
+(s/def ::start_time_speak_write (s/and (s/nilable string?) #(<= (count %) 5)))
 (s/def ::published_at (s/nilable ::date-type))
 (s/def ::participants int?)
 (s/def ::exam_fee pos-int?)
@@ -246,6 +251,11 @@
                                        ::location]
                               :opt-un [::id
                                        ::office_oid
+                                       ::max_participants_read_listen
+                                       ::max_participants_speak_write
+                                       ::start_time
+                                       ::start_time_read_listen
+                                       ::start_time_speak_write
                                        ::exam_fee
                                        ::contact
                                        ::open
