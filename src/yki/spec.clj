@@ -231,6 +231,8 @@
 (s/def ::start_time_speak_write (s/and (s/nilable string?) #(<= (count %) 5)))
 (s/def ::published_at (s/nilable ::date-type))
 (s/def ::participants int?)
+(s/def ::participants_read_listen int?)
+(s/def ::participants_speak_write int?)
 (s/def ::exam_fee pos-int?)
 (s/def ::open boolean?)
 (s/def ::queue_full boolean?)
@@ -262,6 +264,8 @@
                                        ::queue
                                        ::queue_full
                                        ::participants
+                                       ::participants_read_listen
+                                       ::participants_speak_write
                                        ::organizer_oid
                                        ::transfer_targets
                                        ::upcoming_admission

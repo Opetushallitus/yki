@@ -339,6 +339,18 @@ SELECT
    WHERE re.exam_session_id = e.id
      AND re.kind = 'ADMISSION'
      AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id
+     AND re.partial_exam_type IN ('ALL_PARTS', 'READ', 'LISTEN')
+     AND re.kind = 'ADMISSION'
+     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants_read_listen,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id
+     AND re.kind = 'ADMISSION'
+     AND re.partial_exam_type IN ('ALL_PARTS', 'SPEAK', 'WRITE')
+     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants_speak_write,
   o.oid AS organizer_oid,
   (SELECT array_to_json(array_agg(loc))
    FROM (SELECT
