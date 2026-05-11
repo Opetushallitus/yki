@@ -12,7 +12,17 @@
 
 (defn- get-exam-fee
   [payment-config exam-session]
-  (get-in payment-config [:amount (keyword (:level_code exam-session))]))
+  (let [code-from-config (fn [code] (get-in payment-config [:amount code]))]
+    (case (:type exam-session)
+      "FULL"         {:exam_fee (code-from-config (keyword (:level_code exam-session)))}
+      "READ_SPEAK"   {:exam_fee (+ (code-from-config :KESKI_READ)
+                                   (code-from-config :KESKI_SPEAK))
+                      :exam_fee_read_listen (code-from-config :KESKI_READ)
+                      :exam_fee_speak_write (code-from-config :KESKI_SPEAK)}
+      "LISTEN_WRITE" {:exam_fee (+ (code-from-config :KESKI_LISTEN)
+                                   (code-from-config :KESKI_WRITE))
+                      :exam_fee_read_listen (code-from-config :KESKI_LISTEN)
+                      :exam_fee_speak_write (code-from-config :KESKI_WRITE)})))
 
 (defmethod ig/init-key :yki.handler/exam-session-public [_ {:keys [db environment payment-config]}]
   {:pre [(some? db) (s/valid? ::ys/environment environment) (some? payment-config)]}
@@ -25,7 +35,7 @@
       :return ::ys/exam-sessions-response
       (let [from-date     (t/now)
             exam-sessions (exam-session-db/get-exam-sessions db from-date)
-            with-fee      (map #(assoc % :exam_fee (get-exam-fee payment-config %)) exam-sessions)]
+            with-fee      (map #(merge % (get-exam-fee payment-config %)) exam-sessions)]
         (ok {:exam_sessions with-fee})))
 
     (context "/:id" []
@@ -34,7 +44,6 @@
         :return ::ys/exam-session
         :path-params [id :- ::ys/id]
         (if-let [exam-session (exam-session-db/get-exam-session-by-id db id)]
-          (-> (assoc exam-session :exam_fee (get-exam-fee payment-config exam-session))
+          (-> (merge exam-session (get-exam-fee payment-config exam-session))
               (ok))
           (not-found "Exam session not found"))))))
-

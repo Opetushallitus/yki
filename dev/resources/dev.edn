@@ -31,7 +31,11 @@
                                                            :merchant-secret "SAIPPUAKAUPPIAS"
                                                            :amount          {:PERUS 153
                                                                              :KESKI 176
-                                                                             :YLIN  200}}}
+                                                                             :YLIN  200
+                                                                             :KESKI_READ 43
+                                                                             :KESKI_LISTEN 43
+                                                                             :KESKI_WRITE 70
+                                                                             :KESKI_SPEAK 84}}}
 
  :yki.util/evaluation-payment-helper     {:payment-config {:merchant-id     "375917"
                                                            :merchant-secret "SAIPPUAKAUPPIAS"
@@ -64,6 +68,10 @@
                                                            :amount          {:PERUS     153
                                                                              :KESKI     176
                                                                              :YLIN      200
+                                                                             :KESKI_READ 43
+                                                                             :KESKI_LISTEN 43
+                                                                             :KESKI_WRITE 70
+                                                                             :KESKI_SPEAK 84
                                                                              :READING   50
                                                                              :LISTENING 50
                                                                              :WRITING   50
