@@ -477,6 +477,7 @@ SELECT
   e.max_participants,
   e.office_oid,
   e.published_at,
+  e.type,
 (SELECT COUNT(1)
  FROM registration re
  WHERE re.exam_session_id = e.id
@@ -1116,7 +1117,9 @@ SELECT re.id,
        es.language_code,
        es.level_code,
        es.organizer_id,
-       ed.exam_date
+       ed.exam_date,
+       re.partial_exam_type AS registration_type,
+       es.type AS exam_type
 FROM registration re
 INNER JOIN person pe ON re.person_oid = pe.oid
 INNER JOIN participant p ON p.id = re.participant_id
