@@ -28,7 +28,7 @@
                                       :request-method :get))]
     (testing "unauthenticated user should be redirected with http code 303"
       (is (= (get-in response [:response :status]) 303))
-      (is (= ((get-in response [:response :headers]) "Location") "https://localhost:8080/cas-oppija/login?locale=fi&service=http://yki.localhost:8080/yki/auth/callback/fi/ADMISSION?examSessionId=")))))
+      (is (= ((get-in response [:response :headers]) "Location") "https://localhost:8080/cas-oppija/login?locale=fi&service=http%3A%2F%2Fyki.localhost%3A8080%2Fyki%2Fauth%2Fcallback%2Ffi%2FADMISSION%3FexamSessionId%3D%26registrationId%3D")))))
 
 (def user-1 {"last_name"        "Aakula"
              "nick_name"        "Emma"
