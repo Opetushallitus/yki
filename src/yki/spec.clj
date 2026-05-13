@@ -232,7 +232,7 @@
 (s/def ::published_at (s/nilable ::date-type))
 (s/def ::participants int?)
 (s/def ::participants_read_listen int?)
-(s/def ::participants_speak_write int?)
+(s/def ::participants-speak-write int?)
 (s/def ::exam_fee pos-int?)
 (s/def ::open boolean?)
 (s/def ::queue_full boolean?)
@@ -259,6 +259,8 @@
                                        ::start_time_read_listen
                                        ::start_time_speak_write
                                        ::exam_fee
+                                       ::exam_fee_read_listen
+                                       ::exam_fee_speak_write
                                        ::contact
                                        ::open
                                        ::queue
