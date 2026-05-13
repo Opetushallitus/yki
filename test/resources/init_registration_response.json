@@ -5,6 +5,7 @@
     "queue": 0,
     "registration_end_date": "2039-12-01",
     "registration_start_date": "2017-12-01",
+    "type": "FULL",
     "open": true,
     "available_registration_kind": "ADMISSION",
     "partial_registration_kind": {
