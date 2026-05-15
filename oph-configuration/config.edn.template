@@ -15,7 +15,11 @@
                         :yki-host-virkailija       "{{host_ilb}}"}
   :yki.util/exam-payment-helper {:payment-config {:amount {:PERUS {{yki_exam_session_fee_basic}}
                                                            :KESKI {{yki_exam_session_fee_intermediate}}
-                                                           :YLIN  {{yki_exam_session_fee_advanced}}}
+                                                           :YLIN  {{yki_exam_session_fee_advanced}}
+                                                           :KESKI_READ   {{yki_exam_session_fee_partial_read}}
+                                                           :KESKI_LISTEN {{yki_exam_session_fee_partial_listen}}
+                                                           :KESKI_WRITE  {{yki_exam_session_fee_partial_write}}
+                                                           :KESKI_SPEAK  {{yki_exam_session_fee_partial_speak}}}
                                              :merchant-id "{{yki_examination_paytrail_merchant_id | default('placeholder')}}"
                                              :merchant-secret "{{yki_examination_paytrail_merchant_secret | default('placeholder')}}"}}
   :yki.util/evaluation-payment-helper {:payment-config {:amount {:READING {{yki_exam_session_fee_reading}}
@@ -59,6 +63,10 @@
                                                             :KESKI {{yki_exam_session_fee_intermediate}}
                                                             :YLIN {{yki_exam_session_fee_advanced}}
                                                             :READING {{yki_exam_session_fee_reading}}
+                                                            :KESKI_READ   {{yki_exam_session_fee_partial_read}}
+                                                            :KESKI_LISTEN {{yki_exam_session_fee_partial_listen}}
+                                                            :KESKI_WRITE  {{yki_exam_session_fee_partial_write}}
+                                                            :KESKI_SPEAK  {{yki_exam_session_fee_partial_speak}}
                                                             :LISTENING {{yki_exam_session_fee_listening}}
                                                             :WRITING {{yki_exam_session_fee_writing}}
                                                             :SPEAKING {{yki_exam_session_fee_speaking}}
