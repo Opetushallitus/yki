@@ -1843,7 +1843,7 @@ INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 INNER JOIN organizer o on es.organizer_id = o.id
 LEFT JOIN exam_session oes ON r.original_exam_session_id = oes.id
 LEFT JOIN exam_date oed ON oes.exam_date_id = oed.id
-WHERE r.state = 'COMPLETED' AND
+WHERE (r.state = 'COMPLETED' OR r.state = 'PAID_AND_CANCELLED') AND
     (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= fr.created_at AND
     fr.created_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
 
