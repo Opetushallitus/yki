@@ -1,4 +1,4 @@
-ALTER TABLE exam_session ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE exam_session ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
 UPDATE exam_session SET last_sync_at = NOW() WHERE last_sync_at IS NULL;
 
