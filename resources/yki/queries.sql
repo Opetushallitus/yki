@@ -1931,7 +1931,7 @@ WHERE oid = :oid;
 
 -- name: select-person-registrations
 SELECT r.id, r.exam_session_id, r.state, r.kind, r.partial_exam_type,
-ed.exam_date, es.language_code, es.level_code, es.type,
+ed.exam_date, es.language_code, es.level_code, es.type, es.start_time, es.start_time_read_listen, es.start_time_speak_write,
 ed.registration_start_date, ed.registration_end_date,
 re.state AS evaluation_state,
        (SELECT array_to_json(array_agg(loc))
