@@ -333,6 +333,7 @@
   (base/insert-base-data)
   (base/insert-persons)
   (base/insert-registrations "COMPLETED")
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_session SET last_sync_at = NOW()")
   (let [exam-session-id (:id (base/select-one base/select-exam-session))
         exam-date-id    (:exam_date_id (base/select-one (str "SELECT exam_date_id FROM exam_session WHERE id=" exam-session-id)))
         db              (base/db)
