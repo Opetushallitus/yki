@@ -45,6 +45,12 @@
                                                :url-helper #ig/ref :yki.util/url-helper
                                                :retry-duration-in-days 1}
 
+:yki.job.scheduled-tasks/exam-session-solki-sync-handler {:db         #ig/ref :duct.database/sql
+                                                          :disabled   {{yki_register_exam_session_sync_disabled}}
+                                                          :basic-auth {:user     "{{yki_register_user}}"
+                                                                       :password "{{yki_register_password}}"}
+                                                          :url-helper #ig/ref :yki.util/url-helper}
+
 :yki.job.scheduled-tasks/data-sync-queue-reader {:data-sync-q  #ig/ref :yki.job.job-queue/data-sync-q
                                                  :db #ig/ref :duct.database/sql
                                                  :disabled {{yki_register_exam_session_sync_disabled}}
