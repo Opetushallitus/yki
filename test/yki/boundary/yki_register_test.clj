@@ -218,20 +218,20 @@
                     :zip "33100" :post_office "Tampere" :street_address "Linja 1" :country_code nil}
           url-helper (base/create-url-helper (str "localhost:" port))
           oid->ssn   {"1.2.3.4.5" "150690-900T"}]
-      (testing "READ_SPEAK/ALL_PARTS flags: speak=1 write=0 listen=0 read=1"
+      (testing "READ_SPEAK/ALL_PARTS flags: speak=1 write=0 read=1 listen=0"
         (let [result (yki-register/participant->csv-record url-helper oid->ssn
                                                            (assoc base-map :speak 1 :write 0 :listen 0 :read 1))]
           (is (= 1 (nth result 14)))
           (is (= 0 (nth result 15)))
-          (is (= 0 (nth result 16)))
-          (is (= 1 (nth result 17)))))
-      (testing "LISTEN_WRITE/ALL_PARTS flags: speak=0 write=1 listen=1 read=0"
+          (is (= 1 (nth result 16)))
+          (is (= 0 (nth result 17)))))
+      (testing "LISTEN_WRITE/ALL_PARTS flags: speak=0 write=1 read=0 listen=1"
         (let [result (yki-register/participant->csv-record url-helper oid->ssn
                                                            (assoc base-map :speak 0 :write 1 :listen 1 :read 0))]
           (is (= 0 (nth result 14)))
           (is (= 1 (nth result 15)))
-          (is (= 1 (nth result 16)))
-          (is (= 0 (nth result 17)))))
+          (is (= 0 (nth result 16)))
+          (is (= 1 (nth result 17)))))
       (testing "single subtest SPEAK only: speak=1 rest=0"
         (let [result (yki-register/participant->csv-record url-helper oid->ssn
                                                            (assoc base-map :speak 1 :write 0 :listen 0 :read 0))]
@@ -260,12 +260,12 @@
                                          :birthdate "2000-01-01"
                                          :certificate_lang "fi" :exam_lang "fi"}})
           participants [(make-row "p1" "FULL"         "ALL_PARTS")   ; → 1 1 1 1
-                        (make-row "p2" "READ_SPEAK"   "ALL_PARTS")   ; → 1 0 0 1
-                        (make-row "p3" "LISTEN_WRITE" "ALL_PARTS")   ; → 0 1 1 0
+                        (make-row "p2" "READ_SPEAK"   "ALL_PARTS")   ; → 1 0 1 0
+                        (make-row "p3" "LISTEN_WRITE" "ALL_PARTS")   ; → 0 1 0 1
                         (make-row "p4" "READ_SPEAK"   "ALL_PARTS")   ; \  merged
                         (make-row "p4" "LISTEN_WRITE" "ALL_PARTS")   ; /  → 1 1 1 1
                         (make-row "p5" "READ_SPEAK"   "SPEAK")       ; \  merged
-                        (make-row "p5" "LISTEN_WRITE" "LISTEN")]     ; /  → 1 0 1 0
+                        (make-row "p5" "LISTEN_WRITE" "LISTEN")]     ; /  → 1 0 0 1
           csv-str (yki-register/create-participants-csv url-helper participants oid->ssn)
           rows    (str/split csv-str #"\n")
           fields  (fn [row-str] (str/split row-str #";"))]
@@ -274,18 +274,18 @@
       (testing "p1 FULL/ALL_PARTS → speak=1 write=1 listen=1 read=1"
         (let [f (fields (first (filter #(str/starts-with? % "p1") rows)))]
           (is (= ["1" "1" "1" "1"] (subvec (vec f) 14 18)))))
-      (testing "p2 READ_SPEAK/ALL_PARTS → speak=1 write=0 listen=0 read=1"
+      (testing "p2 READ_SPEAK/ALL_PARTS → speak=1 write=0 read=1 listen=0"
         (let [f (fields (first (filter #(str/starts-with? % "p2") rows)))]
-          (is (= ["1" "0" "0" "1"] (subvec (vec f) 14 18)))))
-      (testing "p3 LISTEN_WRITE/ALL_PARTS → speak=0 write=1 listen=1 read=0"
+          (is (= ["1" "0" "1" "0"] (subvec (vec f) 14 18)))))
+      (testing "p3 LISTEN_WRITE/ALL_PARTS → speak=0 write=1 read=0 listen=1"
         (let [f (fields (first (filter #(str/starts-with? % "p3") rows)))]
-          (is (= ["0" "1" "1" "0"] (subvec (vec f) 14 18)))))
+          (is (= ["0" "1" "0" "1"] (subvec (vec f) 14 18)))))
       (testing "p4 READ_SPEAK+LISTEN_WRITE both ALL_PARTS → merged speak=1 write=1 listen=1 read=1"
         (let [f (fields (first (filter #(str/starts-with? % "p4") rows)))]
           (is (= ["1" "1" "1" "1"] (subvec (vec f) 14 18)))))
-      (testing "p5 READ_SPEAK/SPEAK + LISTEN_WRITE/LISTEN → merged speak=1 write=0 listen=1 read=0"
+      (testing "p5 READ_SPEAK/SPEAK + LISTEN_WRITE/LISTEN → merged speak=1 write=0 read=0 listen=1"
         (let [f (fields (first (filter #(str/starts-with? % "p5") rows)))]
-          (is (= ["1" "0" "1" "0"] (subvec (vec f) 14 18))))))))
+          (is (= ["1" "0" "0" "1"] (subvec (vec f) 14 18))))))))
 
 ;; ──────────────────────────────────────────────────────────────────────────────
 ;; sync-exam-session-participants — full integration against embedded DB
