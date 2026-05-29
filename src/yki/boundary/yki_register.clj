@@ -204,8 +204,8 @@
      (if is_transfered 1 0)
      speak
      write
-     listen
-     read]))
+     read
+     listen]))
 
 (defn create-participants-csv [url-helper participants oid->ssn]
   (with-open [writer (StringWriter.)]
