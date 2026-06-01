@@ -23,7 +23,7 @@
 (defn add-and-link-contact
   "Takes the first contact on the list and adds a new contact to org if it does not exist yet.
    Links said contact to the exam session. Data and data model support multiple contacts but
-   for now only one is handled."
+   for now only one is handled.."
   [tx spec oid exam-session-id contact-list]
   (log/info "Add and link contact" contact-list "from org" oid "to exam session" exam-session-id)
   (if contact-list
