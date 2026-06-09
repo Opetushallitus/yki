@@ -895,6 +895,12 @@ WHERE re.state = 'STARTED'
   AND es.id = :exam_session_id
   AND re.id = :registration_id;
 
+-- name: select-registration-details-by-id
+SELECT re.id, re.kind, re.partial_exam_type, re.exam_session_id
+FROM registration re
+WHERE re.id = :id
+  AND re.state = 'STARTED';
+
 -- name: select-registration
 SELECT state, exam_session_id, participant_id, es.organizer_id, ed.exam_date
 FROM registration re
