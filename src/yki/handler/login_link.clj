@@ -22,16 +22,18 @@
   (bytes->hex (hash/sha256 code)))
 
 (defn create-and-send-link [db url-helper email-q lang login-link exam-session to-queue?]
-  (let [code          (str (random-uuid))
-        login-url     (url-helper :yki.login-link.url code)
-        email         (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
-        link-type     (if to-queue? "LOGIN_QUEUE" (:type login-link))
-        subject       (str (localisation/get-translation lang (if to-queue? "email.login_queue.subject" "email.login.subject")))
-        hashed        (sha256-hash code)
-        template-data (assoc exam-session :subject subject
-                                          :language (template-util/get-language (:language_code exam-session) lang)
-                                          :level (template-util/get-level (:level_code exam-session) lang)
-                                          :login_url login-url)]
+  (let [code              (str (random-uuid))
+        login-url         (url-helper :yki.login-link.url code)
+        email             (:email (registration-db/get-participant-by-id db (:participant_id login-link)))
+        link-type         (if to-queue? "LOGIN_QUEUE" (:type login-link))
+        subject           (str (localisation/get-translation lang (if to-queue? "email.login_queue.subject" "email.login.subject")))
+        hashed            (sha256-hash code)
+        partial-exam-type (registration-db/get-partial-exam-type-for-login db (:participant_id login-link) (:exam_session_id login-link))
+        template-data     (assoc exam-session :subject subject
+                                              :language (template-util/get-language (:language_code exam-session) lang)
+                                              :level (template-util/get-level (:level_code exam-session) lang)
+                                              :login_url login-url
+                                              :subtests (template-util/get-registration-subtests (:exam_session_type exam-session) partial-exam-type lang))]
     (login-link-db/create-login-link! db (assoc login-link :code hashed))
     (log/info "Login link created for" email ". Adding to email queue")
     (pgq/put email-q
