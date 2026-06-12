@@ -313,11 +313,12 @@
                                      payment-link
                                      "PAYMENT"
                                      (assoc registration-data
-                                            :amount (:email-template amount)
-                                            :language (template-util/get-language (:language_code registration-data) lang)
-                                            :level (template-util/get-level (:level_code registration-data) lang)
-                                            :expiration_date (common/format-date-to-finnish-format last-payment-date)
-                                            :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal)))
+                                       :amount (:email-template amount)
+                                       :language (template-util/get-language (:language_code registration-data) lang)
+                                       :level (template-util/get-level (:level_code registration-data) lang)
+                                       :expiration_date (common/format-date-to-finnish-format last-payment-date)
+                                       :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal))
+                                       :subtests (template-util/get-registration-subtests (:exam_session_type registration-data) (:partial_exam_type registration-data) lang))
                                      code
                                      login-url))
     "QUEUE"
@@ -350,11 +351,12 @@
                                   payment-link
                                   "PAYMENT_FROM_QUEUE"
                                   (assoc registration-data
-                                         :amount (:email-template amount)
-                                         :language (template-util/get-language (:language_code registration-data) lang)
-                                         :level (template-util/get-level (:level_code registration-data) lang)
-                                         :expiration_date (common/format-date-to-finnish-format last-payment-date)
-                                         :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal)))
+                                    :amount (:email-template amount)
+                                    :language (template-util/get-language (:language_code registration-data) lang)
+                                    :level (template-util/get-level (:level_code registration-data) lang)
+                                    :expiration_date (common/format-date-to-finnish-format last-payment-date)
+                                    :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal))
+                                    :subtests (template-util/get-registration-subtests (:exam_session_type registration-data) (:partial_exam_type registration-data) lang))
                                   code
                                   login-url)))
 
