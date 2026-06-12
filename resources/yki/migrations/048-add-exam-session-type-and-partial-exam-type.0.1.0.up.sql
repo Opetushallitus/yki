@@ -9,5 +9,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 ALTER TABLE exam_session ADD COLUMN IF NOT EXISTS type exam_session_type NOT NULL DEFAULT 'FULL';
+ALTER TABLE exam_session ADD COLUMN IF NOT EXISTS max_participants_read_listen INTEGER;
+ALTER TABLE exam_session ADD COLUMN IF NOT EXISTS max_participants_speak_write INTEGER;
 ALTER TABLE exam_date ADD COLUMN IF NOT EXISTS type exam_session_type NOT NULL DEFAULT 'FULL';
 ALTER TABLE registration ADD COLUMN IF NOT EXISTS partial_exam_type exam_session_ticket_type NOT NULL DEFAULT 'ALL_PARTS';
