@@ -475,6 +475,10 @@ SELECT
   e.language_code,
   e.level_code,
   e.max_participants,
+  e.max_participants_read_listen,
+  e.max_participants_speak_write,
+  e.start_time_read_listen,
+  e.start_time_speak_write,
   e.office_oid,
   e.published_at,
   e.type,
@@ -493,6 +497,18 @@ SELECT
  WHERE re.exam_session_id = e.id
    AND re.kind = 'POST_ADMISSION'
    AND re.state in ('COMPLETED', 'SUBMITTED', 'STARTED')) AS pa_participants,
+(SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id
+     AND re.partial_exam_type IN ('ALL_PARTS', 'READ', 'LISTEN')
+     AND re.kind = 'ADMISSION'
+     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants_read_listen,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id
+     AND re.kind = 'ADMISSION'
+     AND re.partial_exam_type IN ('ALL_PARTS', 'SPEAK', 'WRITE')
+     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants_speak_write,
 o.oid AS organizer_oid,
 (
   SELECT array_to_json(array_agg(contact_row))
