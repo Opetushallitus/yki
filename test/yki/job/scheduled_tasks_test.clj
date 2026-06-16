@@ -150,6 +150,7 @@
 (deftest handle-exam-session-participants-sync-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_session SET last_sync_at = NOW()")
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set exam_date = '" (base/two-weeks-from-now) "'"))
   (with-routes!
     {"/oph/osallistujat"                                                    {:status 200
@@ -177,7 +178,7 @@
 (deftest handle-exam-session-participants-failure-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
-
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_session SET last_sync_at = NOW()")
   (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set registration_end_date = '" (base/two-weeks-ago) "'"))
   (jdbc/execute! @embedded-db/conn (str "INSERT INTO participant_sync_status (exam_session_id, failed_at) VALUES (1, '" (base/yesterday) "')"))
 

@@ -266,7 +266,8 @@ INSERT INTO exam_session (
   exam_date_id,
   max_participants,
   office_oid,
-  published_at
+  published_at,
+  last_sync_at
 ) VALUES (
   (SELECT id FROM organizer
     WHERE oid = :oid AND deleted_at IS NULL AND agreement_end_date >= :session_date AND agreement_start_date <= :session_date
@@ -282,7 +283,8 @@ INSERT INTO exam_session (
   (SELECT id from exam_date WHERE exam_date = :session_date AND deleted_at IS NULL),
   :max_participants,
   :office_oid,
-  :published_at
+  :published_at,
+  NOW()
 );
 
 -- name: insert-exam-session-location!
@@ -1307,7 +1309,26 @@ WHERE (((ed.exam_date >= (current_date + interval '1 week' - :duration::interval
   AND (SELECT COUNT(1)
        FROM registration re
        WHERE re.exam_session_id = es.id
-         AND re.state = 'COMPLETED') > 0;
+         AND re.state = 'COMPLETED') > 0
+  AND es.last_sync_at IS NOT NULL;
+
+-- name: select-unsynced-exam-sessions
+SELECT es.id,
+       es.language_code,
+       es.level_code,
+       ed.exam_date AS session_date,
+       o.oid        AS organizer_oid,
+       es.office_oid
+FROM exam_session es
+INNER JOIN exam_date ed ON es.exam_date_id = ed.id
+INNER JOIN organizer o ON es.organizer_id = o.id
+WHERE es.last_sync_at IS NULL
+  AND ed.exam_date >= current_date;
+
+-- name: set-exam-session-last-sync-at!
+UPDATE exam_session
+SET last_sync_at = current_timestamp
+WHERE id = :id;
 
 -- name: update-participant-sync-to-success!
 UPDATE participant_sync_status
@@ -1324,11 +1345,25 @@ DELETE FROM participant_sync_status
 WHERE exam_session_id = :exam_session_id;
 
 -- name: select-completed-exam-session-participants
-SELECT r.form, r.person_oid, r.is_transfered, p.last_name, p.first_name, p.email, p.zip, p.post_office, p.street_address, p.country_code
+SELECT r.form,
+       r.person_oid,
+       r.is_transfered,
+       r.partial_exam_type,
+       es.type AS exam_session_type,
+       p.last_name,
+       p.first_name,
+       p.email,
+       p.zip,
+       p.post_office,
+       p.street_address,
+       p.country_code
 FROM registration r
+INNER JOIN exam_session es ON es.id = r.exam_session_id
 INNER JOIN person p ON p.oid = r.person_oid
-WHERE r.exam_session_id = :id
-AND r.state = 'COMPLETED';
+WHERE es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :id)
+  AND es.organizer_id = (SELECT organizer_id FROM exam_session WHERE id = :id)
+  AND r.state = 'COMPLETED'
+ORDER BY r.id ASC;
 
 -- name: select-exam-session-participants
 SELECT
