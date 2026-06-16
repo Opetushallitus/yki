@@ -50,8 +50,12 @@
   (lift-registration-from-queue! [db exam-session-id send-email!])
   (expire-queued-registrations-after-exam-date! [db])
   (get-free-registration [db registration-id])
+<<<<<<< HEAD
   (check-registration-id-matches-session [db registration-id participant-id external-user-id])
   (get-registration-details-by-id [db registration-id]))
+=======
+  (check-registration-id-matches-session [db registration-id participant-id external-user-id]))
+>>>>>>> dev
 
 (defn get-registration-data-with-tx
   [tx registration-id participant-id lang]
@@ -274,5 +278,4 @@
     (first (q/check-registration-id-matches-session spec {:id registration-id :participant_id participant-id :external_user_id external-user-id})))
   (get-registration-details-by-id
     [{:keys [spec]} registration-id]
-    (first (q/select-registration-details-by-id spec {:id registration-id})))
-  )
+    (first (q/select-registration-details-by-id spec {:id registration-id}))))
