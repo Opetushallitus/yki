@@ -319,10 +319,16 @@ SELECT
   level_code,
   ed.exam_date AS session_date,
   e.max_participants,
+  e.max_participants_read_listen,
+  e.max_participants_speak_write,
+  e.start_time,
+  e.start_time_read_listen,
+  e.start_time_speak_write,
   ed.registration_start_date,
   ed.registration_end_date,
   e.office_oid,
   e.published_at,
+  e.type,
   (SELECT COUNT(1)
    FROM registration re
    WHERE re.exam_session_id = e.id
@@ -333,6 +339,18 @@ SELECT
    WHERE re.exam_session_id = e.id
      AND re.kind = 'ADMISSION'
      AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id
+     AND re.partial_exam_type IN ('ALL_PARTS', 'READ', 'LISTEN')
+     AND re.kind = 'ADMISSION'
+     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants_read_listen,
+  (SELECT COUNT(1)
+   FROM registration re
+   WHERE re.exam_session_id = e.id
+     AND re.kind = 'ADMISSION'
+     AND re.partial_exam_type IN ('ALL_PARTS', 'SPEAK', 'WRITE')
+     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants_speak_write,
   o.oid AS organizer_oid,
   (SELECT array_to_json(array_agg(loc))
    FROM (SELECT
@@ -349,7 +367,21 @@ SELECT
   (now() AT TIME ZONE 'Europe/Helsinki' <
     (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') +
      time '16:00')) AS upcoming_admission,
-  select_registration_kind(e.id) AS available_registration_kind
+  select_registration_kind(e.id, 'ALL_PARTS') AS available_registration_kind,
+  CASE e.type
+    WHEN 'FULL' THEN
+      json_build_object('ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'))
+    WHEN 'READ_SPEAK' THEN
+      json_build_object(
+        'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+        'READ', select_registration_kind(e.id, 'READ'),
+        'SPEAK', select_registration_kind(e.id, 'SPEAK'))
+    WHEN 'LISTEN_WRITE' THEN
+      json_build_object(
+        'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+        'LISTEN', select_registration_kind(e.id, 'LISTEN'),
+        'WRITE', select_registration_kind(e.id, 'WRITE'))
+  END AS partial_registration_kind
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -445,6 +477,7 @@ SELECT
   e.max_participants,
   e.office_oid,
   e.published_at,
+  e.type,
 (SELECT COUNT(1)
  FROM registration re
  WHERE re.exam_session_id = e.id
@@ -489,7 +522,21 @@ o.oid AS organizer_oid,
  (date_trunc('day', ed.registration_end_date AT TIME ZONE 'Europe/Helsinki') +
   time '16:00')) AS upcoming_admission,
 within_dt_range(now(), ed.registration_start_date, ed.registration_end_date) AS open,
-select_registration_kind(e.id) AS available_registration_kind
+select_registration_kind(e.id, 'ALL_PARTS') AS available_registration_kind,
+CASE e.type
+  WHEN 'FULL' THEN
+    json_build_object('ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'))
+  WHEN 'READ_SPEAK' THEN
+    json_build_object(
+      'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+      'READ', select_registration_kind(e.id, 'READ'),
+      'SPEAK', select_registration_kind(e.id, 'SPEAK'))
+  WHEN 'LISTEN_WRITE' THEN
+    json_build_object(
+      'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+      'LISTEN', select_registration_kind(e.id, 'LISTEN'),
+      'WRITE', select_registration_kind(e.id, 'WRITE'))
+END AS partial_registration_kind
 FROM exam_session e
 INNER JOIN organizer o ON e.organizer_id = o.id
 INNER JOIN exam_date ed ON e.exam_date_id = ed.id
@@ -683,14 +730,16 @@ INSERT INTO registration(
   participant_id,
   started_at,
   kind,
-  strong_auth
+  strong_auth,
+  partial_exam_type
 ) SELECT
   'STARTED',
   :exam_session_id,
   :participant_id,
   :started_at,
   :kind::registration_kind,
-  :strong_auth
+  :strong_auth,
+  COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type
   -- only one registration per participant on same exam date
   WHERE NOT EXISTS (SELECT es.id
                     FROM exam_session es
@@ -792,9 +841,10 @@ SELECT NOT EXISTS (
 	FROM exam_session es
 	LEFT JOIN registration re ON es.id = re.exam_session_id
 	WHERE re.exam_session_id = :exam_session_id
-    AND re.id != COALESCE(:registration_id, 0)
-	  AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-      AND re.kind = 'ADMISSION'
+        AND re.id != COALESCE(:registration_id, 0)
+        AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+        AND re.kind = 'ADMISSION'
+        AND (re.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type OR re.partial_exam_type = :partial_exam_type::exam_session_ticket_type)
 	GROUP BY es.max_participants
     HAVING (es.max_participants - COUNT(re.id)) <= 0)
 AS exists;
@@ -827,12 +877,21 @@ WHERE r.id = :registration_id
   AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id);
 
 -- name: select-started-registration-id-and-kind-by-participant
-SELECT re.id, re.kind
+SELECT re.id, re.kind, re.partial_exam_type
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
 WHERE re.participant_id = :participant_id
   AND re.state = 'STARTED'
-  AND es.id = :exam_session_id;
+  AND es.id = :exam_session_id
+  AND COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type = re.partial_exam_type;
+
+-- name: select-started-registration-kind-and-type-by-id
+SELECT re.id, re.kind, re.partial_exam_type, re.participant_id
+FROM exam_session es
+INNER JOIN registration re ON es.id = re.exam_session_id
+WHERE re.state = 'STARTED'
+  AND es.id = :exam_session_id
+  AND re.id = :registration_id;
 
 -- name: select-registration
 SELECT state, exam_session_id, participant_id, es.organizer_id, ed.exam_date
@@ -917,6 +976,7 @@ SELECT re.id,
        esl.zip,
        esl.name,
        p.external_user_id = p.email AS is_email_auth,
+       p.external_user_id,
        pe.email,
        fr.free_registration_id
 FROM registration re
@@ -1037,7 +1097,7 @@ FROM registration re
 WHERE re.id = :id;
 
 -- name: select-open-registrations-by-participant
-SELECT re.exam_session_id, (started_at + interval '30 minutes') AS expires_at
+SELECT re.exam_session_id, (started_at + interval '30 minutes') AS expires_at, re.id AS registration_id
 FROM registration re
 INNER JOIN participant p ON p.id = re.participant_id
 WHERE p.external_user_id = :external_user_id
@@ -1057,7 +1117,9 @@ SELECT re.id,
        es.language_code,
        es.level_code,
        es.organizer_id,
-       ed.exam_date
+       ed.exam_date,
+       re.partial_exam_type AS registration_type,
+       es.type AS exam_type
 FROM registration re
 INNER JOIN person pe ON re.person_oid = pe.oid
 INNER JOIN participant p ON p.id = re.participant_id
@@ -1767,7 +1829,7 @@ INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 INNER JOIN organizer o on es.organizer_id = o.id
 LEFT JOIN exam_session oes ON r.original_exam_session_id = oes.id
 LEFT JOIN exam_date oed ON oes.exam_date_id = oed.id
-WHERE r.state = 'COMPLETED' AND
+WHERE (r.state = 'COMPLETED' OR r.state = 'PAID_AND_CANCELLED') AND
     (date_trunc('day', :from_inclusive) AT TIME ZONE 'Europe/Helsinki')::DATE <= fr.created_at AND
     fr.created_at < (date_trunc('day', :to_exclusive) AT TIME ZONE 'Europe/Helsinki')::DATE;
 
@@ -1833,8 +1895,8 @@ FROM person
 WHERE oid = :oid;
 
 -- name: select-person-registrations
-SELECT r.id, r.exam_session_id, r.state, r.kind,
-ed.exam_date, es.language_code, es.level_code,
+SELECT r.id, r.exam_session_id, r.state, r.kind, r.partial_exam_type,
+ed.exam_date, es.language_code, es.level_code, es.type, es.start_time, es.start_time_read_listen, es.start_time_speak_write,
 ed.registration_start_date, ed.registration_end_date,
 re.state AS evaluation_state,
        (SELECT array_to_json(array_agg(loc))
@@ -2002,3 +2064,10 @@ ORDER BY id;
 -- name: insert-exam-session-statistics!
 INSERT INTO exam_session_statistics (exam_session_id, last_processed_event_id, participants, queue, max_participant_count, max_queue_count, max_participants_at, max_queue_at)
 VALUES (:exam_session_id, :last_processed_event_id, :participants, :queue, :max_participant_count, :max_queue_count, :max_participants_at, :max_queue_at);
+
+-- name: check-registration-id-matches-session
+SELECT re.id
+FROM registration re
+LEFT JOIN participant p ON re.participant_id = p.id
+WHERE re.id = :id
+AND (re.participant_id = :participant_id OR p.external_user_id = :external_user_id);
