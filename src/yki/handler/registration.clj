@@ -1,9 +1,9 @@
 (ns yki.handler.registration
   (:require
     [clojure.tools.logging :as log]
-    [compojure.api.sweet :refer [api context DELETE POST]]
+    [compojure.api.sweet :refer [api context DELETE GET POST]]
     [integrant.core :as ig]
-    [ring.util.http-response :refer [ok bad-request internal-server-error]]
+    [ring.util.http-response :refer [ok bad-request internal-server-error not-found]]
     [yki.boundary.registration-db :as registration-db]
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
@@ -46,6 +46,11 @@
                                             registration-identify
                                             (:payment-config payment-helper)))
       (context "/:id" []
+        (GET "/" _
+          :path-params [id :- ::ys/id]
+          (if-let [result (registration-db/get-registration-details-by-id db id)]
+            (ok result)
+            (not-found {:error "Registration not found"})))
         (POST "/submit" request
           :body [registration ::ys/registration]
           :path-params [id :- ::ys/id]
