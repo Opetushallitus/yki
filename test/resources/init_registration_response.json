@@ -5,8 +5,12 @@
     "queue": 0,
     "registration_end_date": "2039-12-01",
     "registration_start_date": "2017-12-01",
+    "type": "FULL",
     "open": true,
     "available_registration_kind": "ADMISSION",
+    "partial_registration_kind": {
+      "ALL_PARTS": "ADMISSION"
+    },
     "max_participants": 5,
     "pa_participants": 0,
     "language_code": "fin",
@@ -53,6 +57,7 @@
     "external-user-id": "test@user.com",
     "email": "test@user.com"
   },
+  "partial_exam_type": "ALL_PARTS",
   "registration_id": 1,
   "registration_kind": "ADMISSION"
 }

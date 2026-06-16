@@ -83,6 +83,8 @@
   (get-exam-session-participants [db id oid])
   (get-completed-exam-session-participants [db id])
   (get-exam-sessions-to-be-synced [db retry-duration])
+  (get-unsynced-exam-sessions [db])
+  (set-exam-session-synced! [db id])
   (get-exam-sessions [db from]
     "Get exam sessions with exam date at least 'from'")
   (get-exam-sessions-for-oid [db oid from]
@@ -203,6 +205,11 @@
     (first (q/select-exam-session-registration-by-registration-id spec {:registration_id registration-id})))
   (get-exam-sessions-to-be-synced [{:keys [spec]} retry-duration]
     (q/select-exam-sessions-to-be-synced spec {:duration retry-duration}))
+  (get-unsynced-exam-sessions [{:keys [spec]}]
+    (q/select-unsynced-exam-sessions spec))
+  (set-exam-session-synced! [{:keys [spec]} id]
+    (jdbc/with-db-transaction [tx spec]
+      (q/set-exam-session-last-sync-at! tx {:id id})))
   (get-exam-session-participants [{:keys [spec]} id oid]
     (q/select-exam-session-participants spec {:id id :oid oid}))
   (get-completed-exam-session-participants [{:keys [spec]} id]

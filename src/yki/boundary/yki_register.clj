@@ -148,7 +148,42 @@
         (do-post (url-helper :yki-register.exam-date) (json/write-value-as-string exam-date-req) basic-auth)
         (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string exam-session-req) basic-auth)))))
 
-(defn participant->csv-record [url-helper oid->ssn {:keys [form is_transfered person_oid last_name first_name email zip post_office street_address country_code]}]
+(defn session-type->subtest-flags [session-type partial-exam-type]
+  (let [part (or partial-exam-type "ALL_PARTS")]
+    (case (or session-type "FULL")
+      "READ_SPEAK"   {:speak  (if (contains? #{"ALL_PARTS" "SPEAK"} part) 1 0)
+                      :write  0
+                      :listen 0
+                      :read   (if (contains? #{"ALL_PARTS" "READ"} part) 1 0)}
+      "LISTEN_WRITE" {:speak  0
+                      :write  (if (contains? #{"ALL_PARTS" "WRITE"} part) 1 0)
+                      :listen (if (contains? #{"ALL_PARTS" "LISTEN"} part) 1 0)
+                      :read   0}
+                     {:speak  (if (contains? #{"ALL_PARTS" "SPEAK"} part) 1 0)
+                      :write  (if (contains? #{"ALL_PARTS" "WRITE"} part) 1 0)
+                      :listen (if (contains? #{"ALL_PARTS" "LISTEN"} part) 1 0)
+                      :read   (if (contains? #{"ALL_PARTS" "READ"} part) 1 0)})))
+
+(defn- merge-flags [flags-list]
+  (reduce (fn [a b] (merge-with max a b))
+          {:speak 0 :write 0 :listen 0 :read 0}
+          flags-list))
+
+(defn merge-participants [participants]
+  (->> participants
+       (group-by :person_oid)
+       (vals)
+       (map (fn [rows]
+              (let [flags (merge-flags
+                            (map #(session-type->subtest-flags
+                                    (:exam_session_type %)
+                                    (:partial_exam_type %))
+                                 rows))]
+                (merge (first rows)
+                       flags
+                       {:is_transfered (boolean (some :is_transfered rows))}))))))
+
+(defn participant->csv-record [url-helper oid->ssn {:keys [form is_transfered person_oid last_name first_name email zip post_office street_address country_code speak write listen read]}]
   (let [{:keys [gender nationalities birthdate certificate_lang exam_lang]} form
         nationality (codes/get-converted-country-code url-helper (first nationalities))
         country     (codes/get-converted-country-code url-helper country_code)
@@ -166,11 +201,16 @@
      email
      exam_lang
      certificate_lang
-     (if is_transfered 1 0)]))
+     (if is_transfered 1 0)
+     speak
+     write
+     read
+     listen]))
 
 (defn create-participants-csv [url-helper participants oid->ssn]
   (with-open [writer (StringWriter.)]
-    (let [csv-data (map #(participant->csv-record url-helper oid->ssn %) participants)]
+    (let [csv-data (->> (merge-participants participants)
+                        (map #(participant->csv-record url-helper oid->ssn %)))]
       (csv/write-csv writer csv-data :separator \;))
     (.toString writer)))
 

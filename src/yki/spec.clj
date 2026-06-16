@@ -224,8 +224,15 @@
 (s/def ::office_oid (s/nilable ::oid))
 (s/def ::session_date ::date-type)
 (s/def ::max_participants pos-int?)
+(s/def ::max_participants_read_listen (s/nilable pos-int?))
+(s/def ::max_participants_speak_write (s/nilable pos-int?))
+(s/def ::start_time (s/and (s/nilable string?) #(<= (count %) 5)))
+(s/def ::start_time_read_listen (s/and (s/nilable string?) #(<= (count %) 5)))
+(s/def ::start_time_speak_write (s/and (s/nilable string?) #(<= (count %) 5)))
 (s/def ::published_at (s/nilable ::date-type))
 (s/def ::participants int?)
+(s/def ::participants_read_listen int?)
+(s/def ::participants-speak-write int?)
 (s/def ::exam_fee pos-int?)
 (s/def ::open boolean?)
 (s/def ::queue_full boolean?)
@@ -234,6 +241,8 @@
 (s/def ::upcoming_admission boolean?)
 (s/def ::transfer_targets (s/coll-of pos-int?))
 (s/def ::available_registration_kind ::registration-kind)
+(s/def ::partial_registration_kind (s/map-of keyword? ::registration-kind))
+(s/def ::exam_session_type #{"FULL" "READ_SPEAK" "LISTEN_WRITE"})
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -244,16 +253,27 @@
                                        ::location]
                               :opt-un [::id
                                        ::office_oid
+                                       ::max_participants_read_listen
+                                       ::max_participants_speak_write
+                                       ::start_time
+                                       ::start_time_read_listen
+                                       ::start_time_speak_write
                                        ::exam_fee
+                                       ::exam_fee_read_listen
+                                       ::exam_fee_speak_write
                                        ::contact
                                        ::open
                                        ::queue
                                        ::queue_full
                                        ::participants
+                                       ::participants_read_listen
+                                       ::participants_speak_write
                                        ::organizer_oid
                                        ::transfer_targets
                                        ::upcoming_admission
-                                       ::available_registration_kind]))
+                                       ::available_registration_kind
+                                       ::partial_registration_kind
+                                       ::exam_session_type]))
 
 (s/def ::exam_sessions (s/coll-of ::exam-session))
 (s/def ::exam-sessions-response (s/keys :req-un [::exam_sessions]))
@@ -294,7 +314,8 @@
 (s/def ::login-link (s/keys :req-un [::email
                                      ::exam_session_id]
                             :opt-un [::user_data
-                                     ::registration_kind]))
+                                     ::registration_kind
+                                     ::registration_id]))
 
 (s/def ::login-code ::non-blank-string)
 
@@ -339,8 +360,11 @@
 
 (s/def ::exam_session ::exam-session)
 (s/def ::to_queue boolean?)
+(s/def ::exam_session_type #{"ALL_PARTS" "READ" "SPEAK" "LISTEN" "WRITE"})
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]
-                                   :opt-un [::to_queue]))
+                                   :opt-un [::to_queue
+                                            ::partial_exam_type
+                                            ::registration_id]))
 
 (s/def ::registration_id ::id)
 
@@ -368,7 +392,8 @@
                                                      ::is_strongly_identified
                                                      ::user
                                                      ::registration_id
-                                                     ::registration_kind]))
+                                                     ::registration_kind
+                                                     ::partial_exam_type]))
 
 ;; exam session participant
 (s/def ::state ::non-blank-string)
@@ -476,7 +501,7 @@
 
 (s/def ::exam_session_id pos-int?)
 (s/def ::expires_at ::date-type)
-(s/def ::open-registration (s/keys :req-un [::exam_session_id ::expires_at]))
+(s/def ::open-registration (s/keys :req-un [::exam_session_id ::expires_at ::registration_id]))
 (s/def ::open_registrations (s/coll-of ::open-registration))
 
 (s/def ::user-open-registrations-response (s/keys :req-un [::open_registrations]))

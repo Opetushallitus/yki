@@ -49,6 +49,10 @@
                                                :task      "EXAM_SESSION_STATISTICS_HANDLER"
                                                :interval  "57 MINUTES"})
 
+(defonce exam-session-solki-sync-handler-conf {:worker-id (str (random-uuid))
+                                               :task      "EXAM_SESSION_SOLKI_SYNC_HANDLER"
+                                               :interval  "59 MINUTES"})
+
 (defn- take-with-error-handling
   "Takes message from queue and executes handler function with message.
   Rethrows exceptions if retry until limit is not reached so that message is not
@@ -339,3 +343,22 @@
              (exam-session-db/update-exam-session-statistics! db statistics-to-insert)))))
      (catch Exception e
        (log/error e "Exam session statistics handler failed [ERROR_SCHEDULED_TASK]"))))
+
+(defmethod ig/init-key ::exam-session-solki-sync-handler
+  [_ {:keys [db url-helper basic-auth disabled]}]
+  {:pre [(some? db) (some? url-helper) (some? basic-auth)]}
+  #(try
+     (when (job-db/try-to-acquire-lock! db exam-session-solki-sync-handler-conf)
+       (log/info "Exam session Solki sync handler started")
+       (let [unsynced-sessions (exam-session-db/get-unsynced-exam-sessions db)]
+         (log/info "Found unsynced exam sessions" (map :id unsynced-sessions))
+         (doseq [exam-session unsynced-sessions]
+           (try
+             (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled
+                                                           {:type         "CREATE"
+                                                            :exam-session exam-session})
+             (exam-session-db/set-exam-session-synced! db (:id exam-session))
+             (catch Exception e
+               (log/error e "Failed to sync exam session to Solki" {:id (:id exam-session)}))))))
+     (catch Exception e
+       (log/error e "Exam session Solki sync handler failed [ERROR_SCHEDULED_TASK]"))))
