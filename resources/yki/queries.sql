@@ -899,6 +899,7 @@ WHERE re.state = 'STARTED'
 SELECT re.id, re.kind, re.partial_exam_type, re.exam_session_id
 FROM registration re
 WHERE re.id = :id
+  AND re.participant_id = :participant-id
   AND re.state IN ('STARTED', 'SUBMITTED');
 
 -- name: select-registration
