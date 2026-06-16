@@ -46,14 +46,11 @@
                                             registration-identify
                                             (:payment-config payment-helper)))
       (context "/:id" []
-        (GET "/" request
+        (GET "/" _
           :path-params [id :- ::ys/id]
-          (let [session            (:session request)
-                {:keys [identity]} session
-                participant-id     (registration/get-participant-id db identity)]
-            (if-let [result (registration-db/get-registration-details-by-id db id participant-id)]
-              (ok result)
-              (not-found {:error "Registration not found"}))))
+          (if-let [result (registration-db/get-registration-details-by-id db id)]
+            (ok result)
+            (not-found {:error "Registration not found"})))
         (POST "/submit" request
           :body [registration ::ys/registration]
           :path-params [id :- ::ys/id]
