@@ -1368,6 +1368,7 @@ INNER JOIN exam_session es ON es.id = r.exam_session_id
 INNER JOIN person p ON p.oid = r.person_oid
 WHERE es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :id)
   AND es.organizer_id = (SELECT organizer_id FROM exam_session WHERE id = :id)
+  AND r.exam_session_id = :id
   AND r.state = 'COMPLETED'
 ORDER BY r.id ASC;
 
