@@ -1,5 +1,33 @@
-{% extends "yki/templates/receipt_base.html" %} {% block content %}
+{% extends "yki/templates/receipt_base.html" %}
+{% block participant-header %}{% endblock %}
+{% block content %}
+
+<p>
+    {% i18n email.receipt.examPayment.exam %}: {{ language }}, {{ level|lower }}, {{ exam_date|date-format-with-dots }}<br/>
+    {% i18n email.receipt.common.participant %}: {{ last_name }}, {{ first_name }}<br/>
+    {% i18n email.receipt.examPayment.organizer %}: {{ organizer_name }}<br/>
+    {% i18n email.receipt.examPayment.address %}: {{ street_address }}, {{ zip }}, {{ post_office }}
+</p>
+
 <table style="width: 100%;border-spacing: 0;">
+    {% if subtests %}
+    <tr>
+        <td colspan="4" class="cell" style="font-weight: bold; border-width: 1px 1px 0 1px;">
+            {% i18n email.receipt.examPayment.title %}
+        </td>
+        <td class="cell" style="border-width: 1px 1px 0 0;"></td>
+    </tr>
+    {% for test in subtests %}
+    <tr>
+        <td colspan="4" class="cell" style="border-width: 0 1px 0 1px;">
+            {{ test.name }}
+        </td>
+        <td class="cell" style="border-width: 0 1px 0 0;">
+            {{ test.price.email-template }} €
+        </td>
+    </tr>
+    {% endfor %}
+    {% else %}
     <tr>
         <td colspan="4" class="cell" style="font-weight: bold; border-width: 1px 1px 1px 1px;">
             {% i18n email.receipt.examPayment.title %}
@@ -8,42 +36,7 @@
             {{ amount }} €
         </td>
     </tr>
-    <tr>
-        <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
-            {% i18n email.receipt.common.examSession %}: {{ language }}, {{ level|lower }}, {{ exam_date|date-format-with-dots }}
-        </td>
-        <td class="cell" style="border-width: 0 1px 0 0;"></td>
-    </tr>
-    <tr>
-        <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
-            {% i18n email.receipt.common.participant %}: {{ last_name }}, {{ first_name }}
-        </td>
-        <td class="cell" style="border-width: 0 1px 0 0;"></td>
-    </tr>
-    <tr>
-        <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
-            {% i18n email.receipt.examPayment.organizer %}:
-        </td>
-        <td class="cell" style="border-width: 0 1px 0 0;"></td>
-    </tr>
-    <tr>
-        <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
-            {{ organizer_name }}
-        </td>
-        <td class="cell" style="border-width: 0 1px 0 0;"></td>
-    </tr>
-    <tr>
-        <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
-            {{ street_address }}
-        </td>
-        <td class="cell" style="border-width: 0 1px 0 0;"></td>
-    </tr>
-    <tr>
-        <td colspan="4" class="cell" style="font-weight: bold;border-width: 0 1px 0 1px;">
-            {{ zip }} {{ post_office }}
-        </td>
-        <td class="cell" style="border-width: 0 1px 0 0;"></td>
-    </tr>
+    {% endif %}
 
     <tr style="font-weight: bold">
         <td class="cell" colspan="4" style="font-weight: bold; border-width: 1px 1px 1px 1px;">

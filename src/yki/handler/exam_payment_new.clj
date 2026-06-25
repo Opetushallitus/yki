@@ -89,7 +89,7 @@
 (defn- cancel-redirect [url-helper exam-session-id]
   (found (url-helper :yki-ui.registration.payment-cancel.url exam-session-id)))
 
-(defn- handle-success-callback [db email-q pdf-renderer url-helper lang request]
+(defn- handle-success-callback [db email-q pdf-renderer payment-helper url-helper lang request]
   (let [{transaction-id "checkout-transaction-id"
          amount         "checkout-amount"
          payment-status "checkout-status"} (:query-params request)
@@ -117,6 +117,7 @@
             send-registration-complete-email! (fn [updated-payment-details]
                                                 (registration-email/send-exam-registration-completed-email!
                                                   email-q
+                                                  payment-helper
                                                   pdf-renderer
                                                   lang
                                                   email-template-data
@@ -206,7 +207,7 @@
       :middleware [with-error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
-        (handle-success-callback db email-q pdf-renderer url-helper lang request))
+        (handle-success-callback db email-q pdf-renderer payment-helper url-helper lang request))
       (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
         (handle-error-callback db url-helper request)))
@@ -216,7 +217,7 @@
       :middleware [with-error-boundary wrap-params #(with-request-validation (:payment-config payment-helper) %)]
       (GET "/:lang/success" request
         :path-params [lang :- ::ys/language-code]
-        (handle-success-callback db email-q pdf-renderer url-helper lang request))
+        (handle-success-callback db email-q pdf-renderer payment-helper url-helper lang request))
       (GET "/:lang/error" request
         :path-params [lang :- ::ys/language-code]
         (handle-error-callback db url-helper request)))))
