@@ -10,14 +10,14 @@
 </p>
 
 <table style="width: 100%;border-spacing: 0;">
-    {% if subtests %}
+{% if subtests %}
     <tr>
         <td colspan="4" class="cell" style="font-weight: bold; border-width: 1px 1px 0 1px;">
             {% i18n email.receipt.examPayment.title %}
         </td>
         <td class="cell" style="border-width: 1px 1px 0 0;"></td>
     </tr>
-    {% for test in subtests %}
+{% for test in subtests %}
     <tr>
         <td colspan="4" class="cell" style="border-width: 0 1px 0 1px;">
             {{ test.name }}
@@ -26,8 +26,8 @@
             {{ test.price.email-template }} €
         </td>
     </tr>
-    {% endfor %}
-    {% else %}
+{% endfor %}
+{% else %}
     <tr>
         <td colspan="4" class="cell" style="font-weight: bold; border-width: 1px 1px 1px 1px;">
             {% i18n email.receipt.examPayment.title %}
@@ -36,7 +36,7 @@
             {{ amount }} €
         </td>
     </tr>
-    {% endif %}
+{% endif %}
 
     <tr style="font-weight: bold">
         <td class="cell" colspan="4" style="font-weight: bold; border-width: 1px 1px 1px 1px;">

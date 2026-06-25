@@ -107,13 +107,16 @@
             "ALL_PARTS" [{:subtest "READING"  :price (price-for :KESKI_READ)}
                          {:subtest "SPEAKING" :price (price-for :KESKI_SPEAK)}]
             "READ"      [{:subtest "READING"  :price (price-for :KESKI_READ)}]
-            "SPEAK"     [{:subtest "SPEAKING" :price (price-for :KESKI_SPEAK)}])
+            "SPEAK"     [{:subtest "SPEAKING" :price (price-for :KESKI_SPEAK)}]
+            nil)
           "LISTEN_WRITE"
           (case registration_type
             "ALL_PARTS" [{:subtest "LISTENING" :price (price-for :KESKI_LISTEN)}
                          {:subtest "WRITING"   :price (price-for :KESKI_WRITE)}]
             "LISTEN"    [{:subtest "LISTENING" :price (price-for :KESKI_LISTEN)}]
-            "WRITE"     [{:subtest "WRITING"   :price (price-for :KESKI_WRITE)}])))))
+            "WRITE"     [{:subtest "WRITING"   :price (price-for :KESKI_WRITE)}]
+            nil)
+          nil))))
   (registration->payment [_ tx registration language amount]
     (if-let [existing-payment-redirect-url (->> (q/select-unpaid-new-exam-payments-by-registration-id tx {:registration_id (:id registration)})
                                                 (first)
