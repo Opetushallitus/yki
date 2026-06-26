@@ -12,6 +12,10 @@
       "ALL_PARTS": "ADMISSION"
     },
     "max_participants": 5,
+    "max_participants_read_listen": null,
+    "max_participants_speak_write": null,
+    "participants_read_listen": 0,
+    "participants_speak_write": 0,
     "pa_participants": 0,
     "language_code": "fin",
     "office_oid": "1.2.3.4.5",

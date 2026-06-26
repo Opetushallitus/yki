@@ -329,6 +329,43 @@
                   req-body        (get-in request [:request :body "postData"])]
               (is (= req-body (str/replace csv old-email new-email))))))))
 
+(deftest return-exam-session-participants-csv-selects-only-the-target-session-test
+  (base/insert-base-data)
+  (base/insert-persons)
+  (base/insert-registrations "COMPLETED")
+  (jdbc/execute! @embedded-db/conn
+                 "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender, country_code)
+                  VALUES ('9.9.9.9.9', 'Uusi', 'Henkilo', 'uusi@test.fi', '0400000000', 'Uusikatu 1', '00100', '00100', '246', cast('M' as gender_code), '246')")
+  (jdbc/execute! @embedded-db/conn
+                 "INSERT INTO exam_session (organizer_id, language_code, level_code, office_oid, exam_date_id, max_participants, published_at)
+                  VALUES (
+                    (SELECT id FROM organizer WHERE oid = '1.2.3.4'),
+                    'fin', 'PERUS', '1.2.3.4.6',
+                    (SELECT id FROM exam_date WHERE exam_date = '2039-05-02'),
+                    6, null)")
+  (jdbc/execute! @embedded-db/conn
+                 (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, form)
+                       VALUES ('9.9.9.9.9','COMPLETED',
+                               (SELECT id FROM exam_session WHERE office_oid='1.2.3.4.6'),
+                               " base/select-participant ",
+                               '" (j/write-value-as-string base/registration-form) "')"))
+  (let [exam-session-id (:id (base/select-one base/select-exam-session))
+        db              (base/db)]
+    (defn routes [port]
+      (merge (base/cas-mock-routes port)
+             base/onr-mock-routes
+             {"/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                                       :body   (slurp "test/resources/maatjavaltiot2_246.json")}
+              "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                                       :body   (slurp "test/resources/maatjavaltiot2_180.json")}}))
+    (with-routes! routes
+      (let [url-helper (base/create-url-helper (str "localhost:" port))
+            onr-client (base/onr-client url-helper)
+            csv        (yki-register/return-exam-session-participants-csv db url-helper onr-client exam-session-id)
+            rows       (->> (str/split csv #"\n") (remove str/blank?))]
+        (is (= 3 (count rows))))))
+)
+
 (deftest sync-exam-session-participants-schedule-test
   (base/insert-base-data)
   (base/insert-persons)
