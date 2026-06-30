@@ -1126,8 +1126,8 @@ SELECT re.id,
        es.level_code,
        es.organizer_id,
        ed.exam_date,
-       re.partial_exam_type AS registration_type,
-       es.type AS exam_type
+       re.partial_exam_type,
+       es.type AS exam_session_type
 FROM registration re
 INNER JOIN person pe ON re.person_oid = pe.oid
 INNER JOIN participant p ON p.id = re.participant_id
