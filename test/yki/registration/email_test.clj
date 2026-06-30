@@ -7,13 +7,18 @@
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.registration.email :refer [send-exam-registration-completed-email!]]
-    [yki.util.common :refer [string->date]]))
+    [yki.util.common :refer [string->date]]
+    [yki.util.exam-payment-helper :as exam-payment]))
 
 (use-fixtures :once embedded-db/with-postgres embedded-db/with-migration)
 
 (deftest exam-registration-confirmation-test
   (let [email-q           (base/email-q)
         pdf-renderer      (base/mock-pdf-renderer)
+        payment-helper    (reify exam-payment/PaymentHelper
+                            (get-payment-amount-for-registration [_ _] nil)
+                            (registration->payment [_ _ _ _ _] nil)
+                            (subtest-prices [_ _] nil))
         registration-data {:level_code     "KESKI"
                            :language_code  "fin"
                            :email          "teijo@test.invalid"
@@ -29,7 +34,7 @@
         payment-data      {:paid_at   (string->date "2022-10-13T22:00.00Z")
                            :amount    14000M
                            :reference (str "YKI-EXAM-1-2-3-" random-uuid)}]
-    (send-exam-registration-completed-email! email-q pdf-renderer "fi" registration-data payment-data)
+    (send-exam-registration-completed-email! email-q payment-helper pdf-renderer "fi" registration-data payment-data)
     (let [{:keys [recipients attachments]} (pgq/take email-q)]
       (testing "Confirmation email is sent to correct recipient"
         (is (= ["teijo@test.invalid"] recipients)))

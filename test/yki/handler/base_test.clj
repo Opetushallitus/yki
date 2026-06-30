@@ -526,12 +526,13 @@
   (let [uri                  (str "localhost:" port)
         db                   (duct.database.sql/->Boundary @embedded-db/conn)
         url-helper           (create-url-helper uri)
-        exam-session-handler (ig/init-key :yki.handler/exam-session {:db           db
-                                                                     :url-helper   url-helper
-                                                                     :email-q      (email-q)
-                                                                     :pdf-renderer (mock-pdf-renderer)
-                                                                     :data-sync-q  (data-sync-q)
-                                                                     :onr-client   (onr-client url-helper)})
+        exam-session-handler (ig/init-key :yki.handler/exam-session {:db             db
+                                                                     :url-helper     url-helper
+                                                                     :email-q        (email-q)
+                                                                     :payment-helper (create-examination-payment-helper db url-helper)
+                                                                     :pdf-renderer   (mock-pdf-renderer)
+                                                                     :data-sync-q    (data-sync-q)
+                                                                     :onr-client     (onr-client url-helper)})
 
         exam-date-handler    (ig/init-key :yki.handler/exam-date {:db db})
 

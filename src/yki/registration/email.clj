@@ -3,12 +3,19 @@
     [clojure.set :as set]
     [pgqueue.core :as pgq]
     [yki.util.evaluation-payment-helper :refer [subtest->price]]
+    [yki.util.exam-payment-helper :refer [subtest-prices]]
     [yki.util.pdf :refer [template+data->pdf-bytes]]
     [yki.util.template-util :as template-util]))
 
-(defn exam-payment-receipt-contents [pdf-renderer receipt-language registration-data payment-data]
+(defn exam-payment-receipt-contents [payment-helper pdf-renderer receipt-language registration-data payment-data]
   (let [exam-level    (template-util/get-level (:level_code registration-data) receipt-language)
         exam-language (template-util/get-language (:language_code registration-data) receipt-language)
+        raw-subtests  (subtest-prices payment-helper registration-data)
+        subtests      (when raw-subtests
+                        (map (fn [{:keys [subtest price]}]
+                               {:name  (template-util/get-subtest subtest receipt-language)
+                                :price price})
+                             raw-subtests))
         receipt-data  (->
                         (merge registration-data payment-data)
                         (assoc
@@ -16,7 +23,8 @@
                           :receipt_date (:paid_at payment-data)
                           :payment_date (:paid_at payment-data)
                           :level exam-level
-                          :language exam-language)
+                          :language exam-language
+                          :subtests subtests)
                         (update :amount #(/ % 100))
                         (set/rename-keys {:name :organizer_name}))]
     (template+data->pdf-bytes pdf-renderer "receipt_exam_payment" receipt-language receipt-data)))
@@ -29,7 +37,7 @@
                           (set/rename-keys {:first_names :first_name}))]
     (template+data->pdf-bytes pdf-renderer "receipt_evaluation_payment" receipt-language template-data)))
 
-(defn send-exam-registration-completed-email! [email-q pdf-renderer email-language template-data payment-data]
+(defn send-exam-registration-completed-email! [email-q payment-helper pdf-renderer email-language template-data payment-data]
   (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
         exam-language (template-util/get-language (:language_code template-data) email-language)
         receipt-id    (:reference payment-data)]
@@ -40,7 +48,7 @@
               :body        (template-util/render "payment_success" email-language (assoc template-data :language exam-language :level exam-level :subtests (template-util/get-registration-subtests (:exam_session_type template-data) (:partial_exam_type template-data) email-language)))
               :attachments (when payment-data
                              [{:name        (str receipt-id ".pdf")
-                               :data        (exam-payment-receipt-contents pdf-renderer email-language template-data payment-data)
+                               :data        (exam-payment-receipt-contents payment-helper pdf-renderer email-language template-data payment-data)
                                :contentType "application/pdf"}])})))
 
 (defn send-customer-evaluation-registration-completed-email! [email-q payment-helper pdf-renderer email-language order-time template-data]

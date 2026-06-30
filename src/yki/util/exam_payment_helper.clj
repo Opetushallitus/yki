@@ -29,7 +29,8 @@
 
 (defprotocol PaymentHelper
   (get-payment-amount-for-registration [this registration-details])
-  (registration->payment [this tx registration language amount]))
+  (registration->payment [this tx registration language amount])
+  (subtest-prices [this registration]))
 
 (defn- registration->payment-description
   [registration]
@@ -96,6 +97,26 @@
        ; Unit of returned amount is EUR.
        ; Return corresponding amount in minor unit, ie. cents.
        :paytrail       (* 100 (int amount))}))
+  (subtest-prices [_ registration]
+    (let [{:keys [exam_type registration_type]} registration
+          price-for (fn [k] {:email-template (get-in payment-config [:amount k])})]
+      (when exam_type
+        (case exam_type
+          "READ_SPEAK"
+          (case registration_type
+            "ALL_PARTS" [{:subtest "READING"  :price (price-for :KESKI_READ)}
+                         {:subtest "SPEAKING" :price (price-for :KESKI_SPEAK)}]
+            "READ"      [{:subtest "READING"  :price (price-for :KESKI_READ)}]
+            "SPEAK"     [{:subtest "SPEAKING" :price (price-for :KESKI_SPEAK)}]
+            nil)
+          "LISTEN_WRITE"
+          (case registration_type
+            "ALL_PARTS" [{:subtest "LISTENING" :price (price-for :KESKI_LISTEN)}
+                         {:subtest "WRITING"   :price (price-for :KESKI_WRITE)}]
+            "LISTEN"    [{:subtest "LISTENING" :price (price-for :KESKI_LISTEN)}]
+            "WRITE"     [{:subtest "WRITING"   :price (price-for :KESKI_WRITE)}]
+            nil)
+          nil))))
   (registration->payment [_ tx registration language amount]
     (if-let [existing-payment-redirect-url (->> (q/select-unpaid-new-exam-payments-by-registration-id tx {:registration_id (:id registration)})
                                                 (first)
