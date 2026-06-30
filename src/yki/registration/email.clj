@@ -37,7 +37,7 @@
              {:recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject "payment_success" email-language template-data)
-              :body        (template-util/render "payment_success" email-language (assoc template-data :language exam-language :level exam-level))
+              :body        (template-util/render "payment_success" email-language (assoc template-data :language exam-language :level exam-level :subtests (template-util/get-registration-subtests (:exam_session_type template-data) (:partial_exam_type template-data) email-language)))
               :attachments (when payment-data
                              [{:name        (str receipt-id ".pdf")
                                :data        (exam-payment-receipt-contents pdf-renderer email-language template-data payment-data)
@@ -81,7 +81,7 @@
              {:recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject "transfer_confirmation" email-language template-data)
-              :body        (template-util/render "transfer_confirmation" email-language (assoc template-data :language exam-language :level exam-level))})))
+              :body        (template-util/render "transfer_confirmation" email-language (assoc template-data :language exam-language :level exam-level :subtests (template-util/get-registration-subtests (:exam_session_type template-data) (:partial_exam_type template-data) email-language)))})))
 
 (defn send-cancel-registration-email! [email-q email-language template-data]
   (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
@@ -93,7 +93,7 @@
              {:recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject template email-language template-data)
-              :body        (template-util/render template email-language (assoc template-data :language exam-language :level exam-level))})))
+              :body        (template-util/render template email-language (assoc template-data :language exam-language :level exam-level :subtests (template-util/get-registration-subtests (:exam_session_type template-data) (:partial_exam_type template-data) email-language)))})))
 
 (defn send-cancel-queue-email! [email-q email-language template-data]
   (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
@@ -102,7 +102,7 @@
              {:recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject "cancel_queue" email-language template-data)
-              :body        (template-util/render "cancel_queue" email-language (assoc template-data :language exam-language :level exam-level))})))
+              :body        (template-util/render "cancel_queue" email-language (assoc template-data :language exam-language :level exam-level :subtests (template-util/get-registration-subtests (:exam_session_type template-data) (:partial_exam_type template-data) email-language)))})))
 
 (defn send-enrolled-to-queue-email! [email-q email-language template-data]
   (let [exam-level    (template-util/get-level (:level_code template-data) email-language)
@@ -111,4 +111,4 @@
              {:recipients  [(:email template-data)]
               :created     (System/currentTimeMillis)
               :subject     (template-util/subject "queue" email-language template-data)
-              :body        (template-util/render "queue" email-language (assoc template-data :language exam-language :level exam-level))})))
+              :body        (template-util/render "queue" email-language (assoc template-data :language exam-language :level exam-level :subtests (template-util/get-registration-subtests (:exam_session_type template-data) (:partial_exam_type template-data) email-language)))})))

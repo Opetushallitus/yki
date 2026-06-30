@@ -579,6 +579,7 @@ WHERE re.id = :registration_id;
 SELECT
   es.language_code,
   es.level_code,
+  es.type AS exam_session_type,
   ed.exam_date,
   ed.registration_end_date,
   esl.street_address,
@@ -996,6 +997,8 @@ SELECT re.id,
        re.expires_at,
        es.language_code,
        es.level_code,
+       es.type AS exam_session_type,
+       re.partial_exam_type,
        ed.exam_date,
        ed.registration_end_date,
        esl.street_address,
@@ -1035,6 +1038,8 @@ SELECT re.id,
        re.expires_at,
        es.language_code,
        es.level_code,
+       es.type AS exam_session_type,
+       re.partial_exam_type,
        ed.exam_date,
        ed.registration_end_date,
        esl.street_address,
@@ -1054,6 +1059,14 @@ WHERE re.id = :id
        WHERE reg.participant_id = :participant_id
          AND reg.state = 'STARTED'
          AND reg.exam_session_id = es.id);
+
+-- name: select-partial-exam-type-by-participant-and-session
+SELECT re.partial_exam_type
+FROM registration re
+WHERE re.participant_id = :participant_id
+  AND re.exam_session_id = :exam_session_id
+  AND re.state = 'STARTED'
+LIMIT 1;
 
 -- name: select-completed-registration-details
 SELECT re.state,
@@ -1094,6 +1107,8 @@ SELECT re.state,
        re.form->>'certificate_lang' AS lang,
        es.language_code,
        es.level_code,
+       es.type AS exam_session_type,
+       re.partial_exam_type,
        ed.exam_date,
        ed.registration_end_date,
        esl.extra_information,
@@ -1236,6 +1251,8 @@ SELECT pa.id AS participant_id,
        pe.email,
        es.language_code,
        es.level_code,
+       es.type AS exam_session_type,
+       re.partial_exam_type,
        esl.name,
        esl.street_address,
        esl.zip,

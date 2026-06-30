@@ -19,6 +19,11 @@
 </tr>
 <tr>
   <td style="padding-left: 20px;">
+    {% i18n common.subtest %}: {% for test in subtests %}{{test}}{% if not forloop.last %}, {% endif %}{% endfor %}
+  </td>
+</tr>
+<tr>
+  <td style="padding-left: 20px;">
     {% i18n common.testDay %}: {{exam_date|date-format-with-dots}}
   </td>
 </tr>
