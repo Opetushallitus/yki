@@ -14,6 +14,8 @@
     "max_participants": 5,
     "max_participants_read_listen": null,
     "max_participants_speak_write": null,
+    "start_time_read_listen": null,
+    "start_time_speak_write": null,
     "participants_read_listen": 0,
     "participants_speak_write": 0,
     "pa_participants": 0,

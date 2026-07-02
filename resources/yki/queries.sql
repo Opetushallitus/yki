@@ -481,6 +481,8 @@ SELECT
   e.max_participants,
   e.max_participants_read_listen,
   e.max_participants_speak_write,
+  e.start_time_read_listen,
+  e.start_time_speak_write,
   e.office_oid,
   e.published_at,
   e.type,
