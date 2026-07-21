@@ -38,8 +38,8 @@
         lang->location (into {} (map (juxt :lang identity)) locations)]
     (assoc exam-session :location lang->location)))
 
-(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q pdf-renderer url-helper onr-client]}]
-  {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? pdf-renderer) (some? url-helper) (some? onr-client)]}
+(defmethod ig/init-key :yki.handler/exam-session [_ {:keys [db data-sync-q email-q payment-helper pdf-renderer url-helper onr-client]}]
+  {:pre [(some? db) (some? data-sync-q) (some? email-q) (some? payment-helper) (some? pdf-renderer) (some? url-helper) (some? onr-client)]}
   (fn [oid]
     (context "/" []
       (GET "/" []
@@ -242,6 +242,7 @@
                     (log/info "Resending confirmation email for registration with id" registration-id)
                     (registration-email/send-exam-registration-completed-email!
                       email-q
+                      payment-helper
                       pdf-renderer
                       lang
                       email-template-data

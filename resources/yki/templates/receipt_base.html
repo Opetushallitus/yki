@@ -66,9 +66,11 @@
 <p>
     {% i18n email.receipt.common.paymentDate %}: {{ payment_date|date-format-with-dots }}
 </p>
+{% block participant-header %}
 <p>
     {{ last_name }}, {{ first_name }}
 </p>
+{% endblock %}
 
 {% block content %}
 {% endblock %}
