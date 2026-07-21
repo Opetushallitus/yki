@@ -1,5 +1,6 @@
 (ns yki.util.template-util
   (:require
+    [clojure.set :as set]
     [clojure.tools.logging :as log]
     [clojure.string :as str]
     [selmer.filters :as filters]
@@ -70,6 +71,27 @@
 (defn get-subtests
   [subtests lang]
   (map #(get-subtest % lang) subtests))
+
+(def ^:private canonical-subtest-order ["LISTENING" "SPEAKING" "READING" "WRITING"])
+
+(def ^:private session-type->subtest-pool
+  {"FULL"         #{"LISTENING" "SPEAKING" "READING" "WRITING"}
+   "READ_SPEAK"   #{"READING" "SPEAKING"}
+   "LISTEN_WRITE" #{"LISTENING" "WRITING"}})
+
+(def ^:private partial-type->subtests
+  {"ALL_PARTS" nil
+   "LISTEN"    #{"LISTENING"}
+   "SPEAK"     #{"SPEAKING"}
+   "READ"      #{"READING"}
+   "WRITE"     #{"WRITING"}})
+
+(defn get-registration-subtests [exam-session-type partial-exam-type lang]
+  (let [pool    (get session-type->subtest-pool (or exam-session-type "FULL") #{})
+        picked  (get partial-type->subtests (or partial-exam-type "ALL_PARTS"))
+        active  (if picked (set/intersection pool picked) pool)
+        ordered (filter active canonical-subtest-order)]
+    (get-subtests ordered lang)))
 
 (defn subject
   [template lang params]
