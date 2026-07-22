@@ -28,6 +28,8 @@
     :coercion :spec
     :middleware [with-error-boundary]
     (GET "/" []
+      :swagger {:deprecated true
+                :summary "Moved to v2 api"}
       :return ::ys/evaluation-periods-response
       (ok {:evaluation_periods (evaluation-db/get-upcoming-evaluation-periods db)}))
 
@@ -41,6 +43,8 @@
 
     (context "/:id" []
       (GET "/" []
+        :swagger {:deprecated true
+                  :summary "Moved to v2 api"}
         :path-params [id :- ::ys/id]
         :return ::ys/evaluation-period
         (if-let [evaluation (evaluation-db/get-evaluation-period-by-id db id)]

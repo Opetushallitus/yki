@@ -24,6 +24,8 @@
       ; TODO Duplicates functionality provided by endpoint /yki/api/user/identity
       ; Used by legacy yki-frontend. Remove once yki-frontend no longer uses this endpoint.
       (GET "/user" {session :session}
+        :swagger {:deprecated true
+                  :summary "Moved to user handler"}
         (ok (update-in session [:identity] dissoc :ticket)))
       (GET "/login" [code lang]
         (code-auth/login db code lang url-helper))
