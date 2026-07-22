@@ -17,6 +17,7 @@
     (str (subs external-user-id 0 7) "****")
     external-user-id))
 
+; deploy commit
 (defmethod ig/init-key :yki.handler/registration [_ {:keys [db auth access-log payment-helper url-helper email-q onr-client]}]
   {:pre [(some? db) (some? auth) (some? access-log) (some? url-helper) (some? email-q) (some? onr-client)]}
   (api
