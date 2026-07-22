@@ -232,7 +232,7 @@
 (s/def ::published_at (s/nilable ::date-type))
 (s/def ::participants int?)
 (s/def ::participants_read_listen int?)
-(s/def ::participants-speak-write int?)
+(s/def ::participants_speak_write int?)
 (s/def ::exam_fee pos-int?)
 (s/def ::open boolean?)
 (s/def ::queue_full boolean?)
@@ -243,6 +243,8 @@
 (s/def ::available_registration_kind ::registration-kind)
 (s/def ::partial_registration_kind (s/map-of keyword? ::registration-kind))
 (s/def ::exam_session_type #{"FULL" "READ_SPEAK" "LISTEN_WRITE"})
+(s/def ::exam_fee_read_listen pos-int?)
+(s/def ::exam_fee_speak_write pos-int?)
 ; exam-session-contact
 (s/def ::contact (s/nilable (s/coll-of ::contact-type)))
 (s/def ::exam-session (s/keys :req-un [::session_date
@@ -360,7 +362,7 @@
 
 (s/def ::exam_session ::exam-session)
 (s/def ::to_queue boolean?)
-(s/def ::exam_session_type #{"ALL_PARTS" "READ" "SPEAK" "LISTEN" "WRITE"})
+(s/def ::partial_exam_type #{"ALL_PARTS" "READ" "SPEAK" "LISTEN" "WRITE"})
 (s/def ::registration-init (s/keys :req-un [::exam_session_id]
                                    :opt-un [::to_queue
                                             ::partial_exam_type
@@ -489,6 +491,7 @@
 
 (s/def ::auth-method #{"EMAIL" "SUOMIFI" "CAS" "SESSION"})
 (s/def ::username ::non-blank-string)
+(s/def ::external-user-id string?)
 (s/def ::identity (s/or ::not-authenticated nil?
                         ::email-identity (s/keys :req-un [::email])
                         ::session-identity (s/keys :req-un [::external-user-id])
