@@ -344,15 +344,17 @@ SELECT
   (SELECT COUNT(1)
    FROM registration re
    WHERE re.exam_session_id = e.id
-     AND re.partial_exam_type IN ('ALL_PARTS', 'READ', 'LISTEN')
      AND re.kind = 'ADMISSION'
-     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants_read_listen,
+     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+     AND ((e.type = 'READ_SPEAK' AND re.partial_exam_type IN ('ALL_PARTS', 'READ'))
+          OR (e.type = 'LISTEN_WRITE' AND re.partial_exam_type IN ('ALL_PARTS', 'LISTEN')))) AS participants_read_listen,
   (SELECT COUNT(1)
    FROM registration re
    WHERE re.exam_session_id = e.id
      AND re.kind = 'ADMISSION'
-     AND re.partial_exam_type IN ('ALL_PARTS', 'SPEAK', 'WRITE')
-     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants_speak_write,
+     AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+     AND ((e.type = 'READ_SPEAK' AND re.partial_exam_type IN ('ALL_PARTS', 'SPEAK'))
+          OR (e.type = 'LISTEN_WRITE' AND re.partial_exam_type IN ('ALL_PARTS', 'WRITE')))) AS participants_speak_write,
   o.oid AS organizer_oid,
   (SELECT array_to_json(array_agg(loc))
    FROM (SELECT
@@ -477,6 +479,10 @@ SELECT
   e.language_code,
   e.level_code,
   e.max_participants,
+  e.max_participants_read_listen,
+  e.max_participants_speak_write,
+  e.start_time_read_listen,
+  e.start_time_speak_write,
   e.office_oid,
   e.published_at,
   e.type,
@@ -490,6 +496,20 @@ SELECT
  WHERE re.exam_session_id = e.id
    AND re.kind = 'ADMISSION'
    AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')) AS participants,
+(SELECT COUNT(1)
+ FROM registration re
+ WHERE re.exam_session_id = e.id
+   AND re.kind = 'ADMISSION'
+   AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+   AND ((e.type = 'READ_SPEAK' AND re.partial_exam_type IN ('ALL_PARTS', 'READ'))
+        OR (e.type = 'LISTEN_WRITE' AND re.partial_exam_type IN ('ALL_PARTS', 'LISTEN')))) AS participants_read_listen,
+(SELECT COUNT(1)
+ FROM registration re
+ WHERE re.exam_session_id = e.id
+   AND re.kind = 'ADMISSION'
+   AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+   AND ((e.type = 'READ_SPEAK' AND re.partial_exam_type IN ('ALL_PARTS', 'SPEAK'))
+        OR (e.type = 'LISTEN_WRITE' AND re.partial_exam_type IN ('ALL_PARTS', 'WRITE')))) AS participants_speak_write,
 (SELECT COUNT(1)
  FROM registration re
  WHERE re.exam_session_id = e.id
@@ -900,6 +920,7 @@ WHERE re.state = 'STARTED'
 SELECT re.id, re.kind, re.partial_exam_type, re.exam_session_id
 FROM registration re
 WHERE re.id = :id
+  AND re.participant_id = :participant-id
   AND re.state IN ('STARTED', 'SUBMITTED');
 
 -- name: select-registration
