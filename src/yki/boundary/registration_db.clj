@@ -259,17 +259,17 @@
   (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email! types]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-       tx
-       (fn lift-registration-and-notify! []
-         (when-let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id :types types})]
-           (q/insert-registration-change-event!
-            tx
-            (merge (registration->change-event registration)
-                   {:event       "LIFT_FROM_QUEUE"
-                    :author_type "AUTOMATION"
-                    :created_by  nil}))
-           (send-email! tx registration)
-           registration)))))
+        tx
+        (fn lift-registration-and-notify! []
+          (when-let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id :types types})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event registration)
+                     {:event       "LIFT_FROM_QUEUE"
+                      :author_type "AUTOMATION"
+                      :created_by  nil}))
+            (send-email! tx registration)
+            registration)))))
   (expire-queued-registrations-after-exam-date! [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-queued-registrations-to-expire tx)

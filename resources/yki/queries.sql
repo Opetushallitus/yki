@@ -1450,8 +1450,8 @@ ORDER BY r.created, r.id ASC;
 SELECT es.id AS exam_session_id,
        es.type,
        es.max_participants,
-       es.max_participants_read_listen,
-       es.max_participants_speak_write,
+       COALESCE(es.max_participants_read_listen, es.max_participants)  AS max_participants_read_listen,
+       COALESCE(es.max_participants_speak_write, es.max_participants)  AS max_participants_speak_write,
        (SELECT COUNT(*)
         FROM registration r
         WHERE r.kind = 'ADMISSION'
