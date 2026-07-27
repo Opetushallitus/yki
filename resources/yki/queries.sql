@@ -569,7 +569,8 @@ SELECT
   es.id,
   es.language_code,
   es.level_code,
-  es.max_participants,
+  es.
+  max_participants,
   es.office_oid,
   es.published_at,
   re.state
@@ -1448,12 +1449,37 @@ ORDER BY r.created, r.id ASC;
 
 -- name: select-participant-and-queue-count-by-exam-session
 SELECT es.id AS exam_session_id,
+       type,
        es.max_participants,
        (SELECT COUNT(*)
         FROM registration r
         WHERE r.kind = 'ADMISSION'
           AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
           AND r.exam_session_id = es.id) AS participants,
+       (SELECT COUNT(*)
+        FROM registration r
+        WHERE r.kind = 'ADMISSION'
+          AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+          AND r.partial_exam_type IN ('READ', 'LISTEN')
+          AND r.exam_session_id = es.id) AS participants_read_listen,
+       (SELECT COUNT(*)
+        FROM registration r
+        WHERE r.kind = 'ADMISSION'
+          AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
+          AND r.partial_exam_type IN ('SPEAK', 'WRITE')
+          AND r.exam_session_id = es.id) AS participants_speak_write,
+       (SELECT COUNT(*)
+        FROM registration r
+        WHERE r.kind = 'QUEUE'
+          AND r.state IN ('SUBMITTED', 'STARTED')
+          AND r.partial_exam_type IN ('READ', 'LISTEN')
+          AND r.exam_session_id = es.id) AS queue_read_listen,
+       (SELECT COUNT(*)
+        FROM registration r
+        WHERE r.kind = 'QUEUE'
+          AND r.state IN ('SUBMITTED', 'STARTED')
+          AND r.partial_exam_type IN ('SPEAK', 'WRITE')
+          AND r.exam_session_id = es.id) AS queue_speak_write,
        (SELECT COUNT(*)
         FROM registration r
         WHERE r.kind = 'QUEUE'

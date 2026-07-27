@@ -210,9 +210,18 @@
                                                  (send-lifted-from-queue-for-free-email! url-helper email-q lang email-template-data)
                                                  (send-lifted-from-queue-email! db url-helper payment-helper email-q lang email-template-data code login-url))))
              exam-session-details          (registration-db/get-participant-and-queue-count-for-ongoing-admissions db)]
-         (doseq [{:keys [exam_session_id max_participants participants queue]} exam-session-details
+         (doseq [{:keys [exam_session_id max_participants participants queue type
+                         participants_read_listen participants_speak_write
+                         queue_read_listen queue_speak_write]} exam-session-details
                  :let [available-places (- max_participants participants)
-                       to-lift          (min queue available-places)]
+                       places-read-listen (- max_participants participants_read_listen)
+                       places-speak-write (- max_participants participants_speak_write)
+                       ;; Partial exam queue registrations are for one specific subexam, never ALL_PARTS,
+                       ;; so an partial exam session can containt max-participant amount of both partial registrations.
+                       to-lift          (if (= type "FULL" )
+                                          (min queue available-places)
+                                          (+ (min queue_read_listen places-read-listen)
+                                             (min queue_speak_write places-speak-write)))]
                  _ (range 0 to-lift)]
            (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link!))))
      (catch Exception e
