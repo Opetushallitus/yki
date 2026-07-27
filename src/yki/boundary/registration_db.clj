@@ -47,7 +47,7 @@
   (get-started-registration-expires-in [db registration-id])
   ; Queueing
   (get-participant-and-queue-count-for-ongoing-admissions [db])
-  (lift-registration-from-queue! [db exam-session-id send-email!])
+  (lift-registration-from-queue! [db exam-session-id send-email! types])
   (expire-queued-registrations-after-exam-date! [db])
   (get-free-registration [db registration-id])
   (check-registration-id-matches-session [db registration-id participant-id external-user-id])
@@ -256,19 +256,20 @@
         0)))
   (get-participant-and-queue-count-for-ongoing-admissions [{:keys [spec]}]
     (q/select-participant-and-queue-count-by-exam-session spec))
-  (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email!]
+  (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email! types]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-        tx
-        (fn lift-registration-and-notify! []
-          (let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id})]
-            (q/insert-registration-change-event!
-              tx
-              (merge (registration->change-event registration)
-                     {:event       "LIFT_FROM_QUEUE"
-                      :author_type "AUTOMATION"
-                      :created_by  nil}))
-            (send-email! tx registration))))))
+       tx
+       (fn lift-registration-and-notify! []
+         (when-let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id :types types})]
+           (q/insert-registration-change-event!
+            tx
+            (merge (registration->change-event registration)
+                   {:event       "LIFT_FROM_QUEUE"
+                    :author_type "AUTOMATION"
+                    :created_by  nil}))
+           (send-email! tx registration)
+           registration)))))
   (expire-queued-registrations-after-exam-date! [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-queued-registrations-to-expire tx)

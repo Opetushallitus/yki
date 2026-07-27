@@ -569,8 +569,7 @@ SELECT
   es.id,
   es.language_code,
   es.level_code,
-  es.
-  max_participants,
+  es.max_participants,
   es.office_oid,
   es.published_at,
   re.state
@@ -1449,8 +1448,10 @@ ORDER BY r.created, r.id ASC;
 
 -- name: select-participant-and-queue-count-by-exam-session
 SELECT es.id AS exam_session_id,
-       type,
+       es.type,
        es.max_participants,
+       es.max_participants_read_listen,
+       es.max_participants_speak_write,
        (SELECT COUNT(*)
         FROM registration r
         WHERE r.kind = 'ADMISSION'
@@ -1460,13 +1461,13 @@ SELECT es.id AS exam_session_id,
         FROM registration r
         WHERE r.kind = 'ADMISSION'
           AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-          AND r.partial_exam_type IN ('READ', 'LISTEN')
+          AND r.partial_exam_type IN ('READ', 'LISTEN', 'ALL_PARTS')
           AND r.exam_session_id = es.id) AS participants_read_listen,
        (SELECT COUNT(*)
         FROM registration r
         WHERE r.kind = 'ADMISSION'
           AND r.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-          AND r.partial_exam_type IN ('SPEAK', 'WRITE')
+          AND r.partial_exam_type IN ('SPEAK', 'WRITE', 'ALL_PARTS')
           AND r.exam_session_id = es.id) AS participants_speak_write,
        (SELECT COUNT(*)
         FROM registration r
@@ -1499,6 +1500,7 @@ WITH registrations_to_update AS (SELECT id, free_registration_id
                                  WHERE kind = 'QUEUE'
                                    AND state IN ('SUBMITTED')
                                    AND exam_session_id = :exam_session_id
+                                   AND partial_exam_type::text IN (:types)
                                  ORDER BY created ASC
                                  LIMIT 1)
 UPDATE registration
