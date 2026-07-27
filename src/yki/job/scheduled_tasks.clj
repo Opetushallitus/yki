@@ -200,7 +200,8 @@
   #(try
      (when (job-db/try-to-acquire-lock! db registration-queue-handler-conf)
        (log/info "Registration queue handler started")
-       (let [create-and-send-payment-link! (fn [tx {:keys [id participant_id ui_language]}]
+       (let [positive-types (fn [counts] (keep (fn [[t n]] (when (pos? n) t)) counts))
+             create-and-send-payment-link! (fn [tx {:keys [id participant_id ui_language]}]
                                              (let [lang                (or ui_language "fi")
                                                    email-template-data (registration-db/get-registration-data-with-tx tx id participant_id lang)
                                                    code                (str (random-uuid))
@@ -210,20 +211,25 @@
                                                  (send-lifted-from-queue-for-free-email! url-helper email-q lang email-template-data)
                                                  (send-lifted-from-queue-email! db url-helper payment-helper email-q lang email-template-data code login-url))))
              exam-session-details          (registration-db/get-participant-and-queue-count-for-ongoing-admissions db)]
-         (doseq [{:keys [exam_session_id max_participants participants queue type
-                         participants_read_listen participants_speak_write
-                         queue_read_listen queue_speak_write]} exam-session-details
-                 :let [available-places (- max_participants participants)
-                       places-read-listen (- max_participants participants_read_listen)
-                       places-speak-write (- max_participants participants_speak_write)
-                       ;; Partial exam queue registrations are for one specific subexam, never ALL_PARTS,
-                       ;; so an partial exam session can containt max-participant amount of both partial registrations.
-                       to-lift          (if (= type "FULL" )
-                                          (min queue available-places)
-                                          (+ (min queue_read_listen places-read-listen)
-                                             (min queue_speak_write places-speak-write)))]
-                 _ (range 0 to-lift)]
-           (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link!))))
+         (doseq [{:keys [exam_session_id type
+                         max_participants max_participants_read_listen max_participants_speak_write
+                         participants participants_read_listen participants_speak_write
+                         queue queue_read_listen queue_speak_write]} exam-session-details
+                 ;; An ADMISSION may be ALL_PARTS (occupying both pools), but a partial-exam QUEUE
+                 ;; entry is always for one specific subexam, so we lift per subexam pool.
+                 :let [to-lift (if (= type "FULL")
+                                 {"ALL_PARTS" (min queue (- max_participants participants))}
+                                 (let [places-read-listen (- max_participants_read_listen participants_read_listen)
+                                       places-speak-write (- max_participants_speak_write participants_speak_write)]
+                                   ;; for example: {"READ" 10 "WRITE" 0}
+                                   {(if (= type "READ_SPEAK") "READ" "LISTEN") (min queue_read_listen places-read-listen)
+                                    (if (= type "LISTEN_WRITE") "WRITE" "SPEAK") (min queue_speak_write places-speak-write)}))]]
+           (loop [counts to-lift]
+             (let [types (positive-types counts)]
+               (when (seq types)
+                 (when-let [lifted-type (:partial_exam_type
+                                         (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link! types))]
+                   (recur (update counts lifted-type dec)))))))))
      (catch Exception e
        (log/error e "Registration queue handler failed [ERROR_SCHEDULED_TASK]"))))
 
