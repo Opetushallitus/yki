@@ -224,12 +224,15 @@
                                    ;; for example: {"READ" 10 "WRITE" 0}
                                    {(if (= type "READ_SPEAK") "READ" "LISTEN") (min queue_read_listen places-read-listen)
                                     (if (= type "LISTEN_WRITE") "WRITE" "SPEAK") (min queue_speak_write places-speak-write)}))]]
-           (loop [counts to-lift]
-             (let [types (positive-types counts)]
-               (when (seq types)
-                 (when-let [lifted-type (:partial_exam_type
-                                         (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link! types))]
-                   (recur (update counts lifted-type dec)))))))))
+           (try
+             (loop [counts to-lift]
+               (let [types (positive-types counts)]
+                 (when (seq types)
+                   (when-let [lifted-type (:partial_exam_type
+                                            (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link! types))]
+                     (recur (update counts lifted-type dec))))))
+             (catch Exception e
+               (log/error e "Registration queue handler failed for exam session" exam_session_id "[ERROR_SCHEDULED_TASK]"))))))
      (catch Exception e
        (log/error e "Registration queue handler failed [ERROR_SCHEDULED_TASK]"))))
 
