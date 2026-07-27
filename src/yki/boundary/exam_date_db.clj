@@ -1,10 +1,10 @@
 (ns yki.boundary.exam-date-db
   (:require
-   [clojure.java.jdbc :as jdbc]
-   [duct.database.sql]
-   [jeesql.core :refer [require-sql]]
-   [yki.util.common :refer [string->date]]
-   [yki.util.db :refer [rollback-on-exception]])
+    [clojure.java.jdbc :as jdbc]
+    [duct.database.sql]
+    [jeesql.core :refer [require-sql]]
+    [yki.util.common :refer [string->date]]
+    [yki.util.db :refer [rollback-on-exception]])
   (:import [duct.database.sql Boundary]))
 
 (require-sql ["yki/queries.sql" :as q])
@@ -27,12 +27,12 @@
       (rollback-on-exception
         tx
         #(let [result (q/insert-exam-date<! tx {:exam_date              (string->date (:exam_date exam-date))
-                                               :registration_start_date (string->date (:registration_start_date exam-date))
-                                               :registration_end_date   (string->date (:registration_end_date exam-date))})
+                                                :registration_start_date (string->date (:registration_start_date exam-date))
+                                                :registration_end_date   (string->date (:registration_end_date exam-date))})
                id (:id result)]
-          (doseq [lang (:languages exam-date)]
-            (q/insert-exam-date-language! tx (assoc lang :exam_date_id id)))
-          id))))
+           (doseq [lang (:languages exam-date)]
+             (q/insert-exam-date-language! tx (assoc lang :exam_date_id id)))
+           id))))
   (update-exam-date!
     [{:keys [spec]} id exam-date-update new-languages removable-languages]
     (jdbc/with-db-transaction [tx spec]
@@ -45,9 +45,9 @@
              (doseq [lang new-languages]
                (q/insert-exam-date-language! tx (assoc lang :exam_date_id id)))
              (doseq [lang removable-languages]
-                (q/delete-exam-date-language! tx {:exam_date_id id
-                                                :level_code (:level_code lang)
-                                                :language_code (:language_code lang)}))
+               (q/delete-exam-date-language! tx {:exam_date_id id
+                                                 :level_code (:level_code lang)
+                                                 :language_code (:language_code lang)}))
              true))))
   (get-exam-date-by-id [{:keys [spec]} id]
     (first (q/select-exam-date-by-id spec {:id id})))

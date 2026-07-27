@@ -15,15 +15,15 @@
                                  (->> [:amount level-code]
                                       (get-in payment-config)))
               level-code (case (:exam_session_type registration-details)
-                          "READ_SPEAK" (case (:partial_exam_type registration-details)
-                                         "ALL_PARTS" [:KESKI_READ :KESKI_SPEAK]
-                                         "READ" [:KESKI_READ]
-                                         "SPEAK" [:KESKI_SPEAK])
-                          "LISTEN_WRITE" (case (:partial_exam_type registration-details)
-                                           "ALL_PARTS" [:KESKI_LISTEN :KESKI_WRITE]
-                                           "LISTEN" [:KESKI_LISTEN]
-                                           "WRITE" [:KESKI_WRITE])
-                          [(keyword (:level_code registration-details))])]
+                           "READ_SPEAK" (case (:partial_exam_type registration-details)
+                                          "ALL_PARTS" [:KESKI_READ :KESKI_SPEAK]
+                                          "READ" [:KESKI_READ]
+                                          "SPEAK" [:KESKI_SPEAK])
+                           "LISTEN_WRITE" (case (:partial_exam_type registration-details)
+                                            "ALL_PARTS" [:KESKI_LISTEN :KESKI_WRITE]
+                                            "LISTEN" [:KESKI_LISTEN]
+                                            "WRITE" [:KESKI_WRITE])
+                           [(keyword (:level_code registration-details))])]
           (reduce + (map code-from-config level-code))))
       (bigdec)))
 

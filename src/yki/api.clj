@@ -4,5 +4,5 @@
 
 (defmethod ig/init-key :yki/api [_ handlers]
   (api
-   {:swagger {:ui "/yki/api/docs", :spec "/yki/api/swagger.json"}}
-   (apply routes handlers)))
+    {:swagger {:ui "/yki/api/docs", :spec "/yki/api/swagger.json"}}
+    (apply routes handlers)))

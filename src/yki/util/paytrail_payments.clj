@@ -16,8 +16,8 @@
            "checkout-method"    method
            "checkout-nonce"     (str (random-uuid))
            "checkout-timestamp" (str (t/now))}
-          (some? transaction-id)
-          (assoc "checkout-transaction-id" transaction-id)))
+    (some? transaction-id)
+    (assoc "checkout-transaction-id" transaction-id)))
 
 (defn- headers->signature-keys-order [headers]
   (->> (keys headers)
@@ -51,8 +51,8 @@
         body                   (json/write-str payment-data)
         signature              (sign-request payment-config authentication-headers body)
         headers                (assoc authentication-headers
-                                 "content-type" "application/json; charset=utf-8"
-                                 "signature" signature)
+                                      "content-type" "application/json; charset=utf-8"
+                                      "signature" signature)
         response               @(http/post
                                   payments-API-URI
                                   {:headers headers

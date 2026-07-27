@@ -17,7 +17,7 @@
 
 (defn- convert-dates [quarantine]
   (assoc quarantine :start_date (f/parse (:start_date quarantine))
-                    :end_date (f/parse (:end_date quarantine))))
+         :end_date (f/parse (:end_date quarantine))))
 
 (defn- without-nils [kvs]
   (->> kvs

@@ -64,9 +64,9 @@
 
     (testing "mail contains proper content with extra information and organizer's contact info"
       (let [template-data (assoc base-data :extra_information "Be on time"
-                                           :contact_info {:name         "Foo Bar"
-                                                          :email        "foo@bar"
-                                                          :phone_number "+358123"})
+                                 :contact_info {:name         "Foo Bar"
+                                                :email        "foo@bar"
+                                                :phone_number "+358123"})
             rendered      (template-util/render template lang template-data)]
         (is (s/includes? rendered "Test: Finnish basic level"))
         (is (s/includes? rendered "Test day: 16.5.2024"))

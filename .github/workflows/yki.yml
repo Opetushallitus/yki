@@ -22,6 +22,9 @@ jobs:
       - name: Prepare Clojure env
         uses: ./.github/actions/prepare-clojure-env
 
+      - name: Check formatting
+        run:  lein cljfmt check
+
       - name: Lint src/
         run:  clj-kondo --fail-level error --lint src/
 

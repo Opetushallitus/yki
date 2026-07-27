@@ -6,8 +6,8 @@
 
 (defn read-translations [lang]
   (let [json (-> (str "yki/localisations/" lang ".json")
-              (io/resource)
-              (slurp))]
+                 (io/resource)
+                 (slurp))]
     (json/read-str json)))
 
 (defonce translations {"fi" (read-translations "fi")

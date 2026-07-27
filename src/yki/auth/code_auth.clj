@@ -24,12 +24,12 @@
               email               (or (:person_email login-link) (:participant_email login-link))
               identity            (cond-> {:external-user-id (:external_user_id login-link)
                                            :email            email}
-                                          previous-session-id
-                                          (assoc :previous-session-id previous-session-id)
-                                          oid
-                                          (assoc :oid oid)
-                                          registration-id
-                                          (assoc :registration-id registration-id))
+                                    previous-session-id
+                                    (assoc :previous-session-id previous-session-id)
+                                    oid
+                                    (assoc :oid oid)
+                                    registration-id
+                                    (assoc :registration-id registration-id))
               session             {:identity       identity
                                    :auth-method    "EMAIL"
                                    :auth-target    (:type login-link)

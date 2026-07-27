@@ -12,6 +12,4 @@
   (prof/stop)
   ; View the results from your filesystem (by default, under /tmp/clj-async-profiler/results/)
   ; or start a local web UI:
-  (prof/serve-ui 8008)
-
-  )
+  (prof/serve-ui 8008))

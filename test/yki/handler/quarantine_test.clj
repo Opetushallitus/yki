@@ -113,8 +113,7 @@
                  ; quarantine 2 matches registration 1 by birthdate
                  {:id 2 :registration_id 1}
                  ; quarantine 3 matches registration 1 by SSN
-                 {:id 3 :registration_id 1}
-                 })))
+                 {:id 3 :registration_id 1}})))
       (testing "a reviewed quarantine+registration combination is no longer reported as a match"
         (doseq [[id registration-id quarantined] [[1 1 false]
                                                   [2 2 true]]]

@@ -89,13 +89,13 @@
 
 (def onr-mock-routes
   {"/oppijanumerorekisteri-service/s2s/findOrCreateHenkiloPerustieto" {:status 200 :content-type "application/json" :method :post
-                                         :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}
+                                                                       :body   (j/write-value-as-string {:oidHenkilo "1.2.4.5.6"})}
    "/oppijanumerorekisteri-service/s2s/henkilo/perustiedotAsAdmin"    {:status 200 :content-type "application/json" :method :post
-                                         :body   (j/write-value-as-string
-                                                  [{:oidHenkilo "5.4.3.2.2" :hetu "301079-900U"}
-                                                   {:oidHenkilo "5.4.3.2.1" :hetu "010199-9012"}
-                                                   {:oidHenkilo "5.4.3.2.4" :hetu "301079-083N"}
-                                                   {:oidHenkilo "5.4.3.2.3" :hetu "301079-900U"}])}})
+                                                                       :body   (j/write-value-as-string
+                                                                                 [{:oidHenkilo "5.4.3.2.2" :hetu "301079-900U"}
+                                                                                  {:oidHenkilo "5.4.3.2.1" :hetu "010199-9012"}
+                                                                                  {:oidHenkilo "5.4.3.2.4" :hetu "301079-083N"}
+                                                                                  {:oidHenkilo "5.4.3.2.3" :hetu "301079-900U"}])}})
 
 (defn body [response]
   (slurp (:body response) :encoding "UTF-8"))
@@ -415,8 +415,8 @@
         @embedded-db/conn
         (str "INSERT INTO person(oid, first_name, last_name, email, phone_number, street_address, post_office, zip, nationality_code, gender, country_code) VALUES ("
              (let [without-gender-and-country (->> [oid first_name last_name email phone_number street_address post_office zip nationality_code]
-                                       (map #(str "'" % "'"))
-                                       (str/join ","))]
+                                                   (map #(str "'" % "'"))
+                                                   (str/join ","))]
                (str without-gender-and-country ",cast('" gender "' as gender_code), '" country_code "'"))
              ")")))))
 

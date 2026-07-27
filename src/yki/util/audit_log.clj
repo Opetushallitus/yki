@@ -35,9 +35,9 @@
 (defonce ^JsonParser jsonParser (JsonParser.))
 
 (defonce ^Logger logger-proxy
-         (reify Logger
-           (log [_ msg]
-             (log/info msg))))
+  (reify Logger
+    (log [_ msg]
+      (log/info msg))))
 
 (defn op ^Operation [operation]
   (reify Operation

@@ -8,10 +8,10 @@
 
 (defmethod ig/init-key :yki.handler/status [_ {:keys [db]}]
   (api
-   (context routing/status-api-root []
-     (GET "/" []
-       (if (status-db/get-status db)
-         (ok {:success true})
-         (internal-server-error)))
-     (GET "/buildversion.txt" []
-       (ok (edn/read-string (slurp (clojure.java.io/resource "buildversion.edn"))))))))
+    (context routing/status-api-root []
+      (GET "/" []
+        (if (status-db/get-status db)
+          (ok {:success true})
+          (internal-server-error)))
+      (GET "/buildversion.txt" []
+        (ok (edn/read-string (slurp (clojure.java.io/resource "buildversion.edn"))))))))
