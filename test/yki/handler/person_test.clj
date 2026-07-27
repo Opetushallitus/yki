@@ -181,9 +181,9 @@
                                                :content-type "application/json"
                                                :body (json/write-str
                                                        (assoc new-contact-details
-                                                         :first_name "NOT UPDATED"
-                                                         :last_name "NOT UPDATED"
-                                                         :oid "NOT UPDATED"))))
+                                                              :first_name "NOT UPDATED"
+                                                              :last_name "NOT UPDATED"
+                                                              :oid "NOT UPDATED"))))
                   post-response-data     (read-response-json post-response)
                   get-response           (-> session
                                              (peridot/request routing/person-api-root :request-method :get))

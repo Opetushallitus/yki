@@ -74,8 +74,8 @@
         kirjaamo-template     (if (= email-language "fi")
                                 template-with-subject
                                 (assoc template-with-subject
-                                  :language (template-util/get-language (:language_code template-data) "fi")
-                                  :level (template-util/get-level (:level_code template-data) "fi")))]
+                                       :language (template-util/get-language (:language_code template-data) "fi")
+                                       :level (template-util/get-level (:level_code template-data) "fi")))]
     (pgq/put email-q
              {:recipients [kirjaamo-email]
               :created    order-time

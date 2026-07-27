@@ -26,8 +26,8 @@
 
 (defn- request-with-session [handler method url session-cookie]
   (let [request (cond-> (mock/request method url)
-                        session-cookie
-                        (mock/cookie "yki" session-cookie))]
+                  session-cookie
+                  (mock/cookie "yki" session-cookie))]
     (handler request)))
 
 (defn- session->cookie [cookie-store data]

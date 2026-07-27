@@ -97,7 +97,6 @@
         (testing "sanitize registration input"
           (is (= (get-in registration [:form :post_office]) "Helsinki_"))))
 
-
       (testing "second post to same session after submit should return conflict with proper error"
         (let [create-twice-response (-> session
                                         (peridot/request (str routing/registration-api-root "/init")

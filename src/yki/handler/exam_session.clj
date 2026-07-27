@@ -162,8 +162,8 @@
                                                                                           registration-id)
                                                     (url-helper :yki.login.user-portal))
                         email-template-data       (assoc registration-details
-                                                    :contact_info exam-session-contact-info
-                                                    :user_portal_link user-portal-link)]
+                                                         :contact_info exam-session-contact-info
+                                                         :user_portal_link user-portal-link)]
                     (when (= (:state registration-details) "PAID_AND_CANCELLED")
                       (log/info "Sending registration cancelled email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-cancel-registration-email!
@@ -195,8 +195,8 @@
                                                                                             registration-id)
                                                       (url-helper :yki.login.user-portal))
                           email-template-data       (assoc registration-details
-                                                      :contact_info exam-session-contact-info
-                                                      :user_portal_link user-portal-link)]
+                                                           :contact_info exam-session-contact-info
+                                                           :user_portal_link user-portal-link)]
                       (log/info "Sending transfer confirmation email for registration with id" registration-id "and lang" lang)
                       (registration-email/send-transfer-confirmation-email!
                         email-q
@@ -236,9 +236,9 @@
                                                                                                registration-id)
                                                          (url-helper :yki.login.user-portal))
                         email-template-data            (assoc registration-details
-                                                         :contact_info exam-session-contact-info
-                                                         :extra_information (:extra_information exam-session-extra-information)
-                                                         :login_url user-portal-link)]
+                                                              :contact_info exam-session-contact-info
+                                                              :extra_information (:extra_information exam-session-extra-information)
+                                                              :login_url user-portal-link)]
                     (log/info "Resending confirmation email for registration with id" registration-id)
                     (registration-email/send-exam-registration-completed-email!
                       email-q

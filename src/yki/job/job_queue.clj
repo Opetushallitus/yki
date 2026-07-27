@@ -1,6 +1,6 @@
 (ns yki.job.job-queue (:require
-                       [integrant.core :as ig]
-                       [pgqueue.core :as pgq]))
+                        [integrant.core :as ig]
+                        [pgqueue.core :as pgq]))
 
 (def queue-config (atom nil))
 

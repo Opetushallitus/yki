@@ -78,17 +78,17 @@
       (let [{:keys [first_name last_name]} (:identity session)]
         (when (not-any? str/blank? [first_name last_name])
           (person-db/ensure-person-exists!
-           db
-           {:oid oid :first_name first_name :last_name last_name}))))
+            db
+            {:oid oid :first_name first_name :last_name last_name}))))
     (assoc
-     (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
-          :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
-          :registration_id        registration-id
-          :registration_kind      registration-kind
-          :user                   user
-          :expires_in             expires-in
-          :partial_exam_type      partial-exam-type})
-     :session session)))
+      (ok {:exam_session           (assoc exam-session :exam_fee exam-fee)
+           :is_strongly_identified (and (not authenticated-by-email?) (not authenticated-by-session?))
+           :registration_id        registration-id
+           :registration_kind      registration-kind
+           :user                   user
+           :expires_in             expires-in
+           :partial_exam_type      partial-exam-type})
+      :session session)))
 
 (defn- init-error-response [space-left? other-registration to-queue? exam-session-id]
   (let [error {:error {:full                            (not space-left?)
@@ -99,21 +99,21 @@
 
 (defn- max-participants-error? [^Exception e]
   (and
-   (instance? PSQLException e)
-   (some->
-    (.getServerErrorMessage ^PSQLException e)
-    (.getMessage)
-    (str/starts-with?
-     "max_participants of exam_session exceeded"))))
+    (instance? PSQLException e)
+    (some->
+      (.getServerErrorMessage ^PSQLException e)
+      (.getMessage)
+      (str/starts-with?
+        "max_participants of exam_session exceeded"))))
 
 (defn- registration-kind-mismatch? [^Exception e]
   (and
-   (instance? PSQLException e)
-   (some->
-    (.getServerErrorMessage ^PSQLException e)
-    (.getMessage)
-    (str/starts-with?
-     "registration to queue is not available"))))
+    (instance? PSQLException e)
+    (some->
+      (.getServerErrorMessage ^PSQLException e)
+      (.getMessage)
+      (str/starts-with?
+        "registration to queue is not available"))))
 
 (defn- create-registration [db exam-session-id participant-id registration-kind partial-exam-type session payment-config]
   (try
@@ -197,11 +197,11 @@
 
 (defn send-payment-link-email! [email-q lang recipient template-name template-data]
   (pgq/put
-   email-q
-   {:recipients [recipient]
-    :created    (System/currentTimeMillis)
-    :subject    (template-util/subject template-name lang template-data)
-    :body       (template-util/render template-name lang template-data)}))
+    email-q
+    {:recipients [recipient]
+     :created    (System/currentTimeMillis)
+     :subject    (template-util/subject template-name lang template-data)
+     :body       (template-util/render template-name lang template-data)}))
 
 (defn create-and-send-payment-link [db email-q lang payment-link template-name template-data code login-url]
   (let [email  (:email template-data)
@@ -240,8 +240,8 @@
 (defn get-open-registrations-by-participant [db user]
   {:open_registrations
    (registration-db/get-open-registrations-by-participant
-    db
-    (get-in user [:identity :external-user-id]))})
+     db
+     (get-in user [:identity :external-user-id]))})
 
 (defn- validate-free-registration [db registration-data id]
   (when-let [free-registration (registration-db/get-free-registration db (:id registration-data))]
@@ -265,8 +265,8 @@
           ; - IF registration ends in less than two days' time, grant payment period of current day + one full day
           ongoing-registration-expiration (common/date-from-now (inc 3))
           date-of-expiry                  (t/min-date
-                                           ongoing-registration-expiration
-                                           registration-end-date)]
+                                            ongoing-registration-expiration
+                                            registration-end-date)]
       {:expiration-date   date-of-expiry
        ; We want to indicate the last possible payment date in email templates.
        ; The last payment date will be the day before expiration date.
@@ -313,12 +313,12 @@
                                      payment-link
                                      "PAYMENT"
                                      (assoc registration-data
-                                       :amount (:email-template amount)
-                                       :language (template-util/get-language (:language_code registration-data) lang)
-                                       :level (template-util/get-level (:level_code registration-data) lang)
-                                       :expiration_date (common/format-date-to-finnish-format last-payment-date)
-                                       :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal))
-                                       :subtests (template-util/get-registration-subtests (:exam_session_type registration-data) (:partial_exam_type registration-data) lang))
+                                            :amount (:email-template amount)
+                                            :language (template-util/get-language (:language_code registration-data) lang)
+                                            :level (template-util/get-level (:level_code registration-data) lang)
+                                            :expiration_date (common/format-date-to-finnish-format last-payment-date)
+                                            :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal))
+                                            :subtests (template-util/get-registration-subtests (:exam_session_type registration-data) (:partial_exam_type registration-data) lang))
                                      code
                                      login-url))
     "QUEUE"
@@ -351,12 +351,12 @@
                                   payment-link
                                   "PAYMENT_FROM_QUEUE"
                                   (assoc registration-data
-                                    :amount (:email-template amount)
-                                    :language (template-util/get-language (:language_code registration-data) lang)
-                                    :level (template-util/get-level (:level_code registration-data) lang)
-                                    :expiration_date (common/format-date-to-finnish-format last-payment-date)
-                                    :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal))
-                                    :subtests (template-util/get-registration-subtests (:exam_session_type registration-data) (:partial_exam_type registration-data) lang))
+                                         :amount (:email-template amount)
+                                         :language (template-util/get-language (:language_code registration-data) lang)
+                                         :level (template-util/get-level (:level_code registration-data) lang)
+                                         :expiration_date (common/format-date-to-finnish-format last-payment-date)
+                                         :user_portal_link (or user-portal-link (url-helper :yki.login.user-portal))
+                                         :subtests (template-util/get-registration-subtests (:exam_session_type registration-data) (:partial_exam_type registration-data) lang))
                                   code
                                   login-url)))
 
@@ -406,8 +406,8 @@
     (if-let [registration-data (when started? (get-registration-data db registration-id session-participant-id lang))]
       (if-let [oid (or (:oid identity)
                        ((onr/get-or-create-person
-                         onr-client
-                         (assoc form-to-persist :registration_id registration-id)) "oidHenkilo"))]
+                          onr-client
+                          (assoc form-to-persist :registration_id registration-id)) "oidHenkilo"))]
         (let [free-registration (validate-free-registration db registration-data free-registration-id)]
           (if (and free-registration-id (nil? free-registration))
             ; Deny submit if free-registration-id was provided, but it didn't match free_registration entry in DB
@@ -451,10 +451,10 @@
                   person                  (person-db/upsert-person! db update-person)
                   success                 (and person
                                                (registration-db/update-registration-details!
-                                                db
-                                                session
-                                                update-registration
-                                                create-and-send-link-fn))
+                                                 db
+                                                 session
+                                                 update-registration
+                                                 create-and-send-link-fn))
                   response-base           {:oid               oid
                                            :registration_kind kind
                                            :state             submitted-state}]

@@ -90,18 +90,18 @@
   (participant-registered-to-other-exam-on-exam-date?
     [{:keys [spec]} participant-id exam-session-id]
     (first (q/select-participant-registered-to-other-exam-on-exam-date
-            spec {:participant_id  participant-id
-                  :exam_session_id exam-session-id})))
+             spec {:participant_id  participant-id
+                   :exam_session_id exam-session-id})))
   (participant-registered-to-exam-on-exam-date?
     [{:keys [spec]} participant-id exam-session-id]
     (first (q/select-participant-registered-to-exam-on-exam-date
-            spec {:participant_id  participant-id
-                  :exam_session_id exam-session-id})))
+             spec {:participant_id  participant-id
+                   :exam_session_id exam-session-id})))
   (person-registered-to-exam-on-exam-date?
     [{:keys [spec]} registration-id exam-session-id]
     (first (q/select-person-registered-to-exam-on-exam-date
-            spec {:registration_id registration-id
-                  :exam_session_id exam-session-id})))
+             spec {:registration_id registration-id
+                   :exam_session_id exam-session-id})))
   (get-started-registration-id+kind-by-participant-id
     [{:keys [spec]} participant-id exam-session-id partial-exam-type]
     (first (q/select-started-registration-id-and-kind-by-participant spec {:participant_id    participant-id
@@ -138,27 +138,27 @@
     [{:keys [spec]} session registration after-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-       tx
-       #(when-let [updated (q/update-registration-to-submitted<! tx registration)]
-          (q/insert-registration-change-event!
-           tx
-           (merge (registration->change-event updated)
-                  {:event       "SUBMIT"
-                   :author_type "USER"
-                   :created_by  (get-in session [:identity :oid])}))
-          (after-fn)
-          updated))))
+        tx
+        #(when-let [updated (q/update-registration-to-submitted<! tx registration)]
+           (q/insert-registration-change-event!
+             tx
+             (merge (registration->change-event updated)
+                    {:event       "SUBMIT"
+                     :author_type "USER"
+                     :created_by  (get-in session [:identity :oid])}))
+           (after-fn)
+           updated))))
   (create-registration!
     [{:keys [spec]} session registration]
     (jdbc/with-db-transaction [tx spec]
       (when-let [created (q/insert-registration<! tx registration)]
         (q/insert-registration-change-event!
-         tx
-         (merge
-          (registration->change-event created)
-          {:event       "CREATE"
-           :author_type "USER"
-           :created_by  (get-in session [:identity :oid])}))
+          tx
+          (merge
+            (registration->change-event created)
+            {:event       "CREATE"
+             :author_type "USER"
+             :created_by  (get-in session [:identity :oid])}))
         (select-keys created [:id :partial_exam_type]))))
   (update-started-registration-oid!
     [{:keys [spec]} registration-id person-oid]
@@ -217,37 +217,37 @@
   (complete-new-payment-and-exam-registration! [{:keys [spec]} registration-id payment-id after-fn]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-       tx
-       (fn update-payment-and-registration-states! []
-         (let [updated-payment-details (q/update-new-exam-payment-to-paid<! tx {:id payment-id})
-               updated-registration    (q/complete-registration<! tx {:id registration-id})
-               new-state               (:state updated-registration)]
-           (when (= "COMPLETED" new-state)
-             (after-fn updated-payment-details))
-           (when (#{"COMPLETED" "PAID_AND_CANCELLED"} new-state)
-             (q/insert-registration-change-event!
-              tx
-              (merge (registration->change-event updated-registration)
-                     {:event       "COMPLETE_PAYMENT"
-                      :author_type "INTEGRATION"
-                      :created_by  nil})))
-           updated-registration)))))
+        tx
+        (fn update-payment-and-registration-states! []
+          (let [updated-payment-details (q/update-new-exam-payment-to-paid<! tx {:id payment-id})
+                updated-registration    (q/complete-registration<! tx {:id registration-id})
+                new-state               (:state updated-registration)]
+            (when (= "COMPLETED" new-state)
+              (after-fn updated-payment-details))
+            (when (#{"COMPLETED" "PAID_AND_CANCELLED"} new-state)
+              (q/insert-registration-change-event!
+                tx
+                (merge (registration->change-event updated-registration)
+                       {:event       "COMPLETE_PAYMENT"
+                        :author_type "INTEGRATION"
+                        :created_by  nil})))
+            updated-registration)))))
   (cancel-started-registration-for-participant! [{:keys [spec]} session participant-id registration-id]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-       tx
-       (fn cancel-registration! []
-         (when-let [canceled (q/cancel-started-registration-for-participant<!
-                              tx
-                              {:id             registration-id
-                               :participant_id participant-id})]
-           (q/insert-registration-change-event!
-            tx
-            (merge (registration->change-event canceled)
-                   {:event       "CANCEL"
-                    :author_type "USER"
-                    :created_by  (get-in session [:identity :oid])}))
-           canceled)))))
+        tx
+        (fn cancel-registration! []
+          (when-let [canceled (q/cancel-started-registration-for-participant<!
+                                tx
+                                {:id             registration-id
+                                 :participant_id participant-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event canceled)
+                     {:event       "CANCEL"
+                      :author_type "USER"
+                      :created_by  (get-in session [:identity :oid])}))
+            canceled)))))
   (get-started-registration-expires-in [{:keys [spec]} registration-id]
     (let [expires-at (q/select-started-registration-expires-at spec {:id registration-id})
           now        (t/now)]
@@ -259,16 +259,16 @@
   (lift-registration-from-queue! [{:keys [spec]} exam-session-id send-email!]
     (jdbc/with-db-transaction [tx spec]
       (rollback-on-exception
-       tx
-       (fn lift-registration-and-notify! []
-         (let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id})]
-           (q/insert-registration-change-event!
-            tx
-            (merge (registration->change-event registration)
-                   {:event       "LIFT_FROM_QUEUE"
-                    :author_type "AUTOMATION"
-                    :created_by  nil}))
-           (send-email! tx registration))))))
+        tx
+        (fn lift-registration-and-notify! []
+          (let [registration (q/lift-registration-from-queue<! tx {:exam_session_id exam-session-id})]
+            (q/insert-registration-change-event!
+              tx
+              (merge (registration->change-event registration)
+                     {:event       "LIFT_FROM_QUEUE"
+                      :author_type "AUTOMATION"
+                      :created_by  nil}))
+            (send-email! tx registration))))))
   (expire-queued-registrations-after-exam-date! [{:keys [spec]}]
     (jdbc/with-db-transaction [tx spec]
       (let [ids (->> (q/select-queued-registrations-to-expire tx)

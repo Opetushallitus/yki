@@ -43,14 +43,14 @@
 (defn send-evaluation-order-completed-emails! [email-q payment-helper pdf-renderer order-data lang]
   (let [order-time    (:created order-data)
         template-data (assoc order-data
-                        :subject (str (localisation/get-translation lang "email.evaluation_payment_success.subject") ":")
-                        :language (template-util/get-language (:language_code order-data) lang)
-                        :level (template-util/get-level (:level_code order-data) lang)
-                        :order_time order-time
-                        :amount (int (:amount order-data))
-                        :order_number (:reference order-data)
-                        :receipt_date (:paid_at order-data)
-                        :payment_date (:paid_at order-data))]
+                             :subject (str (localisation/get-translation lang "email.evaluation_payment_success.subject") ":")
+                             :language (template-util/get-language (:language_code order-data) lang)
+                             :level (template-util/get-level (:level_code order-data) lang)
+                             :order_time order-time
+                             :amount (int (:amount order-data))
+                             :order_number (:reference order-data)
+                             :receipt_date (:paid_at order-data)
+                             :payment_date (:paid_at order-data))]
     (log/info (str "Evaluation payment success, sending email to " (:email order-data) " and Kirjaamo"))
     ;; Customer email
     (registration-email/send-customer-evaluation-registration-completed-email! email-q payment-helper pdf-renderer lang order-time template-data)

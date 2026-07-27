@@ -21,53 +21,53 @@
 (deftest exam-session-participants-test
   (with-routes!
     common-route-specs
-      (with-redefs [auth/oph-admin? (constantly true)]
-        (testing "get exam session participants endpoint should return participant registration form and state"
-          (base/insert-base-data)
-          (base/insert-persons)
-          (base/insert-registrations "COMPLETED")
-          (base/insert-unpaid-expired-registration)
-          (let [exam-session-route    (get-exam-session-route)
-                request               (mock/request :get (str exam-session-route "/registration"))
-                response              (base/send-request-with-tx request (:port server))
-                participants-response (-> (base/body-as-json response)
-                                          (update "participants" #(map (fn [data]
-                                                                         (dissoc data "free_registration_source" "free_registration_basis" "free_registration_is_foreign"))
-                                                                       %)))
-                id->created           (->> (str "SELECT r.id, r.created FROM registration r WHERE r.exam_session_id=" (base/get-exam-session-id))
-                                           (base/select)
-                                           (map (juxt :id :created))
-                                           (into {}))
-                expected-response     (update
-                                       (j/read-value (slurp "test/resources/participants.json"))
-                                       "participants"
-                                       #(map (fn [data]
-                                               (let [registration-id (data "registration_id")]
-                                                 (-> data
-                                                     (assoc "created" (str (id->created registration-id))))))
-                                             %))]
-            (is (= "application/json; charset=utf-8" (get (:headers response) "Content-Type")))
-            (is (= 200 (:status response)))
-            (is (= expected-response participants-response))
+    (with-redefs [auth/oph-admin? (constantly true)]
+      (testing "get exam session participants endpoint should return participant registration form and state"
+        (base/insert-base-data)
+        (base/insert-persons)
+        (base/insert-registrations "COMPLETED")
+        (base/insert-unpaid-expired-registration)
+        (let [exam-session-route    (get-exam-session-route)
+              request               (mock/request :get (str exam-session-route "/registration"))
+              response              (base/send-request-with-tx request (:port server))
+              participants-response (-> (base/body-as-json response)
+                                        (update "participants" #(map (fn [data]
+                                                                       (dissoc data "free_registration_source" "free_registration_basis" "free_registration_is_foreign"))
+                                                                     %)))
+              id->created           (->> (str "SELECT r.id, r.created FROM registration r WHERE r.exam_session_id=" (base/get-exam-session-id))
+                                         (base/select)
+                                         (map (juxt :id :created))
+                                         (into {}))
+              expected-response     (update
+                                      (j/read-value (slurp "test/resources/participants.json"))
+                                      "participants"
+                                      #(map (fn [data]
+                                              (let [registration-id (data "registration_id")]
+                                                (-> data
+                                                    (assoc "created" (str (id->created registration-id))))))
+                                            %))]
+          (is (= "application/json; charset=utf-8" (get (:headers response) "Content-Type")))
+          (is (= 200 (:status response)))
+          (is (= expected-response participants-response))
 
-            (base/insert-exam-session 2 (:oid base/organizer) 5)
-            (testing "participant registration is changed to another exam session"
-              (let [registration-id     (:id (base/select-one "SELECT id from registration"))
-                    relocate-request    (-> (mock/request :post (str exam-session-route "/registration/" registration-id "/relocate")
-                                                          (j/write-value-as-string {:to_exam_session_id 2}))
-                                            (mock/content-type "application/json; charset=UTF-8"))
-                    not-found-request   (-> (mock/request :post (str exam-session-route "/registration/" registration-id "/relocate")
-                                                          (j/write-value-as-string {:to_exam_session_id 3}))
-                                            (mock/content-type "application/json; charset=UTF-8"))
-                    relocate-response   (base/send-request-with-tx relocate-request)
-                    not-found-response  (base/send-request-with-tx not-found-request)
-                    registration        (base/select-one (str "SELECT * from registration where id=" registration-id))
-                    old-exam-session-id (:original_exam_session_id registration)
-                    new-exam-session-id (:exam_session_id registration)]
-                (is (= old-exam-session-id 1))
-                (is (= new-exam-session-id 2))
-                (is (= (:status not-found-response) 404))
-                (is (= (:status relocate-response) 200)))))))))
+          (base/insert-exam-session 2 (:oid base/organizer) 5)
+          (testing "participant registration is changed to another exam session"
+            (let [registration-id     (:id (base/select-one "SELECT id from registration"))
+                  relocate-request    (-> (mock/request :post (str exam-session-route "/registration/" registration-id "/relocate")
+                                                        (j/write-value-as-string {:to_exam_session_id 2}))
+                                          (mock/content-type "application/json; charset=UTF-8"))
+                  not-found-request   (-> (mock/request :post (str exam-session-route "/registration/" registration-id "/relocate")
+                                                        (j/write-value-as-string {:to_exam_session_id 3}))
+                                          (mock/content-type "application/json; charset=UTF-8"))
+                  relocate-response   (base/send-request-with-tx relocate-request)
+                  not-found-response  (base/send-request-with-tx not-found-request)
+                  registration        (base/select-one (str "SELECT * from registration where id=" registration-id))
+                  old-exam-session-id (:original_exam_session_id registration)
+                  new-exam-session-id (:exam_session_id registration)]
+              (is (= old-exam-session-id 1))
+              (is (= new-exam-session-id 2))
+              (is (= (:status not-found-response) 404))
+              (is (= (:status relocate-response) 200)))))))))
 
 (deftest exam-session-participant-delete-not-paid-test
   (testing "delete exam session participant should set registration state to CANCELLED when registration is not paid"

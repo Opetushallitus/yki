@@ -61,7 +61,7 @@
                   ["vcs" "commit"]
                   ["vcs" "push"]]
   :plugins [[duct/lein-duct "0.12.3"]
-            [lein-cljfmt "0.6.4"]
+            [dev.weavejester/lein-cljfmt "0.16.5"]
             [jonase/eastwood "0.3.3"]
             [lein-bikeshed "0.5.1"]
             [lein-ancient "1.0.0-RC3"]
@@ -72,6 +72,7 @@
   :git-version {:version-file      "target/classes/buildversion.edn"
                 :version-file-keys [:ref :version :branch :message]}
   :test-refresh {:changes-only true}
+  :cljfmt {:function-arguments-indentation :cursive}
   :middleware [lein-duct.plugin/middleware lein-git-version.plugin/middleware]
   :main ^:skip-aot yki.main
   :jvm-opts ["-Duser.timezone=Europe/Helsinki"

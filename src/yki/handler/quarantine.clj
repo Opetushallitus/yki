@@ -90,11 +90,11 @@
                                     (map :person_oid)
                                     (onr/list-ssn-by-oids onr-client))
               matches-with-ssn (mapv #(assoc-in
-                                       (dissoc % :person_oid)
-                                       [:form :ssn]
-                                       (oid->ssn (get % :person_oid)))
+                                        (dissoc % :person_oid)
+                                        [:form :ssn]
+                                        (oid->ssn (get % :person_oid)))
                                      matches)]
-          (ok { :quarantine_matches matches-with-ssn})))
+          (ok {:quarantine_matches matches-with-ssn})))
       (context "/:id/registration/:reg-id" []
         (PUT "/set" request
           :body [quarantined ::ys/quarantined]

@@ -73,7 +73,7 @@
      "items"        items}))
 
 (defrecord NewEvaluationPaymentHelper
-  [db payment-config url-helper]
+           [db payment-config url-helper]
   EvaluationPaymentHelper
   (order-id->payment-data [_ id]
     (first (q/select-new-evaluation-payment-by-order-id (:spec db) {:evaluation_order_id id})))

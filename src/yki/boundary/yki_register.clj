@@ -159,10 +159,10 @@
                       :write  (if (contains? #{"ALL_PARTS" "WRITE"} part) 1 0)
                       :listen (if (contains? #{"ALL_PARTS" "LISTEN"} part) 1 0)
                       :read   0}
-                     {:speak  (if (contains? #{"ALL_PARTS" "SPEAK"} part) 1 0)
-                      :write  (if (contains? #{"ALL_PARTS" "WRITE"} part) 1 0)
-                      :listen (if (contains? #{"ALL_PARTS" "LISTEN"} part) 1 0)
-                      :read   (if (contains? #{"ALL_PARTS" "READ"} part) 1 0)})))
+      {:speak  (if (contains? #{"ALL_PARTS" "SPEAK"} part) 1 0)
+       :write  (if (contains? #{"ALL_PARTS" "WRITE"} part) 1 0)
+       :listen (if (contains? #{"ALL_PARTS" "LISTEN"} part) 1 0)
+       :read   (if (contains? #{"ALL_PARTS" "READ"} part) 1 0)})))
 
 (defn- merge-flags [flags-list]
   (reduce (fn [a b] (merge-with max a b))

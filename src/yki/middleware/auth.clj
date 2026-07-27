@@ -242,9 +242,9 @@
           ; Get response from downstream handler.
           ; Strip away session details if session is expired (or doesn't contain expiry time).
           response       (handler (cond-> request
-                                          (or (nil? session-expiry)
-                                              (< session-expiry now))
-                                          (dissoc :session)))]
+                                    (or (nil? session-expiry)
+                                        (< session-expiry now))
+                                    (dissoc :session)))]
       (if-let [response-session (:session response)]
         (if (:timeout response-session)
           ; Don't renew session timeout if a timeout is present in response

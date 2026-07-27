@@ -11,7 +11,7 @@
   (template+data->pdf-bytes [_ template-name language template-data]))
 
 (defrecord PdfTemplateRendererImpl
-  []
+           []
   PdfTemplateRenderer
   (template+data->pdf-bytes [_ template-name language template-data]
     (let [pdf (Pdf. pdf-wrapper-config)]
@@ -19,4 +19,4 @@
       (.getPDF pdf))))
 
 (defmethod ig/init-key :yki.util/pdf [_ _]
-  (->PdfTemplateRendererImpl ))
+  (->PdfTemplateRendererImpl))

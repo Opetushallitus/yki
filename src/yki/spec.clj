@@ -205,10 +205,7 @@
                                                 ::lang]))
 (s/def ::location (s/coll-of ::exam-session-location))
 
-
-
 ;; organizer-contact
-
 
 (s/def :contact/name (s/nilable ::name))
 (s/def :contact/email (s/nilable ::email))
@@ -407,13 +404,13 @@
 (s/def ::is_free_registration boolean?)
 (s/def ::free_registration_source (s/nilable #{"KOSKI" "USER"}))
 (s/def ::free_registration_basis (s/nilable
-                                  #{"MatriculationExam"
-                                    "HigherEducationEnrolled"
-                                    "HigherEducationConcluded"
-                                    "DIA"
-                                    "EB"
-                                    "Other"
-                                    "None"}))
+                                   #{"MatriculationExam"
+                                     "HigherEducationEnrolled"
+                                     "HigherEducationConcluded"
+                                     "DIA"
+                                     "EB"
+                                     "Other"
+                                     "None"}))
 (s/def ::free_registration_is_foreign (s/nilable boolean?))
 
 (s/def ::exam-session-participant (s/keys :req-un [::created

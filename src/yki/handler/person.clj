@@ -98,8 +98,8 @@
                                                                       registration-id)
                                              (url-helper :yki.login.user-portal))
                           template-data    (assoc email-data
-                                             :contact_info contact-info
-                                             :user_portal_link user-portal-link)]
+                                                  :contact_info contact-info
+                                                  :user_portal_link user-portal-link)]
                       (send-cancel-registration-email! email-q lang template-data)
                       (exam-session-db/init-participants-sync-status! db exam_session_id))
                     (= "QUEUE" kind)
@@ -111,8 +111,8 @@
                                                                       registration-id)
                                              (url-helper :yki.login.user-portal))
                           template-data    (assoc email-data
-                                             :contact_info contact-info
-                                             :user_portal_link user-portal-link)]
+                                                  :contact_info contact-info
+                                                  :user_portal_link user-portal-link)]
                       (send-cancel-queue-email! email-q lang template-data)))
                   (ok {:success true}))
                 (ok {:success false}))))

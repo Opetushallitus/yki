@@ -30,10 +30,10 @@
         hashed            (sha256-hash code)
         partial-exam-type (registration-db/get-partial-exam-type-for-login db (:participant_id login-link) (:exam_session_id login-link))
         template-data     (assoc exam-session :subject subject
-                                              :language (template-util/get-language (:language_code exam-session) lang)
-                                              :level (template-util/get-level (:level_code exam-session) lang)
-                                              :login_url login-url
-                                              :subtests (template-util/get-registration-subtests (:exam_session_type exam-session) partial-exam-type lang))]
+                                 :language (template-util/get-language (:language_code exam-session) lang)
+                                 :level (template-util/get-level (:level_code exam-session) lang)
+                                 :login_url login-url
+                                 :subtests (template-util/get-registration-subtests (:exam_session_type exam-session) partial-exam-type lang))]
     (login-link-db/create-login-link! db (assoc login-link :code hashed))
     (log/info "Login link created for" email ". Adding to email queue")
     (pgq/put email-q
@@ -48,7 +48,7 @@
         link-type     "LOGIN_RENEW"
         subject       (str (localisation/get-translation lang "email.login_renew.subject"))
         template-data {:subject subject
-                       :login_url login-url }]
+                       :login_url login-url}]
     (log/info "Login link renewed for" email ". Adding to email queue")
     (pgq/put email-q
              {:recipients [email]
@@ -80,28 +80,28 @@
                   registration-url         (url-helper (if to-queue? :yki-ui.exam-session-queue.url :yki-ui.exam-session-registration.url) exam-session-id registration-id)
                   registration-expired-url (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
                   link                     (assoc login-link :participant_id participant-id
-                                                             :type "LOGIN"
+                                                  :type "LOGIN"
                                                              ; Login link should be valid for the current day PLUS ONE FULL DAY.
-                                                             :expires_at (c/date-from-now 2)
-                                                             :success_redirect registration-url
-                                                             :expired_link_redirect registration-expired-url
-                                                             :registration_id registration-id
-                                                             :user_data {:previous-session-id (:yki-session-id session)})]
+                                                  :expires_at (c/date-from-now 2)
+                                                  :success_redirect registration-url
+                                                  :expired_link_redirect registration-expired-url
+                                                  :registration_id registration-id
+                                                  :user_data {:previous-session-id (:yki-session-id session)})]
               (log/info "Requested login link:" login-link)
               (if (and registration-id (nil? registration-matches))
                 (do (log/error "Requested login link, but participant doesn't match registration")
                     (forbidden))
                 (if
-                    (login-link-db/get-recent-login-link-by-exam-session-and-participant
-                     db
-                     exam-session-id
-                     participant-id
-                     (t/minus (t/now) (t/minutes 5)))
+                  (login-link-db/get-recent-login-link-by-exam-session-and-participant
+                    db
+                    exam-session-id
+                    participant-id
+                    (t/minus (t/now) (t/minutes 5)))
                   (do (log/info
-                       "Found recent login-link for email and exam session. Not sending another email yet to avoid flooding the email service. Email:"
-                       (:email login-link)
-                       ", exam-session-id:"
-                       exam-session-id)
+                        "Found recent login-link for email and exam session. Not sending another email yet to avoid flooding the email service. Email:"
+                        (:email login-link)
+                        ", exam-session-id:"
+                        exam-session-id)
                       (ok {:success true}))
                   (when (create-and-send-link db url-helper email-q lang link exam-session to-queue?)
                                         ; If user isn't properly logged in, ie. auth-method is "SESSION", clear session details after ordering login link.
@@ -110,7 +110,7 @@
                     (let [auth-method   (:auth-method session)
                           session-auth? (= "SESSION" auth-method)]
                       (cond->
-                          (ok {:success true})
+                        (ok {:success true})
                         session-auth?
                         (assoc :session nil)))))))
             (do (log/error "Requested login link, but registration for exam session isn't open." login-link)
