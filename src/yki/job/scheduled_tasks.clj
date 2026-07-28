@@ -88,7 +88,9 @@
        (let [ids (registration-db/expire-queued-registrations-after-exam-date! db)]
          (when ids (log/info "Queued registrations set to expired" ids))))
      (catch Exception e
-       (log/error e "Registration state handler failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Registration state handler failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Registration state handler failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defmethod ig/init-key ::participants-sync-handler
   [_ {:keys [db url-helper onr-client basic-auth disabled retry-duration-in-days]}]
@@ -106,7 +108,9 @@
                  (log/error e "Failed to synchronize participants of exam session" exam-session)
                  (exam-session-db/set-participants-sync-to-failed! db (:exam_session_id exam-session) (str retry-duration-in-days " days"))))))))
      (catch Exception e
-       (log/error e "Participant sync handler failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Participant sync handler failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Participant sync handler failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defmethod ig/init-key ::persons-sync-handler
   [_ {:keys [db url-helper basic-auth disabled retry-duration-in-days]}]
@@ -130,7 +134,9 @@
                  (log/error e "Updating person details to Solki failed!" {:id id, :oid person_oid})
                  (person-db/mark-person-sync-attempt! db id false true)))))))
      (catch Exception e
-       (log/error e "Persons sync handler failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Persons sync handler failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Persons sync handler failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defmethod ig/init-key ::email-queue-reader
   [_ {:keys [email-q handle-at-once-at-most url-helper retry-duration-in-days disabled]}]
@@ -142,15 +148,22 @@
                                    (log/info "Email queue reader sending email to:" (:recipients email-req))
                                    (email/send-email! url-helper email-req disabled))))
      (catch Exception e
-       (log/error e "Email queue reader failed"))))
+       (log/error e "Email queue reader failed"))
+     (catch Throwable t
+       (log/error t "Email queue reader failed with a non-Exception Throwable"))))
 
 (defmethod ig/init-key ::data-sync-queue-reader
   [_ {:keys [data-sync-q url-helper db retry-duration-in-days disabled basic-auth]}]
   {:pre [(some? url-helper) (some? data-sync-q) (some? db) (some? retry-duration-in-days) (some? basic-auth)]}
-  #(take-with-error-handling data-sync-q retry-duration-in-days
-                             (fn [data-sync-req]
-                               (log/info "Received request to sync data to yki register" data-sync-req)
-                               (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled data-sync-req))))
+  #(try
+     (take-with-error-handling data-sync-q retry-duration-in-days
+                               (fn [data-sync-req]
+                                 (log/info "Received request to sync data to yki register" data-sync-req)
+                                 (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled data-sync-req)))
+     (catch Exception e
+       (log/error e "Data sync queue reader failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Data sync queue reader failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defmethod ig/init-key ::remove-old-data-handler
   [_ {:keys [db]}]
@@ -165,7 +178,9 @@
          (log/info "Removed old CAS tickets:" deleted-cas-tickets)
          (log/info "Removed old CAS-oppija tickets:" deleted-cas-oppija-tickets)))
      (catch Exception e
-       (log/error e "Old data removal failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Old data removal failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Old data removal failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defmethod ig/init-key ::sync-participant-onr-data-handler [_ {:keys [db onr-client]}]
   {:pre [(some? db)]}
@@ -193,7 +208,9 @@
            ; Wait 10 seconds between calls to ONR just to play it safe.
            (Thread/sleep 10000))))
      (catch Exception e
-       (log/error e "Syncing participant ONR data failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Syncing participant ONR data failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Syncing participant ONR data failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defmethod ig/init-key ::registration-queue-handler [_ {:keys [db url-helper payment-helper email-q]}]
   {:pre [(some? db) (some? url-helper) (some? payment-helper) (some? email-q)]}
@@ -234,7 +251,9 @@
              (catch Exception e
                (log/error e "Registration queue handler failed for exam session" exam_session_id "[ERROR_SCHEDULED_TASK]"))))))
      (catch Exception e
-       (log/error e "Registration queue handler failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Registration queue handler failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Registration queue handler failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defmethod ig/init-key ::migrate-person-handler [_ {:keys [db]}]
   {:pre [(some? db)]}
@@ -256,7 +275,9 @@
              (catch Exception e
                (log/error e "Updating gender and nationality failed for person" (dissoc person :ssn)))))))
      (catch Exception e
-       (log/error e "Person migration failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Person migration failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Person migration failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defn- statistics+event->statistics [{:keys [exam_session_id participants queue max_participant_count max_queue_count max_participants_at max_queue_at]
                                       :as   statistics}
@@ -360,7 +381,9 @@
            (when-let [statistics-to-insert (get-statistics-entry db exam-session)]
              (exam-session-db/update-exam-session-statistics! db statistics-to-insert)))))
      (catch Exception e
-       (log/error e "Exam session statistics handler failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Exam session statistics handler failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Exam session statistics handler failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
 (defmethod ig/init-key ::exam-session-solki-sync-handler
   [_ {:keys [db url-helper basic-auth disabled]}]
@@ -379,4 +402,6 @@
              (catch Exception e
                (log/error e "Failed to sync exam session to Solki" {:id (:id exam-session)}))))))
      (catch Exception e
-       (log/error e "Exam session Solki sync handler failed [ERROR_SCHEDULED_TASK]"))))
+       (log/error e "Exam session Solki sync handler failed [ERROR_SCHEDULED_TASK]"))
+     (catch Throwable t
+       (log/error t "Exam session Solki sync handler failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
