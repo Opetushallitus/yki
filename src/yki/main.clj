@@ -31,7 +31,7 @@
   (duct/load-hierarchy)
   (let [keys            (or (duct/parse-keys args) [:duct/daemon
                                                     :duct.migrator/ragtime
-                                                    :duct.scheduler/simple])
+                                                    :yki.job.scheduler/scheduler])
         profiles        [:duct.profile/prod]
         base-config     (duct/read-config (duct/resource "yki/config.edn"))
         external-config (duct/read-config (read-external-config))]
