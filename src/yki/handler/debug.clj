@@ -1,12 +1,14 @@
 (ns yki.handler.debug
   (:require
     [clojure.data.csv :as csv]
-    [compojure.api.sweet :refer [api context GET]]
+    [clojure.tools.logging :as log]
+    [compojure.api.sweet :refer [api context GET POST]]
     [integrant.core :as ig]
     [ring.middleware.params :refer [wrap-params]]
     [ring.util.http-response :refer [ok internal-server-error]]
     [yki.boundary.debug :as b]
     [yki.handler.routing :as routing]
+    [yki.job.scheduler :as scheduler]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.util.http-util :as http-util])
   (:import (java.io StringWriter)))
@@ -14,10 +16,11 @@
 (defn- with-onr-url [url-helper {:keys [oid] :as data}]
   (assoc data :onr_url (url-helper :henkilo-ui.henkilo-by-oid oid)))
 
-(defmethod ig/init-key :yki.handler/debug [_ {:keys [access-log auth db url-helper]}]
+(defmethod ig/init-key :yki.handler/debug [_ {:keys [access-log auth db scheduler url-helper]}]
   {:pre [(some? access-log)
          (some? auth)
          (some? db)
+         (some? scheduler)
          (some? url-helper)]}
   (api
     (context routing/debug-root []
@@ -39,6 +42,11 @@
             (-> (.toString writer)
                 (ok)
                 (assoc-in [:headers "Content-Type"] "text/csv")))))
+      (GET "/scheduler/status" _
+        (ok (scheduler/status scheduler)))
+      (POST "/scheduler/restart" _
+        (log/warn "Restarting scheduler on request")
+        (ok (scheduler/restart! scheduler)))
       (GET "/solki/connection" _
         (let [{:keys [error status]} (http-util/do-get "https://yki.jyu.fi" nil)]
           (if error

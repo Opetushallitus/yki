@@ -107,8 +107,8 @@
                                                               :basic-auth {:user "user" :password "pass"}
                                                               :url-helper #ig/ref :yki.util/url-helper}
 
-  :duct.scheduler/simple
-  {:thread-pool-size 10
+  :yki.job.scheduler/scheduler
+  {:thread-pool-size 16
    :jobs             [{:interval 60 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/registration-state-handler}
                       {:interval 3600 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/participants-sync-handler}
                       {:interval 1 :delay 60 :run #ig/ref :yki.job.scheduled-tasks/email-queue-reader}
@@ -236,6 +236,7 @@
   :yki.handler/debug                                         {:access-log #ig/ref :yki.middleware.access-log/with-logging
                                                               :auth       #ig/ref :yki.middleware.auth/with-authentication
                                                               :db         #ig/ref :duct.database/sql
+                                                              :scheduler  #ig/ref :yki.job.scheduler/scheduler
                                                               :url-helper #ig/ref :yki.util/url-helper}}
 
  :duct.profile/dev   #duct/include "dev"

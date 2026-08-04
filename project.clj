@@ -28,7 +28,6 @@
                  [duct/module.logging "0.5.0"]
                  [duct/module.sql "0.6.1"]
                  [duct/module.web "0.7.4"]
-                 [duct/scheduler.simple "0.1.0"]
                  [com.layerware/pgqueue "0.5.1"]
                  [selmer "1.12.62"]
                  [metosin/compojure-api "2.0.0-alpha31"

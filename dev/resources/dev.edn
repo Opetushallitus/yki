@@ -83,6 +83,11 @@
                                                                :proxy-config {:endpoint "http://localhost:8083"
                                                                               :token "03e2f9b3-d1de-4846-884e-80e6c3d0fae4"}}
 
+:yki.handler/debug                                         {:access-log #ig/ref :yki.middleware.access-log/with-logging
+                                                            :auth       #ig/ref :yki.middleware.no-auth/with-authentication
+                                                            :db         #ig/ref :duct.database/sql
+                                                            :scheduler  #ig/ref :yki.job.scheduler/scheduler
+                                                            :url-helper #ig/ref :yki.util/url-helper}
 
 
  :yki.middleware.auth/with-authentication
