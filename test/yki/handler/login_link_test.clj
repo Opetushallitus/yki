@@ -63,7 +63,7 @@
         (base/execute! "INSERT INTO participant (external_user_id, email) VALUES ('partial@test.com', 'partial@test.com');")
         (let [participant-id  (:id (base/select-one "SELECT id FROM participant WHERE external_user_id = 'partial@test.com'"))
               _               (base/execute! (str "INSERT INTO registration (participant_id, exam_session_id, state, kind, partial_exam_type) VALUES ("
-                                                   participant-id ", 1, 'STARTED', 'ADMISSION', 'SPEAK');"))
+                                                  participant-id ", 1, 'STARTED', 'ADMISSION', 'SPEAK');"))
               registration-id (:id (base/select-one (str "SELECT id FROM registration WHERE participant_id = " participant-id)))
               request-data    {:email           "partial@test.com"
                                :exam_session_id 1
