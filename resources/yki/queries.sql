@@ -1062,13 +1062,11 @@ WHERE re.id = :id
          AND reg.state = 'STARTED'
          AND reg.exam_session_id = es.id);
 
--- name: select-partial-exam-type-by-participant-and-session
+-- name: select-partial-exam-type-by-registration-id
 SELECT re.partial_exam_type
 FROM registration re
-WHERE re.participant_id = :participant_id
-  AND re.exam_session_id = :exam_session_id
-  AND re.state = 'STARTED'
-LIMIT 1;
+WHERE re.id = :registration_id
+  AND re.exam_session_id = :exam_session_id;
 
 -- name: select-completed-registration-details
 SELECT re.state,

@@ -78,6 +78,17 @@
         (is (s/includes? rendered "Email address: foo@bar"))
         (is (s/includes? rendered "Phone: +358123"))))))
 
+(deftest get-registration-subtests-test
+  (testing "returns only the chosen subtest for a partial exam registration"
+    (is (= ["Puhuminen"] (template-util/get-registration-subtests "READ_SPEAK" "SPEAK" "fi")))
+    (is (= ["Kirjoittaminen"] (template-util/get-registration-subtests "LISTEN_WRITE" "WRITE" "fi"))))
+  (testing "falls back to every subtest of the session type when the partial exam type is unknown"
+    (is (= ["Puhuminen" "Tekstin ymmärtäminen"] (template-util/get-registration-subtests "READ_SPEAK" nil "fi")))
+    (is (= ["Puheen ymmärtäminen" "Kirjoittaminen"] (template-util/get-registration-subtests "LISTEN_WRITE" nil "fi"))))
+  (testing "returns all four subtests for a full exam"
+    (is (= ["Puheen ymmärtäminen" "Puhuminen" "Tekstin ymmärtäminen" "Kirjoittaminen"]
+           (template-util/get-registration-subtests "FULL" nil "fi")))))
+
 (deftest render-evaluation-payment-success-email-test
   (let [template "EVALUATION_PAYMENT_SUCCESS"
         lang     "fi"

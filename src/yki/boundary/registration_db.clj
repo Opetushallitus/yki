@@ -57,12 +57,13 @@
   [tx registration-id participant-id lang]
   (first (q/select-registration-data tx {:id registration-id :participant_id participant-id :lang lang})))
 
-(defn get-partial-exam-type-for-login [db participant-id exam-session-id]
-  (:partial_exam_type
-    (first (q/select-partial-exam-type-by-participant-and-session
-             (:spec db)
-             {:participant_id  participant-id
-              :exam_session_id exam-session-id}))))
+(defn get-partial-exam-type-for-login [db registration-id exam-session-id]
+  (when registration-id
+    (:partial_exam_type
+      (first (q/select-partial-exam-type-by-registration-id
+               (:spec db)
+               {:registration_id registration-id
+                :exam_session_id exam-session-id})))))
 
 (defn- expire-registrations! [tx ids]
   (when (seq ids)
