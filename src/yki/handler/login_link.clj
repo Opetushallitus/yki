@@ -28,7 +28,7 @@
         link-type         (if to-queue? "LOGIN_QUEUE" (:type login-link))
         subject           (str (localisation/get-translation lang (if to-queue? "email.login_queue.subject" "email.login.subject")))
         hashed            (sha256-hash code)
-        partial-exam-type (registration-db/get-partial-exam-type-for-login db (:participant_id login-link) (:exam_session_id login-link))
+        partial-exam-type (registration-db/get-partial-exam-type-for-login db (:registration_id login-link) (:exam_session_id login-link))
         template-data     (assoc exam-session :subject subject
                                  :language (template-util/get-language (:language_code exam-session) lang)
                                  :level (template-util/get-level (:level_code exam-session) lang)
@@ -77,7 +77,10 @@
                   registration-id          (:registration_id login-link)
                   registration-matches     (registration-db/check-registration-id-matches-session db registration-id participant-id (:yki-session-id session))
                   to-queue?                (= "QUEUE" registration-kind)
-                  registration-url         (url-helper (if to-queue? :yki-ui.exam-session-queue.url :yki-ui.exam-session-registration.url) exam-session-id registration-id)
+                  registration-url         (cond
+                                             (and to-queue? registration-id) (url-helper :yki-ui.exam-session-queue.url exam-session-id registration-id)
+                                             registration-id                 (url-helper :yki-ui.exam-session-registration.url exam-session-id registration-id)
+                                             :else                           (url-helper :exam-session.url exam-session-id))
                   registration-expired-url (url-helper :yki-ui.exam-session-registration-expired.url exam-session-id)
                   link                     (assoc login-link :participant_id participant-id
                                                   :type "LOGIN"

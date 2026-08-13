@@ -202,7 +202,7 @@
      {:pattern #".*/api/registration/init"
       :handler any-access}
      {:pattern        #".*/api/registration/.*"
-      :request-method :delete
+      :request-method #{:get :delete}
       :handler        {:or [oppija-authenticated? session-authenticated?]}}
      {:pattern #".*/api/registration.*"
       :handler oppija-authenticated?}

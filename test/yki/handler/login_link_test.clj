@@ -2,6 +2,7 @@
   (:require
     [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
     [clojure.java.jdbc :as jdbc]
+    [clojure.string :as s]
     [duct.database.sql]
     [integrant.core :as ig]
     [jsonista.core :as j]
@@ -52,11 +53,28 @@
               _                (base/body-as-json response)
               email-request    (pgq/take email-q)]
           (is (= (count code) 64))
-          (is (= success-redirect (str "http://yki.localhost:" port "/yki/ilmoittautuminen/tutkintotilaisuus/1/")))
+          (is (= success-redirect (str "http://yki.localhost:" port "/yki/tutkintotilaisuus/1")))
           (is (= (:status response) 200))
           (testing "email send request should be send to job queue"
             (is (= (:subject email-request) "Ilmoittautuminen (YKI): Suomi perustaso - Omenia, 27.1.2018"))
             (is (= (:recipients email-request) ["test@test.com"])))))
+      (testing "login link for an existing partial exam registration should list only the chosen subtest"
+        (base/execute! "UPDATE exam_session SET type = 'READ_SPEAK' WHERE id = 1;")
+        (base/execute! "INSERT INTO participant (external_user_id, email) VALUES ('partial@test.com', 'partial@test.com');")
+        (let [participant-id  (:id (base/select-one "SELECT id FROM participant WHERE external_user_id = 'partial@test.com'"))
+              _               (base/execute! (str "INSERT INTO registration (participant_id, exam_session_id, state, kind, partial_exam_type) VALUES ("
+                                                  participant-id ", 1, 'STARTED', 'ADMISSION', 'SPEAK');"))
+              registration-id (:id (base/select-one (str "SELECT id FROM registration WHERE participant_id = " participant-id)))
+              request-data    {:email           "partial@test.com"
+                               :exam_session_id 1
+                               :registration_id registration-id}
+              response        (request-link! request-data)
+              success-redirect (:success_redirect (base/select-one (str "SELECT * FROM login_link WHERE registration_id = " registration-id)))
+              email-request   (pgq/take email-q)]
+          (is (= (:status response) 200))
+          (is (= success-redirect (str "http://yki.localhost:" port "/yki/ilmoittautuminen/tutkintotilaisuus/1/" registration-id)))
+          (is (s/includes? (:body email-request) "Puhuminen"))
+          (is (not (s/includes? (:body email-request) "Tekstin ymmärtäminen")))))
       (testing "login link should not be created if exam session isn't open for registration"
         (base/execute! "UPDATE exam_date SET registration_start_date='2039-01-01' WHERE id IN (SELECT exam_date_id FROM exam_session WHERE id=1);")
         (let [request-data  {:email           "unique@email.com"
