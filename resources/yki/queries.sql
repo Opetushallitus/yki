@@ -817,6 +817,10 @@ SELECT EXISTS (
       AND r.person_oid = :oid
       AND r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day)
       AND r.state IN ('SUBMITTED', 'COMPLETED')
+      -- registrations to different partial exams on the same day are allowed
+      AND (r.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type
+           OR (SELECT partial_exam_type FROM registration WHERE id = :id)
+              IN ('ALL_PARTS'::exam_session_ticket_type, r.partial_exam_type))
     );
 
 -- name: update-registration-to-submitted<!
@@ -848,7 +852,12 @@ WHERE
       WHERE r.id <> :id AND
             r.person_oid = :oid AND
             r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day) AND
-            r.state IN ('SUBMITTED', 'COMPLETED'));
+            r.state IN ('SUBMITTED', 'COMPLETED') AND
+            -- registrations to different partial exams on the same day are allowed;
+            -- registration.partial_exam_type is the row being submitted
+            (r.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type
+             OR registration.partial_exam_type
+                IN ('ALL_PARTS'::exam_session_ticket_type, r.partial_exam_type)));
 
 -- name: cancel-started-registration-for-participant<!
 UPDATE registration SET

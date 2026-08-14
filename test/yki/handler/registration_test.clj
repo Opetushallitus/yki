@@ -367,3 +367,57 @@
         (let [response (init-registration! nil)]
           (is (= 409 (:status response)))
           (is (some? (get-in (base/body-as-json response) ["error" "other-exam-session-registration"]))))))))
+
+(deftest partial-exam-submit-on-same-exam-date-test
+  (insert-initial-data!)
+  (base/execute! (str "UPDATE exam_session SET type='READ_SPEAK',
+                       max_participants_read_listen=5,
+                       max_participants_speak_write=5
+                       WHERE id=1"))
+  (with-routes!
+    common-route-specs
+    (let [email-q                   (base/email-q)
+          oid                       "1.2.3.5.001"
+          fake-session              {:identity    {:oid              oid
+                                                   :first_name       "Etu"
+                                                   :last_name        "Suku"
+                                                   :external-user-id oid}
+                                     :auth-method "SUOMIFI"}
+          auth                      (ig/init-key :yki.middleware.no-auth/with-fake-session fake-session)
+          handlers                  (create-handlers email-q (:port server) auth)
+          session                   (peridot/session handlers)
+          get-registration          (fn [registration-id]
+                                      (base/select-one (str "SELECT * FROM registration WHERE id = " registration-id)))
+          init-registration!        (fn [partial-exam-type]
+                                      (-> session
+                                          (peridot/request (str routing/registration-api-root "/init")
+                                                           :body (j/write-value-as-string {:exam_session_id   1
+                                                                                           :partial_exam_type partial-exam-type})
+                                                           :content-type "application/json"
+                                                           :request-method :post)
+                                          (:response)
+                                          (base/body-as-json)
+                                          (get "registration_id")))
+          insert-free-registration! (fn [registration-id]
+                                      (jdbc/execute!
+                                        @embedded-db/conn
+                                        (str "INSERT INTO free_registration (source, type, matriculation_exam, higher_education_concluded, higher_education_enrolled, eb, dia, other, registration_id, is_foreign) VALUES ('KOSKI', 'HigherEducationConcluded', true, false, false, false, false, false, " registration-id ", false)")
+                                        {:return-keys true}))
+          submit-registration!      (fn [registration-id]
+                                      (let [free-registration-id (:free_registration_id (insert-free-registration! registration-id))]
+                                        (-> session
+                                            (peridot/request (str routing/registration-api-root "/" registration-id "/submit" "?lang=fi")
+                                                             :body (j/write-value-as-string (assoc registration-form-data :free_registration_id free-registration-id))
+                                                             :content-type "application/json"
+                                                             :request-method :post))))]
+      (testing "the first partial exam can be submitted"
+        (let [registration-id (init-registration! "READ")]
+          (is (some? registration-id))
+          (submit-registration! registration-id)
+          (is (= "COMPLETED" (:state (get-registration registration-id))))))
+
+      (testing "a different partial exam on the same exam date can also be submitted"
+        (let [registration-id (init-registration! "SPEAK")]
+          (is (some? registration-id))
+          (submit-registration! registration-id)
+          (is (= "COMPLETED" (:state (get-registration registration-id)))))))))
