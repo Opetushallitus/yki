@@ -421,3 +421,37 @@
           (is (some? registration-id))
           (submit-registration! registration-id)
           (is (= "COMPLETED" (:state (get-registration registration-id)))))))))
+
+(deftest partial-exam-registration-to-another-session-on-same-exam-date-test
+  (insert-initial-data!)
+  (base/execute! (str "UPDATE exam_session SET type='READ_SPEAK',
+                       max_participants_read_listen=5,
+                       max_participants_speak_write=5
+                       WHERE id IN (1, 2)"))
+  (with-routes!
+    common-route-specs
+    (let [handlers           (create-handlers (base/email-q) (:port server))
+          session            (-> (peridot/session handlers)
+                                 (base/login-with-login-link))
+          init-registration! (fn [exam-session-id partial-exam-type]
+                               (-> session
+                                   (peridot/request
+                                     (str routing/registration-api-root "/init")
+                                     :body (j/write-value-as-string {:exam_session_id   exam-session-id
+                                                                     :partial_exam_type partial-exam-type})
+                                     :content-type "application/json"
+                                     :request-method :post)
+                                   (:response)))]
+      (testing "both exam sessions are on the same exam date"
+        (is (= 1 (:count (base/select-one "SELECT COUNT(DISTINCT exam_date_id) AS count FROM exam_session WHERE id IN (1, 2)")))))
+
+      (testing "registering to the first partial exam succeeds"
+        (let [response (init-registration! 1 "READ")]
+          (is (= 200 (:status response)))
+          (is (= "READ" (get (base/body-as-json response) "partial_exam_type")))))
+
+      (testing "a different partial exam in another exam session on the same date is blocked"
+        (let [response (init-registration! 2 "SPEAK")]
+          (is (= 409 (:status response)))
+          (is (some? (get-in (base/body-as-json response) ["error" "other-exam-session-registration"])))
+          (is (= 1 (:count (base/select-one "SELECT COUNT(*) AS count FROM registration")))))))))
