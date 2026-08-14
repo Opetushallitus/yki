@@ -763,14 +763,18 @@ INSERT INTO registration(
   :kind::registration_kind,
   :strong_auth,
   COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type
-  -- only one registration per participant on same exam date
+  -- only one registration per participant on same exam date, unless the registrations
+  -- are to different partial exams
   WHERE NOT EXISTS (SELECT es.id
                     FROM exam_session es
                     INNER JOIN registration re ON es.id = re.exam_session_id
                     WHERE re.participant_id = :participant_id
                       AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
                       AND es.exam_date_id =
-                        (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
+                        (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
+                      AND (re.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type
+                           OR COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type
+                              IN ('ALL_PARTS'::exam_session_ticket_type, re.partial_exam_type)));
 
 -- name: insert-registration-change-event!
 INSERT INTO registration_change_event (event, registration_id, exam_session_id, registration_state, registration_kind, original_exam_session_id, created_by, author_type)
@@ -882,12 +886,15 @@ WHERE re.participant_id = :participant_id
   AND es.id <> :exam_session_id;
 
 -- name: select-participant-registered-to-exam-on-exam-date
-SELECT es.id, re.state
+SELECT es.id, re.state, re.id AS registration_id
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
 WHERE re.participant_id = :participant_id
   AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-  AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id);
+  AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
+  AND (re.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type
+       OR COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type
+          IN ('ALL_PARTS'::exam_session_ticket_type, re.partial_exam_type));
 
 -- name: select-person-registered-to-exam-on-exam-date
 SELECT es.id

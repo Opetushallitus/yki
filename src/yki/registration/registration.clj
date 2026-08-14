@@ -152,7 +152,7 @@
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
         (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil partial_exam_type)
-              other-registration (registration-db/participant-registered-to-exam-on-exam-date? db participant-id exam_session_id)
+              other-registration (registration-db/participant-registered-to-exam-on-exam-date? db participant-id exam_session_id partial_exam_type)
               registration-kind  (if to_queue "QUEUE" "ADMISSION")]
           (if (and (not other-registration)
                    (or to_queue space-left?))
@@ -170,7 +170,6 @@
         found-session-registration      (and participant-id-session (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-session exam_session_id partial_exam_type))
         found-other-registration        (and participant-id-other (registration-db/get-started-registration-id+kind-by-participant-id db participant-id-other exam_session_id partial_exam_type))
         registration-to-other-session   (and participant-id-other (registration-db/participant-registered-to-other-exam-on-exam-date? db participant-id-other exam_session_id))]
-    ; (log/info "found-registration-id" (:id found-registration))
     (cond
       (some? found-direct-registration) (cond
                                           (not (contains? #{participant-id-session participant-id-other} (:participant_id found-direct-registration)))

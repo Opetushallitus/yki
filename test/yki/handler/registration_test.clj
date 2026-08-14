@@ -104,7 +104,7 @@
                                                          :content-type "application/json"
                                                          :request-method :post))]
 
-          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "other-exam-session-registration"]) {"id" 1, "state" "SUBMITTED"}))
+          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "other-exam-session-registration"]) {"id" 1, "state" "SUBMITTED", "registration_id" 1}))
           (is (= (get-in create-twice-response [:response :status]) 409))))
 
       (testing "second post to another session should return conflict with proper error"
@@ -114,7 +114,7 @@
                                                          :content-type "application/json"
                                                          :request-method :post))]
 
-          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "other-exam-session-registration"]) {"id" 1, "state" "SUBMITTED"}))
+          (is (= (get-in (base/body-as-json (:response create-twice-response)) ["error" "other-exam-session-registration"]) {"id" 1, "state" "SUBMITTED", "registration_id" 1}))
           (is (= (get-in create-twice-response [:response :status]) 409))))
 
       (testing "when session is full should return conflict with proper error"
@@ -317,3 +317,53 @@
                            (:status))]
             (is (= 500 status)))
           (is (= "STARTED" (:state (get-registration registration-id)))))))))
+
+(deftest partial-exam-registration-on-same-exam-date-test
+  (insert-initial-data!)
+  (base/execute! (str "UPDATE exam_session SET type='READ_SPEAK',
+                       max_participants_read_listen=5,
+                       max_participants_speak_write=5
+                       WHERE id=1"))
+  (with-routes!
+    common-route-specs
+    (let [handlers           (create-handlers (base/email-q) (:port server))
+          session            (-> (peridot/session handlers)
+                                 (base/login-with-login-link))
+          init-registration! (fn [partial-exam-type]
+                               (-> session
+                                   (peridot/request
+                                     (str routing/registration-api-root "/init")
+                                     :body (j/write-value-as-string
+                                             (cond-> {:exam_session_id 1}
+                                               partial-exam-type (assoc :partial_exam_type partial-exam-type)))
+                                     :content-type "application/json"
+                                     :request-method :post)
+                                   (:response)))
+          registration-count (fn []
+                               (:count (base/select-one "SELECT COUNT(*) AS count FROM registration")))]
+      (testing "registering to the first partial exam succeeds"
+        (let [response (init-registration! "READ")]
+          (is (= 200 (:status response)))
+          (is (= "READ" (get (base/body-as-json response) "partial_exam_type")))))
+
+      (testing "registering again to the same partial exam returns the started registration"
+        (let [response (init-registration! "READ")]
+          (is (= 200 (:status response)))
+          (is (= "READ" (get (base/body-as-json response) "partial_exam_type")))
+          (is (= 1 (registration-count)))))
+
+      (testing "registering to a different partial exam on the same exam date succeeds"
+        (let [response (init-registration! "SPEAK")]
+          (is (= 200 (:status response)))
+          (is (= "SPEAK" (get (base/body-as-json response) "partial_exam_type")))
+          (is (= 2 (registration-count)))))
+
+      (testing "registering to the whole exam on the same exam date is blocked"
+        (let [response (init-registration! "ALL_PARTS")]
+          (is (= 409 (:status response)))
+          (is (some? (get-in (base/body-as-json response) ["error" "other-exam-session-registration"])))))
+
+      (testing "omitted partial exam type means the whole exam and is blocked"
+        (let [response (init-registration! nil)]
+          (is (= 409 (:status response)))
+          (is (some? (get-in (base/body-as-json response) ["error" "other-exam-session-registration"]))))))))

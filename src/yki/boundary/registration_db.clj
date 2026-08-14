@@ -23,7 +23,7 @@
   (get-participant-by-id [db id])
   (get-participant-by-external-id [db external-id])
   (participant-registered-to-other-exam-on-exam-date? [db participant-id exam-session-id])
-  (participant-registered-to-exam-on-exam-date? [db participant-id exam-session-id])
+  (participant-registered-to-exam-on-exam-date? [db participant-id exam-session-id partial-exam-type])
   (person-registered-to-exam-on-exam-date? [db registration-id exam-session-id])
   (get-started-registration-id+kind-by-participant-id [db participant-id exam-session-id partial-exam-type])
   (get-started-registration-kind+type-by-id [db exam-session-id registration-id])
@@ -94,9 +94,10 @@
              spec {:participant_id  participant-id
                    :exam_session_id exam-session-id})))
   (participant-registered-to-exam-on-exam-date?
-    [{:keys [spec]} participant-id exam-session-id]
+    [{:keys [spec]} participant-id exam-session-id partial-exam-type]
     (first (q/select-participant-registered-to-exam-on-exam-date
              spec {:participant_id  participant-id
+                   :partial_exam_type partial-exam-type
                    :exam_session_id exam-session-id})))
   (person-registered-to-exam-on-exam-date?
     [{:keys [spec]} registration-id exam-session-id]
