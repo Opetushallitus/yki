@@ -763,14 +763,19 @@ INSERT INTO registration(
   :kind::registration_kind,
   :strong_auth,
   COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type
-  -- only one registration per participant on same exam date
+  -- only one registration per participant on same exam date, unless the registrations
+  -- are to different, non-ALL_PARTS partial exams within the same exam session
   WHERE NOT EXISTS (SELECT es.id
                     FROM exam_session es
                     INNER JOIN registration re ON es.id = re.exam_session_id
                     WHERE re.participant_id = :participant_id
                       AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
                       AND es.exam_date_id =
-                        (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id));
+                        (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
+                      AND (es.id <> :exam_session_id
+                           OR re.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type
+                           OR COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type
+                              IN ('ALL_PARTS'::exam_session_ticket_type, re.partial_exam_type)));
 
 -- name: insert-registration-change-event!
 INSERT INTO registration_change_event (event, registration_id, exam_session_id, registration_state, registration_kind, original_exam_session_id, created_by, author_type)
@@ -813,6 +818,12 @@ SELECT EXISTS (
       AND r.person_oid = :oid
       AND r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day)
       AND r.state IN ('SUBMITTED', 'COMPLETED')
+      -- registrations to different, non-ALL_PARTS partial exams are allowed,
+      -- but only within the same exam session
+      AND (r.exam_session_id <> (SELECT exam_session_id FROM registration WHERE id = :id)
+           OR r.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type
+           OR (SELECT partial_exam_type FROM registration WHERE id = :id)
+              IN ('ALL_PARTS'::exam_session_ticket_type, r.partial_exam_type))
     );
 
 -- name: update-registration-to-submitted<!
@@ -844,7 +855,13 @@ WHERE
       WHERE r.id <> :id AND
             r.person_oid = :oid AND
             r.exam_session_id IN (SELECT id FROM exam_sessions_for_same_day) AND
-            r.state IN ('SUBMITTED', 'COMPLETED'));
+            r.state IN ('SUBMITTED', 'COMPLETED') AND
+            -- registrations to different, non-ALL_PARTS partial exams are allowed, but only
+            -- within the same exam session; the unaliased `registration` is the row being submitted
+            (r.exam_session_id <> registration.exam_session_id
+             OR r.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type
+             OR registration.partial_exam_type
+                IN ('ALL_PARTS'::exam_session_ticket_type, r.partial_exam_type)));
 
 -- name: cancel-started-registration-for-participant<!
 UPDATE registration SET
@@ -882,12 +899,18 @@ WHERE re.participant_id = :participant_id
   AND es.id <> :exam_session_id;
 
 -- name: select-participant-registered-to-exam-on-exam-date
-SELECT es.id, re.state
+SELECT es.id, re.state, re.id AS registration_id
 FROM exam_session es
 INNER JOIN registration re ON es.id = re.exam_session_id
 WHERE re.participant_id = :participant_id
   AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-  AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id);
+  AND es.exam_date_id = (SELECT exam_date_id FROM exam_session WHERE id = :exam_session_id)
+  -- registrations to different, non-ALL_PARTS partial exams are allowed,
+  -- but only within the same exam session
+  AND (es.id <> :exam_session_id
+       OR re.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type
+       OR COALESCE(:partial_exam_type, 'ALL_PARTS')::exam_session_ticket_type
+          IN ('ALL_PARTS'::exam_session_ticket_type, re.partial_exam_type));
 
 -- name: select-person-registered-to-exam-on-exam-date
 SELECT es.id
