@@ -90,10 +90,11 @@
            :partial_exam_type      partial-exam-type})
       :session session)))
 
-(defn- init-error-response [space-left? other-registration to-queue? exam-session-id]
-  (let [error {:error {:full                            (not space-left?)
+(defn- init-error-response [admission-available? other-registration to-queue? exam-session-id partial-full?]
+  (let [error {:error {:full                            (not admission-available?)
                        :other-exam-session-registration other-registration
-                       :to-queue                        to-queue?}}]
+                       :to-queue                        to-queue?
+                       :partialFull                     partial-full?}}]
     (log/warn "END: Init exam session" exam-session-id "failed with error" error)
     (conflict error)))
 
@@ -139,6 +140,7 @@
           (log/error e "Caught unexpected error within create-registration")
           (conflict {:error {:full       false
                              :registered false}}))))))
+
 (defn init-registration
   [db session {:keys [exam_session_id to_queue partial_exam_type]} payment-config]
   (log/info "START: Init exam session" exam_session_id "registration")
@@ -151,13 +153,21 @@
       (create-registration-response db session-new exam_session_id (:id started-registration) (:kind started-registration) (:partial_exam_type started-registration) payment-config)
       (if (registration-db/exam-session-registration-open? db exam_session_id)
         ; admission open
-        (let [space-left?        (registration-db/exam-session-space-left? db exam_session_id nil partial_exam_type)
+        (let [{session-type :type
+               kinds        :partial_registration_kind} (registration-db/get-exam-session-registration-kinds db exam_session_id)
               other-registration (registration-db/participant-registered-to-exam-on-exam-date? db participant-id exam_session_id partial_exam_type)
-              registration-kind  (if to_queue "QUEUE" "ADMISSION")]
+              admission?         (= "ADMISSION" (get kinds (keyword (or partial_exam_type "ALL_PARTS"))))
+              all-parts?         (contains? #{nil "ALL_PARTS"} partial_exam_type)
+              queue-forbidden?   (and all-parts? (not= "FULL" session-type))
+              to-queue?          (and to_queue (not queue-forbidden?))
+              registration-kind  (if to-queue? "QUEUE" "ADMISSION")
+              partial-full?      (boolean (and queue-forbidden?
+                                               (not admission?)
+                                               (some #{"ADMISSION"} (vals (dissoc kinds :ALL_PARTS)))))]
           (if (and (not other-registration)
-                   (or to_queue space-left?))
+                   (or to-queue? admission?))
             (create-registration db exam_session_id participant-id registration-kind partial_exam_type session-new payment-config)
-            (init-error-response space-left? other-registration to_queue exam_session_id)))
+            (init-error-response admission? other-registration to_queue exam_session_id partial-full?)))
         ; no registration open
         (conflict {:error {:closed true}})))))
 
@@ -176,7 +186,7 @@
                                           (bad-request {:reason :registration-not-found})
 
                                           registration-to-other-session
-                                          (init-error-response true registration-to-other-session (if to_queue "QUEUE" "ADMISSION") exam_session_id)
+                                          (init-error-response true registration-to-other-session to_queue exam_session_id false)
 
                                           :else
                                           (do
@@ -191,7 +201,7 @@
                                                (update-registration-participant-id! db (:id found-session-registration) participant-id-other)
                                                (update-participant-external-id! db participant-id-session session))
                                              (create-registration-response db session exam_session_id (:id found-session-registration) (:kind found-session-registration) (:partial_exam_type found-session-registration) payment-config))
-                                           (init-error-response true registration-to-other-session (if to_queue "QUEUE" "ADMISSION") exam_session_id))
+                                           (init-error-response true registration-to-other-session to_queue exam_session_id false))
       :else (bad-request {:reason :registration-not-found}))))
 
 (defn send-payment-link-email! [email-q lang recipient template-name template-data]

@@ -875,20 +875,6 @@ WHERE
 -- name: select-exam-session-registration-open
 SELECT exam_session_registration_open(:exam_session_id) as exists;
 
--- name: select-exam-session-space-left
-SELECT NOT EXISTS (
-	SELECT es.max_participants
-	FROM exam_session es
-	LEFT JOIN registration re ON es.id = re.exam_session_id
-	WHERE re.exam_session_id = :exam_session_id
-        AND re.id != COALESCE(:registration_id, 0)
-        AND re.state IN ('COMPLETED', 'SUBMITTED', 'STARTED')
-        AND re.kind = 'ADMISSION'
-        AND (re.partial_exam_type = 'ALL_PARTS'::exam_session_ticket_type OR re.partial_exam_type = :partial_exam_type::exam_session_ticket_type)
-	GROUP BY es.max_participants
-    HAVING (es.max_participants - COUNT(re.id)) <= 0)
-AS exists;
-
 -- name: select-participant-registered-to-other-exam-on-exam-date
 SELECT es.id, re.state
 FROM exam_session es
@@ -2200,3 +2186,23 @@ FROM registration re
 LEFT JOIN participant p ON re.participant_id = p.id
 WHERE re.id = :id
 AND (re.participant_id = :participant_id OR p.external_user_id = :external_user_id);
+
+-- name: select-exam-session-registration-kinds
+SELECT
+  e.type,
+  CASE e.type
+    WHEN 'FULL' THEN
+      json_build_object('ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'))
+    WHEN 'READ_SPEAK' THEN
+      json_build_object(
+        'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+        'READ', select_registration_kind(e.id, 'READ'),
+        'SPEAK', select_registration_kind(e.id, 'SPEAK'))
+    WHEN 'LISTEN_WRITE' THEN
+      json_build_object(
+        'ALL_PARTS', select_registration_kind(e.id, 'ALL_PARTS'),
+        'LISTEN', select_registration_kind(e.id, 'LISTEN'),
+        'WRITE', select_registration_kind(e.id, 'WRITE'))
+  END AS partial_registration_kind
+FROM exam_session e
+WHERE e.id = :exam_session_id;
