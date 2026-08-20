@@ -36,7 +36,6 @@
   (get-registration-data-for-clerk-mail [db exam-session-id registration-id])
   (get-completed-payment-data-for-registration [db registration-id])
   (get-open-registrations-by-participant [db participant-id])
-  (exam-session-space-left? [db exam-session-id registration-id partial-exam-type])
   (exam-session-registration-open? [db exam-session-id])
   (update-participant-email! [db email participant-id])
   (get-participant-data-by-registration-id [db registration-id])
@@ -51,6 +50,7 @@
   (expire-queued-registrations-after-exam-date! [db])
   (get-free-registration [db registration-id])
   (check-registration-id-matches-session [db registration-id participant-id external-user-id])
+  (get-exam-session-registration-kinds [db exam-session-id])
   (get-registration-details-by-id [db registration-id participant-id]))
 
 (defn get-registration-data-with-tx
@@ -113,12 +113,6 @@
     [{:keys [spec]} exam-session-id registration-id]
     (first (q/select-started-registration-kind-and-type-by-id spec {:exam_session_id exam-session-id
                                                                     :registration_id registration-id})))
-  (exam-session-space-left?
-    [{:keys [spec]} exam-session-id registration-id partial-exam-type]
-    (let [exists (first (q/select-exam-session-space-left spec {:exam_session_id exam-session-id
-                                                                :registration_id registration-id
-                                                                :partial_exam_type partial-exam-type}))]
-      (:exists exists)))
   (exam-session-registration-open?
     [{:keys [spec]} id]
     (let [exists (first (q/select-exam-session-registration-open spec {:exam_session_id id}))]
@@ -284,4 +278,7 @@
     (first (q/check-registration-id-matches-session spec {:id registration-id :participant_id participant-id :external_user_id external-user-id})))
   (get-registration-details-by-id
     [{:keys [spec]} registration-id participant-id]
-    (first (q/select-registration-details-by-id spec {:id registration-id :participant-id participant-id}))))
+    (first (q/select-registration-details-by-id spec {:id registration-id :participant-id participant-id})))
+  (get-exam-session-registration-kinds
+    [{:keys [spec]} exam-session-id]
+    (first (q/select-exam-session-registration-kinds spec {:exam_session_id exam-session-id}))))
