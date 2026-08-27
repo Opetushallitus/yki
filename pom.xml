@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>ad84dab3381e8840a0f4b1f0fb5db48f725c060f</tag>
+    <tag>950ca58dd1927523fe11a0ea64bc507dcdecb053</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -76,36 +76,6 @@
       </releases>
     </repository>
     <repository>
-      <id>oph-releases</id>
-      <url>https://artifactory.opintopolku.fi/artifactory/oph-sade-release-local</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-    </repository>
-    <repository>
-      <id>oph-snapshots</id>
-      <url>https://artifactory.opintopolku.fi/artifactory/oph-sade-snapshot-local</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-    </repository>
-    <repository>
-      <id>ext-snapshots</id>
-      <url>https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-    </repository>
-    <repository>
       <id>Scalaz Bintray Repo</id>
       <url>https://dl.bintray.com/scalaz/releases</url>
       <snapshots>
@@ -146,12 +116,12 @@
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers</artifactId>
-        <version>1.21.3</version>
+        <version>1.21.4</version>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>postgresql</artifactId>
-        <version>1.21.3</version>
+        <version>1.21.4</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -310,21 +280,6 @@
       <groupId>duct</groupId>
       <artifactId>module.web</artifactId>
       <version>0.7.4</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>commons-logging</artifactId>
-          <groupId>commons-logging</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>slf4j-nop</artifactId>
-          <groupId>org.slf4j</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>duct</groupId>
-      <artifactId>scheduler.simple</artifactId>
-      <version>0.1.0</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -572,7 +527,7 @@
     <dependency>
       <groupId>fi.vm.sade</groupId>
       <artifactId>auditlogger</artifactId>
-      <version>9.2.4-SNAPSHOT</version>
+      <version>9.2.7-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
