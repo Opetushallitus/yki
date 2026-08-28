@@ -1,6 +1,6 @@
 # Scheduled Tasks
 
-YKI has multiple tasks which are scheduled using Duct module [scheduler.simple](https://github.com/duct-framework/scheduler.simple).
+YKI has multiple tasks which are scheduled using custom `scheduler yki.job.scheduler`
 As a general rule all interactions with external systems which user can't retry from UI are implemented using scheduled jobs
 which are retried if failed.
 

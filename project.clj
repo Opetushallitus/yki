@@ -5,9 +5,6 @@
                                          :password :env/GITHUB_REGISTRY_TOKEN
                                          ; Check for snapshot updates daily
                                          :update   :daily}]
-                 ["oph-releases" "https://artifactory.opintopolku.fi/artifactory/oph-sade-release-local"]
-                 ["oph-snapshots" "https://artifactory.opintopolku.fi/artifactory/oph-sade-snapshot-local"]
-                 ["ext-snapshots" "https://artifactory.opintopolku.fi/artifactory/ext-snapshot-local"]
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
   :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.20"]
@@ -17,11 +14,11 @@
                          ; [com.layerware/pgqueue "0.5.1"] depends on a version of nippy with a known vulnerability
                          ; as there is no update for pgqueue available, let's instead fix the nippy version here
                          [com.taoensso/nippy "2.15.3"]]
-  :dependencies [[org.clojure/clojure "1.12.3"]
+  :dependencies [[org.clojure/clojure "1.12.4"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/data.json "2.5.1"]
-                 [org.clojure/data.csv "1.1.0"]
-                 [org.clojure/tools.logging "1.3.0"]
+                 [org.clojure/data.csv "1.1.1"]
+                 [org.clojure/tools.logging "1.3.1"]
                  [org.clojure/core.memoize "1.1.266"]
                  [clj-time "0.15.2"]
                  [duct/core "0.8.1"]
@@ -41,11 +38,11 @@
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.8.1"]
                  [ring-logger "1.1.1"]
-                 [ch.qos.logback/logback-classic "1.5.19"]
+                 [ch.qos.logback/logback-classic "1.5.25"]
                  [org.clojure/data.xml "0.0.8"]
                  [fi.vm.sade.java-utils/java-cas "1.2.3-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-simple]]
-                 [fi.vm.sade/auditlogger "9.2.4-SNAPSHOT"]
+                 [fi.vm.sade/auditlogger "9.2.7-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]
                  [com.github.jhonnymertz/java-wkhtmltopdf-wrapper "1.3.1-RELEASE"]
                  [org.clojars.pkoivisto/clj-json-patch "0.1.9"]]
