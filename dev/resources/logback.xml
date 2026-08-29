@@ -59,7 +59,7 @@
     </root>
 
     <!-- Access Log -->
-    <logger name="ring.logger" level="INFO" additivity="false">
+    <logger name="yki.middleware.access-log" level="INFO" additivity="false">
         <appender-ref ref="ACCESS" />
     </logger>
 
