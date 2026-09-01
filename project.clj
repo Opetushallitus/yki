@@ -7,13 +7,17 @@
                                          :update   :daily}]
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
-  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.20"]
-                         [com.fasterxml.jackson.core/jackson-core "2.20.0"]
-                         [com.fasterxml.jackson.core/jackson-databind "2.20.0"]
-                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.20.0"]
-                         ; [com.layerware/pgqueue "0.5.1"] depends on a version of nippy with a known vulnerability
-                         ; as there is no update for pgqueue available, let's instead fix the nippy version here
-                         [com.taoensso/nippy "2.15.3"]]
+  :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.21"]
+                         [com.fasterxml.jackson.core/jackson-core "2.21.4"]
+                         [com.fasterxml.jackson.core/jackson-databind "2.21.4"]
+                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.21.4"]
+                         ; pgqueue depends on an old nippy with known vulnerabilities. nippy < 3.4.0 also pulls in
+                         ; org.lz4/lz4-java, which has an unpatched vulnerability (CVE-2025-12183) and is unmaintained.
+                         ; nippy >= 3.4.0 replaced lz4-java with io.airlift/aircompressor, so pin a current release.
+                         [com.taoensso/nippy "3.6.2"]
+                         ; ring-core pulls in commons-fileupload2-core 2.0.0-M1 with a known vulnerability (CVE-2025-48976);
+                         ; force the patched 2.0.0-M4 release
+                         [org.apache.commons/commons-fileupload2-core "2.0.0-M4"]]
   :dependencies [[org.clojure/clojure "1.12.4"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.clojure/data.json "2.5.1"]
@@ -32,7 +36,7 @@
                  [metosin/jsonista "0.3.13"]
                  [metosin/muuntaja "0.6.11"]
                  [metosin/spec-tools "0.10.7"]
-                 [org.postgresql/postgresql "42.7.8"]
+                 [org.postgresql/postgresql "42.7.12"]
                  [duct/database.sql.hikaricp "0.4.0"]
                  [buddy/buddy-auth "3.0.323"]
                  [webjure/jeesql "0.4.7"]
