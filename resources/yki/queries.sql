@@ -2051,6 +2051,7 @@ JOIN registration r2 ON r2.exam_session_id = es.id
 WHERE r2.id <> r.id
 AND r2.created < r.created
 AND r2.kind = 'QUEUE'
+AND r2.partial_exam_type = r.partial_exam_type
 AND r2.state IN ('STARTED', 'SUBMITTED')
 AND r.id IN (:ids)
 GROUP BY r.id;
