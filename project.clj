@@ -8,9 +8,20 @@
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
   :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.21"]
-                         [com.fasterxml.jackson.core/jackson-core "2.21.4"]
-                         [com.fasterxml.jackson.core/jackson-databind "2.21.4"]
-                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.21.4"]
+                         [com.fasterxml.jackson.core/jackson-core "2.21.6"]
+                         [com.fasterxml.jackson.core/jackson-databind "2.21.6"]
+                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.21.6"]
+                         ; Use the Jetty 12 adapter and align its entry points to the patched release.
+                         [ring/ring-jetty-adapter "1.14.2"]
+                         [org.eclipse.jetty/jetty-server "12.0.36"]
+                         [org.eclipse.jetty/jetty-unixdomain-server "12.0.36"]
+                         [org.eclipse.jetty.ee9/jetty-ee9-servlet "12.0.36"]
+                         [org.eclipse.jetty.ee9.websocket/jetty-ee9-websocket-jetty-server "12.0.36"]
+                         ; buddy-core 1.11 replaces the discontinued Bouncy Castle jdk15on artifacts.
+                         [buddy/buddy-core "1.11.418"]
+                         [org.bouncycastle/bcpkix-jdk18on "1.85"]
+                         [org.bouncycastle/bcprov-jdk18on "1.85"]
+                         [org.apache.commons/commons-lang3 "3.18.0"]
                          ; pgqueue depends on an old nippy with known vulnerabilities. nippy < 3.4.0 also pulls in
                          ; org.lz4/lz4-java, which has an unpatched vulnerability (CVE-2025-12183) and is unmaintained.
                          ; nippy >= 3.4.0 replaced lz4-java with io.airlift/aircompressor, so pin a current release.
@@ -42,7 +53,7 @@
                  [webjure/jeesql "0.4.7"]
                  [http-kit "2.8.1"]
                  [ring-logger "1.1.1"]
-                 [ch.qos.logback/logback-classic "1.5.25"]
+                 [ch.qos.logback/logback-classic "1.5.34"]
                  [org.clojure/data.xml "0.0.8"]
                  [fi.vm.sade.java-utils/java-cas "1.2.3-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-simple]]
