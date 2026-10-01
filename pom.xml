@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>e34e14faefc7ec2b0958cadf64c0da30cb32eaee</tag>
+    <tag>df288bfc08672c7f8b6ecc6beddd3772357a3b41</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -96,17 +96,72 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>2.21.4</version>
+        <version>2.21.6</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>2.21.4</version>
+        <version>2.21.6</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>2.21.4</version>
+        <version>2.21.6</version>
+      </dependency>
+      <dependency>
+        <groupId>ring</groupId>
+        <artifactId>ring-jetty-adapter</artifactId>
+        <version>1.14.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>12.0.36</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-unixdomain-server</artifactId>
+        <version>12.0.36</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty.ee9</groupId>
+        <artifactId>jetty-ee9-servlet</artifactId>
+        <version>12.0.36</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty.ee9.websocket</groupId>
+        <artifactId>jetty-ee9-websocket-jetty-server</artifactId>
+        <version>12.0.36</version>
+      </dependency>
+      <dependency>
+        <groupId>buddy</groupId>
+        <artifactId>buddy-core</artifactId>
+        <version>1.11.418</version>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcpkix-jdk18on</artifactId>
+        <version>1.85</version>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk18on</artifactId>
+        <version>1.85</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>3.18.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>32.0.1-jre</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mozilla</groupId>
+        <artifactId>rhino</artifactId>
+        <version>1.7.14.1</version>
       </dependency>
       <dependency>
         <groupId>com.taoensso</groupId>
@@ -483,7 +538,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.25</version>
+      <version>1.5.34</version>
       <exclusions>
         <exclusion>
           <artifactId>commons-logging</artifactId>
@@ -511,6 +566,21 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>org.asynchttpclient</groupId>
+      <artifactId>async-http-client</artifactId>
+      <version>3.0.14</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>commons-logging</artifactId>
+          <groupId>commons-logging</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>slf4j-nop</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>fi.vm.sade.java-utils</groupId>
       <artifactId>java-cas</artifactId>
       <version>1.2.3-SNAPSHOT</version>
@@ -526,6 +596,14 @@
         <exclusion>
           <artifactId>slf4j-simple</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>async-http-client</artifactId>
+          <groupId>org.asynchttpclient</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>io.netty</groupId>
         </exclusion>
       </exclusions>
     </dependency>
