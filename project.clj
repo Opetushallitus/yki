@@ -22,6 +22,9 @@
                          [org.bouncycastle/bcpkix-jdk18on "1.85"]
                          [org.bouncycastle/bcprov-jdk18on "1.85"]
                          [org.apache.commons/commons-lang3 "3.18.0"]
+                         ; The Swagger JSON-schema validator pulls in vulnerable Guava and Rhino versions.
+                         [com.google.guava/guava "32.0.1-jre"]
+                         [org.mozilla/rhino "1.7.14.1"]
                          ; pgqueue depends on an old nippy with known vulnerabilities. nippy < 3.4.0 also pulls in
                          ; org.lz4/lz4-java, which has an unpatched vulnerability (CVE-2025-12183) and is unmaintained.
                          ; nippy >= 3.4.0 replaced lz4-java with io.airlift/aircompressor, so pin a current release.
@@ -55,8 +58,12 @@
                  [ring-logger "1.1.1"]
                  [ch.qos.logback/logback-classic "1.5.34"]
                  [org.clojure/data.xml "0.0.8"]
+                 ; Let the patched HTTP client supply a consistent Netty version instead of java-cas's old pins.
+                 [org.asynchttpclient/async-http-client "3.0.14"]
                  [fi.vm.sade.java-utils/java-cas "1.2.3-SNAPSHOT"
-                  :exclusions [org.slf4j/slf4j-simple]]
+                  :exclusions [org.slf4j/slf4j-simple
+                               org.asynchttpclient/async-http-client
+                               io.netty/*]]
                  [fi.vm.sade/auditlogger "9.2.7-SNAPSHOT"]
                  [fi.vm.sade.java-utils/java-properties "0.1.0-SNAPSHOT"]
                  [com.github.jhonnymertz/java-wkhtmltopdf-wrapper "1.3.1-RELEASE"]

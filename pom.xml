@@ -11,7 +11,7 @@
     <url>https://github.com/Opetushallitus/yki</url>
     <connection>scm:git:git://github.com/Opetushallitus/yki.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Opetushallitus/yki.git</developerConnection>
-    <tag>58ed56900054f9599e4691114e1e92be4fd40fc2</tag>
+    <tag>df288bfc08672c7f8b6ecc6beddd3772357a3b41</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -152,6 +152,16 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>3.18.0</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>32.0.1-jre</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mozilla</groupId>
+        <artifactId>rhino</artifactId>
+        <version>1.7.14.1</version>
       </dependency>
       <dependency>
         <groupId>com.taoensso</groupId>
@@ -556,6 +566,21 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>org.asynchttpclient</groupId>
+      <artifactId>async-http-client</artifactId>
+      <version>3.0.14</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>commons-logging</artifactId>
+          <groupId>commons-logging</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>slf4j-nop</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>fi.vm.sade.java-utils</groupId>
       <artifactId>java-cas</artifactId>
       <version>1.2.3-SNAPSHOT</version>
@@ -571,6 +596,14 @@
         <exclusion>
           <artifactId>slf4j-simple</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>async-http-client</artifactId>
+          <groupId>org.asynchttpclient</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>io.netty</groupId>
         </exclusion>
       </exclusions>
     </dependency>
