@@ -368,3 +368,59 @@
                 :max_queue_count       3}
                (-> (select-latest-exam-session-statistics)
                    (select-keys [:participants :queue :max_participant_count :max_queue_count]))))))))
+
+(defn- insert-liftable-queued-registration! []
+  (base/insert-base-data)
+  (base/insert-persons)
+  (base/execute! "UPDATE exam_date SET registration_start_date = '2020-01-01'")
+  ; The trigger only accepts a queued registration into a full session. Lifting does not depend on
+  ; how the place was freed, so the test skips filling and emptying the session.
+  (base/execute! "ALTER TABLE registration DISABLE TRIGGER participant_limit_trigger")
+  (base/execute! (str "INSERT INTO registration(person_oid, state, kind, exam_session_id, participant_id, form, ui_language)
+                       VALUES ('5.4.3.2.1', 'SUBMITTED', 'QUEUE', " base/select-exam-session ", " base/select-participant ", '"
+                      (j/write-value-as-string base/registration-form) "', 'fi')")))
+
+; Mirrors the Java backend's Liquibase changeset, which is what creates the table outside tests.
+(defn- set-registration-queue-owner! [owner]
+  (base/execute! "CREATE TABLE IF NOT EXISTS runtime_flag (name TEXT PRIMARY KEY, value TEXT NOT NULL)")
+  (base/execute! (str "INSERT INTO runtime_flag (name, value) VALUES ('registration_queue_handler.owner', '" owner "')
+                       ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value")))
+
+(defn- run-registration-queue-handler! []
+  (let [db         (base/db)
+        url-helper (base/create-url-helper "localhost:8080")
+        handler    (ig/init-key :yki.job.scheduled-tasks/registration-queue-handler
+                                {:db             db
+                                 :url-helper     url-helper
+                                 :payment-helper (base/create-examination-payment-helper db url-helper)
+                                 :email-q        (base/email-q)})]
+    (handler)))
+
+(defn- queued-registration-kind []
+  (:kind (base/select-one "SELECT kind FROM registration WHERE person_oid = '5.4.3.2.1'")))
+
+(deftest registration-queue-handler-lifts-when-runtime-flag-does-not-exist-test
+  (insert-liftable-queued-registration!)
+  (run-registration-queue-handler!)
+  (testing "should lift as before the Java backend created the flag"
+    (is (= "ADMISSION" (queued-registration-kind)))
+    (is (= 1 (pgq/count (base/email-q))))))
+
+(deftest registration-queue-handler-lifts-when-legacy-owns-queue-test
+  (insert-liftable-queued-registration!)
+  (set-registration-queue-owner! "LEGACY")
+  (run-registration-queue-handler!)
+  (is (= "ADMISSION" (queued-registration-kind))))
+
+(deftest registration-queue-handler-does-not-lift-when-java-owns-queue-test
+  (insert-liftable-queued-registration!)
+  (set-registration-queue-owner! "JAVA")
+  (run-registration-queue-handler!)
+  (is (= "QUEUE" (queued-registration-kind)))
+  (is (= 0 (pgq/count (base/email-q)))))
+
+(deftest registration-queue-handler-does-not-lift-when-owner-is-unrecognised-test
+  (insert-liftable-queued-registration!)
+  (set-registration-queue-owner! "JAVE")
+  (run-registration-queue-handler!)
+  (is (= "QUEUE" (queued-registration-kind))))

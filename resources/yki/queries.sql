@@ -1500,6 +1500,15 @@ WHERE
     OR (ed.registration_end_date <= current_date AND
         current_date + interval '1 week' <= ed.exam_date);
 
+-- name: select-runtime-flag-table-exists
+-- runtime_flag is created by the Java backend's Liquibase, which may be deployed after this one.
+SELECT to_regclass('public.runtime_flag') IS NOT NULL AS table_exists;
+
+-- name: select-runtime-flag-for-share
+-- The share lock holds until the transaction ends, so changing the flag waits for every
+-- transaction that has acted on its old value to commit.
+SELECT value FROM runtime_flag WHERE name = :name FOR SHARE;
+
 -- name: lift-registration-from-queue<!
 WITH registrations_to_update AS (SELECT id, free_registration_id
                                  FROM registration
@@ -1717,14 +1726,11 @@ DELETE FROM exam_session_contact
 
 --name: select-exam-session-contact-info
 SELECT
-  co.name,
-  co.email,
-  co.phone_number
-FROM contact co
-INNER JOIN exam_session_contact esc on co.id = esc.contact_id
-WHERE co.deleted_at IS NULL
-AND esc.deleted_at IS NULL
-AND esc.exam_session_id = :id;
+  es.contact_name AS name,
+  es.contact_email AS email,
+  es.contact_phone_number AS phone_number
+FROM exam_session es
+WHERE es.id = :id;
 
 --name: select-exam-session-extra-information
 SELECT
