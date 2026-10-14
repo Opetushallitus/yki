@@ -396,8 +396,8 @@
          (doseq [exam-session unsynced-sessions]
            (try
              (when (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled
-                                                                  {:type         "CREATE"
-                                                                   :exam-session exam-session})
+                                                                 {:type         "CREATE"
+                                                                  :exam-session exam-session})
                (exam-session-db/set-exam-session-synced! db (:id exam-session)))
              (catch Exception e
                (log/error e "Failed to sync exam session to Solki" {:id (:id exam-session)}))))))

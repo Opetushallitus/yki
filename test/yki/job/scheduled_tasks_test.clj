@@ -142,14 +142,14 @@
                                                                     :body         "{}"}
             "/oph/jarjestaja"                                      {:status       201
                                                                     :content-type "application/json"
-                                                                  :body         "{}"}})
+                                                                    :body         "{}"}})
     (let [db         (base/db)
           url-helper (base/create-url-helper (str "localhost:" port))
           handler    (ig/init-key :yki.job.scheduled-tasks/exam-session-solki-sync-handler
-                                   {:db         db
-                                    :url-helper url-helper
-                                    :basic-auth {:user "user" :password "pass"}
-                                    :disabled   false})]
+                                  {:db         db
+                                   :url-helper url-helper
+                                   :basic-auth {:user "user" :password "pass"}
+                                   :disabled   false})]
       (testing "should sync organizer and exam session to Solki and mark exam session as synced"
         (is (nil? (:last_sync_at (base/select-one "SELECT last_sync_at FROM exam_session"))))
         (handler)
@@ -163,10 +163,10 @@
     (let [db         (base/db)
           url-helper (base/create-url-helper (str "localhost:" port))
           handler    (ig/init-key :yki.job.scheduled-tasks/exam-session-solki-sync-handler
-                                   {:db         db
-                                    :url-helper url-helper
-                                    :basic-auth {:user "user" :password "pass"}
-                                    :disabled   true})]
+                                  {:db         db
+                                   :url-helper url-helper
+                                   :basic-auth {:user "user" :password "pass"}
+                                   :disabled   true})]
       (testing "when sync is disabled, exam session should not be marked as synced (no false positives for Java side cutover)"
         (is (nil? (:last_sync_at (base/select-one "SELECT last_sync_at FROM exam_session"))))
         (handler)
