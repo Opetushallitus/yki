@@ -212,6 +212,17 @@
      (catch Throwable t
        (log/error t "Syncing participant ONR data failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
+(defn legacy-owns-registration-queue?
+  "The Java backend lifts only when the owner is exactly JAVA, and this one only when it is LEGACY or
+  not set yet, so a value neither recognises stops both rather than letting both lift."
+  [owner]
+  (case owner
+    (nil "LEGACY") true
+    "JAVA" false
+    (do (log/error (str "Unrecognised registration_queue_handler.owner '" owner
+                        "', so neither backend lifts from the queue [ERROR_SCHEDULED_TASK]"))
+        false)))
+
 (defmethod ig/init-key ::registration-queue-handler [_ {:keys [db url-helper payment-helper email-q]}]
   {:pre [(some? db) (some? url-helper) (some? payment-helper) (some? email-q)]}
   #(try
@@ -246,7 +257,7 @@
                (let [types (positive-types counts)]
                  (when (seq types)
                    (when-let [lifted-type (:partial_exam_type
-                                            (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link! types))]
+                                            (registration-db/lift-registration-from-queue! db exam_session_id create-and-send-payment-link! types legacy-owns-registration-queue?))]
                      (recur (update counts lifted-type dec))))))
              (catch Exception e
                (log/error e "Registration queue handler failed for exam session" exam_session_id "[ERROR_SCHEDULED_TASK]"))))))
