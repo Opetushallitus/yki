@@ -1342,7 +1342,7 @@ ON CONFLICT DO NOTHING;
 -- for one day after the relocation.
 
 -- name: select-exam-sessions-to-be-synced
-SELECT es.id as exam_session_id, pss.created
+SELECT DISTINCT es.id as exam_session_id
 FROM exam_session es
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
 LEFT JOIN participant_sync_status pss ON pss.exam_session_id = es.id

@@ -228,7 +228,8 @@
         request      (create-participants-csv url-helper participants oid->ssn)]
     (exam-session-db/init-participants-sync-status! db exam-session-id)
     (if disabled
-      (log/info "Sending disabled. Logging request" request)
+      (log/info "Sending disabled, would have sent CSV for exam session" exam-session-id
+                (str "(" (count (str/split-lines request)) " line(s))"))
       (do
         (do-post url request basic-auth "text/csv; charset=UTF-8")
         (exam-session-db/set-participants-sync-to-success! db exam-session-id)))))
