@@ -275,6 +275,45 @@
       (testing "should update failed at timestamp"
         (is (t/after? failed_at_after failed_at_before))))))
 
+(deftest handle-persons-sync-test
+  (base/insert-persons)
+  (jdbc/execute! @embedded-db/conn "INSERT INTO person_sync_status (person_oid) VALUES ('5.4.3.2.1')")
+  (with-routes!
+    {"/oph/osallistuja/5.4.3.2.1"                                            {:status 200 :content-type "application/json" :body "{}"}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                             :body   (slurp "test/resources/maatjavaltiot2_246.json")}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                             :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
+    (let [url-helper (base/create-url-helper (str "localhost:" port))
+          handler    (ig/init-key :yki.job.scheduled-tasks/persons-sync-handler {:db                     (base/db)
+                                                                                 :disabled               false
+                                                                                 :basic-auth             {:user "user" :password "pass"}
+                                                                                 :retry-duration-in-days 14
+                                                                                 :url-helper             url-helper})]
+      (testing "should sync person to Solki and mark sync status as success"
+        (handler)
+        (is (= 1 (count (:recordings (first (filter #(= "/oph/osallistuja/5.4.3.2.1" (:request-spec %)) @(:routes server)))))))
+        (is (some? (:success_at (base/select-one "SELECT success_at FROM person_sync_status"))))))))
+
+(deftest handle-persons-sync-disabled-test
+  (base/insert-persons)
+  (jdbc/execute! @embedded-db/conn "INSERT INTO person_sync_status (person_oid) VALUES ('5.4.3.2.1')")
+  (with-routes!
+    {"/oph/osallistuja/5.4.3.2.1" {:status 200 :content-type "application/json" :body "{}"}}
+    (let [url-helper (base/create-url-helper (str "localhost:" port))
+          handler    (ig/init-key :yki.job.scheduled-tasks/persons-sync-handler {:db                     (base/db)
+                                                                                 :disabled               true
+                                                                                 :basic-auth             {:user "user" :password "pass"}
+                                                                                 :retry-duration-in-days 14
+                                                                                 :url-helper             url-helper})]
+      (testing "when disabled, should not send request and should not mark failed/retry (no false positives for Java side cutover)"
+        (handler)
+        (is (= 0 (count (:recordings (first @(:routes server))))))
+        (let [sync-status (base/select-one "SELECT success_at, failed_at, should_retry FROM person_sync_status")]
+          (is (nil? (:success_at sync-status)))
+          (is (nil? (:failed_at sync-status)))
+          (is (nil? (:should_retry sync-status))))))))
+
 (defn- insert-change-event! [{:keys [event exam_session_id registration_id registration_state registration_kind original_exam_session_id author_type created_at]}]
   (let [sql-format           #(cond
                                 (string? %)
