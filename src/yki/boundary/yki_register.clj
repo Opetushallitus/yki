@@ -91,8 +91,8 @@
         organization (when (= disabled false) (organization/get-organization-by-oid url-helper (or office-oid organizer-oid)))
         request      (when (= disabled false) (create-sync-organizer-req organizer organization))]
     (if disabled
-      (log/info "Organizer sync sending disabled.")
-      (do-post (url-helper :yki-register.organizer) (json/write-value-as-string request) basic-auth))))
+      (do (log/info "Organizer sync sending disabled.") false)
+      (do (do-post (url-helper :yki-register.organizer) (json/write-value-as-string request) basic-auth) true))))
 
 (defn- create-url-params
   [{:keys [language_code level_code session_date office_oid organizer_oid]}]
@@ -143,10 +143,12 @@
     (if disabled
       (do
         (log/info "Sending disabled. Logging exam session request" exam-session-req)
-        (log/info "Sending disabled. Logging exam date request" exam-date-req))
+        (log/info "Sending disabled. Logging exam date request" exam-date-req)
+        false)
       (do
         (do-post (url-helper :yki-register.exam-date) (json/write-value-as-string exam-date-req) basic-auth)
-        (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string exam-session-req) basic-auth)))))
+        (do-post (url-helper :yki-register.exam-session) (json/write-value-as-string exam-session-req) basic-auth)
+        true))))
 
 (defn session-type->subtest-flags [session-type partial-exam-type]
   (let [part (or partial-exam-type "ALL_PARTS")]
@@ -226,9 +228,11 @@
         request      (create-participants-csv url-helper participants oid->ssn)]
     (exam-session-db/init-participants-sync-status! db exam-session-id)
     (if disabled
-      (log/info "Sending disabled. Logging request" request)
-      (do-post url request basic-auth "text/csv; charset=UTF-8"))
-    (exam-session-db/set-participants-sync-to-success! db exam-session-id)))
+      (log/info "Sending disabled, would have sent CSV for exam session" exam-session-id
+                (str "(" (count (str/split-lines request)) " line(s))"))
+      (do
+        (do-post url request basic-auth "text/csv; charset=UTF-8")
+        (exam-session-db/set-participants-sync-to-success! db exam-session-id)))))
 
 (defn sync-exam-session-and-organizer
   "When exam session is synced to YKI register then also organizer data is synced."
@@ -238,9 +242,10 @@
                (remove-exam-session url-helper basic-auth disabled exam-session)
                (remove-organizer url-helper basic-auth disabled organizer-oid))
     (if exam-session
-      (let [{:keys [organizer_oid office_oid]} exam-session]
-        (sync-organizer db url-helper basic-auth disabled organizer_oid office_oid)
-        (sync-exam-session url-helper basic-auth disabled exam-session))
+      (let [{:keys [organizer_oid office_oid]} exam-session
+            organizer-synced?    (sync-organizer db url-helper basic-auth disabled organizer_oid office_oid)
+            exam-session-synced? (sync-exam-session url-helper basic-auth disabled exam-session)]
+        (and organizer-synced? exam-session-synced?))
       (sync-organizer db url-helper basic-auth disabled organizer-oid nil))))
 
 (defn return-exam-session-participants-csv [db url-helper onr-client exam-session-id]

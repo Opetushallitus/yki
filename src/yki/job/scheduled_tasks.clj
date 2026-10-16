@@ -120,15 +120,17 @@
        (let [persons-to-sync (person-db/get-persons-to-sync db (str retry-duration-in-days " days"))]
          (doseq [{:keys [id person_oid]} persons-to-sync]
            (try
-             (let [person          (person-db/get-full-person-details db person_oid)
-                   solki-response  (yki-register/sync-person url-helper basic-auth disabled person)
-                   status          (:status solki-response)
-                   success?        (= 200 status)
-                   retry-if-error? (and (not success?)
-                                        (not (= 404 status)))]
-               (when (not success?)
-                 (log/error "Updating person details to Solki failed!" {:oid person_oid, :response solki-response}))
-               (person-db/mark-person-sync-attempt! db id success? retry-if-error?))
+             (let [person (person-db/get-full-person-details db person_oid)]
+               (if disabled
+                 (yki-register/sync-person url-helper basic-auth disabled person)
+                 (let [solki-response  (yki-register/sync-person url-helper basic-auth disabled person)
+                       status          (:status solki-response)
+                       success?        (= 200 status)
+                       retry-if-error? (and (not success?)
+                                            (not (= 404 status)))]
+                   (when (not success?)
+                     (log/error "Updating person details to Solki failed!" {:oid person_oid, :response solki-response}))
+                   (person-db/mark-person-sync-attempt! db id success? retry-if-error?))))
              (catch Exception e
                (do
                  (log/error e "Updating person details to Solki failed!" {:id id, :oid person_oid})
@@ -395,10 +397,10 @@
          (log/info "Found unsynced exam sessions" (map :id unsynced-sessions))
          (doseq [exam-session unsynced-sessions]
            (try
-             (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled
-                                                           {:type         "CREATE"
-                                                            :exam-session exam-session})
-             (exam-session-db/set-exam-session-synced! db (:id exam-session))
+             (when (yki-register/sync-exam-session-and-organizer db url-helper basic-auth disabled
+                                                                 {:type         "CREATE"
+                                                                  :exam-session exam-session})
+               (exam-session-db/set-exam-session-synced! db (:id exam-session)))
              (catch Exception e
                (log/error e "Failed to sync exam session to Solki" {:id (:id exam-session)}))))))
      (catch Exception e

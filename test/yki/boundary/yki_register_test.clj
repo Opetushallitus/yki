@@ -327,7 +327,17 @@
               _               (yki-register/sync-exam-session-participants db url-helper onr-client {:user "user" :password "pass"} false exam-session-id)
               request         (first (:recordings (first (filter #(= "/oph/osallistujat" (get-in % [:request-spec :path])) @(:routes server)))))
               req-body        (get-in request [:request :body "postData"])]
-          (is (= req-body (str/replace csv old-email new-email))))))))
+          (is (= req-body (str/replace csv old-email new-email)))))))
+  (testing "when disabled, should not send participants and should return falsy (no false positives for Java side cutover)"
+    (with-routes! routes
+      (let [exam-session-id (:id (base/select-one "SELECT id FROM exam_session"))
+            db              (base/db)
+            url-helper      (base/create-url-helper (str "localhost:" port))
+            onr-client      (base/onr-client url-helper)
+            result          (yki-register/sync-exam-session-participants db url-helper onr-client {:user "user" :password "pass"} true exam-session-id)
+            request         (first (:recordings (first (filter #(= "/oph/osallistujat" (get-in % [:request-spec :path])) @(:routes server)))))]
+        (is (nil? request))
+        (is (not result))))))
 
 (deftest return-exam-session-participants-csv-selects-only-the-target-session-test
   (base/insert-base-data)
