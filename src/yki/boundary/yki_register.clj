@@ -256,26 +256,24 @@
     (create-participants-csv url-helper participants onr->ssn)))
 
 (defn sync-person
-  [url-helper basic-auth disabled person]
-  (if disabled
-    (log/info "Person sync disabled")
-    (let [oid                   (:oid person)
-          nationality             (codes/get-converted-country-code url-helper (:nationality_code person))
-          country                 (codes/get-converted-country-code url-helper (:country_code person))
-          converted-nationality   (if (nationality-not-supported-or-missing? nationality) "xxx" nationality)
-          converted-country       (if (nationality-not-supported-or-missing? country) "xxx" country)
-          person->solki-payload   {:last_name        :sukunimi
-                                   :first_name       :etunimet
-                                   :gender           :sukupuoli
-                                   :nationality_code :kansalaisuus
-                                   :country_code     :maa
-                                   :street_address   :katuosoite
-                                   :zip              :postinumero
-                                   :post_office      :postitoimipaikka
-                                   :email            :sahkoposti}
-          payload                 (-> person
-                                      (assoc :nationality_code converted-nationality
-                                             :country_code converted-country)
-                                      (select-keys (keys person->solki-payload))
-                                      (set/rename-keys person->solki-payload))]
-      (do-put (url-helper :yki-register.person oid) (json/write-value-as-string payload) basic-auth "application/json"))))
+  [url-helper basic-auth person]
+  (let [oid                   (:oid person)
+        nationality             (codes/get-converted-country-code url-helper (:nationality_code person))
+        country                 (codes/get-converted-country-code url-helper (:country_code person))
+        converted-nationality   (if (nationality-not-supported-or-missing? nationality) "xxx" nationality)
+        converted-country       (if (nationality-not-supported-or-missing? country) "xxx" country)
+        person->solki-payload   {:last_name        :sukunimi
+                                 :first_name       :etunimet
+                                 :gender           :sukupuoli
+                                 :nationality_code :kansalaisuus
+                                 :country_code     :maa
+                                 :street_address   :katuosoite
+                                 :zip              :postinumero
+                                 :post_office      :postitoimipaikka
+                                 :email            :sahkoposti}
+        payload                 (-> person
+                                    (assoc :nationality_code converted-nationality
+                                           :country_code converted-country)
+                                    (select-keys (keys person->solki-payload))
+                                    (set/rename-keys person->solki-payload))]
+    (do-put (url-helper :yki-register.person oid) (json/write-value-as-string payload) basic-auth "application/json")))
