@@ -123,6 +123,55 @@
         (reader)
         (is (= (pgq/count data-sync-q) 0))))))
 
+(deftest handle-exam-session-solki-sync-test
+  (base/insert-base-data)
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set exam_date = '" (base/two-weeks-from-now) "'"))
+  (with-routes!
+    (merge base/onr-mock-routes
+           {"/organisaatio-service/rest/organisaatio/v4/1.2.3.4"   {:status       200
+                                                                    :content-type "application/json"
+                                                                    :body         (slurp "test/resources/organization.json")}
+            "/organisaatio-service/rest/organisaatio/v4/1.2.3.4.5" {:status       200
+                                                                    :content-type "application/json"
+                                                                    :body         (slurp "test/resources/organization.json")}
+            "/oph/tutkinto"                                        {:status       201
+                                                                    :content-type "application/json"
+                                                                    :body         "{}"}
+            "/oph/tutkintotilaisuus"                               {:status       201
+                                                                    :content-type "application/json"
+                                                                    :body         "{}"}
+            "/oph/jarjestaja"                                      {:status       201
+                                                                    :content-type "application/json"
+                                                                    :body         "{}"}})
+    (let [db         (base/db)
+          url-helper (base/create-url-helper (str "localhost:" port))
+          handler    (ig/init-key :yki.job.scheduled-tasks/exam-session-solki-sync-handler
+                                  {:db         db
+                                   :url-helper url-helper
+                                   :basic-auth {:user "user" :password "pass"}
+                                   :disabled   false})]
+      (testing "should sync organizer and exam session to Solki and mark exam session as synced"
+        (is (nil? (:last_sync_at (base/select-one "SELECT last_sync_at FROM exam_session"))))
+        (handler)
+        (is (some? (:last_sync_at (base/select-one "SELECT last_sync_at FROM exam_session"))))))))
+
+(deftest handle-exam-session-solki-sync-disabled-test
+  (base/insert-base-data)
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set exam_date = '" (base/two-weeks-from-now) "'"))
+  (with-routes!
+    base/onr-mock-routes
+    (let [db         (base/db)
+          url-helper (base/create-url-helper (str "localhost:" port))
+          handler    (ig/init-key :yki.job.scheduled-tasks/exam-session-solki-sync-handler
+                                  {:db         db
+                                   :url-helper url-helper
+                                   :basic-auth {:user "user" :password "pass"}
+                                   :disabled   true})]
+      (testing "when sync is disabled, exam session should not be marked as synced (no false positives for Java side cutover)"
+        (is (nil? (:last_sync_at (base/select-one "SELECT last_sync_at FROM exam_session"))))
+        (handler)
+        (is (nil? (:last_sync_at (base/select-one "SELECT last_sync_at FROM exam_session"))))))))
+
 (deftest queue-reader-retry-if-execution-fails-test
   (with-routes!
     {"/ryhmasahkoposti-service/email/firewall" {:status 500 :content-type "application/json"
@@ -175,6 +224,30 @@
         (handler)
         (is (= (count (:recordings (first @(:routes server)))) 1))))))
 
+(deftest handle-exam-session-participants-sync-disabled-test
+  (base/insert-base-data)
+  (base/insert-registrations "COMPLETED")
+  (jdbc/execute! @embedded-db/conn "UPDATE exam_session SET last_sync_at = NOW()")
+  (jdbc/execute! @embedded-db/conn (str "UPDATE exam_date set exam_date = '" (base/two-weeks-from-now) "'"))
+  (with-routes!
+    {"/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                             :body   (slurp "test/resources/maatjavaltiot2_246.json")}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                             :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
+    (let [url-helper  (base/create-url-helper (str "localhost:" port))
+          handler     (ig/init-key :yki.job.scheduled-tasks/participants-sync-handler {:db                     (base/db)
+                                                                                       :disabled               true
+                                                                                       :basic-auth             {:user "user" :password "pass"}
+                                                                                       :retry-duration-in-days 14
+                                                                                       :url-helper             url-helper
+                                                                                       :onr-client             (base/onr-client url-helper)})
+          _           (handler)
+          sync_status (base/select-one "SELECT * FROM participant_sync_status")]
+      (testing "should not send participants to yki register and should not mark sync status as success (no false positives for Java side cutover)"
+        (is (= (count @(:routes server)) 2))
+        (is (every? #(= 0 (count (:recordings %))) @(:routes server)))
+        (is (nil? (:success_at sync_status)))))))
+
 (deftest handle-exam-session-participants-failure-test
   (base/insert-base-data)
   (base/insert-registrations "COMPLETED")
@@ -201,6 +274,45 @@
           failed_at_after  (:failed_at (base/select-one "SELECT failed_at FROM participant_sync_status"))]
       (testing "should update failed at timestamp"
         (is (t/after? failed_at_after failed_at_before))))))
+
+(deftest handle-persons-sync-test
+  (base/insert-persons)
+  (jdbc/execute! @embedded-db/conn "INSERT INTO person_sync_status (person_oid) VALUES ('5.4.3.2.1')")
+  (with-routes!
+    {"/oph/osallistuja/5.4.3.2.1"                                            {:status 200 :content-type "application/json" :body "{}"}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_246" {:status 200 :content-type "application/json"
+                                                                             :body   (slurp "test/resources/maatjavaltiot2_246.json")}
+     "/koodisto-service/rest/json/relaatio/rinnasteinen/maatjavaltiot2_180" {:status 200 :content-type "application/json"
+                                                                             :body   (slurp "test/resources/maatjavaltiot2_180.json")}}
+    (let [url-helper (base/create-url-helper (str "localhost:" port))
+          handler    (ig/init-key :yki.job.scheduled-tasks/persons-sync-handler {:db                     (base/db)
+                                                                                 :disabled               false
+                                                                                 :basic-auth             {:user "user" :password "pass"}
+                                                                                 :retry-duration-in-days 14
+                                                                                 :url-helper             url-helper})]
+      (testing "should sync person to Solki and mark sync status as success"
+        (handler)
+        (is (= 1 (count (:recordings (first (filter #(= "/oph/osallistuja/5.4.3.2.1" (:request-spec %)) @(:routes server)))))))
+        (is (some? (:success_at (base/select-one "SELECT success_at FROM person_sync_status"))))))))
+
+(deftest handle-persons-sync-disabled-test
+  (base/insert-persons)
+  (jdbc/execute! @embedded-db/conn "INSERT INTO person_sync_status (person_oid) VALUES ('5.4.3.2.1')")
+  (with-routes!
+    {"/oph/osallistuja/5.4.3.2.1" {:status 200 :content-type "application/json" :body "{}"}}
+    (let [url-helper (base/create-url-helper (str "localhost:" port))
+          handler    (ig/init-key :yki.job.scheduled-tasks/persons-sync-handler {:db                     (base/db)
+                                                                                 :disabled               true
+                                                                                 :basic-auth             {:user "user" :password "pass"}
+                                                                                 :retry-duration-in-days 14
+                                                                                 :url-helper             url-helper})]
+      (testing "when disabled, should not send request and should not mark failed/retry (no false positives for Java side cutover)"
+        (handler)
+        (is (= 0 (count (:recordings (first @(:routes server))))))
+        (let [sync-status (base/select-one "SELECT success_at, failed_at, should_retry FROM person_sync_status")]
+          (is (nil? (:success_at sync-status)))
+          (is (nil? (:failed_at sync-status)))
+          (is (nil? (:should_retry sync-status))))))))
 
 (defn- insert-change-event! [{:keys [event exam_session_id registration_id registration_state registration_kind original_exam_session_id author_type created_at]}]
   (let [sql-format           #(cond
