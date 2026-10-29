@@ -5,10 +5,12 @@
     [compojure.api.sweet :refer [api context GET POST]]
     [integrant.core :as ig]
     [org.httpkit.client :as http]
+    [ring.util.http-response :refer [forbidden]]
     [yki.handler.routing :as routing]
     [yki.middleware.error-boundary :refer [with-error-boundary]]
     [yki.registration.registration :as registration]
-    [yki.spec :as ys]))
+    [yki.spec :as ys]
+    [yki.util.http-util :as http-util]))
 
 (defn- proxy-request [{:keys [endpoint token]} {:keys [request-method uri body-params query-params headers] :as request}]
   (let [oid         (get-in request [:session :identity :oid])
@@ -17,7 +19,11 @@
         opts        {:method       request-method
                      :url          (str endpoint uri)
                      :body         (json/write-str body-params)
-                     :headers      (merge auth headers)
+                     ; The browser never receives Java's CSRF cookie, so the proxy supplies a matching cookie and header itself.
+                     :headers      (merge auth
+                                          (dissoc headers "cookie" "csrf")
+                                          {"CSRF"   http-util/csrf-value
+                                           "Cookie" (str "CSRF=" http-util/csrf-value)})
                      :query-params query-params}
         response    @(http/request opts)]
     {:status  (:status response)
@@ -36,4 +42,10 @@
             (proxy-request request))
           (POST "/education/:registration-id" request
             :path-params [registration-id :- ::ys/id]
-            (proxy-request request)))))))
+            (proxy-request request))
+          (POST "/integration-assistance/:registration-id" request
+            :path-params [registration-id :- ::ys/id]
+            ; The Java backend only receives the OID, so strong authentication must be enforced here.
+            (if (= "SUOMIFI" (get-in request [:session :auth-method]))
+              (proxy-request request)
+              (forbidden))))))))
