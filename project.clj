@@ -8,9 +8,9 @@
                  ["Scalaz Bintray Repo" "https://dl.bintray.com/scalaz/releases"]]
   :min-lein-version "2.0.0"
   :managed-dependencies [[com.fasterxml.jackson.core/jackson-annotations "2.21"]
-                         [com.fasterxml.jackson.core/jackson-core "2.21.6"]
-                         [com.fasterxml.jackson.core/jackson-databind "2.21.6"]
-                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.21.6"]
+                         [com.fasterxml.jackson.core/jackson-core "2.21.7"]
+                         [com.fasterxml.jackson.core/jackson-databind "2.21.7"]
+                         [com.fasterxml.jackson.datatype/jackson-datatype-jsr310 "2.21.7"]
                          ; Use the Jetty 12 adapter and align its entry points to the patched release.
                          [ring/ring-jetty-adapter "1.14.2"]
                          [org.eclipse.jetty/jetty-server "12.0.36"]
