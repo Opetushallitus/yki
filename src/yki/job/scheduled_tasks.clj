@@ -184,10 +184,22 @@
      (catch Throwable t
        (log/error t "Old data removal failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
+(defn legacy-owns-participant-onr-sync?
+  "The Java backend syncs only when the owner is exactly JAVA, and this one only when it is LEGACY or
+  not set yet, so a value neither recognises stops both rather than letting both sync."
+  [owner]
+  (case owner
+    (nil "LEGACY") true
+    "JAVA" false
+    (do (log/error (str "Unrecognised participant_onr_sync.owner '" owner
+                        "', so neither backend syncs participant ONR data [ERROR_SCHEDULED_TASK]"))
+        false)))
+
 (defmethod ig/init-key ::sync-participant-onr-data-handler [_ {:keys [db onr-client]}]
   {:pre [(some? db)]}
   #(try
-     (when (job-db/try-to-acquire-lock! db sync-onr-participant-data-handler-conf)
+     (when (and (legacy-owns-participant-onr-sync? (job-db/get-runtime-flag db "participant_onr_sync.owner"))
+                (job-db/try-to-acquire-lock! db sync-onr-participant-data-handler-conf))
        (log/info "Participant ONR data syncing started")
        (let [participants-to-sync (debug/get-participants-for-onr-check db)
              batch-size           1000]

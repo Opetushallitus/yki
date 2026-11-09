@@ -536,3 +536,48 @@
   (set-registration-queue-owner! "JAVE")
   (run-registration-queue-handler!)
   (is (= "QUEUE" (queued-registration-kind))))
+
+(defn- create-runtime-flag-table! []
+  (base/execute! "CREATE TABLE IF NOT EXISTS runtime_flag (name TEXT PRIMARY KEY, value TEXT NOT NULL)"))
+
+; Mirrors the Java backend's Liquibase changeset, which is what inserts the row outside tests.
+(defn- set-participant-onr-sync-owner! [owner]
+  (create-runtime-flag-table!)
+  (base/execute! (str "INSERT INTO runtime_flag (name, value) VALUES ('participant_onr_sync.owner', '" owner "')
+                       ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value")))
+
+; No registration is waiting for an ONR check, so a run that takes the lock does not call ONR.
+(defn- run-sync-participant-onr-data-handler! []
+  (let [handler (ig/init-key :yki.job.scheduled-tasks/sync-participant-onr-data-handler {:db (base/db)})]
+    (handler)))
+
+(defn- sync-participant-onr-data-lock-taken? []
+  (= (:worker-id yki.job.scheduled-tasks/sync-onr-participant-data-handler-conf)
+     (:worker_id (base/select-one "SELECT worker_id FROM task_lock WHERE task = 'SYNC_ONR_PARTICIPANT_DATA_HANDLER'"))))
+
+(deftest sync-participant-onr-data-handler-runs-when-runtime-flag-table-does-not-exist-test
+  (run-sync-participant-onr-data-handler!)
+  (testing "should run as before the Java backend created the table"
+    (is (sync-participant-onr-data-lock-taken?))))
+
+(deftest sync-participant-onr-data-handler-runs-when-runtime-flag-does-not-exist-test
+  (create-runtime-flag-table!)
+  (run-sync-participant-onr-data-handler!)
+  (testing "should run as before the Java backend inserted the flag"
+    (is (sync-participant-onr-data-lock-taken?))))
+
+(deftest sync-participant-onr-data-handler-runs-when-legacy-owns-sync-test
+  (set-participant-onr-sync-owner! "LEGACY")
+  (run-sync-participant-onr-data-handler!)
+  (is (sync-participant-onr-data-lock-taken?)))
+
+(deftest sync-participant-onr-data-handler-does-not-take-lock-when-java-owns-sync-test
+  (set-participant-onr-sync-owner! "JAVA")
+  (run-sync-participant-onr-data-handler!)
+  (testing "should leave the shared task_lock row to the Java backend"
+    (is (not (sync-participant-onr-data-lock-taken?)))))
+
+(deftest sync-participant-onr-data-handler-does-not-take-lock-when-owner-is-unrecognised-test
+  (set-participant-onr-sync-owner! "JAVE")
+  (run-sync-participant-onr-data-handler!)
+  (is (not (sync-participant-onr-data-lock-taken?))))
