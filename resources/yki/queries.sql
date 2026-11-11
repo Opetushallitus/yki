@@ -2047,7 +2047,8 @@ LEFT JOIN free_registration fr ON r.id = fr.registration_id
 LEFT JOIN registration_evaluation re ON r.id = re.registration_id
 WHERE r.person_oid = :oid
   AND current_date - interval '1 year' <= ed.exam_date
-  AND r.state <> 'STARTED';
+  AND r.state <> 'STARTED'
+  AND r.form IS NOT NULL;
 
 -- name: select-registration-queue-positions
 SELECT r.id, COUNT(r2.id) AS position
