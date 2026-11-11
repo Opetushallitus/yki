@@ -9,6 +9,7 @@
     [pgqueue.core :as pgq]
     [stub-http.core :refer [with-routes!]]
     [yki.boundary.exam-session-db :as exam-session-db]
+    [yki.boundary.onr :as onr]
     [yki.embedded-db :as embedded-db]
     [yki.handler.base-test :as base]
     [yki.job.scheduled-tasks]))
@@ -574,10 +575,41 @@
 (deftest sync-participant-onr-data-handler-does-not-take-lock-when-java-owns-sync-test
   (set-participant-onr-sync-owner! "JAVA")
   (run-sync-participant-onr-data-handler!)
-  (testing "should leave the shared task_lock row to the Java backend"
+  (testing "should not start a run, so ONR is not called"
     (is (not (sync-participant-onr-data-lock-taken?)))))
 
 (deftest sync-participant-onr-data-handler-does-not-take-lock-when-owner-is-unrecognised-test
   (set-participant-onr-sync-owner! "JAVE")
   (run-sync-participant-onr-data-handler!)
   (is (not (sync-participant-onr-data-lock-taken?))))
+
+(defn- insert-registration-waiting-for-onr-check! []
+  (base/insert-base-data)
+  (base/execute! (str "INSERT INTO registration(person_oid, state, exam_session_id, participant_id, created)
+                       VALUES ('5.4.3.2.1', 'SUBMITTED', " base/select-exam-session ", " base/select-participant ", current_timestamp - interval '2 hours')")))
+
+(defn- fake-onr-client [on-list-persons!]
+  (reify onr/Onr
+    (list-persons-by-oids [_ oids]
+      (on-list-persons!)
+      (for [oid oids]
+        {"oidHenkilo" oid "oppijanumero" "1.2.246.562.24.1" "yksiloity" false "yksiloityVTJ" true}))))
+
+(defn- run-sync-participant-onr-data-handler-with-onr! [onr-client]
+  (let [handler (ig/init-key :yki.job.scheduled-tasks/sync-participant-onr-data-handler {:db         (base/db)
+                                                                                         :onr-client onr-client})]
+    (handler)))
+
+(deftest sync-participant-onr-data-handler-writes-onr-data-when-legacy-owns-sync-test
+  (insert-registration-waiting-for-onr-check!)
+  (set-participant-onr-sync-owner! "LEGACY")
+  (run-sync-participant-onr-data-handler-with-onr! (fake-onr-client (constantly nil)))
+  (is (= [{:oid "5.4.3.2.1" :oppijanumero "1.2.246.562.24.1" :is_individualized true}]
+         (base/select "SELECT oid, oppijanumero, is_individualized FROM participant_onr"))))
+
+(deftest sync-participant-onr-data-handler-discards-batch-when-owner-switches-to-java-during-onr-call-test
+  (insert-registration-waiting-for-onr-check!)
+  (set-participant-onr-sync-owner! "LEGACY")
+  (run-sync-participant-onr-data-handler-with-onr! (fake-onr-client #(set-participant-onr-sync-owner! "JAVA")))
+  (testing "should not write ONR data fetched before the switch, as the Java backend now writes"
+    (is (empty? (base/select "SELECT oid FROM participant_onr")))))

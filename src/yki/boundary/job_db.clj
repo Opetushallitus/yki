@@ -14,7 +14,8 @@
   (get-runtime-flag [db flag-name]
     "nil when the flag, or its table, does not exist yet. The read has its own short transaction, so
     the share lock of the query ends before this returns. A job that must not run at the same time as
-    its Java port needs another lock for that, such as a task_lock row that both backends take."))
+    its Java port reads the flag again in the transaction that writes, as the Java port does not take
+    this backend's task_lock row."))
 
 (extend-protocol Job
   Boundary
