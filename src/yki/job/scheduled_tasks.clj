@@ -184,31 +184,45 @@
      (catch Throwable t
        (log/error t "Old data removal failed with a non-Exception Throwable [ERROR_SCHEDULED_TASK]"))))
 
+(defn legacy-owns-participant-onr-sync?
+  "The Java backend syncs only when the owner is exactly JAVA, and this one only when it is LEGACY or
+  not set yet, so a value neither recognises stops both rather than letting both sync."
+  [owner]
+  (case owner
+    (nil "LEGACY") true
+    "JAVA" false
+    (do (log/error (str "Unrecognised participant_onr_sync.owner '" owner
+                        "', so neither backend syncs participant ONR data [ERROR_SCHEDULED_TASK]"))
+        false)))
+
 (defmethod ig/init-key ::sync-participant-onr-data-handler [_ {:keys [db onr-client]}]
   {:pre [(some? db)]}
   #(try
-     (when (job-db/try-to-acquire-lock! db sync-onr-participant-data-handler-conf)
+     (when (and (legacy-owns-participant-onr-sync? (job-db/get-runtime-flag db "participant_onr_sync.owner"))
+                (job-db/try-to-acquire-lock! db sync-onr-participant-data-handler-conf))
        (log/info "Participant ONR data syncing started")
        (let [participants-to-sync (debug/get-participants-for-onr-check db)
              batch-size           1000]
-         (doseq [participants-batch (partition-all batch-size participants-to-sync)]
-           (let [oid->participant (into {} (map (juxt :person_oid identity)) participants-batch)
-                 onr-data         (->> participants-batch
-                                       (map :person_oid)
-                                       (onr/list-persons-by-oids onr-client))]
-             (doseq [onr-entry onr-data]
-               (let [onr-details {:person_oid        (onr-entry "oidHenkilo")
-                                  :oppijanumero      (onr-entry "oppijanumero")
-                                  :is_individualized (or (onr-entry "yksiloity")
-                                                         (onr-entry "yksiloityVTJ"))}
-                     oid         (:person_oid onr-details)]
-                 (debug/upsert-participant-onr-data!
-                   db
-                   (merge
-                     (oid->participant oid)
-                     onr-details)))))
-           ; Wait 10 seconds between calls to ONR just to play it safe.
-           (Thread/sleep 10000))))
+         (loop [[participants-batch & batches-left] (partition-all batch-size participants-to-sync)]
+           (when participants-batch
+             (let [oid->participant (into {} (map (juxt :person_oid identity)) participants-batch)
+                   onr-data         (->> participants-batch
+                                         (map :person_oid)
+                                         (onr/list-persons-by-oids onr-client))
+                   participants     (for [onr-entry onr-data
+                                          :let [onr-details {:person_oid        (onr-entry "oidHenkilo")
+                                                             :oppijanumero      (onr-entry "oppijanumero")
+                                                             :is_individualized (or (onr-entry "yksiloity")
+                                                                                    (onr-entry "yksiloityVTJ"))}]]
+                                      (merge
+                                        (oid->participant (:person_oid onr-details))
+                                        onr-details))]
+               (if (debug/upsert-participant-onr-data-batch! db participants legacy-owns-participant-onr-sync?)
+                 (do
+                   ; Wait 10 seconds between calls to ONR just to play it safe.
+                   (Thread/sleep 10000)
+                   (recur batches-left))
+                 (log/info "Participant ONR data syncing stopped, participant_onr_sync.owner is no longer LEGACY")))))))
      (catch Exception e
        (log/error e "Syncing participant ONR data failed [ERROR_SCHEDULED_TASK]"))
      (catch Throwable t
