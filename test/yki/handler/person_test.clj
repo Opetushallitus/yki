@@ -355,7 +355,7 @@
                   (is (= state
                          (get-registration-state id))))))))))))
 
-(deftest person-submitted-registrations-test
+(deftest person-unfinished-registrations-test
   (base/insert-base-data)
   (base/insert-persons)
   (base/insert-registrations "SUBMITTED")
@@ -378,17 +378,24 @@
                            (let [response (peridot/request session routing/person-api-root :request-method :get)]
                              (is (= 200 (get-in response [:response :status])))
                              (:registrations (read-response-json response))))]
-      (testing "unfinished and abandoned cancelled attempts are excluded"
-        (is (= [2] (mapv :id (registrations)))))
-      (testing "an abandoned attempt stays hidden after the scheduler expires it"
+      (testing "unfinished and abandoned cancelled attempts are returned"
+        (is (= #{{:id 1 :state "STARTED" :queue_ended false}
+                 {:id 2 :state "SUBMITTED" :queue_ended false}
+                 {:id 3 :state "CANCELLED" :queue_ended false}}
+               (set (map #(select-keys % [:id :state :queue_ended]) (registrations))))))
+      (testing "an abandoned expired attempt remains visible without a queue-ended reason"
         (registration-db/update-started-registrations-to-expired! db)
         (is (= "EXPIRED" (:state (base/select-one "SELECT state FROM registration WHERE id = 1"))))
-        (is (= [2] (mapv :id (registrations)))))
+        (base/execute! "UPDATE exam_date SET exam_date = current_date + 3 WHERE id = 1")
+        (is (= #{{:id 1 :state "EXPIRED" :queue_ended false}
+                 {:id 2 :state "SUBMITTED" :queue_ended false}
+                 {:id 3 :state "CANCELLED" :queue_ended false}}
+               (set (map #(select-keys % [:id :state :queue_ended]) (registrations))))))
       (testing "submitted registrations remain visible in all subsequent states"
         (doseq [state ["SUBMITTED" "COMPLETED" "EXPIRED" "CANCELLED" "PAID_AND_CANCELLED"]]
           (base/execute! (str "UPDATE registration SET state = '" state "' WHERE id = 2"))
           (is (= [{:id 2 :state state}]
-                 (mapv #(select-keys % [:id :state]) (registrations)))))))))
+                 (mapv #(select-keys % [:id :state]) (filter #(= 2 (:id %)) (registrations))))))))))
 
 (deftest person-expired-queue-registrations-test
   (base/insert-base-data)
@@ -416,6 +423,44 @@
             (registration-db/expire-queued-registrations-after-exam-date! db)
             (let [response (peridot/request session routing/person-api-root :request-method :get)]
               (is (= 200 (get-in response [:response :status])))
-              (is (= [{:id 2 :kind "QUEUE" :state expected-state :partial_exam_type partial-exam-type}]
-                     (mapv #(select-keys % [:id :kind :state :partial_exam_type])
+              (is (= [{:id 2 :kind "QUEUE" :state expected-state :partial_exam_type partial-exam-type :queue_ended (= expected-state "EXPIRED")}]
+                     (mapv #(select-keys % [:id :kind :state :partial_exam_type :queue_ended])
                            (:registrations (read-response-json response))))))))))))
+
+(deftest person-queue-ended-test
+  (base/insert-base-data)
+  (base/insert-persons)
+  (base/insert-registrations "SUBMITTED")
+  (base/execute! "UPDATE registration SET kind = 'QUEUE' WHERE id = 2")
+  (with-routes!
+    {}
+    (let [db             (base/db)
+          url-helper     (base/create-url-helper (str "localhost:" port))
+          payment-helper (base/create-examination-payment-helper db url-helper)
+          fake-auth      (ig/init-key :yki.middleware.no-auth/with-fake-session
+                                      {:identity    {:oid "5.4.3.2.1"}
+                                       :auth-method "SUOMIFI"})
+          handler        (base/person-handler fake-auth url-helper payment-helper)
+          session        (peridot/session (routes handler))]
+      (doseq [[description exam-days end-days kind state expected]
+              [["seven days before exam" 7 -10 "QUEUE" "SUBMITTED" false]
+               ["six days before exam, before scheduler" 6 -10 "QUEUE" "SUBMITTED" true]
+               ["registration still open" 6 1 "QUEUE" "SUBMITTED" false]
+               ["registration has not opened" 6 4 "QUEUE" "SUBMITTED" false]
+               ["scheduler already expired the queue" 3 -10 "QUEUE" "EXPIRED" true]
+               ["scheduler expiry wins even if registration is still open" 3 1 "QUEUE" "EXPIRED" true]
+               ["unfinished registration" 3 -10 "QUEUE" "STARTED" false]
+               ["cancelled queue" 3 -10 "QUEUE" "CANCELLED" false]
+               ["paid cancelled queue" 3 -10 "QUEUE" "PAID_AND_CANCELLED" false]
+               ["confirmed registration" 3 -10 "QUEUE" "COMPLETED" false]
+               ["expired admission" 3 -10 "ADMISSION" "EXPIRED" false]]]
+        (testing description
+          (base/execute! (str "UPDATE exam_date SET exam_date = current_date + " exam-days
+                              ", registration_start_date = current_date + " (- end-days 2)
+                              ", registration_end_date = current_date + " end-days " WHERE id = 1"))
+          (base/execute! (str "UPDATE registration SET kind = '" kind "', state = '" state "' WHERE id = 2"))
+          (let [response (peridot/request session routing/person-api-root :request-method :get)]
+            (is (= 200 (get-in response [:response :status])))
+            (is (= [{:id 2 :queue_ended expected}]
+                   (mapv #(select-keys % [:id :queue_ended])
+                         (:registrations (read-response-json response)))))))))))
