@@ -355,7 +355,7 @@
                   (is (= state
                          (get-registration-state id))))))))))))
 
-(deftest person-unfinished-registrations-test
+(deftest person-submitted-registrations-test
   (base/insert-base-data)
   (base/insert-persons)
   (base/insert-registrations "SUBMITTED")
@@ -378,24 +378,17 @@
                            (let [response (peridot/request session routing/person-api-root :request-method :get)]
                              (is (= 200 (get-in response [:response :status])))
                              (:registrations (read-response-json response))))]
-      (testing "unfinished and abandoned cancelled attempts are returned"
-        (is (= #{{:id 1 :state "STARTED" :queue_ended false}
-                 {:id 2 :state "SUBMITTED" :queue_ended false}
-                 {:id 3 :state "CANCELLED" :queue_ended false}}
-               (set (map #(select-keys % [:id :state :queue_ended]) (registrations))))))
-      (testing "an abandoned expired attempt remains visible without a queue-ended reason"
+      (testing "unfinished and abandoned cancelled attempts are excluded"
+        (is (= [2] (mapv :id (registrations)))))
+      (testing "an abandoned attempt stays hidden after the scheduler expires it"
         (registration-db/update-started-registrations-to-expired! db)
         (is (= "EXPIRED" (:state (base/select-one "SELECT state FROM registration WHERE id = 1"))))
-        (base/execute! "UPDATE exam_date SET exam_date = current_date + 3 WHERE id = 1")
-        (is (= #{{:id 1 :state "EXPIRED" :queue_ended false}
-                 {:id 2 :state "SUBMITTED" :queue_ended false}
-                 {:id 3 :state "CANCELLED" :queue_ended false}}
-               (set (map #(select-keys % [:id :state :queue_ended]) (registrations))))))
+        (is (= [2] (mapv :id (registrations)))))
       (testing "submitted registrations remain visible in all subsequent states"
         (doseq [state ["SUBMITTED" "COMPLETED" "EXPIRED" "CANCELLED" "PAID_AND_CANCELLED"]]
           (base/execute! (str "UPDATE registration SET state = '" state "' WHERE id = 2"))
           (is (= [{:id 2 :state state}]
-                 (mapv #(select-keys % [:id :state]) (filter #(= 2 (:id %)) (registrations))))))))))
+                 (mapv #(select-keys % [:id :state]) (registrations)))))))))
 
 (deftest person-expired-queue-registrations-test
   (base/insert-base-data)
@@ -449,7 +442,6 @@
                ["registration has not opened" 6 4 "QUEUE" "SUBMITTED" false]
                ["scheduler already expired the queue" 3 -10 "QUEUE" "EXPIRED" true]
                ["scheduler expiry wins even if registration is still open" 3 1 "QUEUE" "EXPIRED" true]
-               ["unfinished registration" 3 -10 "QUEUE" "STARTED" false]
                ["cancelled queue" 3 -10 "QUEUE" "CANCELLED" false]
                ["paid cancelled queue" 3 -10 "QUEUE" "PAID_AND_CANCELLED" false]
                ["confirmed registration" 3 -10 "QUEUE" "COMPLETED" false]
