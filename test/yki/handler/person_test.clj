@@ -444,7 +444,7 @@
           session        (peridot/session (routes handler))]
       (doseq [[description exam-days end-days kind state expected]
               [["seven days before exam" 7 -10 "QUEUE" "SUBMITTED" false]
-               ["six days before exam, before scheduler" 6 -10 "QUEUE" "SUBMITTED" true]
+               ["six days before exam, before scheduler" 6 -10 "QUEUE" "SUBMITTED" false]
                ["registration still open" 6 1 "QUEUE" "SUBMITTED" false]
                ["registration has not opened" 6 4 "QUEUE" "SUBMITTED" false]
                ["scheduler already expired the queue" 3 -10 "QUEUE" "EXPIRED" true]

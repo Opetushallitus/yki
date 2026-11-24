@@ -2041,16 +2041,7 @@ re.state AS evaluation_state,
        r.lifted_from_queue_at,
        fr.free_registration_id IS NOT NULL AS is_free_registration,
        -- A form distinguishes submitted queues from abandoned attempts that also expire.
-       (r.kind = 'QUEUE' AND r.form IS NOT NULL
-        AND (r.state = 'EXPIRED'
-             OR (r.state = 'SUBMITTED'
-                 AND ed.registration_end_date <= current_date
-                 -- Match select-participant-and-queue-count-by-exam-session before the expiry job runs.
-                 AND NOT (
-                     within_dt_range(now(), ed.registration_start_date, ed.registration_end_date)
-                     OR (ed.registration_end_date <= current_date AND
-                         current_date + interval '1 week' <= ed.exam_date)
-                 )))) AS queue_ended
+       (r.kind = 'QUEUE' AND r.form IS NOT NULL AND r.state = 'EXPIRED') AS queue_ended
 FROM registration r
 INNER JOIN exam_session es ON r.exam_session_id = es.id
 INNER JOIN exam_date ed ON es.exam_date_id = ed.id
